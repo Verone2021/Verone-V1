@@ -323,9 +323,9 @@ export function useUploadInvoice() {
         throw new Error('Seuls les fichiers PDF sont acceptés');
       }
 
-      // Vérifier la taille (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        throw new Error('Le fichier ne doit pas dépasser 5 Mo');
+      // Vérifier la taille (max 10MB — aligné avec le back-office)
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error('Le fichier ne doit pas dépasser 10 Mo');
       }
 
       // Path conforme aux nouvelles RLS storage : {request_id}/{timestamp}.pdf

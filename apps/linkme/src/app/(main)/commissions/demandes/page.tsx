@@ -205,8 +205,8 @@ function UploadInvoiceModal({
         setError('Seuls les fichiers PDF sont acceptés');
         return;
       }
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Le fichier ne doit pas dépasser 5 Mo');
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Le fichier ne doit pas dépasser 10 Mo');
         return;
       }
       setError(null);
@@ -282,7 +282,7 @@ function UploadInvoiceModal({
               <p className="text-sm text-gray-600">
                 Cliquez pour sélectionner votre facture PDF
               </p>
-              <p className="text-xs text-gray-400">Max 5 Mo</p>
+              <p className="text-xs text-gray-400">Max 10 Mo</p>
             </div>
           )}
         </div>

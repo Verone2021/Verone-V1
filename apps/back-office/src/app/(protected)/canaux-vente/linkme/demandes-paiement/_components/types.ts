@@ -43,7 +43,7 @@ export interface PaymentRequestRaw {
 }
 
 export const STATUS_LABELS: Record<PaymentRequestStatus, string> = {
-  pending: 'En attente de facture',
+  pending: 'En attente de paiement',
   paid: 'Payée',
   cancelled: 'Annulée',
 };

@@ -7,30 +7,10 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '13.0.5';
   };
   public: {
     Tables: {
@@ -4824,9 +4804,11 @@ export type Database = {
         Row: {
           affiliate_id: string;
           created_at: string | null;
+          financial_document_id: string | null;
           id: string;
           invoice_file_name: string | null;
           invoice_file_url: string | null;
+          invoice_received: boolean;
           invoice_received_at: string | null;
           notes: string | null;
           paid_at: string | null;
@@ -4843,9 +4825,11 @@ export type Database = {
         Insert: {
           affiliate_id: string;
           created_at?: string | null;
+          financial_document_id?: string | null;
           id?: string;
           invoice_file_name?: string | null;
           invoice_file_url?: string | null;
+          invoice_received?: boolean;
           invoice_received_at?: string | null;
           notes?: string | null;
           paid_at?: string | null;
@@ -4862,9 +4846,11 @@ export type Database = {
         Update: {
           affiliate_id?: string;
           created_at?: string | null;
+          financial_document_id?: string | null;
           id?: string;
           invoice_file_name?: string | null;
           invoice_file_url?: string | null;
+          invoice_received?: boolean;
           invoice_received_at?: string | null;
           notes?: string | null;
           paid_at?: string | null;
@@ -4885,6 +4871,27 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'linkme_affiliates';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'linkme_payment_requests_financial_document_id_fkey';
+            columns: ['financial_document_id'];
+            isOneToOne: false;
+            referencedRelation: 'financial_documents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'linkme_payment_requests_financial_document_id_fkey';
+            columns: ['financial_document_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_pending_invoice_uploads';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'linkme_payment_requests_financial_document_id_fkey';
+            columns: ['financial_document_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['financial_document_id'];
           },
         ];
       };
@@ -13289,6 +13296,10 @@ export type Database = {
         Args: { p_affiliate_id: string };
         Returns: Json;
       };
+      get_affiliate_partner_organisation_id: {
+        Args: { p_affiliate_id: string };
+        Returns: string;
+      };
       get_affiliate_product_by_id: {
         Args: { p_enseigne_id: string; p_product_id: string };
         Returns: {
@@ -15694,9 +15705,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       affiliate_product_approval_status: [

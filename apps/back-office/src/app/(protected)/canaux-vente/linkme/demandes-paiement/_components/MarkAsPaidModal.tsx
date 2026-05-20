@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Info, Loader2 } from 'lucide-react';
 
 import { formatCurrency } from './helpers';
 import { useMarkAsPaid } from './hooks';
@@ -23,6 +23,9 @@ export function MarkAsPaidModal({
 }: MarkAsPaidModalProps) {
   const [reference, setReference] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [reconciliationMsg, setReconciliationMsg] = useState<string | null>(
+    null
+  );
   const markAsPaid = useMarkAsPaid();
 
   const handleSubmit = async () => {
@@ -33,12 +36,37 @@ export function MarkAsPaidModal({
     }
 
     try {
-      await markAsPaid.mutateAsync({
+      const result = await markAsPaid.mutateAsync({
         requestId: request.id,
         paymentReference: reference.trim(),
       });
-      onSuccess();
-      handleClose();
+
+      if (result.reconciliation.linked) {
+        setReconciliationMsg(
+          'Paiement enregistré et rapproché avec la transaction Qonto.'
+        );
+      } else {
+        const reason = result.reconciliation.reason;
+        if (reason === 'no_financial_document') {
+          setReconciliationMsg(
+            'Paiement enregistré. La facture n’a pas encore été déposée — rapproche manuellement plus tard.'
+          );
+        } else if (reason === 'transaction_not_found') {
+          setReconciliationMsg(
+            'Paiement enregistré. Aucune transaction trouvée par référence — rapproche manuellement dans /finance/transactions.'
+          );
+        } else {
+          setReconciliationMsg(
+            'Paiement enregistré. Rapprochement bancaire à faire manuellement.'
+          );
+        }
+      }
+
+      // Fermer après 2s pour laisser voir le message
+      setTimeout(() => {
+        onSuccess();
+        handleClose();
+      }, 1800);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Erreur lors de la mise à jour';
@@ -50,6 +78,7 @@ export function MarkAsPaidModal({
   const handleClose = () => {
     setReference('');
     setError(null);
+    setReconciliationMsg(null);
     onClose();
   };
 
@@ -82,6 +111,13 @@ export function MarkAsPaidModal({
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm">
             <AlertCircle className="h-4 w-4" />
             {error}
+          </div>
+        )}
+
+        {reconciliationMsg && (
+          <div className="mb-4 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+            <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            {reconciliationMsg}
           </div>
         )}
 

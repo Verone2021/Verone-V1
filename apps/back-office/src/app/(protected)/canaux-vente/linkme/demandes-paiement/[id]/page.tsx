@@ -7,7 +7,10 @@ import {
   Calendar,
   CheckCircle2,
   CreditCard,
+  Download,
+  FileText,
   Loader2,
+  Upload,
   User,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -17,8 +20,12 @@ import { Card } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { StatusBadge } from '../_components/StatusBadge';
+import { UploadInvoiceBackOfficeModal } from '../_components/UploadInvoiceBackOfficeModal';
 import { formatCurrency, formatDate } from '../_components/helpers';
-import { type PaymentRequestStatus } from '../_components/types';
+import {
+  type PaymentRequestAdmin,
+  type PaymentRequestStatus,
+} from '../_components/types';
 
 interface CommissionRow {
   order_number: string;
@@ -31,11 +38,16 @@ interface CommissionRow {
 interface PaymentRequestDetail {
   id: string;
   request_number: string;
+  affiliate_id: string;
   affiliate_name: string;
   affiliate_email: string;
   total_amount_ht: number;
   total_amount_ttc: number;
   status: PaymentRequestStatus;
+  invoice_received: boolean;
+  invoice_file_name: string | null;
+  invoice_received_at: string | null;
+  financial_document_id: string | null;
   payment_reference: string | null;
   paid_at: string | null;
   created_at: string;
@@ -61,6 +73,8 @@ export default function PaymentRequestDetailPage() {
   const [commissions, setCommissions] = useState<CommissionRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [invoiceUrlLoading, setInvoiceUrlLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     const supabase = createClient();
@@ -71,9 +85,14 @@ export default function PaymentRequestDetailPage() {
       type PRRaw = {
         id: string;
         request_number: string;
+        affiliate_id: string;
         total_amount_ht: number;
         total_amount_ttc: number;
         status: string;
+        invoice_received: boolean;
+        invoice_file_name: string | null;
+        invoice_received_at: string | null;
+        financial_document_id: string | null;
         payment_reference: string | null;
         paid_at: string | null;
         created_at: string;
@@ -87,7 +106,8 @@ export default function PaymentRequestDetailPage() {
       const { data: prRows, error: prError } = await supabase
         .from('linkme_payment_requests' as 'linkme_affiliates')
         .select(
-          `id, request_number, total_amount_ht, total_amount_ttc, status,
+          `id, request_number, affiliate_id, total_amount_ht, total_amount_ttc, status,
+           invoice_received, invoice_file_name, invoice_received_at, financial_document_id,
            payment_reference, paid_at, created_at, notes,
            linkme_affiliates ( display_name, email )`
         )
@@ -103,11 +123,16 @@ export default function PaymentRequestDetailPage() {
       setRequest({
         id: raw.id,
         request_number: raw.request_number,
+        affiliate_id: raw.affiliate_id,
         affiliate_name: raw.linkme_affiliates?.display_name ?? 'Affilié',
         affiliate_email: raw.linkme_affiliates?.email ?? '',
         total_amount_ht: raw.total_amount_ht ?? 0,
         total_amount_ttc: raw.total_amount_ttc ?? 0,
         status: raw.status as PaymentRequestStatus,
+        invoice_received: raw.invoice_received ?? false,
+        invoice_file_name: raw.invoice_file_name,
+        invoice_received_at: raw.invoice_received_at,
+        financial_document_id: raw.financial_document_id,
         payment_reference: raw.payment_reference,
         paid_at: raw.paid_at,
         created_at: raw.created_at,
@@ -278,6 +303,132 @@ export default function PaymentRequestDetailPage() {
           <p className="text-sm text-blue-800">{request.notes}</p>
         </Card>
       )}
+
+      {/* Section Facture */}
+      <Card className="p-4 md:p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <FileText className="h-5 w-5 text-gray-500" />
+          <h2 className="text-base font-semibold text-gray-900">
+            Facture de l&apos;affilié
+          </h2>
+        </div>
+
+        {request.invoice_received ? (
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Reçue
+              </span>
+              <span className="text-gray-700">
+                {request.invoice_file_name ?? 'facture.pdf'}
+              </span>
+              {request.invoice_received_at && (
+                <span className="text-xs text-gray-500">
+                  le {formatDate(request.invoice_received_at)}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={invoiceUrlLoading}
+                onClick={() => {
+                  setInvoiceUrlLoading(true);
+                  fetch(`/api/linkme/invoices/${request.id}/signed-url`)
+                    .then(r => r.json() as Promise<{ signedUrl?: string }>)
+                    .then(body => {
+                      if (body.signedUrl) {
+                        window.open(body.signedUrl, '_blank', 'noopener');
+                      }
+                    })
+                    .catch(err => {
+                      console.error('[PaymentRequestDetail] signed url:', err);
+                    })
+                    .finally(() => setInvoiceUrlLoading(false));
+                }}
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                {invoiceUrlLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Télécharger
+              </button>
+              {request.status !== 'paid' && (
+                <button
+                  type="button"
+                  onClick={() => setUploadModalOpen(true)}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  <Upload className="h-4 w-4" />
+                  Remplacer
+                </button>
+              )}
+            </div>
+            {request.financial_document_id && (
+              <p className="text-xs text-gray-500">
+                Cette facture a généré{' '}
+                <Link
+                  href={`/finance/depenses/${request.financial_document_id}`}
+                  className="text-blue-600 hover:underline"
+                >
+                  une dépense en compta
+                </Link>
+                .
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">
+              Aucune facture déposée pour le moment. Si l&apos;affilié t&apos;a
+              envoyé sa facture par email, dépose-la manuellement ici.
+            </p>
+            <button
+              type="button"
+              onClick={() => setUploadModalOpen(true)}
+              className="inline-flex h-10 items-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              <Upload className="h-4 w-4" />
+              Déposer la facture (cas email)
+            </button>
+          </div>
+        )}
+      </Card>
+
+      <UploadInvoiceBackOfficeModal
+        isOpen={uploadModalOpen}
+        request={
+          request
+            ? ({
+                id: request.id,
+                requestNumber: request.request_number,
+                affiliateId: request.affiliate_id,
+                affiliateName: request.affiliate_name,
+                affiliateEmail: request.affiliate_email,
+                totalAmountHT: request.total_amount_ht,
+                totalAmountTTC: request.total_amount_ttc,
+                status: request.status,
+                invoiceReceived: request.invoice_received,
+                financialDocumentId: request.financial_document_id,
+                invoiceFileUrl: null,
+                invoiceFileName: request.invoice_file_name,
+                invoiceReceivedAt: request.invoice_received_at,
+                paidAt: request.paid_at,
+                paymentReference: request.payment_reference,
+                createdAt: request.created_at,
+              } satisfies PaymentRequestAdmin)
+            : null
+        }
+        onClose={() => setUploadModalOpen(false)}
+        onSuccess={() => {
+          void fetchData().catch(err => {
+            console.error('[PaymentRequestDetail] refetch after upload:', err);
+          });
+        }}
+      />
 
       {/* Tableau des commissions */}
       <Card className="overflow-hidden">
