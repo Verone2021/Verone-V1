@@ -243,7 +243,7 @@ export function AddToSelectionModal({
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-gray-900 truncate">
-                {product.custom_title ?? product.name}
+                {product.name}
               </p>
               <p className="text-sm text-gray-500 font-mono">
                 {product.reference}

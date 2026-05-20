@@ -32,9 +32,6 @@ export interface LinkMeCatalogProduct {
   name: string;
   reference: string;
   description: string | null;
-  custom_title: string | null;
-  custom_description: string | null;
-  custom_selling_points: string[] | null;
   selling_price_ht: number; // Prix de vente HT (custom_price_ht ou calculé)
   public_price_ht: number | null; // Tarif public HT
   channel_commission_rate: number | null; // Commission LinkMe % (pour calcul prix client)
@@ -83,9 +80,6 @@ interface ChannelPricingWithProduct {
   id: string;
   product_id: string;
   is_featured: boolean | null;
-  custom_title: string | null;
-  custom_description: string | null;
-  custom_selling_points: string[] | null;
   custom_price_ht: number | null;
   public_price_ht: number | null;
   channel_commission_rate: number | null;
@@ -122,9 +116,6 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       id,
       product_id,
       is_featured,
-      custom_title,
-      custom_description,
-      custom_selling_points,
       custom_price_ht,
       public_price_ht,
       channel_commission_rate,
@@ -307,9 +298,6 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       name: product?.name ?? '',
       reference: product?.sku ?? '',
       description: product?.description ?? null,
-      custom_title: cp.custom_title,
-      custom_description: cp.custom_description,
-      custom_selling_points: cp.custom_selling_points,
       selling_price_ht: sellingPrice,
       public_price_ht: cp.public_price_ht,
       channel_commission_rate: cp.channel_commission_rate ?? null,
@@ -374,9 +362,6 @@ interface ChannelPricingWithProductDetail {
   id: string;
   product_id: string;
   is_featured: boolean | null;
-  custom_title: string | null;
-  custom_description: string | null;
-  custom_selling_points: string[] | null;
   custom_price_ht: number | null;
   public_price_ht: number | null;
   min_margin_rate: number | null;
@@ -424,9 +409,6 @@ export function useCatalogProduct(catalogId: string | null) {
           id,
           product_id,
           is_featured,
-          custom_title,
-          custom_description,
-          custom_selling_points,
           custom_price_ht,
           public_price_ht,
           min_margin_rate,
@@ -485,9 +467,8 @@ export function useCatalogProduct(catalogId: string | null) {
         product_id: data.product_id,
         name: product?.name ?? '',
         reference: product?.sku ?? '',
-        description: data.custom_description ?? product?.description ?? null,
-        selling_points:
-          data.custom_selling_points ?? product?.selling_points ?? null,
+        description: product?.description ?? null,
+        selling_points: product?.selling_points ?? null,
         selling_price_ht: data.custom_price_ht ?? calculatedPrice,
         public_price_ht: data.public_price_ht,
         image_url: images?.[0]?.public_url ?? null,

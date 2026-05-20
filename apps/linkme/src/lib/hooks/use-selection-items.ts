@@ -27,7 +27,6 @@ export interface SelectionItem {
   base_price_ht: number;
   margin_rate: number;
   selling_price_ht: number;
-  custom_description: string | null;
   is_featured: boolean;
   is_hidden_by_staff: boolean;
   display_order: number;
@@ -51,7 +50,6 @@ interface SelectionItemWithProduct {
   base_price_ht: number | null;
   margin_rate: number | null;
   selling_price_ht: number | null;
-  custom_description: string | null;
   is_featured: boolean | null;
   is_hidden_by_staff: boolean | null;
   display_order: number | null;
@@ -110,7 +108,6 @@ export function useSelectionItems(selectionId: string | null) {
           base_price_ht,
           margin_rate,
           selling_price_ht,
-          custom_description,
           is_featured,
           is_hidden_by_staff,
           display_order,
@@ -166,7 +163,6 @@ export function useSelectionItems(selectionId: string | null) {
         base_price_ht: item.base_price_ht ?? 0,
         margin_rate: item.margin_rate ?? DEFAULT_SELECTION_ITEM_MARGIN,
         selling_price_ht: item.selling_price_ht ?? 0,
-        custom_description: item.custom_description,
         is_featured: item.is_featured ?? false,
         is_hidden_by_staff: item.is_hidden_by_staff ?? false,
         display_order: item.display_order ?? 0,
