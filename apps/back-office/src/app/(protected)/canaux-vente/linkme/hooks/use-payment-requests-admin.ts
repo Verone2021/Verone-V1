@@ -17,7 +17,9 @@ interface PaymentRequestAdmin {
   total_amount_ht: number;
   total_amount_ttc: number;
   tax_rate: number;
-  status: 'pending' | 'invoice_received' | 'paid' | 'cancelled';
+  status: 'pending' | 'paid' | 'cancelled';
+  invoice_received: boolean;
+  financial_document_id: string | null;
   invoice_file_url: string | null;
   invoice_file_name: string | null;
   invoice_received_at: string | null;
@@ -38,8 +40,8 @@ interface PaymentRequestAdmin {
 
 interface PaymentRequestCounts {
   pending: number;
-  invoice_received: number;
-  total_pending: number; // pending + invoice_received
+  with_invoice_pending: number; // facture reçue mais pas encore payée
+  total_pending: number; // pending + with_invoice_pending
   paid: number;
   cancelled: number;
 }
@@ -53,6 +55,8 @@ interface PaymentRequestRaw {
   total_amount_ttc: number;
   tax_rate: number;
   status: string;
+  invoice_received: boolean;
+  financial_document_id: string | null;
   invoice_file_url: string | null;
   invoice_file_name: string | null;
   invoice_received_at: string | null;
@@ -82,8 +86,8 @@ export function usePaymentRequestsCounts() {
     queryFn: async (): Promise<PaymentRequestCounts> => {
       const { data, error } = await supabase
         .from('linkme_payment_requests')
-        .select('status')
-        .returns<{ status: string }[]>();
+        .select('status, invoice_received')
+        .returns<{ status: string; invoice_received: boolean }[]>();
 
       if (error) {
         console.error('Erreur fetch payment requests counts:', error);
@@ -92,20 +96,22 @@ export function usePaymentRequestsCounts() {
 
       const counts: PaymentRequestCounts = {
         pending: 0,
-        invoice_received: 0,
+        with_invoice_pending: 0,
         total_pending: 0,
         paid: 0,
         cancelled: 0,
       };
 
       (data ?? []).forEach(item => {
-        if (item.status === 'pending') counts.pending++;
-        if (item.status === 'invoice_received') counts.invoice_received++;
+        if (item.status === 'pending' && !item.invoice_received)
+          counts.pending++;
+        if (item.invoice_received && item.status === 'pending')
+          counts.with_invoice_pending++;
         if (item.status === 'paid') counts.paid++;
         if (item.status === 'cancelled') counts.cancelled++;
       });
 
-      counts.total_pending = counts.pending + counts.invoice_received;
+      counts.total_pending = counts.pending + counts.with_invoice_pending;
 
       return counts;
     },
@@ -136,6 +142,8 @@ export function usePaymentRequestsAdmin(statusFilter?: string) {
           total_amount_ttc,
           tax_rate,
           status,
+          invoice_received,
+          financial_document_id,
           invoice_file_url,
           invoice_file_name,
           invoice_received_at,
@@ -169,6 +177,8 @@ export function usePaymentRequestsAdmin(statusFilter?: string) {
       return (data ?? []).map(item => ({
         ...item,
         status: item.status as PaymentRequestAdmin['status'],
+        invoice_received: item.invoice_received ?? false,
+        financial_document_id: item.financial_document_id ?? null,
         affiliate: item.linkme_affiliates ?? undefined,
       }));
     },
@@ -233,7 +243,7 @@ export function useCancelPaymentRequestAdmin() {
         .from('linkme_payment_requests')
         .update({ status: 'cancelled' })
         .eq('id', requestId)
-        .in('status', ['pending', 'invoice_received']);
+        .in('status', ['pending', 'partially_paid']);
 
       if (error) {
         console.error('Erreur cancelling request:', error);
@@ -338,7 +348,7 @@ async function createPaymentRequestFn(
       status: 'pending',
     })
     .select(
-      'id, affiliate_id, request_number, total_amount_ht, total_amount_ttc, tax_rate, status, invoice_file_url, invoice_file_name, invoice_received_at, paid_at, paid_by, payment_reference, notes, created_at, updated_at'
+      'id, affiliate_id, request_number, total_amount_ht, total_amount_ttc, tax_rate, status, invoice_received, financial_document_id, invoice_file_url, invoice_file_name, invoice_received_at, paid_at, paid_by, payment_reference, notes, created_at, updated_at'
     )
     .single()
     .returns<PaymentRequestRaw>();
@@ -379,6 +389,8 @@ async function createPaymentRequestFn(
   return {
     ...request,
     status: request.status as PaymentRequestAdmin['status'],
+    invoice_received: request.invoice_received ?? false,
+    financial_document_id: request.financial_document_id ?? null,
   };
 }
 
@@ -420,6 +432,8 @@ export function useRecentPaymentRequests(limit: number = 5) {
           total_amount_ttc,
           tax_rate,
           status,
+          invoice_received,
+          financial_document_id,
           invoice_file_url,
           invoice_file_name,
           invoice_received_at,
@@ -437,7 +451,7 @@ export function useRecentPaymentRequests(limit: number = 5) {
           )
         `
         )
-        .in('status', ['pending', 'invoice_received'])
+        .eq('status', 'pending')
         .order('created_at', { ascending: false })
         .limit(limit)
         .returns<PaymentRequestRaw[]>();
@@ -450,6 +464,8 @@ export function useRecentPaymentRequests(limit: number = 5) {
       return (data ?? []).map(item => ({
         ...item,
         status: item.status as PaymentRequestAdmin['status'],
+        invoice_received: item.invoice_received ?? false,
+        financial_document_id: item.financial_document_id ?? null,
         affiliate: item.linkme_affiliates ?? undefined,
       }));
     },

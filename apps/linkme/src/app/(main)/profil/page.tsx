@@ -236,6 +236,13 @@ export default function ProfilPage(): JSX.Element | null {
           <p className="text-gray-500 mt-1 text-sm">
             Consultez et gérez vos informations personnelles
           </p>
+          <Link
+            href="/profil/facturation"
+            className="mt-3 inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <Briefcase className="h-4 w-4" />
+            Mes infos de facturation
+          </Link>
         </div>
 
         {/* Message de succès */}
