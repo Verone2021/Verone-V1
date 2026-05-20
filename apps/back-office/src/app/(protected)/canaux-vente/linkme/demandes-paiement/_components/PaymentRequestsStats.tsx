@@ -11,9 +11,12 @@ interface PaymentRequestsStatsProps {
 export function PaymentRequestsStats({ requests }: PaymentRequestsStatsProps) {
   const stats = {
     total: requests?.length ?? 0,
-    pending: requests?.filter(r => r.status === 'pending').length ?? 0,
+    pending:
+      requests?.filter(r => r.status === 'pending' && !r.invoiceReceived)
+        .length ?? 0,
     invoiceReceived:
-      requests?.filter(r => r.status === 'invoice_received').length ?? 0,
+      requests?.filter(r => r.invoiceReceived && r.status === 'pending')
+        .length ?? 0,
     paid: requests?.filter(r => r.status === 'paid').length ?? 0,
   };
 

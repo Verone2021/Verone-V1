@@ -4824,9 +4824,11 @@ export type Database = {
         Row: {
           affiliate_id: string;
           created_at: string | null;
+          financial_document_id: string | null;
           id: string;
           invoice_file_name: string | null;
           invoice_file_url: string | null;
+          invoice_received: boolean;
           invoice_received_at: string | null;
           notes: string | null;
           paid_at: string | null;
@@ -4843,9 +4845,11 @@ export type Database = {
         Insert: {
           affiliate_id: string;
           created_at?: string | null;
+          financial_document_id?: string | null;
           id?: string;
           invoice_file_name?: string | null;
           invoice_file_url?: string | null;
+          invoice_received?: boolean;
           invoice_received_at?: string | null;
           notes?: string | null;
           paid_at?: string | null;
@@ -4862,9 +4866,11 @@ export type Database = {
         Update: {
           affiliate_id?: string;
           created_at?: string | null;
+          financial_document_id?: string | null;
           id?: string;
           invoice_file_name?: string | null;
           invoice_file_url?: string | null;
+          invoice_received?: boolean;
           invoice_received_at?: string | null;
           notes?: string | null;
           paid_at?: string | null;
@@ -4885,6 +4891,27 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'linkme_affiliates';
             referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'linkme_payment_requests_financial_document_id_fkey';
+            columns: ['financial_document_id'];
+            isOneToOne: false;
+            referencedRelation: 'financial_documents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'linkme_payment_requests_financial_document_id_fkey';
+            columns: ['financial_document_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_pending_invoice_uploads';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'linkme_payment_requests_financial_document_id_fkey';
+            columns: ['financial_document_id'];
+            isOneToOne: false;
+            referencedRelation: 'v_transactions_missing_invoice';
+            referencedColumns: ['financial_document_id'];
           },
         ];
       };
@@ -13289,6 +13316,10 @@ export type Database = {
         Args: { p_affiliate_id: string };
         Returns: Json;
       };
+      get_affiliate_partner_organisation_id: {
+        Args: { p_affiliate_id: string };
+        Returns: string;
+      };
       get_affiliate_product_by_id: {
         Args: { p_enseigne_id: string; p_product_id: string };
         Returns: {
@@ -14745,6 +14776,10 @@ export type Database = {
       is_transaction_locked_by_id: {
         Args: { p_transaction_id: string };
         Returns: boolean;
+      };
+      link_linkme_payment_to_bank_transaction: {
+        Args: { p_payment_reference: string; p_payment_request_id: string };
+        Returns: Json;
       };
       link_transaction_to_document: {
         Args: {

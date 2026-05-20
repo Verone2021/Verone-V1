@@ -21,7 +21,6 @@ import {
   ArrowLeft,
   FileText,
   Upload,
-  Download,
   Eye,
   Clock,
   CheckCircle2,
@@ -53,11 +52,6 @@ function StatusBadge({ status }: { status: PaymentRequestStatus }) {
     { icon: typeof Clock; color: string; bg: string }
   > = {
     pending: { icon: Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
-    invoice_received: {
-      icon: FileText,
-      color: 'text-blue-600',
-      bg: 'bg-blue-100',
-    },
     paid: {
       icon: CheckCircle2,
       color: 'text-emerald-600',
@@ -150,16 +144,11 @@ function PaymentRequestRow({
       {/* Actions */}
       <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
         {/* Facture uploadée */}
-        {request.invoiceFileUrl ? (
-          <a
-            href={request.invoiceFileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-700"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Voir la facture
-          </a>
+        {request.invoiceReceived ? (
+          <span className="flex items-center gap-2 text-xs text-blue-600">
+            <FileText className="h-3.5 w-3.5" />
+            Facture déposée
+          </span>
         ) : request.status === 'pending' ? (
           <button
             onClick={() => {
@@ -216,8 +205,8 @@ function UploadInvoiceModal({
         setError('Seuls les fichiers PDF sont acceptés');
         return;
       }
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Le fichier ne doit pas dépasser 5 Mo');
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Le fichier ne doit pas dépasser 10 Mo');
         return;
       }
       setError(null);
@@ -293,7 +282,7 @@ function UploadInvoiceModal({
               <p className="text-sm text-gray-600">
                 Cliquez pour sélectionner votre facture PDF
               </p>
-              <p className="text-xs text-gray-400">Max 5 Mo</p>
+              <p className="text-xs text-gray-400">Max 10 Mo</p>
             </div>
           )}
         </div>
@@ -343,9 +332,8 @@ export default function PaymentRequestsPage() {
   // Grouper par statut pour affichage
   const groupedRequests = {
     active:
-      requests?.filter(
-        r => r.status === 'pending' || r.status === 'invoice_received'
-      ) ?? [],
+      requests?.filter(r => r.status !== 'paid' && r.status !== 'cancelled') ??
+      [],
     paid: requests?.filter(r => r.status === 'paid') ?? [],
     cancelled: requests?.filter(r => r.status === 'cancelled') ?? [],
   };

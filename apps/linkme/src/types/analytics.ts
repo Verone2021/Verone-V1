@@ -203,11 +203,7 @@ export function formatCompactNumber(value: number): string {
 // Types pour les Demandes de Versement (Payment Requests)
 // ============================================================================
 
-export type PaymentRequestStatus =
-  | 'pending'
-  | 'invoice_received'
-  | 'paid'
-  | 'cancelled';
+export type PaymentRequestStatus = 'pending' | 'paid' | 'cancelled';
 
 export interface PaymentRequest {
   id: string;
@@ -217,6 +213,8 @@ export interface PaymentRequest {
   totalAmountTTC: number;
   taxRate: number;
   status: PaymentRequestStatus;
+  invoiceReceived: boolean;
+  financialDocumentId: string | null;
   invoiceFileUrl: string | null;
   invoiceFileName: string | null;
   invoiceReceivedAt: string | null;
@@ -246,7 +244,6 @@ export const PAYMENT_REQUEST_STATUS_LABELS: Record<
   string
 > = {
   pending: 'En attente de facture',
-  invoice_received: 'Facture reçue',
   paid: 'Payée',
   cancelled: 'Annulée',
 };
@@ -257,7 +254,6 @@ export const PAYMENT_REQUEST_STATUS_COLORS: Record<
   string
 > = {
   pending: 'orange',
-  invoice_received: 'blue',
   paid: 'green',
   cancelled: 'red',
 };

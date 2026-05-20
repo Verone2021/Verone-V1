@@ -65,8 +65,7 @@ export default function PaymentRequestsAdminPage() {
           className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
         >
           <option value="all">Tous les statuts</option>
-          <option value="pending">En attente de facture</option>
-          <option value="invoice_received">Facture reçue</option>
+          <option value="pending">En attente / Facture reçue</option>
           <option value="paid">Payées</option>
           <option value="cancelled">Annulées</option>
         </select>
