@@ -57,7 +57,7 @@ export function ProductCard({
   showCustomBadge = false,
 }: ProductCardProps): JSX.Element {
   const [isHovered, setIsHovered] = useState(false);
-  const displayTitle = product.custom_title ?? product.name;
+  const displayTitle = product.name;
 
   // Prix client calculé = prix vente × (1 + commission%)
   const customerPriceHT = calculateCustomerPrice(
@@ -213,7 +213,7 @@ export function ProductListItem({
   onAddToSelection,
   showCustomBadge = false,
 }: ProductListItemProps): JSX.Element {
-  const displayTitle = product.custom_title ?? product.name;
+  const displayTitle = product.name;
 
   // Prix client calculé = prix vente × (1 + commission%)
   const customerPriceHT = calculateCustomerPrice(
