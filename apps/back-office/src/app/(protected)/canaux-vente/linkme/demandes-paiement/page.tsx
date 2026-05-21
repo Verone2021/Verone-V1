@@ -4,7 +4,7 @@
  * Gestion des demandes de versement des affiliés :
  * - Liste de toutes les demandes
  * - Filtres par statut
- * - Actions : voir facture, marquer payé, annuler
+ * - Actions : voir facture, traiter le paiement, annuler
  *
  * @module PaymentRequestsAdminPage
  * @since 2025-12-11
@@ -16,7 +16,7 @@ import { useState } from 'react';
 
 import { Filter } from 'lucide-react';
 
-import { MarkAsPaidModal } from './_components/MarkAsPaidModal';
+import { ProcessPaymentModal } from './_components/ProcessPaymentModal';
 import { PaymentRequestsStats } from './_components/PaymentRequestsStats';
 import { PaymentRequestsTable } from './_components/PaymentRequestsTable';
 import { usePaymentRequestsAdmin } from './_components/hooks';
@@ -24,6 +24,30 @@ import {
   type PaymentRequestAdmin,
   type PaymentRequestStatus,
 } from './_components/types';
+import { usePaymentHistory } from './hooks/use-payment-requests-admin';
+
+function PaymentModalWrapper({
+  selectedRequest,
+  onClose,
+  onSuccess,
+}: {
+  selectedRequest: PaymentRequestAdmin | null;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const { data: history = [] } = usePaymentHistory(selectedRequest?.id ?? null);
+  const alreadyPaidTTC = history.reduce((sum, p) => sum + p.amountTTC, 0);
+
+  return (
+    <ProcessPaymentModal
+      isOpen={!!selectedRequest}
+      request={selectedRequest}
+      alreadyPaidTTC={alreadyPaidTTC}
+      onClose={onClose}
+      onSuccess={onSuccess}
+    />
+  );
+}
 
 export default function PaymentRequestsAdminPage() {
   const [statusFilter, setStatusFilter] = useState<
@@ -65,7 +89,8 @@ export default function PaymentRequestsAdminPage() {
           className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
         >
           <option value="all">Tous les statuts</option>
-          <option value="pending">En attente / Facture reçue</option>
+          <option value="pending">En attente de paiement</option>
+          <option value="partially_paid">Partiellement payée</option>
           <option value="paid">Payées</option>
           <option value="cancelled">Annulées</option>
         </select>
@@ -74,12 +99,11 @@ export default function PaymentRequestsAdminPage() {
       <PaymentRequestsTable
         requests={requests}
         isLoading={isLoading}
-        onMarkAsPaid={setSelectedRequest}
+        onProcessPayment={setSelectedRequest}
       />
 
-      <MarkAsPaidModal
-        isOpen={!!selectedRequest}
-        request={selectedRequest}
+      <PaymentModalWrapper
+        selectedRequest={selectedRequest}
         onClose={() => setSelectedRequest(null)}
         onSuccess={() => {
           void refetch().catch(err => {

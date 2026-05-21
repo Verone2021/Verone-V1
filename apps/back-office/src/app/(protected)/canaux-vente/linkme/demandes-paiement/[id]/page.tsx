@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import {
   ArrowLeft,
+  Banknote,
   Calendar,
   CheckCircle2,
   CreditCard,
@@ -19,6 +20,9 @@ import { useParams } from 'next/navigation';
 import { Card } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 
+import { CommissionsTable } from '../_components/CommissionsTable';
+import { PaymentHistory } from '../_components/PaymentHistory';
+import { ProcessPaymentModal } from '../_components/ProcessPaymentModal';
 import { StatusBadge } from '../_components/StatusBadge';
 import { UploadInvoiceBackOfficeModal } from '../_components/UploadInvoiceBackOfficeModal';
 import { formatCurrency, formatDate } from '../_components/helpers';
@@ -26,6 +30,11 @@ import {
   type PaymentRequestAdmin,
   type PaymentRequestStatus,
 } from '../_components/types';
+import { usePaymentHistory } from '../hooks/use-payment-requests-admin';
+
+// ============================================================================
+// Types locaux
+// ============================================================================
 
 interface CommissionRow {
   order_number: string;
@@ -65,6 +74,31 @@ interface ItemRow {
   } | null;
 }
 
+type PRRaw = {
+  id: string;
+  request_number: string;
+  affiliate_id: string;
+  total_amount_ht: number;
+  total_amount_ttc: number;
+  status: string;
+  invoice_received: boolean;
+  invoice_file_name: string | null;
+  invoice_received_at: string | null;
+  financial_document_id: string | null;
+  payment_reference: string | null;
+  paid_at: string | null;
+  created_at: string;
+  notes: string | null;
+  linkme_affiliates: {
+    display_name: string;
+    email: string | null;
+  } | null;
+};
+
+// ============================================================================
+// Page principale
+// ============================================================================
+
 export default function PaymentRequestDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
@@ -74,7 +108,13 @@ export default function PaymentRequestDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [invoiceUrlLoading, setInvoiceUrlLoading] = useState(false);
+
+  // L'historique est chargé ici pour calculer alreadyPaidTTC (passé au modal)
+  const { data: paymentHistory = [], refetch: refetchHistory } =
+    usePaymentHistory(id);
+  const alreadyPaidTTC = paymentHistory.reduce((s, p) => s + p.amountTTC, 0);
 
   const fetchData = useCallback(async () => {
     const supabase = createClient();
@@ -82,27 +122,6 @@ export default function PaymentRequestDetailPage() {
     setError(null);
 
     try {
-      type PRRaw = {
-        id: string;
-        request_number: string;
-        affiliate_id: string;
-        total_amount_ht: number;
-        total_amount_ttc: number;
-        status: string;
-        invoice_received: boolean;
-        invoice_file_name: string | null;
-        invoice_received_at: string | null;
-        financial_document_id: string | null;
-        payment_reference: string | null;
-        paid_at: string | null;
-        created_at: string;
-        notes: string | null;
-        linkme_affiliates: {
-          display_name: string;
-          email: string | null;
-        } | null;
-      };
-
       const { data: prRows, error: prError } = await supabase
         .from('linkme_payment_requests' as 'linkme_affiliates')
         .select(
@@ -203,11 +222,8 @@ export default function PaymentRequestDetailPage() {
     );
   }
 
-  const totalPayoutHT = commissions.reduce((s, c) => s + c.total_payout_ht, 0);
-  const totalPayoutTTC = commissions.reduce(
-    (s, c) => s + c.total_payout_ttc,
-    0
-  );
+  const canProcessPayment =
+    request.status === 'pending' || request.status === 'partially_paid';
 
   return (
     <div className="p-6 space-y-6">
@@ -221,7 +237,7 @@ export default function PaymentRequestDetailPage() {
       </Link>
 
       {/* En-tête */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             {request.request_number}
@@ -230,7 +246,18 @@ export default function PaymentRequestDetailPage() {
             Créée le {formatDate(request.created_at)}
           </p>
         </div>
-        <StatusBadge status={request.status} />
+        <div className="flex items-center gap-3">
+          <StatusBadge status={request.status} />
+          {canProcessPayment && (
+            <button
+              onClick={() => setPaymentModalOpen(true)}
+              className="inline-flex h-10 items-center gap-2 rounded-lg bg-emerald-600 px-4 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
+            >
+              <Banknote className="h-4 w-4" />
+              Traiter le paiement
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Cartes info */}
@@ -271,7 +298,7 @@ export default function PaymentRequestDetailPage() {
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Payée le</p>
+              <p className="text-xs text-gray-500">Soldée le</p>
               <p className="text-sm font-medium text-gray-900">
                 {formatDate(request.paid_at)}
               </p>
@@ -398,6 +425,17 @@ export default function PaymentRequestDetailPage() {
         )}
       </Card>
 
+      {/* Historique des virements */}
+      <PaymentHistory
+        requestId={request.id}
+        totalAmountTTC={request.total_amount_ttc}
+        onProcessPayment={() => setPaymentModalOpen(true)}
+      />
+
+      {/* Tableau des commissions */}
+      <CommissionsTable commissions={commissions} />
+
+      {/* Modals */}
       <UploadInvoiceBackOfficeModal
         isOpen={uploadModalOpen}
         request={
@@ -430,89 +468,38 @@ export default function PaymentRequestDetailPage() {
         }}
       />
 
-      {/* Tableau des commissions */}
-      <Card className="overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-700">
-            Commandes incluses ({commissions.length})
-          </h2>
-          <span className="text-xs text-gray-500">
-            Total : {formatCurrency(totalPayoutTTC)} TTC
-          </span>
-        </div>
-
-        {commissions.length === 0 ? (
-          <div className="p-8 text-center text-sm text-gray-400">
-            Aucune commande liée à cette demande.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                    N° commande
-                  </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">
-                    Date
-                  </th>
-                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase hidden xl:table-cell">
-                    Montant HT
-                  </th>
-                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
-                    Rémunération HT
-                  </th>
-                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
-                    Rémunération TTC
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {commissions.map((c, idx) => (
-                  <tr
-                    key={`${c.order_number}-${idx}`}
-                    className="hover:bg-gray-50"
-                  >
-                    <td className="px-4 py-2.5">
-                      <span className="text-sm font-medium text-gray-900">
-                        {c.order_number}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2.5 text-sm text-gray-500 hidden lg:table-cell">
-                      {formatDate(c.order_date)}
-                    </td>
-                    <td className="px-4 py-2.5 text-sm text-gray-600 text-right hidden xl:table-cell">
-                      {formatCurrency(c.order_amount_ht)}
-                    </td>
-                    <td className="px-4 py-2.5 text-sm text-gray-700 text-right">
-                      {formatCurrency(c.total_payout_ht)}
-                    </td>
-                    <td className="px-4 py-2.5 text-sm font-medium text-emerald-600 text-right">
-                      {formatCurrency(c.total_payout_ttc)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="border-t-2 border-gray-200 bg-gray-50">
-                <tr>
-                  <td
-                    colSpan={3}
-                    className="px-4 py-2.5 text-sm font-semibold text-gray-700"
-                  >
-                    Total
-                  </td>
-                  <td className="px-4 py-2.5 text-sm font-semibold text-gray-700 text-right">
-                    {formatCurrency(totalPayoutHT)}
-                  </td>
-                  <td className="px-4 py-2.5 text-sm font-semibold text-emerald-700 text-right">
-                    {formatCurrency(totalPayoutTTC)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        )}
-      </Card>
+      <ProcessPaymentModal
+        isOpen={paymentModalOpen}
+        request={
+          request
+            ? ({
+                id: request.id,
+                requestNumber: request.request_number,
+                affiliateId: request.affiliate_id,
+                affiliateName: request.affiliate_name,
+                affiliateEmail: request.affiliate_email,
+                totalAmountHT: request.total_amount_ht,
+                totalAmountTTC: request.total_amount_ttc,
+                status: request.status,
+                invoiceReceived: request.invoice_received,
+                financialDocumentId: request.financial_document_id,
+                invoiceFileUrl: null,
+                invoiceFileName: request.invoice_file_name,
+                invoiceReceivedAt: request.invoice_received_at,
+                paidAt: request.paid_at,
+                paymentReference: request.payment_reference,
+                createdAt: request.created_at,
+              } satisfies PaymentRequestAdmin)
+            : null
+        }
+        alreadyPaidTTC={alreadyPaidTTC}
+        onClose={() => setPaymentModalOpen(false)}
+        onSuccess={() => {
+          void Promise.all([fetchData(), refetchHistory()]).catch(err => {
+            console.error('[PaymentRequestDetail] refetch after payment:', err);
+          });
+        }}
+      />
     </div>
   );
 }
