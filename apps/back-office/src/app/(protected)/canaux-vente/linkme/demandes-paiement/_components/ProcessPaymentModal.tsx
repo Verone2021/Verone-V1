@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
-import { AlertCircle, Banknote, Loader2 } from 'lucide-react';
+import { AlertCircle, Banknote, Loader2, Paperclip, X } from 'lucide-react';
 
 import { useAddPayment } from '../hooks/use-linkme-payments';
 import { formatCurrency } from './helpers';
@@ -35,7 +35,9 @@ export function ProcessPaymentModal({
     () => new Date().toISOString().split('T')[0]
   );
   const [notes, setNotes] = useState('');
+  const [proofFile, setProofFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const addPayment = useAddPayment();
 
@@ -49,8 +51,24 @@ export function ProcessPaymentModal({
     setReference('');
     setPaymentDate(new Date().toISOString().split('T')[0]);
     setNotes('');
+    setProofFile(null);
     setError(null);
     onClose();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      setError('Seuls les fichiers PDF sont acceptés');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Le justificatif ne doit pas dépasser 10 Mo');
+      return;
+    }
+    setError(null);
+    setProofFile(file);
   };
 
   const handleSubmit = async () => {
@@ -85,6 +103,13 @@ export function ProcessPaymentModal({
       payment_reference: reference.trim(),
       payment_date: paymentDate,
       notes: notes.trim() || undefined,
+      proofFile: proofFile ?? undefined,
+      requestMeta: {
+        totalAmountTTC: request.totalAmountTTC,
+        requestNumber: request.requestNumber,
+        affiliateName: request.affiliateName,
+        affiliateEmail: request.affiliateEmail,
+      },
     });
     onSuccess();
     handleClose();
@@ -241,7 +266,50 @@ export function ProcessPaymentModal({
               className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2.5 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
             />
           </div>
-          {/* Note: upload justificatif PDF prévu en Bloc C */}
+          {/* Justificatif PDF (optionnel) */}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Justificatif de paiement{' '}
+              <span className="text-xs font-normal text-gray-400">
+                (PDF, optionnel, max 10 Mo)
+              </span>
+            </label>
+            {proofFile ? (
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                <Paperclip className="h-4 w-4 flex-shrink-0 text-emerald-600" />
+                <span className="flex-1 truncate text-sm text-emerald-800">
+                  {proofFile.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProofFile(null);
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                  }}
+                  className="flex-shrink-0 rounded p-0.5 text-emerald-600 hover:bg-emerald-100"
+                  aria-label="Supprimer le justificatif"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 px-3 py-3 text-sm text-gray-500 transition-colors hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-600"
+              >
+                <Paperclip className="h-4 w-4" />
+                Joindre un justificatif PDF
+              </button>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
         </div>
 
         {/* Footer */}

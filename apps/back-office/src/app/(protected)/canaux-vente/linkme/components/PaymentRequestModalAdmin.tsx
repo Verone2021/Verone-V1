@@ -24,6 +24,7 @@ import {
   ChevronLeft,
   Banknote,
   Eye,
+  AlertTriangle,
 } from 'lucide-react';
 
 import { PaymentRequestInvoiceTemplate } from './payment-request-invoice-template';
@@ -83,6 +84,21 @@ export function PaymentRequestModalAdmin({
     onSuccess,
     onClose,
   });
+
+  // Garde-fou : détecter si la sélection mélange plusieurs affiliés distincts.
+  // On utilise affiliate_id quand disponible, sinon on se rabat sur l'identité
+  // de l'affilié via enseigne_id ou organisation_id.
+  const affiliateIds = new Set(
+    selectedCommissions.map(c => {
+      if (c.affiliate_id) return c.affiliate_id;
+      if (c.affiliate?.enseigne_id)
+        return `enseigne-${c.affiliate.enseigne_id}`;
+      if (c.affiliate?.organisation_id)
+        return `org-${c.affiliate.organisation_id}`;
+      return 'unknown';
+    })
+  );
+  const hasMixedAffiliates = affiliateIds.size > 1;
 
   if (!isOpen) return null;
 
@@ -168,6 +184,22 @@ export function PaymentRequestModalAdmin({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
+          {/* Garde-fou : mélange d'affiliés */}
+          {hasMixedAffiliates && (
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2 text-amber-800 text-sm">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5 text-amber-500" />
+              <div>
+                <p className="font-semibold">Sélection mixte non autorisée</p>
+                <p className="mt-0.5">
+                  Les commissions sélectionnées appartiennent à plusieurs
+                  affiliés différents. Une demande de paiement ne peut porter
+                  que sur un seul affilié. Désélectionnez les commissions des
+                  autres affiliés avant de continuer.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Erreur */}
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm">
@@ -351,7 +383,8 @@ export function PaymentRequestModalAdmin({
                 onClick={() =>
                   goToStep(currentStep === 'recap' ? 'template' : 'confirm')
                 }
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+                disabled={hasMixedAffiliates}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Suivant
                 <ChevronRight className="h-4 w-4" />
@@ -366,7 +399,7 @@ export function PaymentRequestModalAdmin({
                     );
                   });
                 }}
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || hasMixedAffiliates}
                 className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {createMutation.isPending ? (

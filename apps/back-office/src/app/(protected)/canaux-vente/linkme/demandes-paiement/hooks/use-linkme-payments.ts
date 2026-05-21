@@ -29,6 +29,15 @@ export interface AddPaymentInput {
   payment_reference: string;
   payment_date: string;
   notes?: string;
+  /** Fichier PDF justificatif optionnel (max 10 Mo) */
+  proofFile?: File;
+  /** Métadonnées de la demande, utilisées pour l'email si la demande devient paid */
+  requestMeta?: {
+    totalAmountTTC: number;
+    requestNumber: string;
+    affiliateName: string;
+    affiliateEmail: string;
+  };
 }
 
 interface LinkResult {
@@ -92,7 +101,36 @@ export function useAddPayment() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      // 2. Insérer le virement — le trigger DB se charge du reste
+      // 2. Upload justificatif PDF si fourni (best-effort, n'échoue pas l'insert)
+      let proofUrl: string | null = null;
+      if (input.proofFile) {
+        const file = input.proofFile;
+        if (file.type !== 'application/pdf') {
+          throw new Error('Seuls les fichiers PDF sont acceptés');
+        }
+        if (file.size > 10 * 1024 * 1024) {
+          throw new Error('Le justificatif ne doit pas dépasser 10 Mo');
+        }
+        const timestamp = Date.now();
+        const filePath = `${input.payment_request_id}/payment-proof-${timestamp.toString()}.pdf`;
+        const { error: uploadError } = await supabase.storage
+          .from('linkme-invoices')
+          .upload(filePath, file, {
+            contentType: 'application/pdf',
+            upsert: false,
+          });
+        if (uploadError) {
+          // Non-bloquant : on log mais on continue l'insert
+          console.error(
+            '[useAddPayment] proof upload error (non-blocking):',
+            uploadError
+          );
+        } else {
+          proofUrl = filePath;
+        }
+      }
+
+      // 3. Insérer le virement — le trigger DB se charge du reste
       const { error: insertError } = await supabase
         .from('linkme_payments')
         .insert({
@@ -102,6 +140,7 @@ export function useAddPayment() {
           payment_date: input.payment_date,
           notes: input.notes ?? null,
           paid_by: user?.id ?? null,
+          payment_proof_url: proofUrl,
         });
 
       if (insertError) {
@@ -109,7 +148,40 @@ export function useAddPayment() {
         throw insertError;
       }
 
-      // 3. Tentative de rapprochement bancaire (best-effort, n'échoue pas)
+      // 4. Vérifier si la demande est désormais intégralement payée
+      //    pour envoyer l'email de confirmation (best-effort)
+      if (input.requestMeta?.affiliateEmail) {
+        const { data: prRow } = await supabase
+          .from('linkme_payment_requests' as 'linkme_affiliates')
+          .select('status')
+          .eq('id', input.payment_request_id)
+          .limit(1)
+          .returns<{ status: string }[]>();
+
+        const newStatus = prRow?.[0]?.status;
+        if (newStatus === 'paid' && input.requestMeta) {
+          const meta = input.requestMeta;
+          void fetch('/api/emails/payment-request-paid', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              affiliateName: meta.affiliateName,
+              affiliateEmail: meta.affiliateEmail,
+              requestNumber: meta.requestNumber,
+              totalAmountTTC: meta.totalAmountTTC,
+              paymentReference: input.payment_reference,
+              paymentDate: input.payment_date,
+            }),
+          }).catch(err => {
+            console.error(
+              '[useAddPayment] email notification error (non-blocking):',
+              err
+            );
+          });
+        }
+      }
+
+      // 5. Tentative de rapprochement bancaire (best-effort, n'échoue pas)
       if (input.payment_reference.trim()) {
         const { data: rpcData, error: rpcError } = await supabase.rpc(
           'link_linkme_payment_to_bank_transaction',
