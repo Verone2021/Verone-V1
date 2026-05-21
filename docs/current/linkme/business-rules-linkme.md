@@ -1,6 +1,6 @@
 # Business Rules LinkMe
 
-**Derniere mise a jour:** 2026-02-18
+**Derniere mise a jour:** 2026-05-20
 
 > **Guide unifié** : Pour la documentation complète et à jour, voir `docs/current/linkme/GUIDE-COMPLET-LINKME.md`
 
@@ -123,23 +123,47 @@ Expedition + Creation commission auto
 ### 4. Cycle Commissions
 
 ```
-Commande expediee (status: shipped)
+Commande validee puis expediee (status: validated → shipped)
     │
     ▼
-Trigger SQL → Insert linkme_commissions (pending)
+Trigger create_linkme_commission_on_order_update → linkme_commissions
+    │  status = 'validated' si la commande est deja payee, sinon 'pending'
+    ▼
+Verone encaisse la commande (payment_status_v2 = 'paid')
+    │  rapprochement bancaire Qonto OU marquage manuel
+    ▼
+Trigger sync_commission_status_on_payment → commission 'pending' → 'validated'
     │
     ▼
-Client paie → automatique (pending → validated)
+La commission devient DEMANDABLE (statut 'validated')
     │
     ▼
-Commission eligible (validated → payable)
-    │
+L'affilie l'inclut dans une demande de paiement + depose sa facture PDF
+    │  trigger mark_commission_requested_on_item_insert → 'validated' → 'requested'
     ▼
-Affilie demande versement + Upload facture PDF
-    │
-    ▼
-Virement Verone + status: paid
+Verone regle la demande (1 ou plusieurs virements)
+    │  trigger sync_commissions_on_payment_request_paid → 'requested' → 'paid'
 ```
+
+#### Conditions d'eligibilite a une demande de paiement
+
+> **REGLE FONDAMENTALE** : un affilie ne peut demander le paiement d'une
+> commission QUE si elle est au statut `validated`.
+
+Une commission `validated` signifie que **Verone a effectivement encaisse la
+commande correspondante** — rapprochement bancaire Qonto confirme, ou marquage
+manuel quand il n'y a pas de transaction a rapprocher. Une commission `pending`
+(commande pas encore payee a Verone) n'est **jamais** demandable. Le paiement
+d'une commande peut prendre jusqu'a 30 jours ; il existe aussi des prepaiements.
+
+Comme une commande payee est forcement deja expediee, et qu'une commande
+expediee n'est plus modifiable (cf. `.claude/rules/finance.md` R6), une
+commission `requested` ou `paid` porte toujours sur une commande figee.
+
+**Garde-fou** : `apps/linkme/src/lib/hooks/use-payment-requests.ts` filtre
+`.eq('status','validated')` a la creation d'une demande de paiement cote
+affilie. Toute demande montee hors de ce parcours (script, back-office) doit
+respecter la meme regle.
 
 ---
 
@@ -164,20 +188,51 @@ draft → validated → partially_shipped → shipped → delivered
 ### Commission
 
 ```
-pending ──> validated ──> payable ──> paid
-              │
-              └──> cancelled
+pending ──> validated ──> requested ──> paid
+   │            │             │
+   │            └──> cancelled │
+   └──────────────────────────┘ (de-soldage : un virement supprime
+                                  ramene la commission a 'requested')
 ```
 
-> **Note** : Ce cycle est simplifié. Voir `docs/current/linkme/GUIDE-COMPLET-LINKME.md` section 10 pour le détail complet.
+| Statut      | Signification                                                          |
+| ----------- | ---------------------------------------------------------------------- |
+| `pending`   | Commission creee, commande pas encore payee a Verone. Non demandable.  |
+| `validated` | Commande payee/rapprochee. Commission DEMANDABLE par l'affilie.        |
+| `requested` | Commission incluse dans une demande de paiement en cours de reglement. |
+| `paid`      | Demande reglee integralement, commission versee a l'affilie.           |
+| `cancelled` | Commission annulee.                                                    |
+| `payable`   | Alias historique de `validated` (lecture seule, ne plus utiliser).     |
+
+**Transitions et declencheurs :**
+
+| Transition                         | Declencheur                          | Trigger DB                                 |
+| ---------------------------------- | ------------------------------------ | ------------------------------------------ |
+| → `pending` / `validated`          | Commande validee / expediee          | `create_linkme_commission_on_order_update` |
+| `pending` → `validated`            | Commande payee (`payment_status_v2`) | `sync_commission_status_on_payment`        |
+| `validated` → `requested`          | Entree dans une demande de paiement  | `mark_commission_requested_on_item_insert` |
+| `requested` → `paid`               | Demande reglee integralement         | `sync_commissions_on_payment_request_paid` |
+| `paid` / `requested` → `requested` | De-soldage (virement supprime)       | `sync_commissions_on_payment_request_paid` |
+
+> **Faille connue (non corrigee, latente)** : le trigger
+> `create_linkme_commission_on_order_update` se declenche sur tout changement
+> de statut d'une commande. Quand une commande LinkMe passe a `delivered`, il
+> execute un `DELETE` de la commission liee — meme `requested` ou `paid`. Aucune
+> commande LinkMe n'est `delivered` aujourd'hui, donc rien n'est casse, mais le
+> correctif reste a faire. Voir `.claude/work/ACTIVE.md` Bloc 2.
 
 ### Demande Paiement
 
 ```
-pending ──> invoice_received ──> paid
-    │              │
-    └─── cancelled <┘
+pending ──> partially_paid ──> paid
+   │
+   └──> cancelled
 ```
+
+Le flag `invoice_received` (booleen) est **independant du statut** : il passe a
+`true` des que l'affilie depose sa facture PDF, peu importe l'avancement du
+paiement. Une demande peut etre `paid` sans `invoice_received`, ou
+`invoice_received` sans etre payee.
 
 ---
 
@@ -208,12 +263,12 @@ apps/back-office/src/app/canaux-vente/linkme/
 
 ## KPIs Commissions (Affiche TTC)
 
-| KPI        | Description           |
-| ---------- | --------------------- |
-| En attente | Commissions pending   |
-| Validees   | Commissions validated |
-| Payables   | Commissions payable   |
-| Payees     | Commissions paid      |
+| KPI          | Description                             |
+| ------------ | --------------------------------------- |
+| En attente   | Commissions `pending` (non demandables) |
+| Validees     | Commissions `validated` (demandables)   |
+| En reglement | Commissions `requested`                 |
+| Payees       | Commissions `paid`                      |
 
 ---
 

@@ -125,13 +125,13 @@ products -> channel_pricing -> linkme_selection_items -> sales_order_items -> li
 
 ### `linkme_commissions`
 
-| Column                     | Description                          |
-| -------------------------- | ------------------------------------ |
-| `affiliate_commission`     | HT commission earned by affiliate    |
-| `affiliate_commission_ttc` | TTC commission                       |
-| `linkme_commission`        | Verone's commission                  |
-| `margin_rate_applied`      | Rate applied at order time           |
-| `status`                   | pending, validated, in_payment, paid |
+| Column                     | Description                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------------ |
+| `affiliate_commission`     | HT commission earned by affiliate                                                          |
+| `affiliate_commission_ttc` | TTC commission                                                                             |
+| `linkme_commission`        | Verone's commission                                                                        |
+| `margin_rate_applied`      | Rate applied at order time                                                                 |
+| `status`                   | pending, validated, requested, paid, cancelled (`payable` = alias historique de validated) |
 
 ---
 
