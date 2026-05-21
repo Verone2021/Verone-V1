@@ -112,11 +112,11 @@ export function useAddPayment() {
       // 3. Tentative de rapprochement bancaire (best-effort, n'échoue pas)
       if (input.payment_reference.trim()) {
         const { data: rpcData, error: rpcError } = await supabase.rpc(
-          'link_linkme_payment_to_bank_transaction' as never,
+          'link_linkme_payment_to_bank_transaction',
           {
             p_payment_request_id: input.payment_request_id,
             p_payment_reference: input.payment_reference.trim(),
-          } as never
+          }
         );
 
         if (rpcError) {
@@ -127,7 +127,15 @@ export function useAddPayment() {
           return { linked: false, reason: 'rpc_error' };
         }
 
-        return (rpcData as LinkResult | null) ?? { linked: false };
+        // Le RPC renvoie un jsonb { linked, reason, ... }
+        if (rpcData && typeof rpcData === 'object' && !Array.isArray(rpcData)) {
+          const obj = rpcData as Record<string, unknown>;
+          return {
+            linked: Boolean(obj.linked),
+            reason: typeof obj.reason === 'string' ? obj.reason : undefined,
+          };
+        }
+        return { linked: false };
       }
 
       return { linked: false, reason: 'no_reference' };

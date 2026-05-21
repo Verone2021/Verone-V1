@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { AlertCircle, Banknote, Loader2 } from 'lucide-react';
 
-import { useAddPayment } from '../hooks/use-payment-requests-admin';
+import { useAddPayment } from '../hooks/use-linkme-payments';
 import { formatCurrency } from './helpers';
 import type { PaymentRequestAdmin } from './types';
 

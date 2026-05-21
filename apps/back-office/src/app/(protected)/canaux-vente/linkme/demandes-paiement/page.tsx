@@ -24,7 +24,7 @@ import {
   type PaymentRequestAdmin,
   type PaymentRequestStatus,
 } from './_components/types';
-import { usePaymentHistory } from './hooks/use-payment-requests-admin';
+import { usePaymentHistory } from './hooks/use-linkme-payments';
 
 function PaymentModalWrapper({
   selectedRequest,

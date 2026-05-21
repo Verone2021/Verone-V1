@@ -4,7 +4,7 @@ import { Banknote, Loader2 } from 'lucide-react';
 
 import { Card } from '@verone/ui';
 
-import { usePaymentHistory } from '../hooks/use-payment-requests-admin';
+import { usePaymentHistory } from '../hooks/use-linkme-payments';
 import { formatCurrency, formatDate } from './helpers';
 
 interface PaymentHistoryProps {
