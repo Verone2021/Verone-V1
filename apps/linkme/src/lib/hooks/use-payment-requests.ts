@@ -7,9 +7,11 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { Database } from '@verone/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@verone/utils/supabase/client';
 
-const supabase = createClient();
+const supabase: SupabaseClient<Database> = createClient();
 
 import { useUserAffiliate } from './use-user-selection';
 import type {
@@ -402,6 +404,62 @@ export function useCancelPaymentRequest() {
         queryKey: ['affiliate-commissions'],
       });
     },
+  });
+}
+
+// ============================================================================
+// Types pour l'historique des virements reçus
+// ============================================================================
+
+export interface AffiliatePayment {
+  id: string;
+  paymentRequestId: string;
+  amountTTC: number;
+  paymentReference: string;
+  paymentDate: string;
+  paymentProofUrl: string | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+// ============================================================================
+// Hook: Historique des virements reçus pour une demande
+// ============================================================================
+
+export function usePaymentHistory(requestId: string | null) {
+  const { data: affiliate } = useUserAffiliate();
+
+  return useQuery({
+    queryKey: ['payment-history', requestId],
+    queryFn: async (): Promise<AffiliatePayment[]> => {
+      if (!requestId || !affiliate) return [];
+
+      const { data, error } = await supabase
+        .from('linkme_payments')
+        .select(
+          'id, payment_request_id, amount_ttc, payment_reference, payment_date, payment_proof_url, notes, created_at'
+        )
+        .eq('payment_request_id', requestId)
+        .order('payment_date', { ascending: false });
+
+      if (error) {
+        console.error('[usePaymentHistory] Erreur fetch virements:', error);
+        throw error;
+      }
+
+      return (data ?? []).map(row => ({
+        id: row.id,
+        paymentRequestId: row.payment_request_id,
+        amountTTC: Number(row.amount_ttc),
+        paymentReference: row.payment_reference,
+        paymentDate: row.payment_date,
+        paymentProofUrl: row.payment_proof_url ?? null,
+        notes: row.notes ?? null,
+        createdAt: row.created_at,
+      }));
+    },
+    enabled: !!requestId && !!affiliate,
+    staleTime: 60_000,
   });
 }
 

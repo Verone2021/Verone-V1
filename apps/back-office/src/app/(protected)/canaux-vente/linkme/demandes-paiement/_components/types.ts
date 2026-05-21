@@ -1,6 +1,10 @@
-import { Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { Clock, CheckCircle2, XCircle, CircleDollarSign } from 'lucide-react';
 
-export type PaymentRequestStatus = 'pending' | 'paid' | 'cancelled';
+export type PaymentRequestStatus =
+  | 'pending'
+  | 'partially_paid'
+  | 'paid'
+  | 'cancelled';
 
 export interface PaymentRequestAdmin {
   id: string;
@@ -44,6 +48,7 @@ export interface PaymentRequestRaw {
 
 export const STATUS_LABELS: Record<PaymentRequestStatus, string> = {
   pending: 'En attente de paiement',
+  partially_paid: 'Partiellement payée',
   paid: 'Payée',
   cancelled: 'Annulée',
 };
@@ -53,6 +58,11 @@ export const STATUS_CONFIG: Record<
   { icon: typeof Clock; color: string; bg: string }
 > = {
   pending: { icon: Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
+  partially_paid: {
+    icon: CircleDollarSign,
+    color: 'text-amber-600',
+    bg: 'bg-amber-100',
+  },
   paid: { icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-100' },
   cancelled: { icon: XCircle, color: 'text-gray-500', bg: 'bg-gray-100' },
 };

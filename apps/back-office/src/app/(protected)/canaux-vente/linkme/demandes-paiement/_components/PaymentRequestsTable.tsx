@@ -58,13 +58,13 @@ function InvoiceDownloadButton({ requestId }: { requestId: string }) {
 interface PaymentRequestsTableProps {
   requests: PaymentRequestAdmin[] | undefined;
   isLoading: boolean;
-  onMarkAsPaid: (request: PaymentRequestAdmin) => void;
+  onProcessPayment: (request: PaymentRequestAdmin) => void;
 }
 
 export function PaymentRequestsTable({
   requests,
   isLoading,
-  onMarkAsPaid,
+  onProcessPayment,
 }: PaymentRequestsTableProps) {
   if (isLoading) {
     return (
@@ -99,7 +99,7 @@ export function PaymentRequestsTable({
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
               Affilié
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">
               Date
             </th>
             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
@@ -114,86 +114,92 @@ export function PaymentRequestsTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {requests.map(request => (
-            <tr key={request.id} className="hover:bg-gray-50">
-              <td className="px-4 py-3">
-                <Link
-                  href={`/canaux-vente/linkme/demandes-paiement/${request.id}`}
-                  className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
-                >
-                  {request.requestNumber}
-                </Link>
-              </td>
-              <td className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-gray-100 rounded-lg">
-                    <User className="h-3.5 w-3.5 text-gray-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {request.affiliateName}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {request.affiliateEmail}
-                    </p>
-                  </div>
-                </div>
-              </td>
-              <td className="px-4 py-3 text-sm text-gray-600">
-                {formatDate(request.createdAt)}
-              </td>
-              <td className="px-4 py-3 text-right">
-                <span className="text-sm font-semibold text-emerald-600">
-                  {formatCurrency(request.totalAmountTTC)}
-                </span>
-              </td>
-              <td className="px-4 py-3 text-center">
-                <StatusBadge status={request.status} />
-              </td>
-              <td className="px-4 py-3">
-                <div className="flex items-center justify-center gap-2">
-                  {request.affiliateEmail && (
-                    <a
-                      href={generateMailtoLink(request)}
-                      className="p-1.5 text-gray-600 hover:bg-gray-100 hover:text-gray-800 rounded-lg transition-colors"
-                      title={`Envoyer email à ${request.affiliateName}`}
-                    >
-                      <Mail className="h-4 w-4" />
-                    </a>
-                  )}
+          {requests.map(request => {
+            const canProcessPayment =
+              request.status === 'pending' ||
+              request.status === 'partially_paid';
 
-                  {request.invoiceReceived && (
-                    <>
-                      <span
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 bg-blue-100 rounded-full"
-                        title="Facture déposée"
+            return (
+              <tr key={request.id} className="hover:bg-gray-50">
+                <td className="px-4 py-3">
+                  <Link
+                    href={`/canaux-vente/linkme/demandes-paiement/${request.id}`}
+                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    {request.requestNumber}
+                  </Link>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-gray-100 rounded-lg">
+                      <User className="h-3.5 w-3.5 text-gray-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {request.affiliateName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {request.affiliateEmail}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">
+                  {formatDate(request.createdAt)}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <span className="text-sm font-semibold text-emerald-600">
+                    {formatCurrency(request.totalAmountTTC)}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <StatusBadge status={request.status} />
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-center gap-2">
+                    {request.affiliateEmail && (
+                      <a
+                        href={generateMailtoLink(request)}
+                        className="p-1.5 text-gray-600 hover:bg-gray-100 hover:text-gray-800 rounded-lg transition-colors"
+                        title={`Envoyer email à ${request.affiliateName}`}
                       >
-                        <FileText className="h-3 w-3" />
-                        Facture reçue
+                        <Mail className="h-4 w-4" />
+                      </a>
+                    )}
+
+                    {request.invoiceReceived && (
+                      <>
+                        <span
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 bg-blue-100 rounded-full"
+                          title="Facture déposée"
+                        >
+                          <FileText className="h-3 w-3" />
+                          Facture reçue
+                        </span>
+                        <InvoiceDownloadButton requestId={request.id} />
+                      </>
+                    )}
+
+                    {canProcessPayment && (
+                      <button
+                        onClick={() => onProcessPayment(request)}
+                        className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                        title="Traiter le paiement"
+                      >
+                        <Banknote className="h-4 w-4" />
+                      </button>
+                    )}
+
+                    {request.status === 'paid' && request.paymentReference && (
+                      <span className="text-xs text-gray-500 truncate max-w-[100px]">
+                        Réf: {request.paymentReference}
                       </span>
-                      <InvoiceDownloadButton requestId={request.id} />
-                    </>
-                  )}
-
-                  {request.invoiceReceived && request.status === 'pending' && (
-                    <button
-                      onClick={() => onMarkAsPaid(request)}
-                      className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                      title="Marquer comme payé"
-                    >
-                      <Banknote className="h-4 w-4" />
-                    </button>
-                  )}
-
-                  {request.status === 'paid' && request.paymentReference && (
-                    <span className="text-xs text-gray-500">
-                      Réf: {request.paymentReference}
-                    </span>
-                  )}
-                </div>
-              </td>
-            </tr>
-          ))}
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </Card>
