@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
 
     const bodyHtml = `
       <p style="margin: 0 0 16px 0;">
-        Votre demande de versement <strong>${requestNumber}</strong> a été intégralement réglée.
+        Votre demande de versement <strong>${requestNumber}</strong> a &eacute;t&eacute; int&eacute;gralement r&eacute;gl&eacute;e.
       </p>
 
       <table style="width: 100%; border-collapse: collapse; margin: 0 0 20px 0; font-size: 14px;">
@@ -99,11 +99,11 @@ export async function POST(request: NextRequest) {
           <td style="padding: 10px 0; text-align: right; font-weight: 500; color: #1f2937;">${requestNumber}</td>
         </tr>
         <tr style="border-bottom: 1px solid #99d5d1;">
-          <td style="padding: 10px 0; color: #4b5563;">Montant versé TTC</td>
+          <td style="padding: 10px 0; color: #4b5563;">Montant vers&eacute; TTC</td>
           <td style="padding: 10px 0; text-align: right; font-weight: 700; color: #1f2937; font-size: 16px;">${formatPrice(totalAmountTTC)}</td>
         </tr>
         <tr style="border-bottom: 1px solid #99d5d1;">
-          <td style="padding: 10px 0; color: #4b5563;">Référence virement</td>
+          <td style="padding: 10px 0; color: #4b5563;">R&eacute;f&eacute;rence virement</td>
           <td style="padding: 10px 0; text-align: right; font-weight: 500; color: #1f2937;">${paymentReference}</td>
         </tr>
         ${
@@ -118,18 +118,18 @@ export async function POST(request: NextRequest) {
 
       <div style="background-color: #ccfbf1; padding: 16px; border-radius: 6px; margin: 0 0 16px 0; border: 1px solid #99d5d1;">
         <p style="margin: 0; font-size: 14px; color: #0f766e;">
-          Le virement est en cours de traitement et devrait apparaître sur votre compte bancaire sous 1 à 3 jours ouvrés, selon votre établissement bancaire.
+          Le virement est en cours de traitement et devrait appara&icirc;tre sur votre compte bancaire sous 1 &agrave; 3 jours ouvr&eacute;s, selon votre &eacute;tablissement bancaire.
         </p>
       </div>
 
       <p style="margin: 0; font-size: 13px; color: #6b7280;">
-        Pour toute question concernant ce versement, contactez-nous à
+        Pour toute question concernant ce versement, contactez-nous &agrave;
         <a href="mailto:${process.env.RESEND_REPLY_TO ?? 'contact@linkme.network'}" style="color: #0f766e;">${process.env.RESEND_REPLY_TO ?? 'contact@linkme.network'}</a>
-        en indiquant la référence <strong>${requestNumber}</strong>.
+        en indiquant la r&eacute;f&eacute;rence <strong>${requestNumber}</strong>.
       </p>`;
 
     const emailHtml = buildEmailHtml({
-      title: 'Votre versement a été effectué',
+      title: 'Votre versement a &eacute;t&eacute; effectu&eacute;',
       recipientName: affiliateName,
       accentColor: 'teal',
       bodyHtml,
