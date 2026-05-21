@@ -13,6 +13,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { Resend } from 'resend';
+import { z } from 'zod';
 
 import { getLogoAttachments } from '../_shared/email-logo';
 import { buildEmailHtml } from '../_shared/email-template';
@@ -28,14 +29,14 @@ function getResendClient(): Resend | null {
   return new Resend(apiKey);
 }
 
-interface PaymentRequestPaidRequest {
-  affiliateName: string;
-  affiliateEmail: string;
-  requestNumber: string;
-  totalAmountTTC: number;
-  paymentReference: string;
-  paymentDate: string;
-}
+const paymentRequestPaidSchema = z.object({
+  affiliateName: z.string().min(1),
+  affiliateEmail: z.string().email(),
+  requestNumber: z.string().min(1),
+  totalAmountTTC: z.number().positive(),
+  paymentReference: z.string().min(1),
+  paymentDate: z.string().min(1),
+});
 
 function formatPrice(value: number): string {
   return new Intl.NumberFormat('fr-FR', {
@@ -54,7 +55,14 @@ function formatDate(iso: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as PaymentRequestPaidRequest;
+    const parsed = paymentRequestPaidSchema.safeParse(await request.json());
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid payload' },
+        { status: 400 }
+      );
+    }
 
     const {
       affiliateName,
@@ -63,19 +71,7 @@ export async function POST(request: NextRequest) {
       totalAmountTTC,
       paymentReference,
       paymentDate,
-    } = body;
-
-    if (
-      !affiliateName ||
-      !affiliateEmail ||
-      !requestNumber ||
-      !paymentReference
-    ) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
+    } = parsed.data;
 
     const resendClient = getResendClient();
     if (!resendClient) {
@@ -86,7 +82,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const formattedDate = paymentDate ? formatDate(paymentDate) : '';
+    const formattedDate = formatDate(paymentDate);
 
     const bodyHtml = `
       <p style="margin: 0 0 16px 0;">
@@ -106,14 +102,10 @@ export async function POST(request: NextRequest) {
           <td style="padding: 10px 0; color: #4b5563;">R&eacute;f&eacute;rence virement</td>
           <td style="padding: 10px 0; text-align: right; font-weight: 500; color: #1f2937;">${paymentReference}</td>
         </tr>
-        ${
-          formattedDate
-            ? `<tr>
+        <tr>
           <td style="padding: 10px 0; color: #4b5563;">Date du virement</td>
           <td style="padding: 10px 0; text-align: right; font-weight: 500; color: #1f2937;">${formattedDate}</td>
-        </tr>`
-            : ''
-        }
+        </tr>
       </table>
 
       <div style="background-color: #ccfbf1; padding: 16px; border-radius: 6px; margin: 0 0 16px 0; border: 1px solid #99d5d1;">

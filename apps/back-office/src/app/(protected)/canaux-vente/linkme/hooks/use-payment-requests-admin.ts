@@ -187,49 +187,6 @@ export function usePaymentRequestsAdmin(statusFilter?: string) {
 }
 
 // ============================================================================
-// Mutation: Marquer comme payée
-// ============================================================================
-
-interface MarkAsPaidInput {
-  requestId: string;
-  paymentReference: string;
-}
-
-export function useMarkAsPaid() {
-  const queryClient = useQueryClient();
-  const supabase = createClient();
-
-  return useMutation({
-    mutationFn: async (input: MarkAsPaidInput): Promise<void> => {
-      const { data: userData } = await supabase.auth.getUser();
-
-      const { error } = await supabase
-        .from('linkme_payment_requests')
-        .update({
-          status: 'paid',
-          paid_at: new Date().toISOString(),
-          paid_by: userData?.user?.id ?? null,
-          payment_reference: input.paymentReference,
-        })
-        .eq('id', input.requestId);
-
-      if (error) {
-        console.error('Erreur marking as paid:', error);
-        throw new Error('Erreur lors du marquage comme payée');
-      }
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ['payment-requests-admin'],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ['payment-requests-counts'],
-      });
-    },
-  });
-}
-
-// ============================================================================
 // Mutation: Annuler une demande
 // ============================================================================
 
