@@ -214,12 +214,17 @@ pending ──> validated ──> requested ──> paid
 | `requested` → `paid`               | Demande reglee integralement         | `sync_commissions_on_payment_request_paid` |
 | `paid` / `requested` → `requested` | De-soldage (virement supprime)       | `sync_commissions_on_payment_request_paid` |
 
-> **Faille connue (non corrigee, latente)** : le trigger
-> `create_linkme_commission_on_order_update` se declenche sur tout changement
-> de statut d'une commande. Quand une commande LinkMe passe a `delivered`, il
-> execute un `DELETE` de la commission liee — meme `requested` ou `paid`. Aucune
-> commande LinkMe n'est `delivered` aujourd'hui, donc rien n'est casse, mais le
-> correctif reste a faire. Voir `.claude/work/ACTIVE.md` Bloc 2.
+> **Principe : une commission ne disparait jamais.** Elle suit son cycle
+> `pending → validated → requested → paid`. Une fois demandable (`validated`),
+> elle reste active tant que l'affilie ne l'a pas demandee — **independamment du
+> statut d'avancement de la commande** (validee, partiellement expediee,
+> expediee, livree). Aucun automatisme ne la supprime ni n'ecrase un statut
+> `requested`/`paid`.
+>
+> Le trigger `create_linkme_commission_on_order_update` ne supprime la commission
+> que si la commande retourne en `draft` (devalidation) ou passe `cancelled`, et
+> uniquement pour les commissions encore `pending`/`validated`. Corrige dans
+> `[BO-LINKME-PR-004]` (migration `20260521120000`).
 
 ### Demande Paiement
 
