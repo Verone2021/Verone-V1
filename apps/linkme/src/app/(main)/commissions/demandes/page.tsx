@@ -29,6 +29,8 @@ import {
   Loader2,
   AlertCircle,
   Inbox,
+  ChevronRight,
+  CircleDollarSign,
 } from 'lucide-react';
 
 import {
@@ -52,6 +54,11 @@ function StatusBadge({ status }: { status: PaymentRequestStatus }) {
     { icon: typeof Clock; color: string; bg: string }
   > = {
     pending: { icon: Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
+    partially_paid: {
+      icon: CircleDollarSign,
+      color: 'text-blue-600',
+      bg: 'bg-blue-100',
+    },
     paid: {
       icon: CheckCircle2,
       color: 'text-emerald-600',
@@ -60,7 +67,7 @@ function StatusBadge({ status }: { status: PaymentRequestStatus }) {
     cancelled: { icon: XCircle, color: 'text-gray-500', bg: 'bg-gray-100' },
   };
 
-  const { icon: Icon, color, bg } = config[status] || config.pending;
+  const { icon: Icon, color, bg } = config[status] ?? config.pending;
 
   return (
     <span
@@ -84,77 +91,84 @@ function PaymentRequestRow({
   onUploadClick: (requestId: string) => void;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-all">
-      <div className="flex items-start justify-between gap-4">
-        {/* Infos principales */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-sm font-semibold text-gray-900">
-              {request.requestNumber}
-            </span>
-            <StatusBadge status={request.status} />
-          </div>
+    <div className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all overflow-hidden">
+      {/* Zone cliquable vers le détail */}
+      <Link href={`/commissions/demandes/${request.id}`} className="block p-4">
+        <div className="flex items-start justify-between gap-4">
+          {/* Infos principales */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-sm font-semibold text-gray-900">
+                {request.requestNumber}
+              </span>
+              <StatusBadge status={request.status} />
+            </div>
 
-          <div className="text-xs text-gray-500 space-y-1">
-            <p>
-              Créée le{' '}
-              {formatDateFR(request.createdAt, {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-              })}
-            </p>
-            {request.invoiceReceivedAt && (
+            <div className="text-xs text-gray-500 space-y-1">
               <p>
-                Facture reçue le{' '}
-                {formatDateFR(request.invoiceReceivedAt, {
+                Créée le{' '}
+                {formatDateFR(request.createdAt, {
                   day: '2-digit',
                   month: 'short',
                   year: 'numeric',
                 })}
               </p>
-            )}
-            {request.paidAt && (
-              <p className="text-emerald-600 font-medium">
-                Payée le{' '}
-                {formatDateFR(request.paidAt, {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                })}
-                {request.paymentReference && (
-                  <span className="ml-1">
-                    (Réf: {request.paymentReference})
-                  </span>
-                )}
+              {request.invoiceReceivedAt && (
+                <p>
+                  Facture reçue le{' '}
+                  {formatDateFR(request.invoiceReceivedAt, {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </p>
+              )}
+              {request.paidAt && (
+                <p className="text-emerald-600 font-medium">
+                  Payée le{' '}
+                  {formatDateFR(request.paidAt, {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                  {request.paymentReference && (
+                    <span className="ml-1">
+                      (Réf: {request.paymentReference})
+                    </span>
+                  )}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Montant + chevron */}
+          <div className="flex items-center gap-2">
+            <div className="text-right">
+              <p className="text-lg font-bold text-emerald-600">
+                {formatCurrency(request.totalAmountTTC)}
               </p>
-            )}
+              <p className="text-xs text-gray-400">TTC</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
           </div>
         </div>
+      </Link>
 
-        {/* Montant */}
-        <div className="text-right">
-          <p className="text-lg font-bold text-emerald-600">
-            {formatCurrency(request.totalAmountTTC)}
-          </p>
-          <p className="text-xs text-gray-400">TTC</p>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+      {/* Actions (upload facture / justificatif) — hors zone Link pour éviter l'imbrication */}
+      <div className="px-4 pb-4 pt-0 border-t border-gray-100 flex items-center justify-between mt-0">
         {/* Facture uploadée */}
         {request.invoiceReceived ? (
           <span className="flex items-center gap-2 text-xs text-blue-600">
             <FileText className="h-3.5 w-3.5" />
             Facture déposée
           </span>
-        ) : request.status === 'pending' ? (
+        ) : request.status === 'pending' ||
+          request.status === 'partially_paid' ? (
           <button
             onClick={() => {
               onUploadClick(request.id);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors h-8 min-h-[44px] md:min-h-[32px]"
           >
             <Upload className="h-3.5 w-3.5" />
             Uploader ma facture
@@ -164,17 +178,18 @@ function PaymentRequestRow({
         )}
 
         {/* Paiement proof */}
-        {request.status === 'paid' && request.paymentProofUrl && (
-          <a
-            href={request.paymentProofUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-xs text-emerald-600 hover:text-emerald-700"
-          >
-            <Eye className="h-3.5 w-3.5" />
-            Justificatif paiement
-          </a>
-        )}
+        {(request.status === 'paid' || request.status === 'partially_paid') &&
+          request.paymentProofUrl && (
+            <a
+              href={request.paymentProofUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-xs text-emerald-600 hover:text-emerald-700"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              Justificatif paiement
+            </a>
+          )}
       </div>
     </div>
   );
@@ -330,10 +345,12 @@ export default function PaymentRequestsPage() {
   const { data: requests, isLoading, refetch } = useAffiliatePaymentRequests();
 
   // Grouper par statut pour affichage
+  // "active" = pending + partially_paid (en cours de traitement)
   const groupedRequests = {
     active:
-      requests?.filter(r => r.status !== 'paid' && r.status !== 'cancelled') ??
-      [],
+      requests?.filter(
+        r => r.status === 'pending' || r.status === 'partially_paid'
+      ) ?? [],
     paid: requests?.filter(r => r.status === 'paid') ?? [],
     cancelled: requests?.filter(r => r.status === 'cancelled') ?? [],
   };

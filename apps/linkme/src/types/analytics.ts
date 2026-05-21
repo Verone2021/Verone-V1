@@ -203,7 +203,11 @@ export function formatCompactNumber(value: number): string {
 // Types pour les Demandes de Versement (Payment Requests)
 // ============================================================================
 
-export type PaymentRequestStatus = 'pending' | 'paid' | 'cancelled';
+export type PaymentRequestStatus =
+  | 'pending'
+  | 'partially_paid'
+  | 'paid'
+  | 'cancelled';
 
 export interface PaymentRequest {
   id: string;
@@ -244,6 +248,7 @@ export const PAYMENT_REQUEST_STATUS_LABELS: Record<
   string
 > = {
   pending: 'En attente de facture',
+  partially_paid: 'Partiellement payée',
   paid: 'Payée',
   cancelled: 'Annulée',
 };
@@ -254,6 +259,7 @@ export const PAYMENT_REQUEST_STATUS_COLORS: Record<
   string
 > = {
   pending: 'orange',
+  partially_paid: 'blue',
   paid: 'green',
   cancelled: 'red',
 };
