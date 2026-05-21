@@ -123,7 +123,7 @@ export default function PaymentRequestDetailPage() {
 
     try {
       const { data: prRows, error: prError } = await supabase
-        .from('linkme_payment_requests' as 'linkme_affiliates')
+        .from('linkme_payment_requests')
         .select(
           `id, request_number, affiliate_id, total_amount_ht, total_amount_ttc, status,
            invoice_received, invoice_file_name, invoice_received_at, financial_document_id,
@@ -159,7 +159,7 @@ export default function PaymentRequestDetailPage() {
       });
 
       const { data: itemsData, error: itemsError } = await supabase
-        .from('linkme_payment_request_items' as 'linkme_affiliates')
+        .from('linkme_payment_request_items')
         .select(
           `commission_amount_ttc,
            linkme_commissions (

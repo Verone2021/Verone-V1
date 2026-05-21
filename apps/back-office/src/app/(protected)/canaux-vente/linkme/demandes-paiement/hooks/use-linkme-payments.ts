@@ -152,11 +152,10 @@ export function useAddPayment() {
       //    pour envoyer l'email de confirmation (best-effort)
       if (input.requestMeta?.affiliateEmail) {
         const { data: prRow } = await supabase
-          .from('linkme_payment_requests' as 'linkme_affiliates')
+          .from('linkme_payment_requests')
           .select('status')
           .eq('id', input.payment_request_id)
-          .limit(1)
-          .returns<{ status: string }[]>();
+          .limit(1);
 
         const newStatus = prRow?.[0]?.status;
         if (newStatus === 'paid' && input.requestMeta) {

@@ -44,10 +44,8 @@ export function usePaymentRequestsAdmin(
   return useQuery({
     queryKey: ['admin-payment-requests', statusFilter],
     queryFn: async (): Promise<PaymentRequestAdmin[]> => {
-      // Note: Table linkme_payment_requests créée par migration 20251211_001
-      // Les types Supabase seront mis à jour après `supabase gen types`
       const baseQuery = supabase
-        .from('linkme_payment_requests' as 'linkme_affiliates') // Cast temporaire
+        .from('linkme_payment_requests')
         .select(
           `
           id,
