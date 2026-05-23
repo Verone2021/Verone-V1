@@ -10,6 +10,8 @@ export type Step = 'recap' | 'template' | 'confirm';
 
 export interface CommissionForModal {
   id: string;
+  /** Identifiant de l'affilié — utilisé pour le garde-fou "mélange d'affiliés" */
+  affiliate_id?: string;
   order_number: string | null;
   order_amount_ht: number;
   affiliate_commission: number;

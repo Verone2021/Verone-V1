@@ -36,6 +36,7 @@ pattern="^\[(([A-Z]{2,5}(-[A-Z0-9]{2,10}){1,3}-[0-9]{3})|NO-TASK)\] (feat|fix|ch
 ```
 
 Tests empiriques du 2026-05-01 :
+
 - `[BO-BRAND-003] feat: test` → ✅ MATCH
 - `[BO-BRAND-003b] feat: test` → ❌ NO MATCH (refusé)
 
@@ -63,26 +64,26 @@ Diff = `[0-9]{3}` → `[0-9]{3}[a-z]?`.
 
 ### Cas valides (doivent passer)
 
-| Task ID | Pourquoi | Avant fix | Après fix |
-|---|---|---|---|
-| `[LM-ORD-009] feat: ...` | Standard | ✅ | ✅ |
-| `[BO-DASH-001] fix: ...` | Standard | ✅ | ✅ |
-| `[BO-UI-RESP-001] feat: ...` | Domaine composé | ✅ | ✅ |
-| `[INFRA-DOC-002] chore: ...` | Domaine INFRA | ✅ | ✅ |
-| `[NO-TASK] chore: ...` | Bypass intentionnel | ✅ | ✅ |
-| **`[BO-BRAND-003b] feat: ...`** | Suffixe lettre | ❌ → ✅ | ✅ (NOUVEAU) |
-| **`[BO-MKT-001a] chore: ...`** | Suffixe lettre | ❌ → ✅ | ✅ (NOUVEAU) |
-| **`[INFRA-RULES-003] chore: ...`** | Cette PR elle-même | ✅ | ✅ |
+| Task ID                            | Pourquoi            | Avant fix | Après fix    |
+| ---------------------------------- | ------------------- | --------- | ------------ |
+| `[LM-ORD-009] feat: ...`           | Standard            | ✅        | ✅           |
+| `[BO-DASH-001] fix: ...`           | Standard            | ✅        | ✅           |
+| `[BO-UI-RESP-001] feat: ...`       | Domaine composé     | ✅        | ✅           |
+| `[INFRA-DOC-002] chore: ...`       | Domaine INFRA       | ✅        | ✅           |
+| `[NO-TASK] chore: ...`             | Bypass intentionnel | ✅        | ✅           |
+| **`[BO-BRAND-003b] feat: ...`**    | Suffixe lettre      | ❌ → ✅   | ✅ (NOUVEAU) |
+| **`[BO-MKT-001a] chore: ...`**     | Suffixe lettre      | ❌ → ✅   | ✅ (NOUVEAU) |
+| **`[INFRA-RULES-003] chore: ...`** | Cette PR elle-même  | ✅        | ✅           |
 
 ### Cas invalides (doivent refuser)
 
-| Mauvais format | Pourquoi |
-|---|---|
-| `[invalid] feat: ...` | Pas de Task ID |
-| `feat: missing brackets` | Pas de crochets |
-| `[BO-BRAND-003ab] feat: ...` | 2 lettres (refusé par `[a-z]?`) |
-| `[BO-BRAND-003B] feat: ...` | Lettre majuscule (déjà dans `[A-Z0-9]` peut potentiellement matcher 003B, mais devra être testé) |
-| `[BO-BRAND-3] feat: ...` | Pas 3 chiffres |
+| Mauvais format               | Pourquoi                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------ |
+| `[invalid] feat: ...`        | Pas de Task ID                                                                                   |
+| `feat: missing brackets`     | Pas de crochets                                                                                  |
+| `[BO-BRAND-003ab] feat: ...` | 2 lettres (refusé par `[a-z]?`)                                                                  |
+| `[BO-BRAND-003B] feat: ...`  | Lettre majuscule (déjà dans `[A-Z0-9]` peut potentiellement matcher 003B, mais devra être testé) |
+| `[BO-BRAND-3] feat: ...`     | Pas 3 chiffres                                                                                   |
 
 ---
 
@@ -103,10 +104,12 @@ Diff = `[0-9]{3}` → `[0-9]{3}[a-z]?`.
 ```
 
 **Fichiers modifiés** :
+
 - `.husky/commit-msg` : regex étendue + commentaire explicatif
 - (optionnel) `.claude/rules/workflow.md` : note sur le format Task ID
 
 **Tests manuels avant push** :
+
 1. Test bash direct (regex isolée) : 8 cas valides + 5 cas invalides
 2. Test git réel : `git commit --allow-empty -m "[BO-BRAND-003b] test"` doit passer
 3. Test git réel : `git commit --allow-empty -m "[invalid] test"` doit refuser

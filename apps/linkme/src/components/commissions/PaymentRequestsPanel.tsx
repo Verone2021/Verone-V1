@@ -22,6 +22,7 @@ import {
   AlertCircle,
   Inbox,
   ChevronRight,
+  CircleDollarSign,
 } from 'lucide-react';
 
 import {
@@ -45,6 +46,11 @@ function StatusBadge({ status }: { status: PaymentRequestStatus }) {
     { icon: typeof Clock; color: string; bg: string }
   > = {
     pending: { icon: Clock, color: 'text-orange-600', bg: 'bg-orange-100' },
+    partially_paid: {
+      icon: CircleDollarSign,
+      color: 'text-blue-600',
+      bg: 'bg-blue-100',
+    },
     paid: {
       icon: CheckCircle2,
       color: 'text-emerald-600',
@@ -53,7 +59,7 @@ function StatusBadge({ status }: { status: PaymentRequestStatus }) {
     cancelled: { icon: XCircle, color: 'text-gray-500', bg: 'bg-gray-100' },
   };
 
-  const { icon: Icon, color, bg } = config[status] || config.pending;
+  const { icon: Icon, color, bg } = config[status] ?? config.pending;
 
   return (
     <span

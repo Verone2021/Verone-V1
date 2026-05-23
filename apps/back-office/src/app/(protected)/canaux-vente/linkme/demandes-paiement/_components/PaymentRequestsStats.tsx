@@ -17,11 +17,13 @@ export function PaymentRequestsStats({ requests }: PaymentRequestsStatsProps) {
     invoiceReceived:
       requests?.filter(r => r.invoiceReceived && r.status === 'pending')
         .length ?? 0,
+    partiallyPaid:
+      requests?.filter(r => r.status === 'partially_paid').length ?? 0,
     paid: requests?.filter(r => r.status === 'paid').length ?? 0,
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
       <Card className="p-4">
         <p className="text-xs text-gray-500 uppercase">Total</p>
         <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
@@ -34,6 +36,12 @@ export function PaymentRequestsStats({ requests }: PaymentRequestsStatsProps) {
         <p className="text-xs text-blue-500 uppercase">Facture reçue</p>
         <p className="text-2xl font-bold text-blue-600">
           {stats.invoiceReceived}
+        </p>
+      </Card>
+      <Card className="p-4">
+        <p className="text-xs text-amber-500 uppercase">Partiellement payée</p>
+        <p className="text-2xl font-bold text-amber-600">
+          {stats.partiallyPaid}
         </p>
       </Card>
       <Card className="p-4">

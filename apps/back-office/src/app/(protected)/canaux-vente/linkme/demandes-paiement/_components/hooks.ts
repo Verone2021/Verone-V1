@@ -44,10 +44,8 @@ export function usePaymentRequestsAdmin(
   return useQuery({
     queryKey: ['admin-payment-requests', statusFilter],
     queryFn: async (): Promise<PaymentRequestAdmin[]> => {
-      // Note: Table linkme_payment_requests créée par migration 20251211_001
-      // Les types Supabase seront mis à jour après `supabase gen types`
       const baseQuery = supabase
-        .from('linkme_payment_requests' as 'linkme_affiliates') // Cast temporaire
+        .from('linkme_payment_requests')
         .select(
           `
           id,
@@ -107,65 +105,6 @@ export function usePaymentRequestsAdmin(
       });
     },
     staleTime: 300_000,
-  });
-}
-
-interface LinkResult {
-  linked: boolean;
-  reason?: string;
-  message?: string;
-}
-
-export interface MarkAsPaidResult {
-  reconciliation: LinkResult;
-}
-
-export function useMarkAsPaid() {
-  const queryClient = useQueryClient();
-  const supabase = createClient();
-
-  return useMutation({
-    mutationFn: async ({
-      requestId,
-      paymentReference,
-    }: {
-      requestId: string;
-      paymentReference: string;
-    }): Promise<MarkAsPaidResult> => {
-      const { error } = await supabase
-        .from('linkme_payment_requests' as 'linkme_affiliates')
-        .update({
-          status: 'paid',
-          paid_at: new Date().toISOString(),
-          payment_reference: paymentReference,
-        })
-        .eq('id', requestId);
-
-      if (error) throw error;
-
-      const { data, error: rpcError } = await supabase.rpc(
-        'link_linkme_payment_to_bank_transaction' as never,
-        {
-          p_payment_request_id: requestId,
-          p_payment_reference: paymentReference,
-        } as never
-      );
-
-      if (rpcError) {
-        console.error('[useMarkAsPaid] reconciliation RPC error:', rpcError);
-        return { reconciliation: { linked: false, reason: 'rpc_error' } };
-      }
-
-      return { reconciliation: (data ?? { linked: false }) as LinkResult };
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ['admin-payment-requests'],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ['admin-payment-request-detail'],
-      });
-    },
   });
 }
 

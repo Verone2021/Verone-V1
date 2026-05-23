@@ -18,7 +18,6 @@ import {
   X,
   FileText,
   CheckCircle2,
-  AlertCircle,
   Loader2,
   ChevronRight,
   ChevronLeft,
@@ -26,7 +25,7 @@ import {
   Eye,
 } from 'lucide-react';
 
-import { PaymentRequestInvoiceTemplate } from './payment-request-invoice-template';
+import { PaymentRequestStepsContent } from './PaymentRequestStepsContent';
 import {
   usePaymentRequest,
   type CommissionForModal,
@@ -83,6 +82,21 @@ export function PaymentRequestModalAdmin({
     onSuccess,
     onClose,
   });
+
+  // Garde-fou : détecter si la sélection mélange plusieurs affiliés distincts.
+  // On utilise affiliate_id quand disponible, sinon on se rabat sur l'identité
+  // de l'affilié via enseigne_id ou organisation_id.
+  const affiliateIds = new Set(
+    selectedCommissions.map(c => {
+      if (c.affiliate_id) return c.affiliate_id;
+      if (c.affiliate?.enseigne_id)
+        return `enseigne-${c.affiliate.enseigne_id}`;
+      if (c.affiliate?.organisation_id)
+        return `org-${c.affiliate.organisation_id}`;
+      return 'unknown';
+    })
+  );
+  const hasMixedAffiliates = affiliateIds.size > 1;
 
   if (!isOpen) return null;
 
@@ -166,159 +180,40 @@ export function PaymentRequestModalAdmin({
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {/* Erreur */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
-              {error}
-            </div>
-          )}
-
-          {/* Étape 1: Récapitulatif */}
-          {currentStep === 'recap' && (
-            <div className="space-y-4">
-              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200">
-                <h3 className="text-sm font-semibold text-emerald-800 mb-3">
-                  Commissions à payer pour {affiliateName}
-                </h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {selectedCommissions.map(c => (
-                    <div
-                      key={c.id}
-                      className="flex items-center justify-between bg-white/70 rounded-lg px-3 py-2"
-                    >
-                      <div>
-                        <span className="text-sm font-medium text-gray-900">
-                          #
-                          {c.sales_order?.order_number ??
-                            c.order_number ??
-                            c.id.slice(0, 8)}
-                        </span>
-                        <span className="text-xs text-gray-500 ml-2">
-                          {formatPrice(
-                            c.sales_order?.total_ht ?? c.order_amount_ht
-                          )}{' '}
-                          HT
-                        </span>
-                      </div>
-                      <span className="text-sm font-semibold text-emerald-600">
-                        {formatPrice(
-                          c.total_payout_ttc ?? c.affiliate_commission_ttc ?? 0
-                        )}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 pt-3 border-t border-emerald-200 flex justify-between items-center">
-                  <span className="text-sm font-medium text-emerald-800">
-                    Total TTC à payer
-                  </span>
-                  <span className="text-xl font-bold text-emerald-600">
-                    {formatPrice(totals.totalTTC)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                <h3 className="text-sm font-semibold text-blue-800 mb-2">
-                  Workflow de paiement
-                </h3>
-                <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
-                  <li>
-                    La demande est créée avec statut &quot;En attente de
-                    facture&quot;
-                  </li>
-                  <li>
-                    L&apos;affilié reçoit une notification pour uploader sa
-                    facture
-                  </li>
-                  <li>
-                    Une fois la facture reçue, vous validez et effectuez le
-                    virement
-                  </li>
-                  <li>Marquez la demande comme payée avec la référence</li>
-                </ol>
-              </div>
-            </div>
-          )}
-
-          {/* Étape 2: Modèle de facture */}
-          {currentStep === 'template' && (
-            <PaymentRequestInvoiceTemplate
-              selectedCommissions={selectedCommissions}
-              affiliateName={affiliateName}
-              totals={totals}
-              copiedField={copiedField}
-              onCopyDestinataire={() => {
-                void handleCopyDestinataire().catch(error => {
-                  console.error(
-                    '[PaymentRequestModalAdmin] handleCopyDestinataire failed:',
-                    error
-                  );
-                });
-              }}
-              onCopyDesignation={() => {
-                void handleCopyDesignation().catch(error => {
-                  console.error(
-                    '[PaymentRequestModalAdmin] handleCopyDesignation failed:',
-                    error
-                  );
-                });
-              }}
-              onCopyMontant={() => {
-                void handleCopyMontant().catch(error => {
-                  console.error(
-                    '[PaymentRequestModalAdmin] handleCopyMontant failed:',
-                    error
-                  );
-                });
-              }}
-            />
-          )}
-
-          {/* Étape 3: Confirmation */}
-          {currentStep === 'confirm' && (
-            <div className="space-y-4">
-              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 text-center border border-emerald-200">
-                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle2 className="h-8 w-8 text-emerald-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Confirmer la création de la demande
-                </h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Cette action va créer une demande de paiement pour{' '}
-                  <strong>{affiliateName}</strong>. L&apos;affilié sera notifié
-                  pour uploader sa facture.
-                </p>
-                <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
-                  <span className="text-gray-600">Montant total TTC :</span>
-                  <span className="text-2xl font-bold text-emerald-600">
-                    {formatPrice(totals.totalTTC)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
-                <p className="font-medium text-gray-800 mb-2">
-                  En confirmant, vous certifiez que :
-                </p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>
-                    Les commissions listées correspondent à des ventes validées
-                    et payées par les clients
-                  </li>
-                  <li>L&apos;affilié sera notifié pour fournir sa facture</li>
-                  <li>
-                    Le paiement sera effectué après réception de la facture
-                  </li>
-                </ul>
-              </div>
-            </div>
-          )}
-        </div>
+        {/* Content — rendu des étapes dans PaymentRequestStepsContent */}
+        <PaymentRequestStepsContent
+          currentStep={currentStep}
+          hasMixedAffiliates={hasMixedAffiliates}
+          error={error}
+          selectedCommissions={selectedCommissions}
+          affiliateName={affiliateName}
+          totals={totals}
+          copiedField={copiedField}
+          onCopyDestinataire={() => {
+            void handleCopyDestinataire().catch(err => {
+              console.error(
+                '[PaymentRequestModalAdmin] handleCopyDestinataire failed:',
+                err
+              );
+            });
+          }}
+          onCopyDesignation={() => {
+            void handleCopyDesignation().catch(err => {
+              console.error(
+                '[PaymentRequestModalAdmin] handleCopyDesignation failed:',
+                err
+              );
+            });
+          }}
+          onCopyMontant={() => {
+            void handleCopyMontant().catch(err => {
+              console.error(
+                '[PaymentRequestModalAdmin] handleCopyMontant failed:',
+                err
+              );
+            });
+          }}
+        />
 
         {/* Footer avec navigation */}
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
@@ -351,7 +246,8 @@ export function PaymentRequestModalAdmin({
                 onClick={() =>
                   goToStep(currentStep === 'recap' ? 'template' : 'confirm')
                 }
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+                disabled={hasMixedAffiliates}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Suivant
                 <ChevronRight className="h-4 w-4" />
@@ -366,7 +262,7 @@ export function PaymentRequestModalAdmin({
                     );
                   });
                 }}
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || hasMixedAffiliates}
                 className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {createMutation.isPending ? (
