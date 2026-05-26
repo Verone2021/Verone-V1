@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Verone Sourcing Import",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Importer des produits depuis Alibaba et autres fournisseurs dans Verone Back-Office",
   "permissions": ["activeTab", "storage", "scripting"],
   "host_permissions": [
