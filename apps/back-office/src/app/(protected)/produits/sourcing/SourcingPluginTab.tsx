@@ -15,7 +15,7 @@ import {
 } from './SourcingPluginIllustrations';
 
 const EXTENSION_ZIP_URL = '/extensions/verone-sourcing-extension.zip';
-const EXTENSION_VERSION = '1.0.3';
+const EXTENSION_VERSION = '1.0.4';
 
 const installSteps = [
   {
