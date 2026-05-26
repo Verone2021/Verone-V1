@@ -27,10 +27,35 @@ const btnRefresh = document.getElementById('btn-refresh');
 const successLink = document.getElementById('success-link');
 const resultLink = document.getElementById('result-link');
 const backofficeUrl = document.getElementById('backoffice-url');
+const supabaseUrl = document.getElementById('supabase-url');
+const supabaseAnonKey = document.getElementById('supabase-anon-key');
+
+// Login form
+const loginCard = document.getElementById('login-card');
+const loginEmail = document.getElementById('login-email');
+const loginPassword = document.getElementById('login-password');
+const loginBtn = document.getElementById('login-btn');
+const loginError = document.getElementById('login-error');
+
+// Success modal
+const successModal = document.getElementById('success-modal');
+const successTitle = document.getElementById('success-title');
+const successSubtitle = document.getElementById('success-subtitle');
+const successSummary = document.getElementById('success-summary');
+const successOpenBo = document.getElementById('success-open-bo');
+const successNew = document.getElementById('success-new');
 
 // Init
 btnRefresh.addEventListener('click', extractFromPage);
 btnImport.addEventListener('click', doImport);
+loginBtn.addEventListener('click', doSignIn);
+loginPassword.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSignIn();
+});
+successNew.addEventListener('click', () => {
+  successModal.style.display = 'none';
+  extractFromPage();
+});
 
 // Charger le token d'auth depuis le storage, puis extraire
 chrome.storage.local.get(['authToken', 'authExpires'], result => {
@@ -61,6 +86,9 @@ async function refreshAuthToken() {
       });
       // Une fois le token disponible, charger les marques
       loadBrands();
+    } else if (res.status === 401 && !authToken) {
+      // Pas de session dans ce profil Chrome → guider vers le login
+      showAuthRequired();
     }
   } catch (_e) {
     // Silencieux — le token existant sera utilise si disponible
@@ -124,11 +152,13 @@ function renderBrandChips() {
 
 function extractFromPage() {
   setStatus('detecting', 'Analyse de la page en cours...');
+  statusEl.style.display = '';
   fieldsContainer.innerHTML = '';
   imagesContainer.style.display = 'none';
   supplierSection.style.display = 'none';
   actionsBar.style.display = 'none';
   successLink.style.display = 'none';
+  if (successModal) successModal.style.display = 'none';
   pageTypeEl.style.display = 'none';
   // Reset selection marques entre 2 analyses, on garde la liste chargée
   selectedBrandIds = new Set();
@@ -503,10 +533,7 @@ async function doImport() {
   if (!extractedData) return;
 
   if (!authToken) {
-    setStatus(
-      'error',
-      'Non connecte. Ouvrez votre back-office Verone dans un onglet, connectez-vous, puis revenez ici et cliquez "Reanalyser".'
-    );
+    showAuthRequired();
     return;
   }
 
@@ -666,61 +693,8 @@ async function doImport() {
       throw err;
     }
 
-    // Afficher le résumé de ce qui a été importé
-    setStatus('success', 'Import termine avec succes !');
-    btnImport.textContent = 'Importe !';
-
-    // Construire le résumé
-    const summary = document.createElement('div');
-    summary.style.cssText =
-      'background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-top:10px;font-size:12px;';
-
-    // Section Produit
-    const p = result.product;
-    let html =
-      '<div style="font-weight:700;margin-bottom:6px;font-size:13px;">Produit cree</div>';
-    html +=
-      '<div style="display:grid;grid-template-columns:auto 1fr;gap:2px 8px;">';
-    html += row('Nom', p.name);
-    html += row('SKU', p.sku);
-    if (p.cost_price) html += row('Prix achat', p.cost_price + ' EUR');
-    if (p.brand) html += row('Marque', p.brand);
-    if (p.supplier_reference)
-      html += row('Ref fournisseur', p.supplier_reference);
-    html += row('Statut', 'Recherche fournisseur');
-    html += row('Photos', p.images_count + ' image(s)');
-    html += '</div>';
-
-    // Section Fournisseur
-    if (result.supplier) {
-      const s = result.supplier;
-      html +=
-        '<div style="font-weight:700;margin:10px 0 6px;font-size:13px;border-top:1px solid #e5e7eb;padding-top:10px;">';
-      html += s.created ? 'Fournisseur cree' : 'Fournisseur existant retrouve';
-      html += '</div>';
-      html +=
-        '<div style="display:grid;grid-template-columns:auto 1fr;gap:2px 8px;">';
-      html += row('Nom', s.name);
-      if (s.country) html += row('Pays', s.country);
-      html += row('Statut', s.created ? 'Nouveau' : 'Deja en base');
-      html += '</div>';
-    } else {
-      html +=
-        '<div style="color:#6b7280;margin-top:8px;font-size:11px;">Aucun fournisseur importe</div>';
-    }
-
-    summary.innerHTML = html;
-
-    // Remplacer le contenu des champs par le résumé
-    fieldsContainer.innerHTML = '';
-    fieldsContainer.appendChild(summary);
-    imagesContainer.style.display = 'none';
-    supplierSection.style.display = 'none';
-
-    // Lien vers la fiche
-    resultLink.href = baseUrl + result.redirect_url;
-    resultLink.textContent = 'Ouvrir la fiche sourcing';
-    successLink.style.display = 'block';
+    // Afficher le modal de confirmation
+    showSuccessModal(result);
   } catch (error) {
     const httpPart = error.httpStatus ? ' (HTTP ' + error.httpStatus + ')' : '';
     setStatus('error', 'Erreur: ' + error.message + httpPart);
@@ -763,6 +737,145 @@ function getCheckedVal(id, fallback, parser) {
 function setStatus(type, message) {
   statusEl.className = 'status ' + type;
   statusEl.textContent = message;
+}
+
+function showAuthRequired() {
+  // Affiche le formulaire de connexion direct dans le popup
+  loginCard.style.display = 'block';
+  loginError.style.display = 'none';
+  if (actionsBar) actionsBar.style.display = 'none';
+  statusEl.style.display = 'none';
+  pageTypeEl.style.display = 'none';
+  loginEmail.focus();
+}
+
+async function doSignIn() {
+  const email = loginEmail.value.trim();
+  const password = loginPassword.value;
+  if (!email || !password) {
+    loginError.textContent = 'Email et mot de passe requis.';
+    loginError.style.display = 'block';
+    return;
+  }
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Connexion...';
+  loginError.style.display = 'none';
+
+  try {
+    const sbUrl = supabaseUrl.value.replace(/\/$/, '');
+    const anonKey = supabaseAnonKey.value;
+    const res = await fetch(sbUrl + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: {
+        apikey: anonKey,
+        Authorization: 'Bearer ' + anonKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      const code = data.error_code || data.error || 'auth_error';
+      const msg =
+        data.error_description ||
+        data.msg ||
+        'Identifiants invalides. Réessaie.';
+      loginError.textContent = msg + ' (' + code + ')';
+      loginError.style.display = 'block';
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Se connecter';
+      return;
+    }
+
+    authToken = data.access_token;
+    const expiresAt = Math.floor(Date.now() / 1000) + (data.expires_in || 3600);
+    chrome.storage.local.set({
+      authToken: data.access_token,
+      authExpires: expiresAt,
+      authEmail: data.user?.email || email,
+    });
+
+    // Reset UI : cacher le login, ré-analyser la page courante
+    loginCard.style.display = 'none';
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Se connecter';
+    loginPassword.value = '';
+    statusEl.style.display = '';
+    if (actionsBar) actionsBar.style.display = '';
+    loadBrands();
+    extractFromPage();
+  } catch (err) {
+    loginError.textContent = 'Erreur réseau : ' + (err.message || err);
+    loginError.style.display = 'block';
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Se connecter';
+  }
+}
+
+function showSuccessModal(result) {
+  const baseUrl = backofficeUrl.value.replace(/\/$/, '');
+  const p = result.product || {};
+  const s = result.supplier;
+
+  // Trouver les noms des marques sélectionnées (lookup dans availableBrands)
+  const selectedBrandNames = Array.from(selectedBrandIds)
+    .map(id => availableBrands.find(b => b.id === id)?.name)
+    .filter(Boolean);
+
+  successTitle.textContent = 'Produit importé';
+  successSubtitle.textContent =
+    'Le produit est ajouté dans le back-office Verone.';
+
+  successSummary.innerHTML = '';
+
+  const addSection = (title, rows) => {
+    const h = document.createElement('h3');
+    h.textContent = title;
+    successSummary.appendChild(h);
+    rows.forEach(([k, v]) => {
+      if (!v) return;
+      const row = document.createElement('div');
+      row.className = 'row';
+      const ke = document.createElement('span');
+      ke.className = 'k';
+      ke.textContent = k;
+      const ve = document.createElement('span');
+      ve.className = 'v';
+      ve.textContent = v;
+      row.appendChild(ke);
+      row.appendChild(ve);
+      successSummary.appendChild(row);
+    });
+  };
+
+  addSection('Produit', [
+    ['Nom', p.name],
+    ['SKU', p.sku],
+    ['Prix achat', p.cost_price ? p.cost_price + ' EUR' : null],
+    [
+      'Marques',
+      selectedBrandNames.length > 0 ? selectedBrandNames.join(', ') : null,
+    ],
+    ['Photos', (p.images_count || 0) + ' image(s)'],
+    ['Statut', 'Recherche fournisseur'],
+  ]);
+
+  if (s) {
+    addSection(s.created ? 'Nouveau fournisseur' : 'Fournisseur existant', [
+      ['Nom', s.name],
+      ['Pays', s.country],
+      ['Statut', s.created ? 'Créé maintenant' : 'Déjà en base'],
+    ]);
+  }
+
+  successOpenBo.onclick = () => {
+    chrome.tabs.create({ url: baseUrl + result.redirect_url });
+  };
+
+  // Masquer tout le reste, afficher le modal
+  successModal.style.display = 'flex';
 }
 
 function showPageType(label, bg, color) {
