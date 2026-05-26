@@ -11,7 +11,6 @@ import {
   Package,
   Users,
   BarChart3,
-  Download,
   Calendar,
   ArrowLeft,
   X,
@@ -367,24 +366,21 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
                         </div>
                       </div>
 
-                      {/* Exports */}
-                      <div>
-                        <p className="text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
-                          <Download className="h-3 w-3" />
-                          Export
-                        </p>
-                        <div className="flex gap-1">
-                          {report.exports.map((format, idx) => (
-                            <Badge
-                              key={idx}
-                              variant="outline"
-                              className="text-xs"
-                            >
-                              {format}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
+                      {/* Action : générer le rapport */}
+                      {!isComingSoon && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="w-full mt-1"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleReportClick(report.id);
+                          }}
+                        >
+                          <FileText className="h-3.5 w-3.5 mr-1.5" />
+                          Générer le rapport
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
                 );
