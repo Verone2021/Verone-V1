@@ -2,6 +2,10 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient } from '@verone/utils/supabase/server';
+import {
+  uploadImageToCloudflare,
+  isCloudflareConfigured,
+} from '@verone/utils/cloudflare/images';
 
 export const maxDuration = 60;
 
@@ -435,10 +439,10 @@ export async function POST(request: NextRequest) {
     }
 
     // ================================================================
-    // STEP 4 : Telecharger les images et les stocker dans Supabase Storage
-    // Puis inserer dans product_images (le trigger genere public_url)
+    // STEP 4 : Telecharger les images depuis la source (Alibaba, etc.)
+    // puis upload vers Cloudflare Images (le trigger DB genere public_url)
     // ================================================================
-    if (input.images && input.images.length > 0) {
+    if (input.images && input.images.length > 0 && isCloudflareConfigured()) {
       const validImages = input.images
         .filter(url => url && !url.includes('icon') && !url.includes('logo'))
         .slice(0, 10);
@@ -446,39 +450,29 @@ export async function POST(request: NextRequest) {
       for (let i = 0; i < validImages.length; i++) {
         const imageUrl = validImages[i];
         try {
-          // Telecharger l'image depuis l'URL externe
           const imgResponse = await fetch(imageUrl);
           if (!imgResponse.ok) continue;
 
           const contentType =
             imgResponse.headers.get('content-type') ?? 'image/jpeg';
           const ext = contentType.includes('png') ? 'png' : 'jpg';
-          const blob = await imgResponse.blob();
-          const buffer = Buffer.from(await blob.arrayBuffer());
+          const arrayBuffer = await imgResponse.arrayBuffer();
 
-          // Upload dans Supabase Storage
-          const storagePath = `sourcing/${productId}/${i}.${ext}`;
-          const { error: uploadError } = await supabase.storage
-            .from('product-images')
-            .upload(storagePath, buffer, {
-              contentType,
-              upsert: true,
-            });
+          // Upload Cloudflare Images
+          const cfResult = await uploadImageToCloudflare(arrayBuffer, {
+            ownerType: 'product',
+            ownerId: productId,
+          });
 
-          if (uploadError) {
-            console.error(
-              `[API sourcing/import] Image ${i} upload failed:`,
-              uploadError
-            );
-            continue;
-          }
-
-          // Inserer dans product_images (le trigger genere public_url)
+          // Inserer dans product_images
+          // storage_path conservé pour compat ascendante (NOT NULL côté DB) ;
+          // le trigger DB privilégie cloudflare_image_id pour générer public_url
           const { error: imgInsertError } = await supabase
             .from('product_images')
             .insert({
               product_id: productId,
-              storage_path: storagePath,
+              cloudflare_image_id: cfResult.id,
+              storage_path: `cloudflare/${cfResult.id}`,
               display_order: i,
               is_primary: i === 0,
               image_type: i === 0 ? 'primary' : 'gallery',
@@ -494,7 +488,7 @@ export async function POST(request: NextRequest) {
           }
         } catch (imgErr) {
           console.error(
-            `[API sourcing/import] Image ${i} download failed:`,
+            `[API sourcing/import] Image ${i} upload failed:`,
             imgErr
           );
         }
