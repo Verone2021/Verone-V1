@@ -144,6 +144,141 @@
       word-break: break-word;
     }
 
+    /* Login form */
+    .login-card {
+      padding: 16px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      margin: 12px;
+    }
+    .login-card h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111;
+      margin-bottom: 4px;
+    }
+    .login-card p {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+    .login-card input {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 13px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      background: #fff;
+    }
+    .login-card input:focus { border-color: #000; outline: none; }
+    .login-card button {
+      width: 100%;
+      padding: 9px;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      border-radius: 6px;
+      background: #000;
+      color: #fff;
+      cursor: pointer;
+    }
+    .login-card button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .login-error {
+      font-size: 11px;
+      color: #991b1b;
+      margin-top: 6px;
+    }
+
+    /* Success modal overlay */
+    .success-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.96);
+      padding: 16px;
+      overflow-y: auto;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+    }
+    .success-modal .icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #dcfce7;
+      color: #166534;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin: 0 auto 10px;
+    }
+    .success-modal h2 {
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 4px;
+    }
+    .success-modal .subtitle {
+      text-align: center;
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+    .success-modal .summary {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+    .success-modal .summary .row {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 4px 8px;
+      margin-bottom: 4px;
+    }
+    .success-modal .summary .row .k {
+      color: #6b7280;
+      font-size: 11px;
+    }
+    .success-modal .summary .row .v {
+      color: #111;
+      font-weight: 500;
+      word-break: break-word;
+    }
+    .success-modal .summary h3 {
+      font-size: 12px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .success-modal .actions-bottom {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: auto;
+    }
+    .success-modal .actions-bottom .btn {
+      padding: 9px;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .success-modal .btn.primary { background: #000; color: #fff; }
+    .success-modal .btn.secondary {
+      background: #fff;
+      color: #111;
+      border: 1px solid #d1d5db;
+    }
+
     /* Images preview */
     .images-row { margin-bottom: 8px; }
     .images-row .field-label { margin-bottom: 6px; padding-left: 24px; }
@@ -278,6 +413,30 @@
   </div>
 
   <input type="hidden" id="backoffice-url" value="https://verone-backoffice.vercel.app" />
+  <input type="hidden" id="supabase-url" value="https://aorroydfjsrygmosnzrl.supabase.co" />
+  <input type="hidden" id="supabase-anon-key" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvcnJveWRmanNyeWdtb3NuenJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3Mjc0NzAsImV4cCI6MjA3MzMwMzQ3MH0.fRi7svC8bAr3wihH76pfQnaq7tjuBMypAEi6q-rHCTA" />
+
+  <!-- Login form (affiché si pas connecté) -->
+  <div id="login-card" class="login-card" style="display:none">
+    <h2>Connexion Verone</h2>
+    <p>Connecte-toi pour importer des produits dans le back-office.</p>
+    <input type="email" id="login-email" placeholder="email@verone.fr" autocomplete="username" />
+    <input type="password" id="login-password" placeholder="Mot de passe" autocomplete="current-password" />
+    <button id="login-btn">Se connecter</button>
+    <div id="login-error" class="login-error" style="display:none"></div>
+  </div>
+
+  <!-- Success modal (affiché après import réussi) -->
+  <div id="success-modal" class="success-modal" style="display:none">
+    <div class="icon">✓</div>
+    <h2 id="success-title">Produit importé</h2>
+    <div class="subtitle" id="success-subtitle">Disponible dans le back-office Verone</div>
+    <div class="summary" id="success-summary"></div>
+    <div class="actions-bottom">
+      <button class="btn primary" id="success-open-bo">Ouvrir dans le back-office</button>
+      <button class="btn secondary" id="success-new">Importer un autre produit</button>
+    </div>
+  </div>
 
   <script src="popup.js"></script>
 </body>

@@ -59,4 +59,7 @@ export interface SourcingFilters {
   assigned_client_id?: string; // 🆕 Filtrer par client assigné spécifique
   has_supplier?: boolean;
   requires_sample?: boolean;
+  // 'active' (défaut) : archived_at IS NULL
+  // 'archived' : archived_at IS NOT NULL (onglet Archivés)
+  archived_view?: 'active' | 'archived';
 }

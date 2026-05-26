@@ -79,8 +79,14 @@ export function useSourcingFetch(filters?: SourcingFilters) {
         `
         )
         .eq('creation_mode', 'sourcing')
-        .is('archived_at', null)
         .order('created_at', { ascending: false });
+
+      // Filtre archivés : par défaut on cache les archivés (vue principale)
+      if (filters?.archived_view === 'archived') {
+        query = query.not('archived_at', 'is', null);
+      } else {
+        query = query.is('archived_at', null);
+      }
 
       // Appliquer les filtres
       if (filters?.search) {
@@ -197,6 +203,7 @@ export function useSourcingFetch(filters?: SourcingFilters) {
     filters?.sourcing_type,
     filters?.has_supplier,
     filters?.requires_sample,
+    filters?.archived_view,
   ]);
 
   return { products, setProducts, loading, error, fetchSourcingProducts };
