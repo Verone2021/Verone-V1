@@ -9,13 +9,12 @@ import { ButtonV2, Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import { colors, spacing } from '@verone/ui/design-system';
 import { debounce } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
-import { Plus, Package, Chrome } from 'lucide-react';
+import { Plus, Package, Chrome, Archive } from 'lucide-react';
 
 import { SourcingCardView } from './SourcingCardView';
 import { SourcingFilters } from './SourcingFilters';
 import { SourcingKanbanView } from './SourcingKanbanView';
 import { SourcingKpiCards } from './SourcingKpiCards';
-import { SourcingPluginTab } from './SourcingPluginTab';
 import { SourcingProductList } from './SourcingProductList';
 import type { SourcingViewMode } from './SourcingViewToggle';
 import { SourcingViewToggle } from './SourcingViewToggle';
@@ -35,7 +34,9 @@ export default function SourcingPage() {
   const [isQuickSourcingModalOpen, setIsQuickSourcingModalOpen] =
     useState(false);
   const [completedThisMonth, setCompletedThisMonth] = useState(0);
-  const [activeTab, setActiveTab] = useState<'produits' | 'plugin'>('produits');
+  const [activeTab, setActiveTab] = useState<'produits' | 'archived'>(
+    'produits'
+  );
 
   const debouncedSearch = useMemo(
     () =>
@@ -61,6 +62,7 @@ export default function SourcingPage() {
         ? undefined
         : (sourcingTypeFilter as 'interne' | 'client'),
     supplier_id: supplierFilter ?? undefined,
+    archived_view: activeTab === 'archived' ? 'archived' : 'active',
   });
 
   useEffect(() => {
@@ -194,23 +196,32 @@ export default function SourcingPage() {
             Gestion des produits à sourcer et validation catalogue
           </p>
         </div>
-        {activeTab === 'produits' && (
-          <div className="flex items-center gap-3">
-            <SourcingViewToggle view={viewMode} onViewChange={setViewMode} />
-            <ButtonV2
-              variant="primary"
-              icon={Plus}
-              onClick={() => setIsQuickSourcingModalOpen(true)}
-            >
-              Nouveau Sourcing
-            </ButtonV2>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          <ButtonV2
+            variant="secondary"
+            icon={Chrome}
+            onClick={() => router.push('/produits/sourcing/plugin')}
+          >
+            Plugin navigateur
+          </ButtonV2>
+          {activeTab === 'produits' && (
+            <>
+              <SourcingViewToggle view={viewMode} onViewChange={setViewMode} />
+              <ButtonV2
+                variant="primary"
+                icon={Plus}
+                onClick={() => setIsQuickSourcingModalOpen(true)}
+              >
+                Nouveau Sourcing
+              </ButtonV2>
+            </>
+          )}
+        </div>
       </div>
 
       <Tabs
         value={activeTab}
-        onValueChange={value => setActiveTab(value as 'produits' | 'plugin')}
+        onValueChange={value => setActiveTab(value as 'produits' | 'archived')}
         className="w-full"
       >
         <TabsList variant="underline" className="w-full justify-start border-b">
@@ -218,9 +229,9 @@ export default function SourcingPage() {
             <Package className="h-4 w-4 mr-2" />
             Produits
           </TabsTrigger>
-          <TabsTrigger value="plugin" variant="underline">
-            <Chrome className="h-4 w-4 mr-2" />
-            Plugin navigateur
+          <TabsTrigger value="archived" variant="underline">
+            <Archive className="h-4 w-4 mr-2" />
+            Archivés
           </TabsTrigger>
         </TabsList>
 
@@ -286,8 +297,48 @@ export default function SourcingPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="plugin" className="pt-6">
-          <SourcingPluginTab />
+        <TabsContent value="archived" className="space-y-6 pt-6">
+          <SourcingFilters
+            searchTerm={searchTerm}
+            onSearchChange={value => {
+              setSearchTerm(value);
+              debouncedSearch(value);
+            }}
+            statusFilter={statusFilter}
+            onStatusChange={setStatusFilter}
+            sourcingTypeFilter={sourcingTypeFilter}
+            onSourcingTypeChange={setSourcingTypeFilter}
+            supplierFilter={supplierFilter}
+            onSupplierChange={setSupplierFilter}
+            pipelineFilter={pipelineFilter}
+            onPipelineChange={setPipelineFilter}
+            priorityFilter={priorityFilter}
+            onPriorityChange={setPriorityFilter}
+          />
+
+          <SourcingProductList
+            products={filteredAndSortedProducts}
+            sortBy={sortBy}
+            sortDir={sortDir}
+            onSort={col => {
+              if (sortBy === col) {
+                setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+              } else {
+                setSortBy(col);
+                setSortDir('desc');
+              }
+            }}
+            loading={loading}
+            error={error}
+            onView={id => router.push(`/produits/sourcing/produits/${id}`)}
+            onViewSupplier={supplierId =>
+              router.push(`/organisations/${supplierId}`)
+            }
+            onEdit={id => router.push(`/produits/sourcing/produits/${id}`)}
+            onValidate={handleValidate}
+            onArchive={handleArchive}
+            onDelete={handleDelete}
+          />
         </TabsContent>
       </Tabs>
 
