@@ -11,6 +11,8 @@ import { debounce } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 import { Plus, Package, Chrome, Archive } from 'lucide-react';
 
+import { SourcingReportButton } from '@/components/business/sourcing-report/SourcingReportButton';
+
 import { SourcingCardView } from './SourcingCardView';
 import { SourcingFilters } from './SourcingFilters';
 import { SourcingKanbanView } from './SourcingKanbanView';
@@ -197,6 +199,7 @@ export default function SourcingPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <SourcingReportButton />
           <ButtonV2
             variant="secondary"
             icon={Chrome}
