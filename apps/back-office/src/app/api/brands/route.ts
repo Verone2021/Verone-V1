@@ -13,7 +13,6 @@ function corsHeaders(origin: string | null): Record<string, string> {
     origin && ALLOWED_ORIGIN_PATTERNS.some(p => p.test(origin)) ? origin : '*';
   return {
     'Access-Control-Allow-Origin': allowed,
-    'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
@@ -27,35 +26,38 @@ export async function OPTIONS(request: NextRequest) {
   });
 }
 
-/**
- * GET /api/sourcing/auth
- *
- * Retourne le token de session Supabase pour l'extension Chrome.
- * L'extension appelle cette route depuis le back-office (meme domaine = cookies OK)
- * puis stocke le token pour les appels cross-origin.
- */
 export async function GET(request: NextRequest) {
   const origin = request.headers.get('origin');
-  const cors = corsHeaders(origin);
   const supabase = await createServerClient();
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const authHeader = request.headers.get('Authorization');
+  const authResult = authHeader?.startsWith('Bearer ')
+    ? await supabase.auth.getUser(authHeader.slice(7))
+    : await supabase.auth.getUser();
 
-  if (!session) {
+  if (!authResult.data.user) {
     return NextResponse.json(
-      { error: 'Non connecte' },
-      { status: 401, headers: cors }
+      { error: 'Non autorise' },
+      { status: 401, headers: corsHeaders(origin) }
+    );
+  }
+
+  const { data, error } = await supabase
+    .from('brands')
+    .select('id, name, slug, brand_color, logo_url')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true })
+    .order('name', { ascending: true });
+
+  if (error) {
+    return NextResponse.json(
+      { error: 'Erreur chargement marques', details: error.message },
+      { status: 500, headers: corsHeaders(origin) }
     );
   }
 
   return NextResponse.json(
-    {
-      access_token: session.access_token,
-      user_email: session.user.email,
-      expires_at: session.expires_at,
-    },
-    { headers: cors }
+    { brands: data ?? [] },
+    { headers: corsHeaders(origin) }
   );
 }

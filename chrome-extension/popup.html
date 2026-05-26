@@ -85,6 +85,65 @@
     textarea.field-value { resize: vertical; min-height: 40px; }
     .field-value:disabled { background: #f3f4f6; color: #9ca3af; }
 
+    /* Brand chips multi-select */
+    .brands-row {
+      margin-bottom: 8px;
+      padding: 8px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+    }
+    .brands-row .field-label { padding-left: 0; margin-bottom: 6px; }
+    .brand-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .brand-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border: 1px solid #e5e7eb;
+      border-radius: 9999px;
+      font-size: 11px;
+      cursor: pointer;
+      background: #fff;
+      color: #374151;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .brand-chip:hover { border-color: #9ca3af; }
+    .brand-chip.selected {
+      background: #1d1d1b;
+      color: #fff;
+      border-color: #1d1d1b;
+    }
+    .brand-chip .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.5;
+    }
+    .brand-chip.selected .dot { opacity: 1; }
+
+    /* Error details box */
+    .error-details {
+      margin-top: 8px;
+      padding: 8px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #991b1b;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      max-height: 120px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
     /* Images preview */
     .images-row { margin-bottom: 8px; }
     .images-row .field-label { margin-bottom: 6px; padding-left: 24px; }
@@ -186,6 +245,12 @@
 
     <!-- Champs editables du produit -->
     <div id="fields-container"></div>
+
+    <!-- Marques (multi-select) -->
+    <div id="brands-row" class="brands-row" style="display:none">
+      <div class="field-label">Marques</div>
+      <div class="brand-chips" id="brand-chips"></div>
+    </div>
 
     <!-- Images -->
     <div id="images-container" class="images-row" style="display:none">

@@ -3,6 +3,36 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient } from '@verone/utils/supabase/server';
 
+export const maxDuration = 60;
+
+// ============================================================
+// CORS — autorise le plugin Chrome + back-office
+// ============================================================
+
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^chrome-extension:\/\//,
+  /^https:\/\/verone-backoffice\.vercel\.app$/,
+  /^http:\/\/localhost:3000$/,
+];
+
+function corsHeaders(origin: string | null): Record<string, string> {
+  const allowed =
+    origin && ALLOWED_ORIGIN_PATTERNS.some(p => p.test(origin)) ? origin : '*';
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400',
+  };
+}
+
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders(request.headers.get('origin')),
+  });
+}
+
 // ============================================================
 // Mapping pays → code ISO 2 lettres
 // ============================================================
@@ -84,6 +114,7 @@ const ImportProductSchema = z.object({
   style: z.string().nullish(),
   moq: z.number().int().nullish(),
   lead_days: z.number().int().nullish(),
+  brand_ids: z.array(z.string().uuid()).nullish(),
 
   // Fournisseur
   supplier: z
@@ -112,6 +143,8 @@ const ImportProductSchema = z.object({
 // ============================================================
 
 export async function POST(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  const cors = corsHeaders(origin);
   const supabase = await createServerClient();
 
   // --- Auth : cookies OU Bearer token ---
@@ -122,7 +155,10 @@ export async function POST(request: NextRequest) {
   const user = authResult.data.user;
 
   if (!user) {
-    return NextResponse.json({ error: 'Non autorise' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'Non autorise' },
+      { status: 401, headers: cors }
+    );
   }
 
   // --- Validation Zod ---
@@ -131,7 +167,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: 'Donnees invalides', details: parsed.error.flatten() },
-      { status: 400 }
+      { status: 400, headers: cors }
     );
   }
 
@@ -156,7 +192,7 @@ export async function POST(request: NextRequest) {
           existing_product_name: existingProduct.name,
           redirect_url: `/produits/sourcing/produits/${existingProduct.id}`,
         },
-        { status: 409 }
+        { status: 409, headers: cors }
       );
     }
 
@@ -167,50 +203,69 @@ export async function POST(request: NextRequest) {
     // STEP 1 : Créer ou trouver le fournisseur
     // ================================================================
     if (input.supplier) {
-      // Chercher le fournisseur existant par 3 méthodes (du plus fiable au moins fiable)
       let existingSupplier: { id: string; trade_name: string | null } | null =
         null;
 
-      // Recherche fournisseur existant — PAR NOM EXACT uniquement
-      // L'URL boutique Alibaba est peu fiable (faux positifs fréquents)
-
-      // 1. Par domaine du website (ex: opjet.com → organisation avec website opjet.com)
-      //    Fiable car le domaine du SITE SOURCE identifie le fournisseur
-      try {
-        const sourceHost = new URL(input.source_url).hostname.replace(
-          'www.',
-          ''
-        );
-        // Ne pas matcher alibaba.com (c'est une marketplace, pas un fournisseur)
-        if (
-          !sourceHost.includes('alibaba.com') &&
-          !sourceHost.includes('1688.com') &&
-          !sourceHost.includes('zentrada.com')
-        ) {
-          const { data } = await supabase
-            .from('organisations')
-            .select('id, trade_name')
-            .ilike('website', `%${sourceHost}%`)
-            .limit(1)
-            .maybeSingle();
-          existingSupplier = data;
-        }
-      } catch (_e) {
-        // URL invalide — ignorer
-      }
-
-      // 2. Par nom exact (insensible à la casse)
-      if (!existingSupplier) {
+      // 1. Par URL boutique Alibaba (identifiant unique du fournisseur sur Alibaba)
+      if (input.supplier.alibaba_store_url) {
         const { data } = await supabase
           .from('organisations')
           .select('id, trade_name')
-          .or(
-            `trade_name.ilike.${input.supplier.name},legal_name.ilike.${input.supplier.name}`
-          )
+          .eq('alibaba_store_url', input.supplier.alibaba_store_url)
           .eq('type', 'supplier')
           .limit(1)
           .maybeSingle();
         existingSupplier = data;
+      }
+
+      // 2. Par domaine du website source (pour fournisseurs hors marketplace)
+      if (!existingSupplier) {
+        try {
+          const sourceHost = new URL(input.source_url).hostname.replace(
+            'www.',
+            ''
+          );
+          if (
+            !sourceHost.includes('alibaba.com') &&
+            !sourceHost.includes('1688.com') &&
+            !sourceHost.includes('zentrada.com')
+          ) {
+            const { data } = await supabase
+              .from('organisations')
+              .select('id, trade_name')
+              .ilike('website', `%${sourceHost}%`)
+              .limit(1)
+              .maybeSingle();
+            existingSupplier = data;
+          }
+        } catch (_e) {
+          // URL invalide — ignorer
+        }
+      }
+
+      // 3. Par nom (2 requêtes séparées au lieu de .or() qui casse avec
+      //    les virgules dans le nom — ex: "Shenzhen XYZ Co., Ltd.")
+      if (!existingSupplier) {
+        const supplierName = input.supplier.name.trim();
+        const { data: byTradeName } = await supabase
+          .from('organisations')
+          .select('id, trade_name')
+          .ilike('trade_name', supplierName)
+          .eq('type', 'supplier')
+          .limit(1)
+          .maybeSingle();
+        existingSupplier = byTradeName;
+
+        if (!existingSupplier) {
+          const { data: byLegalName } = await supabase
+            .from('organisations')
+            .select('id, trade_name')
+            .ilike('legal_name', supplierName)
+            .eq('type', 'supplier')
+            .limit(1)
+            .maybeSingle();
+          existingSupplier = byLegalName;
+        }
       }
 
       if (existingSupplier) {
@@ -288,7 +343,7 @@ export async function POST(request: NextRequest) {
               error: 'Erreur creation fournisseur',
               details: supplierError.message,
             },
-            { status: 500 }
+            { status: 500, headers: cors }
           );
         }
 
@@ -338,6 +393,7 @@ export async function POST(request: NextRequest) {
         weight: input.weight ?? null,
         dimensions,
         style: input.style ?? null,
+        brand_ids: input.brand_ids ?? null,
         // condition: laisser le default DB ('new')
         supplier_id: supplierId,
         supplier_moq: input.moq ?? null,
@@ -355,7 +411,7 @@ export async function POST(request: NextRequest) {
       );
       return NextResponse.json(
         { error: 'Erreur creation produit', details: productError.message },
-        { status: 500 }
+        { status: 500, headers: cors }
       );
     }
 
@@ -491,28 +547,31 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      redirect_url: `/produits/sourcing/produits/${productId}`,
-      product: {
-        id: productId,
-        name: product.name,
-        sku,
-        cost_price: input.cost_price ?? null,
-        manufacturer: input.manufacturer ?? null,
-        supplier_reference: input.supplier_reference ?? null,
-        sourcing_status: 'supplier_search',
-        images_count: imageCount ?? 0,
+    return NextResponse.json(
+      {
+        success: true,
+        redirect_url: `/produits/sourcing/produits/${productId}`,
+        product: {
+          id: productId,
+          name: product.name,
+          sku,
+          cost_price: input.cost_price ?? null,
+          manufacturer: input.manufacturer ?? null,
+          supplier_reference: input.supplier_reference ?? null,
+          sourcing_status: 'supplier_search',
+          images_count: imageCount ?? 0,
+        },
+        supplier: supplierId
+          ? {
+              id: supplierId,
+              name: supplierName,
+              created: supplierIsNew,
+              country: input.supplier?.country ?? null,
+            }
+          : null,
       },
-      supplier: supplierId
-        ? {
-            id: supplierId,
-            name: supplierName,
-            created: supplierIsNew,
-            country: input.supplier?.country ?? null,
-          }
-        : null,
-    });
+      { headers: cors }
+    );
   } catch (error) {
     console.error('[API sourcing/import] Unexpected error:', error);
     return NextResponse.json(
@@ -520,7 +579,7 @@ export async function POST(request: NextRequest) {
         error: 'Erreur interne',
         details: error instanceof Error ? error.message : 'Erreur inconnue',
       },
-      { status: 500 }
+      { status: 500, headers: cors }
     );
   }
 }
