@@ -3,6 +3,36 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient } from '@verone/utils/supabase/server';
 
+export const maxDuration = 30;
+
+// ============================================================
+// CORS — autorise le plugin Chrome + back-office
+// ============================================================
+
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^chrome-extension:\/\//,
+  /^https:\/\/verone-backoffice\.vercel\.app$/,
+  /^http:\/\/localhost:3000$/,
+];
+
+function corsHeaders(origin: string | null): Record<string, string> {
+  const allowed =
+    origin && ALLOWED_ORIGIN_PATTERNS.some(p => p.test(origin)) ? origin : '*';
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400',
+  };
+}
+
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders(request.headers.get('origin')),
+  });
+}
+
 // ============================================================
 // Mapping pays → code ISO 2 lettres
 // ============================================================
@@ -83,6 +113,8 @@ const ImportSupplierSchema = z.object({
 // ============================================================
 
 export async function POST(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  const cors = corsHeaders(origin);
   const supabase = await createServerClient();
 
   // --- Auth : cookies OU Bearer token ---
@@ -93,7 +125,10 @@ export async function POST(request: NextRequest) {
   const user = authResult.data.user;
 
   if (!user) {
-    return NextResponse.json({ error: 'Non autorise' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'Non autorise' },
+      { status: 401, headers: cors }
+    );
   }
 
   // --- Validation Zod ---
@@ -102,7 +137,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json(
       { error: 'Donnees invalides', details: parsed.error.flatten() },
-      { status: 400 }
+      { status: 400, headers: cors }
     );
   }
 
@@ -126,15 +161,29 @@ export async function POST(request: NextRequest) {
       existing = data;
     }
 
+    // Recherche par nom — 2 requêtes séparées au lieu de .or()
+    // (.or() casse avec les virgules dans le nom — ex: "Co., Ltd.")
     if (!existing) {
-      const { data } = await supabase
+      const name = input.name.trim();
+      const { data: byTradeName } = await supabase
         .from('organisations')
         .select('id, trade_name')
-        .or(`trade_name.eq.${input.name},legal_name.eq.${input.name}`)
+        .ilike('trade_name', name)
         .eq('type', 'supplier')
         .limit(1)
         .maybeSingle();
-      existing = data;
+      existing = byTradeName;
+
+      if (!existing) {
+        const { data: byLegalName } = await supabase
+          .from('organisations')
+          .select('id, trade_name')
+          .ilike('legal_name', name)
+          .eq('type', 'supplier')
+          .limit(1)
+          .maybeSingle();
+        existing = byLegalName;
+      }
     }
 
     if (existing) {
@@ -158,13 +207,16 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      return NextResponse.json({
-        success: true,
-        supplier_id: existing.id,
-        supplier_name: existing.trade_name,
-        created: false,
-        redirect_url: `/organisations/${existing.id}`,
-      });
+      return NextResponse.json(
+        {
+          success: true,
+          supplier_id: existing.id,
+          supplier_name: existing.trade_name,
+          created: false,
+          redirect_url: `/organisations/${existing.id}`,
+        },
+        { headers: cors }
+      );
     }
 
     // Construire les notes avec les infos Alibaba
@@ -206,17 +258,20 @@ export async function POST(request: NextRequest) {
       console.error('[API sourcing/import-supplier] Creation failed:', error);
       return NextResponse.json(
         { error: 'Erreur creation fournisseur', details: error.message },
-        { status: 500 }
+        { status: 500, headers: cors }
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      supplier_id: newSupplier.id,
-      supplier_name: newSupplier.trade_name,
-      created: true,
-      redirect_url: `/organisations/${newSupplier.id}`,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        supplier_id: newSupplier.id,
+        supplier_name: newSupplier.trade_name,
+        created: true,
+        redirect_url: `/organisations/${newSupplier.id}`,
+      },
+      { headers: cors }
+    );
   } catch (error) {
     console.error('[API sourcing/import-supplier] Unexpected error:', error);
     return NextResponse.json(
@@ -224,7 +279,7 @@ export async function POST(request: NextRequest) {
         error: 'Erreur interne',
         details: error instanceof Error ? error.message : 'Erreur inconnue',
       },
-      { status: 500 }
+      { status: 500, headers: cors }
     );
   }
 }

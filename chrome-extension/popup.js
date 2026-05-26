@@ -8,10 +8,14 @@
 let extractedData = null;
 let imageSelections = {}; // url -> boolean
 let authToken = null; // Token Supabase pour l'API
+let availableBrands = []; // [{ id, name, slug }]
+let selectedBrandIds = new Set();
 
 const statusEl = document.getElementById('status');
 const pageTypeEl = document.getElementById('page-type');
 const fieldsContainer = document.getElementById('fields-container');
+const brandsRow = document.getElementById('brands-row');
+const brandChips = document.getElementById('brand-chips');
 const imagesContainer = document.getElementById('images-container');
 const imagesGrid = document.getElementById('images-grid');
 const supplierSection = document.getElementById('supplier-section');
@@ -33,6 +37,8 @@ chrome.storage.local.get(['authToken', 'authExpires'], result => {
   const now = Math.floor(Date.now() / 1000);
   if (result.authToken && result.authExpires && result.authExpires > now) {
     authToken = result.authToken;
+    // Token déjà valide — charger les marques tout de suite
+    loadBrands();
   }
   extractFromPage();
   // Rafraichir le token en arriere-plan
@@ -53,10 +59,63 @@ async function refreshAuthToken() {
         authExpires: data.expires_at,
         authEmail: data.user_email,
       });
+      // Une fois le token disponible, charger les marques
+      loadBrands();
     }
   } catch (_e) {
     // Silencieux — le token existant sera utilise si disponible
   }
+}
+
+async function loadBrands() {
+  if (!authToken) return;
+  const baseUrl = backofficeUrl.value.replace(/\/$/, '');
+  try {
+    const res = await fetch(baseUrl + '/api/brands', {
+      headers: { Authorization: 'Bearer ' + authToken },
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    availableBrands = Array.isArray(data.brands) ? data.brands : [];
+    renderBrandChips();
+  } catch (_e) {
+    // Silencieux
+  }
+}
+
+function renderBrandChips() {
+  brandChips.innerHTML = '';
+  if (availableBrands.length === 0) {
+    brandsRow.style.display = 'none';
+    return;
+  }
+  availableBrands.forEach(brand => {
+    const chip = document.createElement('span');
+    chip.className =
+      'brand-chip' + (selectedBrandIds.has(brand.id) ? ' selected' : '');
+    chip.dataset.brandId = brand.id;
+
+    const dot = document.createElement('span');
+    dot.className = 'dot';
+    if (brand.brand_color) dot.style.background = brand.brand_color;
+
+    const label = document.createElement('span');
+    label.textContent = brand.name;
+
+    chip.appendChild(dot);
+    chip.appendChild(label);
+    chip.addEventListener('click', () => {
+      if (selectedBrandIds.has(brand.id)) {
+        selectedBrandIds.delete(brand.id);
+        chip.classList.remove('selected');
+      } else {
+        selectedBrandIds.add(brand.id);
+        chip.classList.add('selected');
+      }
+    });
+    brandChips.appendChild(chip);
+  });
+  brandsRow.style.display = 'block';
 }
 
 // ============================================================
@@ -71,6 +130,9 @@ function extractFromPage() {
   actionsBar.style.display = 'none';
   successLink.style.display = 'none';
   pageTypeEl.style.display = 'none';
+  // Reset selection marques entre 2 analyses, on garde la liste chargée
+  selectedBrandIds = new Set();
+  renderBrandChips();
 
   chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
     const tab = tabs[0];
@@ -160,7 +222,6 @@ function handleData(data) {
     'text',
     !!data.reference
   );
-  addField('brand', 'Marque', data.brand || '', 'text', !!data.brand);
   addField(
     'cost_price',
     "Prix d'achat HT (EUR)",
@@ -260,6 +321,9 @@ function handleData(data) {
   if (data.supplier && data.supplier.name) {
     showSupplierFields(data.supplier);
   }
+
+  // Afficher la rangée marques si elles sont déjà chargées
+  renderBrandChips();
 
   actionsBar.style.display = 'flex';
   btnImport.disabled = false;
@@ -474,11 +538,33 @@ async function doImport() {
       const res = await fetch(baseUrl + '/api/sourcing/import-supplier', {
         method: 'POST',
         headers,
-        credentials: 'include',
+        // credentials omis pour eviter CORS strict (on s'authentifie via Bearer)
         body: JSON.stringify(body),
       });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Erreur serveur');
+
+      let result;
+      try {
+        result = await res.json();
+      } catch (_jsonErr) {
+        const fallback = await res.text().catch(() => '');
+        throw new Error(
+          'Reponse invalide (HTTP ' +
+            res.status +
+            (fallback ? ' : ' + fallback.substring(0, 200) : ')')
+        );
+      }
+
+      if (!res.ok) {
+        const err = new Error(result.error || 'Erreur serveur');
+        err.details =
+          typeof result.details === 'string'
+            ? result.details
+            : result.details
+              ? JSON.stringify(result.details, null, 2)
+              : null;
+        err.httpStatus = res.status;
+        throw err;
+      }
 
       setStatus(
         'success',
@@ -501,7 +587,8 @@ async function doImport() {
       description: getCheckedVal('description', undefined),
       technical_description: getCheckedVal('technical_description', undefined),
       supplier_reference: getCheckedVal('supplier_reference', undefined),
-      brand: getCheckedVal('brand', undefined),
+      brand_ids:
+        selectedBrandIds.size > 0 ? Array.from(selectedBrandIds) : undefined,
       source_url: extractedData.source_url,
       source_platform: extractedData.source_platform || 'other',
       images: selectedImages.length > 0 ? selectedImages : undefined,
@@ -538,10 +625,21 @@ async function doImport() {
     const res = await fetch(baseUrl + '/api/sourcing/import', {
       method: 'POST',
       headers: importHeaders,
-      credentials: 'include',
+      // credentials omis pour eviter CORS strict (on s'authentifie via Bearer)
       body: JSON.stringify(body),
     });
-    const result = await res.json();
+
+    let result;
+    try {
+      result = await res.json();
+    } catch (_jsonErr) {
+      const fallback = await res.text().catch(() => '');
+      throw new Error(
+        'Reponse invalide du serveur (HTTP ' +
+          res.status +
+          (fallback ? ' : ' + fallback.substring(0, 200) : ')')
+      );
+    }
 
     // Doublon détecté
     if (res.status === 409) {
@@ -556,7 +654,17 @@ async function doImport() {
       return;
     }
 
-    if (!res.ok) throw new Error(result.error || 'Erreur serveur');
+    if (!res.ok) {
+      const err = new Error(result.error || 'Erreur serveur');
+      err.details =
+        typeof result.details === 'string'
+          ? result.details
+          : result.details
+            ? JSON.stringify(result.details, null, 2)
+            : null;
+      err.httpStatus = res.status;
+      throw err;
+    }
 
     // Afficher le résumé de ce qui a été importé
     setStatus('success', 'Import termine avec succes !');
@@ -614,7 +722,14 @@ async function doImport() {
     resultLink.textContent = 'Ouvrir la fiche sourcing';
     successLink.style.display = 'block';
   } catch (error) {
-    setStatus('error', 'Erreur: ' + error.message);
+    const httpPart = error.httpStatus ? ' (HTTP ' + error.httpStatus + ')' : '';
+    setStatus('error', 'Erreur: ' + error.message + httpPart);
+    if (error.details) {
+      const detailsBox = document.createElement('div');
+      detailsBox.className = 'error-details';
+      detailsBox.textContent = error.details;
+      statusEl.parentNode.insertBefore(detailsBox, statusEl.nextSibling);
+    }
     btnImport.disabled = false;
     btnImport.textContent = 'Reessayer';
   }
