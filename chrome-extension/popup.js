@@ -57,17 +57,23 @@ successNew.addEventListener('click', () => {
   extractFromPage();
 });
 
-// Charger le token d'auth depuis le storage, puis extraire
+// Charger le token d'auth depuis le storage. Auth = étape 1 obligatoire :
+// tant que pas connecté, on n'analyse pas la page (l'utilisateur perdrait
+// ses modifications quand on l'oblige à se connecter ensuite).
 chrome.storage.local.get(['authToken', 'authExpires'], result => {
   const now = Math.floor(Date.now() / 1000);
   if (result.authToken && result.authExpires && result.authExpires > now) {
     authToken = result.authToken;
-    // Token déjà valide — charger les marques tout de suite
     loadBrands();
+    extractFromPage();
+    // Rafraichir le token en arriere-plan
+    refreshAuthToken();
+  } else {
+    // Pas de session locale valide → exiger le login AVANT toute analyse
+    showAuthRequired();
+    // Tenter quand même un refresh via cookies (cas back-office déjà ouvert)
+    refreshAuthToken();
   }
-  extractFromPage();
-  // Rafraichir le token en arriere-plan
-  refreshAuthToken();
 });
 
 async function refreshAuthToken() {
@@ -78,16 +84,21 @@ async function refreshAuthToken() {
     });
     if (res.ok) {
       const data = await res.json();
+      const wasUnauthenticated = !authToken;
       authToken = data.access_token;
       chrome.storage.local.set({
         authToken: data.access_token,
         authExpires: data.expires_at,
         authEmail: data.user_email,
       });
-      // Une fois le token disponible, charger les marques
       loadBrands();
+      // Si on vient juste d'avoir un token via les cookies du back-office,
+      // basculer du form login vers l'analyse de la page courante
+      if (wasUnauthenticated) {
+        loginCard.style.display = 'none';
+        extractFromPage();
+      }
     } else if (res.status === 401 && !authToken) {
-      // Pas de session dans ce profil Chrome → guider vers le login
       showAuthRequired();
     }
   } catch (_e) {
@@ -151,7 +162,13 @@ function renderBrandChips() {
 // ============================================================
 
 function extractFromPage() {
+  // Garde : si pas connecté, on bloque l'analyse et on demande le login
+  if (!authToken) {
+    showAuthRequired();
+    return;
+  }
   setStatus('detecting', 'Analyse de la page en cours...');
+  loginCard.style.display = 'none';
   statusEl.style.display = '';
   fieldsContainer.innerHTML = '';
   imagesContainer.style.display = 'none';
@@ -746,7 +763,12 @@ function showAuthRequired() {
   if (actionsBar) actionsBar.style.display = 'none';
   statusEl.style.display = 'none';
   pageTypeEl.style.display = 'none';
-  loginEmail.focus();
+  if (fieldsContainer) fieldsContainer.innerHTML = '';
+  if (brandsRow) brandsRow.style.display = 'none';
+  if (imagesContainer) imagesContainer.style.display = 'none';
+  if (supplierSection) supplierSection.style.display = 'none';
+  if (successModal) successModal.style.display = 'none';
+  if (loginEmail) loginEmail.focus();
 }
 
 async function doSignIn() {

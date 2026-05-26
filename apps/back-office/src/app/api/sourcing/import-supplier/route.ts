@@ -1,9 +1,24 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { createServerClient } from '@verone/utils/supabase/server';
+import type { Database } from '@verone/types';
 
 export const maxDuration = 30;
+
+function createAuthedClient(bearerToken: string) {
+  return createSupabaseClient<Database>(
+    process.env['NEXT_PUBLIC_SUPABASE_URL']!,
+    process.env['NEXT_PUBLIC_SUPABASE_ANON_KEY']!,
+    {
+      global: {
+        headers: { Authorization: `Bearer ${bearerToken}` },
+      },
+      auth: { persistSession: false, autoRefreshToken: false },
+    }
+  );
+}
 
 // ============================================================
 // CORS — autorise le plugin Chrome + back-office
@@ -115,13 +130,15 @@ const ImportSupplierSchema = z.object({
 export async function POST(request: NextRequest) {
   const origin = request.headers.get('origin');
   const cors = corsHeaders(origin);
-  const supabase = await createServerClient();
+  const cookieClient = await createServerClient();
 
-  // --- Auth : cookies OU Bearer token ---
   const authHeader = request.headers.get('Authorization');
-  const authResult = authHeader?.startsWith('Bearer ')
-    ? await supabase.auth.getUser(authHeader.slice(7))
-    : await supabase.auth.getUser();
+  const bearerToken = authHeader?.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : null;
+  const authResult = bearerToken
+    ? await cookieClient.auth.getUser(bearerToken)
+    : await cookieClient.auth.getUser();
   const user = authResult.data.user;
 
   if (!user) {
@@ -130,6 +147,9 @@ export async function POST(request: NextRequest) {
       { status: 401, headers: cors }
     );
   }
+
+  // Client qui transmet le bearer token aux queries (sinon RLS = anon)
+  const supabase = bearerToken ? createAuthedClient(bearerToken) : cookieClient;
 
   // --- Validation Zod ---
   const body: unknown = await request.json();

@@ -1,6 +1,21 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { createServerClient } from '@verone/utils/supabase/server';
+import type { Database } from '@verone/types';
+
+function createAuthedClient(bearerToken: string) {
+  return createSupabaseClient<Database>(
+    process.env['NEXT_PUBLIC_SUPABASE_URL']!,
+    process.env['NEXT_PUBLIC_SUPABASE_ANON_KEY']!,
+    {
+      global: {
+        headers: { Authorization: `Bearer ${bearerToken}` },
+      },
+      auth: { persistSession: false, autoRefreshToken: false },
+    }
+  );
+}
 
 const ALLOWED_ORIGIN_PATTERNS = [
   /^chrome-extension:\/\//,
@@ -28,12 +43,15 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   const origin = request.headers.get('origin');
-  const supabase = await createServerClient();
+  const cookieClient = await createServerClient();
 
   const authHeader = request.headers.get('Authorization');
-  const authResult = authHeader?.startsWith('Bearer ')
-    ? await supabase.auth.getUser(authHeader.slice(7))
-    : await supabase.auth.getUser();
+  const bearerToken = authHeader?.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : null;
+  const authResult = bearerToken
+    ? await cookieClient.auth.getUser(bearerToken)
+    : await cookieClient.auth.getUser();
 
   if (!authResult.data.user) {
     return NextResponse.json(
@@ -41,6 +59,8 @@ export async function GET(request: NextRequest) {
       { status: 401, headers: corsHeaders(origin) }
     );
   }
+
+  const supabase = bearerToken ? createAuthedClient(bearerToken) : cookieClient;
 
   const { data, error } = await supabase
     .from('brands')
