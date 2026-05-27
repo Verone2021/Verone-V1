@@ -1,7 +1,15 @@
 'use client';
 
 import { useInlineEdit, type EditableSection } from '@verone/common/hooks';
-import { Card, CardContent, CardHeader } from '@verone/ui';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+  Card,
+  CardContent,
+  CardHeader,
+} from '@verone/ui';
 import { cn } from '@verone/utils';
 
 import { SourcingProductDetailsSection } from './SourcingProductDetailsSection';
@@ -193,6 +201,41 @@ export function SourcingProductEditCard({
     }
   };
 
+  // ── Aperçus résumés pour les labels d'accordéon ─────────────────────────────
+  // Permet à l'utilisateur de voir l'info clé sans déplier chaque section.
+  const formatPriceShort = (value: number | null | undefined): string =>
+    value != null && value > 0
+      ? value.toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' €'
+      : '—';
+
+  const pricingSummary = `${formatPriceShort(product.cost_price)} HT${
+    product.eco_tax_default && product.eco_tax_default > 0
+      ? ` · éco ${formatPriceShort(product.eco_tax_default)}`
+      : ''
+  }`;
+
+  const supplierSummary = product.supplier?.name ?? 'Non défini';
+
+  const dims = product.dimensions;
+  const dimsLabel =
+    dims && (dims.length || dims.width || dims.height)
+      ? `${dims.length ?? 0}×${dims.width ?? 0}×${dims.height ?? 0} cm`
+      : null;
+  const weightLabel =
+    product.weight && product.weight > 0 ? `${product.weight} kg` : null;
+  const detailsSummary =
+    [product.manufacturer, dimsLabel, weightLabel]
+      .filter(Boolean)
+      .join(' · ') || 'Non renseigné';
+
+  const notesLineCount = product.internal_notes
+    ? product.internal_notes.split('\n').filter(l => l.trim()).length
+    : 0;
+  const notesSummary =
+    notesLineCount > 0
+      ? `${notesLineCount} ligne${notesLineCount > 1 ? 's' : ''}`
+      : 'Aucune note';
+
   return (
     <Card className={cn('border-black', className)}>
       <CardHeader className="pb-4">
@@ -222,65 +265,116 @@ export function SourcingProductEditCard({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
-        <div className="border-t border-gray-200 pt-4">
-          <SourcingProductPricingSection
-            product={product}
-            isEditing={isEditing(pricingSection)}
-            isSaving={isSaving(pricingSection)}
-            editedData={pricingData}
-            error={getError(pricingSection)}
-            hasChanges={hasChanges(pricingSection)}
-            onStartEdit={handleStartPricingEdit}
-            onCancelEdit={() => cancelEdit(pricingSection)}
-            onUpdateData={patch => updateEditedData(pricingSection, patch)}
-            onSave={handleSavePricing}
-          />
-        </div>
+      <CardContent className="pt-0">
+        {/* Accordion : 4 sections empilées, Pricing ouvert par défaut.
+            Refonte 2026-05-27 pour soulager visuellement la fiche
+            (auparavant 4 sections empilées à plat, charge visuelle élevée). */}
+        <Accordion
+          type="multiple"
+          defaultValue={['pricing']}
+          className="w-full"
+        >
+          <AccordionItem value="pricing" className="border-gray-200">
+            <AccordionTrigger className="py-3 hover:no-underline">
+              <div className="flex items-center justify-between w-full pr-2">
+                <span className="font-semibold text-sm">Tarification</span>
+                <span className="text-xs text-gray-500 font-normal">
+                  {pricingSummary}
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <SourcingProductPricingSection
+                product={product}
+                isEditing={isEditing(pricingSection)}
+                isSaving={isSaving(pricingSection)}
+                editedData={pricingData}
+                error={getError(pricingSection)}
+                hasChanges={hasChanges(pricingSection)}
+                onStartEdit={handleStartPricingEdit}
+                onCancelEdit={() => cancelEdit(pricingSection)}
+                onUpdateData={patch => updateEditedData(pricingSection, patch)}
+                onSave={handleSavePricing}
+              />
+            </AccordionContent>
+          </AccordionItem>
 
-        <div className="border-t border-gray-200 pt-4">
-          <SourcingProductSupplierSection
-            product={product}
-            isEditing={isEditing(supplierSection)}
-            isSaving={isSaving(supplierSection)}
-            editedData={supplierData}
-            error={getError(supplierSection)}
-            hasChanges={hasChanges(supplierSection)}
-            onStartEdit={handleStartSupplierEdit}
-            onCancelEdit={() => cancelEdit(supplierSection)}
-            onUpdateData={patch => updateEditedData(supplierSection, patch)}
-            onSave={handleSaveSupplier}
-          />
-        </div>
+          <AccordionItem value="supplier" className="border-gray-200">
+            <AccordionTrigger className="py-3 hover:no-underline">
+              <div className="flex items-center justify-between w-full pr-2">
+                <span className="font-semibold text-sm">Fournisseur</span>
+                <span className="text-xs text-gray-500 font-normal">
+                  {supplierSummary}
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <SourcingProductSupplierSection
+                product={product}
+                isEditing={isEditing(supplierSection)}
+                isSaving={isSaving(supplierSection)}
+                editedData={supplierData}
+                error={getError(supplierSection)}
+                hasChanges={hasChanges(supplierSection)}
+                onStartEdit={handleStartSupplierEdit}
+                onCancelEdit={() => cancelEdit(supplierSection)}
+                onUpdateData={patch => updateEditedData(supplierSection, patch)}
+                onSave={handleSaveSupplier}
+              />
+            </AccordionContent>
+          </AccordionItem>
 
-        <div className="border-t border-gray-200 pt-4">
-          <SourcingProductDetailsSection
-            product={product}
-            isEditing={isEditing(detailsSection)}
-            isSaving={isSaving(detailsSection)}
-            editedData={detailsData}
-            error={getError(detailsSection)}
-            hasChanges={hasChanges(detailsSection)}
-            onStartEdit={handleStartDetailsEdit}
-            onCancelEdit={() => cancelEdit(detailsSection)}
-            onUpdateData={patch => updateEditedData(detailsSection, patch)}
-            onSave={handleSaveDetails}
-          />
-        </div>
+          <AccordionItem value="details" className="border-gray-200">
+            <AccordionTrigger className="py-3 hover:no-underline">
+              <div className="flex items-center justify-between w-full pr-2">
+                <span className="font-semibold text-sm">Détails produit</span>
+                <span className="text-xs text-gray-500 font-normal">
+                  {detailsSummary}
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <SourcingProductDetailsSection
+                product={product}
+                isEditing={isEditing(detailsSection)}
+                isSaving={isSaving(detailsSection)}
+                editedData={detailsData}
+                error={getError(detailsSection)}
+                hasChanges={hasChanges(detailsSection)}
+                onStartEdit={handleStartDetailsEdit}
+                onCancelEdit={() => cancelEdit(detailsSection)}
+                onUpdateData={patch => updateEditedData(detailsSection, patch)}
+                onSave={handleSaveDetails}
+              />
+            </AccordionContent>
+          </AccordionItem>
 
-        <SourcingProductNotesSection
-          product={product}
-          isEditing={isEditing(notesSection)}
-          isSaving={isSaving(notesSection)}
-          editedData={notesData}
-          error={getError(notesSection)}
-          hasChanges={hasChanges(notesSection)}
-          onStartEdit={handleStartNotesEdit}
-          onCancelEdit={() => cancelEdit(notesSection)}
-          onUpdateData={patch => updateEditedData(notesSection, patch)}
-          onSave={handleSaveNotes}
-          formatDate={formatDate}
-        />
+          <AccordionItem value="notes" className="border-gray-200 border-b-0">
+            <AccordionTrigger className="py-3 hover:no-underline">
+              <div className="flex items-center justify-between w-full pr-2">
+                <span className="font-semibold text-sm">Notes internes</span>
+                <span className="text-xs text-gray-500 font-normal">
+                  {notesSummary}
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <SourcingProductNotesSection
+                product={product}
+                isEditing={isEditing(notesSection)}
+                isSaving={isSaving(notesSection)}
+                editedData={notesData}
+                error={getError(notesSection)}
+                hasChanges={hasChanges(notesSection)}
+                onStartEdit={handleStartNotesEdit}
+                onCancelEdit={() => cancelEdit(notesSection)}
+                onUpdateData={patch => updateEditedData(notesSection, patch)}
+                onSave={handleSaveNotes}
+                formatDate={formatDate}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
   );
