@@ -4,7 +4,7 @@ import { Document, Page, View, Text, Image } from '@react-pdf/renderer';
 import type { ValorisationReportData } from '../hooks/use-valorisation-report';
 import {
   styles,
-  reportAccentColors,
+  veroneColors,
   formatCurrency,
   formatDateTime,
   truncate,
@@ -16,26 +16,26 @@ interface ValorisationReportPdfProps {
   report: ValorisationReportData;
 }
 
-// Blue palette for categories
+// Palette Vérone : or → goldDeep → goldLight → pearl pour catégories (8 nuances tonales)
 const CATEGORY_COLORS = [
-  '#1E3A8A',
-  '#1E40AF',
-  '#2563EB',
-  '#3B82F6',
-  '#60A5FA',
-  '#93C5FD',
-  '#BFDBFE',
-  '#9CA3AF',
+  veroneColors.charcoal,
+  veroneColors.gold,
+  veroneColors.goldDeep,
+  veroneColors.goldLight,
+  '#857149', // or muted
+  veroneColors.pearl,
+  '#C4C2BD', // pearl lighter
+  veroneColors.pearlSoft,
 ];
 
-// Blue palette for value distribution bars
+// Distribution par tranche de valeur : dégradé charcoal → or
 const VALUE_DIST_COLORS = [
-  '#BFDBFE',
-  '#93C5FD',
-  '#60A5FA',
-  '#3B82F6',
-  '#2563EB',
-  '#1E40AF',
+  veroneColors.pearlSoft,
+  veroneColors.pearl,
+  veroneColors.goldLight,
+  veroneColors.gold,
+  veroneColors.goldDeep,
+  veroneColors.charcoal,
 ];
 
 export function ValorisationReportPdf({ report }: ValorisationReportPdfProps) {
@@ -72,26 +72,35 @@ export function ValorisationReportPdf({ report }: ValorisationReportPdfProps) {
       {/* Page 1: Metrics + Charts */}
       <Page size="A4" style={styles.page}>
         <View
-          style={[
-            styles.accentBar,
-            { backgroundColor: reportAccentColors.valorisation.primary },
-          ]}
+          style={[styles.accentBar, { backgroundColor: veroneColors.gold }]}
         />
         {/* Header */}
         <View style={styles.headerContainer}>
           {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image */}
           <Image src={VERONE_LOGO_BASE64} style={styles.logoImage} />
-          <Text
-            style={[
-              styles.reportTitle,
-              { color: reportAccentColors.valorisation.dark },
-            ]}
-          >
+          <Text style={[styles.reportTitle, { color: veroneColors.charcoal }]}>
             Rapport Valorisation Stock
           </Text>
-          <Text style={styles.generatedAt}>
-            Genere le {formatDateTime(report.generated_at)}
-          </Text>
+          {report.snapshot_at ? (
+            <Text
+              style={[
+                styles.generatedAt,
+                { color: veroneColors.goldDeep, fontFamily: 'Helvetica-Bold' },
+              ]}
+            >
+              Snapshot au{' '}
+              {new Date(report.snapshot_at).toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+              })}{' '}
+              · Généré le {formatDateTime(report.generated_at)}
+            </Text>
+          ) : (
+            <Text style={styles.generatedAt}>
+              Stock courant · Généré le {formatDateTime(report.generated_at)}
+            </Text>
+          )}
         </View>
         <View style={styles.separator} />
 
@@ -157,17 +166,14 @@ export function ValorisationReportPdf({ report }: ValorisationReportPdfProps) {
       {/* Page 2: Top 20 */}
       <Page size="A4" style={styles.page}>
         <View
-          style={[
-            styles.accentBar,
-            { backgroundColor: reportAccentColors.valorisation.primary },
-          ]}
+          style={[styles.accentBar, { backgroundColor: veroneColors.gold }]}
         />
         <Text style={styles.sectionTitle}>Top 20 - Produits par Valeur</Text>
 
         <View
           style={[
             styles.tableHeader,
-            { backgroundColor: reportAccentColors.valorisation.dark },
+            { backgroundColor: veroneColors.charcoal },
           ]}
         >
           <Text style={[styles.tableHeaderCell, { width: '30%' }]}>

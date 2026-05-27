@@ -48,6 +48,10 @@ export interface ValorisationReportData {
   top_20_by_value: ProductWithValuation[];
   value_distribution: ValueRange[];
   generated_at: string;
+  /** Date de snapshot du stock (ISO). Null = stock courant.
+   * Quand fourni, le stock_real est reconstruit historiquement via les
+   * stock_movements postérieurs à cette date. */
+  snapshot_at: string | null;
 }
 
 const VALUE_RANGES = [
@@ -66,161 +70,209 @@ export function useValorisationReport() {
   const { toast } = useToast();
   const supabase = createClient();
 
-  const generateReport = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const generateReport = useCallback(
+    /**
+     * @param snapshotAt - Date de snapshot du stock. Null = stock courant.
+     *   Quand fourni, le stock_real de chaque produit est reconstruit
+     *   historiquement via stock_real_now - SUM(quantity_change WHERE
+     *   performed_at > snapshotAt). Utile pour snapshots comptables au 31/12.
+     */
+    async (snapshotAt: Date | null = null) => {
+      setLoading(true);
+      setError(null);
 
-    try {
-      // Query: produits non archives avec stock > 0
-      const { data: products, error: productsError } = await supabase
-        .from('products')
-        .select(
-          'id, name, sku, stock_real, cost_price, cost_net_avg, subcategory_id'
-        )
-        .is('archived_at', null)
-        .gt('stock_real', 0);
+      try {
+        // Query: produits non archivés (on prend tous les produits, on filtrera
+        // le stock>0 APRES reconstruction historique si snapshotAt est défini).
+        const productsQuery = supabase
+          .from('products')
+          .select(
+            'id, name, sku, stock_real, cost_price, cost_net_avg, subcategory_id'
+          )
+          .is('archived_at', null);
 
-      if (productsError) throw productsError;
+        const { data: products, error: productsError } = snapshotAt
+          ? await productsQuery
+          : await productsQuery.gt('stock_real', 0);
 
-      // Query: subcategories pour les noms
-      const subcategoryIds = [
-        ...new Set(
-          products
-            .map(p => p.subcategory_id)
-            .filter((id): id is string => id != null)
-        ),
-      ];
+        if (productsError) throw productsError;
 
-      const subcategoryMap = new Map<string, string>();
-      if (subcategoryIds.length > 0) {
-        const { data: subcategories } = await supabase
-          .from('subcategories')
-          .select('id, name')
-          .in('id', subcategoryIds);
+        // Si snapshot historique demandé : reconstruire le stock à la date donnée
+        // pour chaque produit. stock_at_snapshot = stock_real_now - SUM(mvts > snapshot)
+        const stockOverrideMap = new Map<string, number>();
+        if (snapshotAt) {
+          const { data: movements, error: mvtError } = await supabase
+            .from('stock_movements')
+            .select('product_id, quantity_change')
+            .gt('performed_at', snapshotAt.toISOString());
 
-        if (subcategories) {
-          subcategories.forEach(sc => {
-            subcategoryMap.set(sc.id, sc.name);
+          if (mvtError) throw mvtError;
+
+          const deltaPerProduct = new Map<string, number>();
+          (movements ?? []).forEach(m => {
+            const current = deltaPerProduct.get(m.product_id) ?? 0;
+            deltaPerProduct.set(
+              m.product_id,
+              current + (m.quantity_change ?? 0)
+            );
+          });
+
+          products.forEach(p => {
+            const delta = deltaPerProduct.get(p.id) ?? 0;
+            const stockAtSnapshot = (p.stock_real ?? 0) - delta;
+            stockOverrideMap.set(p.id, Math.max(0, stockAtSnapshot));
           });
         }
-      }
 
-      // Calcul valorisation par produit
-      const productsWithValuation: ProductWithValuation[] = products.map(p => {
-        const stockReal = p.stock_real ?? 0;
-        const costPrice = Number(p.cost_price) || 0;
-        const costNetAvg =
-          p.cost_net_avg != null ? Number(p.cost_net_avg) : null;
-        const unitCost = costNetAvg ?? costPrice;
+        // Query: subcategories pour les noms
+        const subcategoryIds = [
+          ...new Set(
+            products
+              .map(p => p.subcategory_id)
+              .filter((id): id is string => id != null)
+          ),
+        ];
 
-        return {
-          id: p.id,
-          name: p.name || 'Sans nom',
-          sku: p.sku || '',
-          stock_real: stockReal,
-          cost_price: costPrice,
-          cost_net_avg: costNetAvg,
-          unit_cost: unitCost,
-          value: stockReal * unitCost,
-          value_cost_price: stockReal * costPrice,
-          subcategory_name: p.subcategory_id
-            ? (subcategoryMap.get(p.subcategory_id) ?? 'Non categorise')
-            : 'Non categorise',
-        };
-      });
+        const subcategoryMap = new Map<string, string>();
+        if (subcategoryIds.length > 0) {
+          const { data: subcategories } = await supabase
+            .from('subcategories')
+            .select('id, name')
+            .in('id', subcategoryIds);
 
-      // KPIs globaux
-      const totalValueCostNet = productsWithValuation.reduce(
-        (sum, p) => sum + p.value,
-        0
-      );
-      const totalValueCostPrice = productsWithValuation.reduce(
-        (sum, p) => sum + p.value_cost_price,
-        0
-      );
-      const totalProducts = productsWithValuation.length;
-      const averageUnitCost =
-        totalProducts > 0 ? totalValueCostNet / totalProducts : 0;
+          if (subcategories) {
+            subcategories.forEach(sc => {
+              subcategoryMap.set(sc.id, sc.name);
+            });
+          }
+        }
 
-      // Repartition par categorie
-      const categoryMap = new Map<
-        string,
-        { count: number; quantity: number; value: number }
-      >();
-      productsWithValuation.forEach(p => {
-        const existing = categoryMap.get(p.subcategory_name) ?? {
-          count: 0,
-          quantity: 0,
-          value: 0,
-        };
-        categoryMap.set(p.subcategory_name, {
-          count: existing.count + 1,
-          quantity: existing.quantity + p.stock_real,
-          value: existing.value + p.value,
-        });
-      });
+        // Calcul valorisation par produit (avec stock historique si snapshotAt)
+        const productsWithValuation: ProductWithValuation[] = products
+          .map(p => {
+            const stockReal = snapshotAt
+              ? (stockOverrideMap.get(p.id) ?? 0)
+              : (p.stock_real ?? 0);
+            const costPrice = Number(p.cost_price) || 0;
+            const costNetAvg =
+              p.cost_net_avg != null ? Number(p.cost_net_avg) : null;
+            const unitCost = costNetAvg ?? costPrice;
 
-      const byCategory: CategoryData[] = [...categoryMap.entries()]
-        .map(([name, data]) => ({
-          name,
-          count: data.count,
-          quantity: data.quantity,
-          value: data.value,
-          percentage:
-            totalValueCostNet > 0 ? (data.value / totalValueCostNet) * 100 : 0,
-        }))
-        .sort((a, b) => b.value - a.value);
+            return {
+              id: p.id,
+              name: p.name || 'Sans nom',
+              sku: p.sku || '',
+              stock_real: stockReal,
+              cost_price: costPrice,
+              cost_net_avg: costNetAvg,
+              unit_cost: unitCost,
+              value: stockReal * unitCost,
+              value_cost_price: stockReal * costPrice,
+              subcategory_name: p.subcategory_id
+                ? (subcategoryMap.get(p.subcategory_id) ?? 'Non categorise')
+                : 'Non categorise',
+            };
+          })
+          // Pour le mode snapshot, filtrer les produits avec stock 0 à la date donnée
+          .filter(p => p.stock_real > 0);
 
-      // Top 20 produits par valeur
-      const top20 = [...productsWithValuation]
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 20);
-
-      // Distribution par tranche de valeur
-      const valueDistribution: ValueRange[] = VALUE_RANGES.map(range => {
-        const inRange = productsWithValuation.filter(
-          p => p.value >= range.min && p.value < range.max
+        // KPIs globaux
+        const totalValueCostNet = productsWithValuation.reduce(
+          (sum, p) => sum + p.value,
+          0
         );
-        return {
-          label: range.label,
-          min: range.min,
-          max: range.max,
-          count: inRange.length,
-          value: inRange.reduce((sum, p) => sum + p.value, 0),
+        const totalValueCostPrice = productsWithValuation.reduce(
+          (sum, p) => sum + p.value_cost_price,
+          0
+        );
+        const totalProducts = productsWithValuation.length;
+        const averageUnitCost =
+          totalProducts > 0 ? totalValueCostNet / totalProducts : 0;
+
+        // Repartition par categorie
+        const categoryMap = new Map<
+          string,
+          { count: number; quantity: number; value: number }
+        >();
+        productsWithValuation.forEach(p => {
+          const existing = categoryMap.get(p.subcategory_name) ?? {
+            count: 0,
+            quantity: 0,
+            value: 0,
+          };
+          categoryMap.set(p.subcategory_name, {
+            count: existing.count + 1,
+            quantity: existing.quantity + p.stock_real,
+            value: existing.value + p.value,
+          });
+        });
+
+        const byCategory: CategoryData[] = [...categoryMap.entries()]
+          .map(([name, data]) => ({
+            name,
+            count: data.count,
+            quantity: data.quantity,
+            value: data.value,
+            percentage:
+              totalValueCostNet > 0
+                ? (data.value / totalValueCostNet) * 100
+                : 0,
+          }))
+          .sort((a, b) => b.value - a.value);
+
+        // Top 20 produits par valeur
+        const top20 = [...productsWithValuation]
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 20);
+
+        // Distribution par tranche de valeur
+        const valueDistribution: ValueRange[] = VALUE_RANGES.map(range => {
+          const inRange = productsWithValuation.filter(
+            p => p.value >= range.min && p.value < range.max
+          );
+          return {
+            label: range.label,
+            min: range.min,
+            max: range.max,
+            count: inRange.length,
+            value: inRange.reduce((sum, p) => sum + p.value, 0),
+          };
+        });
+
+        const reportData: ValorisationReportData = {
+          summary: {
+            total_value_cost_net: totalValueCostNet,
+            total_value_cost_price: totalValueCostPrice,
+            total_products: totalProducts,
+            average_unit_cost: averageUnitCost,
+          },
+          by_category: byCategory,
+          top_20_by_value: top20,
+          value_distribution: valueDistribution,
+          generated_at: new Date().toISOString(),
+          snapshot_at: snapshotAt ? snapshotAt.toISOString() : null,
         };
-      });
 
-      const reportData: ValorisationReportData = {
-        summary: {
-          total_value_cost_net: totalValueCostNet,
-          total_value_cost_price: totalValueCostPrice,
-          total_products: totalProducts,
-          average_unit_cost: averageUnitCost,
-        },
-        by_category: byCategory,
-        top_20_by_value: top20,
-        value_distribution: valueDistribution,
-        generated_at: new Date().toISOString(),
-      };
-
-      setReport(reportData);
-      return reportData;
-    } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : 'Erreur lors de la generation du rapport valorisation';
-      setError(errorMessage);
-      toast({
-        title: 'Erreur',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase, toast]);
+        setReport(reportData);
+        return reportData;
+      } catch (err: unknown) {
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : 'Erreur lors de la generation du rapport valorisation';
+        setError(errorMessage);
+        toast({
+          title: 'Erreur',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [supabase, toast]
+  );
 
   return {
     report,

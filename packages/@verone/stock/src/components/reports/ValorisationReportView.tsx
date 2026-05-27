@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
+import { Input, Label } from '@verone/ui';
 import { Skeleton } from '@verone/ui';
 import {
   Table,
@@ -31,17 +32,39 @@ import {
   FileText,
   Download,
   BarChart3,
+  Calendar,
+  RotateCcw,
 } from 'lucide-react';
 
 export function ValorisationReportView() {
   const { report, loading, error, generateReport } = useValorisationReport();
   const [showPdfPreview, setShowPdfPreview] = useState(false);
+  // Snapshot date (vide = stock courant). Format yyyy-MM-dd pour input type=date.
+  const [snapshotDate, setSnapshotDate] = useState<string>('');
 
   useEffect(() => {
-    void generateReport().catch(err => {
+    // Premier chargement : stock courant
+    void generateReport(null).catch(err => {
       console.error('[ValorisationReportView] generateReport failed:', err);
     });
   }, [generateReport]);
+
+  const handleApplySnapshot = () => {
+    const snapshot = snapshotDate ? new Date(snapshotDate) : null;
+    void generateReport(snapshot).catch(err => {
+      console.error(
+        '[ValorisationReportView] snapshot regenerate failed:',
+        err
+      );
+    });
+  };
+
+  const handleResetSnapshot = () => {
+    setSnapshotDate('');
+    void generateReport(null).catch(err => {
+      console.error('[ValorisationReportView] reset regenerate failed:', err);
+    });
+  };
 
   const handleExportPDF = () => {
     if (!report) return;
@@ -79,29 +102,89 @@ export function ValorisationReportView() {
 
   return (
     <div className="space-y-6">
-      {/* Barre d'actions Export */}
-      <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <div className="flex items-center gap-2">
-          <Download className="h-5 w-5 text-gray-600" />
-          <div>
-            <p className="text-sm font-semibold text-gray-900">
-              Exporter le rapport
-            </p>
-            <p className="text-xs text-gray-600">
-              Telecharger dans le format de votre choix
+      {/* Barre d'actions : snapshot date + export */}
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+        {/* Snapshot date */}
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex-1 min-w-[220px]">
+            <Label
+              htmlFor="snapshot-date"
+              className="text-xs flex items-center gap-1 mb-1"
+            >
+              <Calendar className="h-3 w-3" />
+              Snapshot stock à une date (usage comptable)
+            </Label>
+            <Input
+              id="snapshot-date"
+              type="date"
+              value={snapshotDate}
+              max={new Date().toISOString().slice(0, 10)}
+              onChange={e => setSnapshotDate(e.target.value)}
+              className="h-9"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Vide = stock courant. Sinon, reconstruit le stock à cette date via
+              les mouvements postérieurs.
             </p>
           </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleApplySnapshot}
+              disabled={loading}
+              variant="default"
+              size="sm"
+              className="h-9"
+            >
+              {loading ? 'Génération...' : 'Générer'}
+            </Button>
+            {report?.snapshot_at && (
+              <Button
+                onClick={handleResetSnapshot}
+                disabled={loading}
+                variant="outline"
+                size="sm"
+                className="h-9"
+              >
+                <RotateCcw className="h-4 w-4 mr-1" />
+                Stock courant
+              </Button>
+            )}
+          </div>
         </div>
-        <Button
-          onClick={handleExportPDF}
-          disabled={!report || loading}
-          variant="outline"
-          size="sm"
-          className="h-9"
-        >
-          <FileText className="h-4 w-4 mr-2" />
-          {loading ? 'Chargement...' : 'Voir PDF'}
-        </Button>
+
+        {/* Snapshot active info */}
+        {report?.snapshot_at && (
+          <div className="text-xs bg-amber-50 border border-amber-200 rounded p-2 text-amber-900">
+            <strong>Mode snapshot :</strong> Valorisation au{' '}
+            {new Date(report.snapshot_at).toLocaleDateString('fr-FR')} (stock
+            reconstruit historiquement).
+          </div>
+        )}
+
+        {/* Export */}
+        <div className="flex items-center justify-between border-t border-gray-200 pt-3">
+          <div className="flex items-center gap-2">
+            <Download className="h-5 w-5 text-gray-600" />
+            <div>
+              <p className="text-sm font-semibold text-gray-900">
+                Exporter le rapport
+              </p>
+              <p className="text-xs text-gray-600">
+                Télécharger en PDF (snapshot inclus si activé)
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={handleExportPDF}
+            disabled={!report || loading}
+            variant="outline"
+            size="sm"
+            className="h-9"
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            {loading ? 'Chargement...' : 'Voir PDF'}
+          </Button>
+        </div>
       </div>
 
       {/* 4 KPIs */}
