@@ -201,6 +201,31 @@ export function FournisseursFilters({
             </Select>
           </div>
 
+          {/* Type (standard / sample) */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
+              Type :
+            </span>
+            <Select
+              value={advancedFilters.poType}
+              onValueChange={value =>
+                setAdvancedFilters(prev => ({
+                  ...prev,
+                  poType: value as PurchaseAdvancedFilters['poType'],
+                }))
+              }
+            >
+              <SelectTrigger className="w-[140px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="standard">Réappro</SelectItem>
+                <SelectItem value="sample">Échantillon</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Rapprochement */}
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
