@@ -19,7 +19,9 @@ import { useToast } from '@verone/common/hooks';
 import { ABCAnalysisView } from '../../components/reports/ABCAnalysisView';
 import { AgingReportView } from '../../components/reports/AgingReportView';
 import { HistoriqueReportView } from '../../components/reports/HistoriqueReportView';
+import { NiveauxReportView } from '../../components/reports/NiveauxReportView';
 import { RotationReportView } from '../../components/reports/RotationReportView';
+import { RuptureReportView } from '../../components/reports/RuptureReportView';
 import { ValorisationReportView } from '../../components/reports/ValorisationReportView';
 
 interface ReportConfigModalProps {
@@ -113,6 +115,22 @@ export function ReportConfigModal({
       case 'rotation':
         return (
           <RotationReportView
+            key={reportKey}
+            dateFrom={config.dateFrom}
+            dateTo={config.dateTo}
+          />
+        );
+      case 'niveaux':
+        return (
+          <NiveauxReportView
+            key={reportKey}
+            dateFrom={config.dateFrom}
+            dateTo={config.dateTo}
+          />
+        );
+      case 'out-of-stock':
+        return (
+          <RuptureReportView
             key={reportKey}
             dateFrom={config.dateFrom}
             dateTo={config.dateTo}
