@@ -41,6 +41,10 @@ export interface PurchaseAdvancedFilters {
   statuses: string[];
   /** ID fournisseur spécifique */
   supplierId: string | null;
+  /** Type de commande fournisseur (Single Table Inheritance po_type).
+   * 'all' = standard + échantillons, 'standard' = réapprovisionnement,
+   * 'sample' = commandes d'échantillon issues du sourcing. */
+  poType: 'all' | 'standard' | 'sample';
   /** Année spécifique (null = toutes les années) */
   filterYear: number | null;
   /** Période rapide */
@@ -56,6 +60,7 @@ export interface PurchaseAdvancedFilters {
 export const DEFAULT_PURCHASE_FILTERS: PurchaseAdvancedFilters = {
   statuses: [],
   supplierId: null,
+  poType: 'all',
   filterYear: null,
   period: 'all',
   amountMin: null,

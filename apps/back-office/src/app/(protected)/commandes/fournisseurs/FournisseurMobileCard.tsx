@@ -45,7 +45,8 @@ export function FournisseurMobileCard({
   onLinkTransaction,
 }: FournisseurMobileCardProps) {
   const items = order.purchase_order_items ?? [];
-  const hasSamples = items.some(item => item.sample_type);
+  const isSampleOrder =
+    order.po_type === 'sample' || items.some(item => item.sample_type);
 
   return (
     <div className="rounded-lg border bg-card p-4 space-y-3">
@@ -65,8 +66,11 @@ export function FournisseurMobileCard({
           <Badge className={cn('text-xs', statusColors[order.status])}>
             {statusLabels[order.status]}
           </Badge>
-          {hasSamples && (
-            <Badge variant="secondary" className="text-xs">
+          {isSampleOrder && (
+            <Badge
+              className="text-xs bg-[#C9A961] text-white"
+              title="Commande échantillon issue du workflow sourcing"
+            >
               Échantillon
             </Badge>
           )}
