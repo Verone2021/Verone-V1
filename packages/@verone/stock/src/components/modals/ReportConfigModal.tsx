@@ -19,6 +19,7 @@ import { useToast } from '@verone/common/hooks';
 import { ABCAnalysisView } from '../../components/reports/ABCAnalysisView';
 import { AgingReportView } from '../../components/reports/AgingReportView';
 import { HistoriqueReportView } from '../../components/reports/HistoriqueReportView';
+import { RotationReportView } from '../../components/reports/RotationReportView';
 import { ValorisationReportView } from '../../components/reports/ValorisationReportView';
 
 interface ReportConfigModalProps {
@@ -109,6 +110,14 @@ export function ReportConfigModal({
         );
       case 'valorisation':
         return <ValorisationReportView key={reportKey} />;
+      case 'rotation':
+        return (
+          <RotationReportView
+            key={reportKey}
+            dateFrom={config.dateFrom}
+            dateTo={config.dateTo}
+          />
+        );
       case 'mouvements':
         return (
           <HistoriqueReportView

@@ -67,7 +67,7 @@ const AVAILABLE_REPORTS = [
       'Analyser turnover ratio et identifier produits à faible rotation',
     icon: RotateCw,
     priority: 'high',
-    status: 'coming_soon',
+    status: 'available',
     metrics: ['Turnover Ratio', 'Jours moyen rotation', 'Classification FSN'],
     visualizations: ['Graphique rotation', 'Matrice ABC/FSN'],
     filters: ['Période', 'Catégorie'],
