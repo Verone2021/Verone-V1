@@ -168,6 +168,7 @@ Détails dans les règles citées. Résumés courts ici :
 | Zéro donnée fantôme       | `.claude/rules/no-phantom-data.md`             |
 | Autonomie externe         | `.claude/rules/agent-autonomy-external.md`     |
 | Lifecycle mémoires/règles | `.claude/rules/memory-lifecycle.md`            |
+| Modélisation DB           | `.claude/rules/database-modeling-patterns.md`  |
 | Index config agent        | `.claude/INDEX.md`                             |
 | Decisions structurelles   | `.claude/DECISIONS.md` (ADRs)                  |
 
