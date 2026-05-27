@@ -2,6 +2,8 @@ export { AgingReportPdf } from './AgingReportPdf';
 export { ValorisationReportPdf } from './ValorisationReportPdf';
 export { HistoriqueReportPdf } from './HistoriqueReportPdf';
 export { RotationReportPdf } from './RotationReportPdf';
+export { RuptureReportPdf } from './RuptureReportPdf';
+export { NiveauxReportPdf } from './NiveauxReportPdf';
 export {
   colors,
   reportAccentColors,
