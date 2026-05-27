@@ -10,9 +10,9 @@ import {
 } from '@react-pdf/renderer';
 
 import {
-  colors,
-  styles as sharedStyles,
-  formatCurrency,
+  veroneColors,
+  veroneStyles,
+  formatVeronePrice,
   formatDate,
   VERONE_LOGO_BASE64,
 } from '@verone/finance/pdf-templates';
@@ -21,236 +21,206 @@ import type { ClientConsultation } from '../hooks/use-consultations';
 import type { ConsultationItem } from '../hooks/use-consultations';
 import type { ConsultationImage } from '../hooks/use-consultation-images';
 
+// ── Client info shape (mirror of resolveClientInfo) ──────────────────
+export interface ConsultationPdfClientInfo {
+  legalName: string | null;
+  tradeName: string | null;
+  displayName: string;
+  email: string | null;
+  phone: string | null;
+  addressLine1: string | null;
+  postalCode: string | null;
+  city: string | null;
+  country: string | null;
+  siret: string | null;
+  vatNumber: string | null;
+}
+
 // ── Local styles ───────────────────────────────────────────────────
 const s = StyleSheet.create({
-  accentBar: {
-    height: 3,
-    backgroundColor: colors.gray900,
-    marginBottom: 10,
-  },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 6,
+    marginBottom: 18,
+  },
+  logoBlock: {
+    flexDirection: 'column',
   },
   logoImage: {
-    height: 28,
+    height: 32,
     objectFit: 'contain' as const,
-  },
-  infoSection: {
-    marginBottom: 8,
-  },
-  infoSectionTitle: {
-    fontSize: 8,
-    fontFamily: 'Helvetica-Bold',
-    color: colors.gray700,
     marginBottom: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
-  infoRow: {
+  metaBlock: {
+    alignItems: 'flex-end',
+  },
+  docNumber: {
+    fontSize: 8,
+    color: veroneColors.pearl,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1.5,
+  },
+  docDate: {
+    fontSize: 8,
+    color: veroneColors.charcoal,
+    marginTop: 2,
+  },
+  // Two-column header (Vérone | Client)
+  partyRow: {
     flexDirection: 'row',
-    paddingVertical: 2,
-    borderBottomWidth: 0.5,
-    borderBottomColor: colors.gray100,
+    gap: 24,
+    marginBottom: 18,
   },
-  infoLabel: {
-    width: '30%',
-    fontSize: 7,
-    color: colors.gray500,
-  },
-  infoValue: {
-    width: '70%',
-    fontSize: 7,
-    color: colors.gray900,
-  },
-  twoColGrid: {
-    flexDirection: 'row',
-    gap: 20,
-  },
-  twoColItem: {
+  partyCol: {
     flex: 1,
   },
+  partyTitle: {
+    fontSize: 6.5,
+    fontFamily: 'Helvetica-Bold',
+    color: veroneColors.pearl,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1.5,
+    marginBottom: 6,
+  },
+  partyLine: {
+    fontSize: 9,
+    color: veroneColors.charcoal,
+    lineHeight: 1.5,
+  },
+  partyLineBold: {
+    fontSize: 9.5,
+    fontFamily: 'Helvetica-Bold',
+    color: veroneColors.charcoal,
+    marginBottom: 2,
+  },
+  // Description / notes
   descriptionBox: {
-    padding: 8,
-    backgroundColor: colors.gray50,
-    borderRadius: 4,
-    marginTop: 3,
+    padding: 10,
+    backgroundColor: '#FBFAF7',
+    borderLeftWidth: 2,
+    borderLeftColor: veroneColors.gold,
+    paddingLeft: 12,
+    marginTop: 4,
   },
-  notesBox: {
-    padding: 8,
-    backgroundColor: colors.gray50,
-    borderRadius: 4,
-    marginTop: 3,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.gray400,
+  descriptionText: {
+    fontSize: 8.5,
+    color: veroneColors.charcoal,
+    lineHeight: 1.55,
   },
-  emptyText: {
-    fontSize: 7,
-    color: colors.gray500,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    paddingVertical: 12,
-  },
-  // Product card layout
+  // Product cards
   productCard: {
     flexDirection: 'row',
-    borderWidth: 0.5,
-    borderColor: colors.gray200,
-    borderRadius: 4,
-    marginBottom: 6,
-    overflow: 'hidden',
-  },
-  productCardAlt: {
-    flexDirection: 'row',
-    borderWidth: 0.5,
-    borderColor: colors.gray200,
-    borderRadius: 4,
-    marginBottom: 6,
-    overflow: 'hidden',
-    backgroundColor: colors.gray50,
-  },
-  productImageContainer: {
-    width: 80,
-    height: 80,
-    backgroundColor: colors.gray100,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderBottomWidth: 0.5,
+    borderBottomColor: veroneColors.pearlSoft,
+    paddingVertical: 8,
   },
   productImage: {
-    width: 80,
-    height: 80,
+    width: 72,
+    height: 72,
     objectFit: 'cover',
+    marginRight: 12,
   },
   productImagePlaceholder: {
-    width: 80,
-    height: 80,
-    backgroundColor: colors.gray100,
+    width: 72,
+    height: 72,
+    backgroundColor: veroneColors.pearlSoft,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 12,
   },
   productImagePlaceholderText: {
-    fontSize: 7,
-    color: colors.gray400,
-    textAlign: 'center',
+    fontSize: 6.5,
+    color: veroneColors.pearl,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.8,
   },
   productDetails: {
     flex: 1,
-    padding: 8,
     justifyContent: 'center',
   },
   productName: {
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: 'Helvetica-Bold',
-    color: colors.gray900,
+    color: veroneColors.charcoal,
     marginBottom: 2,
   },
   productSku: {
-    fontSize: 7,
-    color: colors.gray500,
+    fontSize: 7.5,
+    color: veroneColors.pearl,
     marginBottom: 6,
   },
-  productMeta: {
+  productMetaRow: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 18,
   },
   productMetaItem: {
     flexDirection: 'column',
   },
   productMetaLabel: {
     fontSize: 6,
-    color: colors.gray400,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    color: veroneColors.pearl,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.6,
     marginBottom: 1,
   },
   productMetaValue: {
-    fontSize: 8,
+    fontSize: 9,
     fontFamily: 'Helvetica-Bold',
-    color: colors.gray900,
+    color: veroneColors.charcoal,
+  },
+  productMetaValueGold: {
+    fontSize: 9.5,
+    fontFamily: 'Helvetica-Bold',
+    color: veroneColors.gold,
   },
   productNotes: {
-    fontSize: 7,
-    color: colors.gray500,
+    fontSize: 7.5,
+    color: veroneColors.pearl,
+    marginTop: 6,
     fontStyle: 'italic',
-    marginTop: 4,
   },
   freeBadge: {
     fontSize: 6,
-    color: colors.green800,
-    backgroundColor: colors.green100,
-    paddingHorizontal: 4,
+    color: veroneColors.charcoal,
+    backgroundColor: veroneColors.gold,
+    paddingHorizontal: 5,
     paddingVertical: 1,
-    borderRadius: 2,
     alignSelf: 'flex-start',
     marginTop: 4,
-  },
-  // Total footer
-  totalBar: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: colors.gray900,
-    borderRadius: 4,
-    marginTop: 4,
-  },
-  totalLabel: {
-    fontSize: 10,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.8,
     fontFamily: 'Helvetica-Bold',
-    color: colors.white,
-    marginRight: 20,
   },
-  totalValue: {
-    fontSize: 12,
-    fontFamily: 'Helvetica-Bold',
-    color: colors.white,
+  emptyText: {
+    fontSize: 8,
+    color: veroneColors.pearl,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingVertical: 16,
+  },
+  // Conditions
+  conditionsBlock: {
+    marginTop: 14,
+    padding: 10,
+    backgroundColor: '#FBFAF7',
+  },
+  conditionsLine: {
+    fontSize: 7.5,
+    color: veroneColors.charcoal,
+    lineHeight: 1.5,
+    marginBottom: 2,
   },
 });
 
 // ── Helpers ────────────────────────────────────────────────────────
-function getStatusLabel(status: string): string {
-  switch (status) {
-    case 'en_attente':
-      return 'En attente';
-    case 'en_cours':
-      return 'En cours';
-    case 'terminee':
-      return 'Terminee';
-    case 'annulee':
-      return 'Annulee';
-    default:
-      return status;
-  }
-}
-
-function getPriorityLabel(level: number): string {
-  switch (level) {
-    case 5:
-      return 'Tres urgent';
-    case 4:
-      return 'Urgent';
-    case 3:
-      return 'Normal+';
-    case 2:
-      return 'Normal';
-    case 1:
-      return 'Faible';
-    default:
-      return 'Normal';
-  }
-}
-
-// ── Sub-components ────────────────────────────────────────────────
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={s.infoRow}>
-      <Text style={s.infoLabel}>{label}</Text>
-      <Text style={s.infoValue}>{value}</Text>
-    </View>
-  );
+function formatAddress(info: ConsultationPdfClientInfo): string[] {
+  const lines: string[] = [];
+  if (info.addressLine1) lines.push(info.addressLine1);
+  const cityLine = [info.postalCode, info.city].filter(Boolean).join(' ');
+  if (cityLine) lines.push(cityLine);
+  if (info.country && info.country !== 'FR') lines.push(info.country);
+  return lines;
 }
 
 // ── Props ──────────────────────────────────────────────────────────
@@ -260,6 +230,7 @@ export interface ConsultationSummaryPdfProps {
   images: ConsultationImage[];
   totalHT: number;
   clientName: string;
+  clientInfo?: ConsultationPdfClientInfo | null;
   preloadedImages?: {
     consultationImages: Array<{ id: string; base64: string }>;
     productImages: Record<string, string>;
@@ -273,6 +244,7 @@ export function ConsultationSummaryPdf({
   images: _images,
   totalHT,
   clientName,
+  clientInfo,
   preloadedImages,
 }: ConsultationSummaryPdfProps) {
   const now = new Date().toLocaleDateString('fr-FR', {
@@ -281,115 +253,131 @@ export function ConsultationSummaryPdf({
     year: 'numeric',
   });
 
-  // Use preloaded base64 product images (much faster for PDF renderer)
+  const proposalRef = `PROP-${consultation.id.slice(0, 8).toUpperCase()}`;
   const productBase64 = preloadedImages?.productImages ?? {};
+  const tvaRate =
+    consultation.tva_rate != null ? Number(consultation.tva_rate) : 0;
+  const tvaAmount = (totalHT * tvaRate) / 100;
+  const totalTTC = totalHT + tvaAmount;
+
+  // Fallback minimal si pas de clientInfo pré-chargé
+  const info: ConsultationPdfClientInfo = clientInfo ?? {
+    legalName: null,
+    tradeName: clientName,
+    displayName: clientName,
+    email: consultation.client_email ?? null,
+    phone: consultation.client_phone ?? null,
+    addressLine1: null,
+    postalCode: null,
+    city: null,
+    country: null,
+    siret: null,
+    vatNumber: null,
+  };
+
+  const addressLines = formatAddress(info);
 
   return (
     <Document>
-      <Page size="A4" style={sharedStyles.page}>
-        {/* Accent bar */}
-        <View style={s.accentBar} />
+      <Page size="A4" style={veroneStyles.page}>
+        {/* Accent bar Vérone (or) */}
+        <View style={veroneStyles.accentBarGold} />
 
-        {/* Header: Logo + Title */}
+        {/* Header : logo + numéro proposition */}
         <View style={s.headerRow}>
-          {/* eslint-disable-next-line jsx-a11y/alt-text */}
-          <Image src={VERONE_LOGO_BASE64} style={s.logoImage} />
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 14, fontFamily: 'Helvetica-Bold' }}>
-              Resume Consultation
+          <View style={s.logoBlock}>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
+            <Image src={VERONE_LOGO_BASE64} style={s.logoImage} />
+            <Text style={s.docNumber}>Proposition commerciale</Text>
+          </View>
+          <View style={s.metaBlock}>
+            <Text style={s.docNumber}>Référence</Text>
+            <Text style={[s.docDate, { fontFamily: 'Helvetica-Bold' }]}>
+              {proposalRef}
             </Text>
-            <Text style={{ fontSize: 7, color: colors.gray500, marginTop: 2 }}>
-              Genere le {now}
-            </Text>
+            <Text style={[s.docDate, { marginTop: 6 }]}>Émis le {now}</Text>
           </View>
         </View>
 
-        <View style={sharedStyles.separator} />
+        <Text style={veroneStyles.title}>Proposition commerciale</Text>
+        <Text style={veroneStyles.subtitle}>
+          Sélection éditoriale pour {clientName}
+        </Text>
 
-        {/* Two-column layout: Client + Consultation */}
-        <View style={s.twoColGrid}>
-          {/* Client info */}
-          <View style={s.twoColItem}>
-            <Text style={s.infoSectionTitle}>Client</Text>
-            <InfoRow label="Nom" value={clientName} />
-            <InfoRow label="Email" value={consultation.client_email ?? '-'} />
-            <InfoRow
-              label="Telephone"
-              value={consultation.client_phone ?? '-'}
-            />
-          </View>
+        <View style={veroneStyles.ruleGold} />
 
-          {/* Consultation info */}
-          <View style={s.twoColItem}>
-            <Text style={s.infoSectionTitle}>Consultation</Text>
-            <InfoRow
-              label="Statut"
-              value={getStatusLabel(consultation.status)}
-            />
-            <InfoRow
-              label="Priorite"
-              value={getPriorityLabel(consultation.priority_level)}
-            />
-            <InfoRow
-              label="Date creation"
-              value={formatDate(consultation.created_at)}
-            />
-            <InfoRow
-              label="Budget max."
-              value={
-                consultation.tarif_maximum
-                  ? formatCurrency(consultation.tarif_maximum, 2)
-                  : '-'
-              }
-            />
-          </View>
-        </View>
-
-        {/* Description */}
-        <View style={s.infoSection}>
-          <Text style={[s.infoSectionTitle, { marginTop: 8 }]}>
-            Description
-          </Text>
-          <View style={s.descriptionBox}>
-            <Text style={{ fontSize: 7, lineHeight: 1.5 }}>
-              {consultation.descriptif ?? 'Aucune description'}
+        {/* Two-column : Émetteur Vérone | Destinataire client */}
+        <View style={s.partyRow}>
+          <View style={s.partyCol}>
+            <Text style={s.partyTitle}>Émetteur</Text>
+            <Text style={s.partyLineBold}>Vérone</Text>
+            <Text style={s.partyLine}>Concept store</Text>
+            <Text style={s.partyLine}>
+              Décoration & mobilier d&apos;intérieur
+            </Text>
+            <Text style={[s.partyLine, { marginTop: 4 }]}>
+              contact@veronecollections.fr
             </Text>
           </View>
-        </View>
-
-        {/* Notes internes */}
-        {consultation.notes_internes ? (
-          <View style={s.infoSection}>
-            <Text style={s.infoSectionTitle}>Notes internes</Text>
-            <View style={s.notesBox}>
-              <Text style={{ fontSize: 7, lineHeight: 1.5 }}>
-                {consultation.notes_internes}
+          <View style={s.partyCol}>
+            <Text style={s.partyTitle}>Destinataire</Text>
+            {info.legalName ? (
+              <Text style={s.partyLineBold}>{info.legalName}</Text>
+            ) : (
+              <Text style={s.partyLineBold}>{info.displayName}</Text>
+            )}
+            {info.tradeName && info.tradeName !== info.legalName ? (
+              <Text style={s.partyLine}>{info.tradeName}</Text>
+            ) : null}
+            {addressLines.map((line, i) => (
+              <Text key={i} style={s.partyLine}>
+                {line}
               </Text>
-            </View>
+            ))}
+            {info.email ? (
+              <Text style={[s.partyLine, { marginTop: 4 }]}>{info.email}</Text>
+            ) : null}
+            {info.phone ? <Text style={s.partyLine}>{info.phone}</Text> : null}
+            {info.siret ? (
+              <Text
+                style={[
+                  s.partyLine,
+                  { marginTop: 4, color: veroneColors.pearl, fontSize: 7.5 },
+                ]}
+              >
+                SIRET {info.siret}
+              </Text>
+            ) : null}
           </View>
+        </View>
+
+        {/* Description / contexte client */}
+        {consultation.descriptif ? (
+          <>
+            <Text style={veroneStyles.sectionTitleEyebrow}>Demande</Text>
+            <View style={s.descriptionBox}>
+              <Text style={s.descriptionText}>{consultation.descriptif}</Text>
+            </View>
+          </>
         ) : null}
 
-        {/* Products — card layout with photos */}
-        <Text style={[s.infoSectionTitle, { marginTop: 4 }]}>
-          Produits ({items.length})
+        {/* Produits — version client : prix de vente uniquement */}
+        <Text style={veroneStyles.sectionTitleEyebrow}>
+          Sélection ({items.length})
         </Text>
 
         {items.length === 0 ? (
           <Text style={s.emptyText}>
-            Aucun produit associe a cette consultation
+            Aucun produit dans cette proposition pour le moment.
           </Text>
         ) : (
           <View>
-            {items.map((item, idx) => {
-              const unitPrice =
-                item.unit_price ?? item.product?.cost_price ?? 0;
+            {items.map(item => {
+              const unitPrice = item.unit_price ?? 0;
               const lineTotal = item.is_free ? 0 : unitPrice * item.quantity;
-              const cardStyle =
-                idx % 2 === 0 ? s.productCard : s.productCardAlt;
 
               return (
-                <View key={item.id} style={cardStyle} wrap={false}>
-                  {/* Product image (base64) */}
+                <View key={item.id} style={s.productCard} wrap={false}>
                   {productBase64[item.product_id] ? (
                     /* eslint-disable-next-line jsx-a11y/alt-text */
                     <Image
@@ -399,41 +387,44 @@ export function ConsultationSummaryPdf({
                   ) : (
                     <View style={s.productImagePlaceholder}>
                       <Text style={s.productImagePlaceholderText}>
-                        Pas de{'\n'}photo
+                        Sans visuel
                       </Text>
                     </View>
                   )}
 
-                  {/* Product details */}
                   <View style={s.productDetails}>
                     <Text style={s.productName}>
-                      {item.product?.name ?? 'Produit inconnu'}
+                      {item.product?.name ?? 'Produit'}
                     </Text>
-                    <Text style={s.productSku}>{item.product?.sku ?? '-'}</Text>
+                    <Text style={s.productSku}>
+                      Réf. {item.product?.sku ?? '—'}
+                    </Text>
 
-                    <View style={s.productMeta}>
+                    <View style={s.productMetaRow}>
                       <View style={s.productMetaItem}>
-                        <Text style={s.productMetaLabel}>Quantite</Text>
+                        <Text style={s.productMetaLabel}>Quantité</Text>
                         <Text style={s.productMetaValue}>
                           {String(item.quantity)}
                         </Text>
                       </View>
                       <View style={s.productMetaItem}>
-                        <Text style={s.productMetaLabel}>Prix unitaire</Text>
+                        <Text style={s.productMetaLabel}>Prix HT</Text>
                         <Text style={s.productMetaValue}>
-                          {formatCurrency(unitPrice, 2)}
+                          {item.is_free
+                            ? 'Offert'
+                            : formatVeronePrice(unitPrice, 2)}
                         </Text>
                       </View>
                       <View style={s.productMetaItem}>
-                        <Text style={s.productMetaLabel}>Total</Text>
-                        <Text style={s.productMetaValue}>
-                          {formatCurrency(lineTotal, 2)}
+                        <Text style={s.productMetaLabel}>Total HT</Text>
+                        <Text style={s.productMetaValueGold}>
+                          {item.is_free ? '—' : formatVeronePrice(lineTotal, 2)}
                         </Text>
                       </View>
                     </View>
 
                     {item.is_free ? (
-                      <Text style={s.freeBadge}>GRATUIT</Text>
+                      <Text style={s.freeBadge}>Offert</Text>
                     ) : null}
 
                     {item.notes ? (
@@ -444,59 +435,60 @@ export function ConsultationSummaryPdf({
               );
             })}
 
-            {/* Total bar with TVA */}
-            <View style={s.totalBar}>
-              <Text style={s.totalLabel}>Total HT</Text>
-              <Text style={s.totalValue}>{formatCurrency(totalHT, 2)}</Text>
+            {/* Totaux */}
+            <View style={[veroneStyles.totalBarPearl, { marginTop: 14 }]}>
+              <Text style={veroneStyles.totalLabelPearl}>Total HT</Text>
+              <Text style={veroneStyles.totalValuePearl}>
+                {formatVeronePrice(totalHT, 2)}
+              </Text>
             </View>
-            {consultation.tva_rate != null &&
-              Number(consultation.tva_rate) > 0 && (
-                <>
-                  <View
-                    style={[
-                      s.totalBar,
-                      { backgroundColor: '#fafafa', borderTopWidth: 0 },
-                    ]}
-                  >
-                    <Text style={[s.totalLabel, { fontFamily: 'Helvetica' }]}>
-                      TVA ({String(consultation.tva_rate)}%)
-                    </Text>
-                    <Text style={[s.totalValue, { fontFamily: 'Helvetica' }]}>
-                      {formatCurrency(
-                        (totalHT * Number(consultation.tva_rate)) / 100,
-                        2
-                      )}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      s.totalBar,
-                      { backgroundColor: '#000', paddingVertical: 6 },
-                    ]}
-                  >
-                    <Text style={[s.totalLabel, { color: '#fff' }]}>
-                      Total TTC
-                    </Text>
-                    <Text style={[s.totalValue, { color: '#fff' }]}>
-                      {formatCurrency(
-                        totalHT * (1 + Number(consultation.tva_rate) / 100),
-                        2
-                      )}
-                    </Text>
-                  </View>
-                </>
-              )}
+            {tvaRate > 0 && (
+              <View style={veroneStyles.totalBarPearl}>
+                <Text style={veroneStyles.totalLabelPearl}>
+                  TVA ({String(consultation.tva_rate)} %)
+                </Text>
+                <Text style={veroneStyles.totalValuePearl}>
+                  {formatVeronePrice(tvaAmount, 2)}
+                </Text>
+              </View>
+            )}
+            <View style={veroneStyles.totalBarCharcoal}>
+              <Text style={veroneStyles.totalLabelCharcoal}>
+                {tvaRate > 0 ? 'Total TTC' : 'Total'}
+              </Text>
+              <Text style={veroneStyles.totalValueCharcoal}>
+                {formatVeronePrice(totalTTC, 2)}
+              </Text>
+            </View>
           </View>
         )}
 
-        {/* Footer */}
-        <Text
-          style={sharedStyles.footer}
-          render={({ pageNumber, totalPages }) =>
-            `Verone - Resume Consultation - Page ${String(pageNumber)}/${String(totalPages)}`
-          }
-          fixed
-        />
+        {/* Conditions */}
+        <View style={s.conditionsBlock}>
+          <Text style={[s.partyTitle, { marginBottom: 4 }]}>Conditions</Text>
+          <Text style={s.conditionsLine}>
+            · Proposition valable 30 jours à compter de la date d&apos;émission
+          </Text>
+          <Text style={s.conditionsLine}>
+            · Prix indiqués hors taxes, sauf mention contraire
+          </Text>
+          <Text style={s.conditionsLine}>
+            · Disponibilité confirmée à la validation de la commande
+          </Text>
+        </View>
+
+        {/* Footer fixe */}
+        <View style={veroneStyles.footer} fixed>
+          <Text style={veroneStyles.footerText}>
+            Vérone — {proposalRef} — {formatDate(consultation.created_at)}
+          </Text>
+          <Text
+            style={veroneStyles.footerText}
+            render={({ pageNumber, totalPages }) =>
+              `Page ${String(pageNumber)} / ${String(totalPages)}`
+            }
+          />
+        </View>
       </Page>
     </Document>
   );

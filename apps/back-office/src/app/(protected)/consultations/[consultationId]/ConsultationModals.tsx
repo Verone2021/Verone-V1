@@ -30,7 +30,10 @@ import {
   Trash2,
 } from 'lucide-react';
 
-import type { PdfImages } from './use-consultation-detail';
+import type {
+  PdfImages,
+  ConsultationClientInfo,
+} from './use-consultation-detail';
 
 // Dynamic import PdfPreviewModal (no SSR — @react-pdf uses browser APIs)
 const PdfPreviewModal = dynamic(
@@ -76,6 +79,7 @@ interface ConsultationModalsProps {
   showPdfPreview: boolean;
   setShowPdfPreview: (v: boolean) => void;
   pdfImages: PdfImages;
+  clientInfo: ConsultationClientInfo | null;
 }
 
 export function ConsultationModals({
@@ -106,7 +110,16 @@ export function ConsultationModals({
   showPdfPreview,
   setShowPdfPreview,
   pdfImages,
+  clientInfo,
 }: ConsultationModalsProps) {
+  // Slug propre pour les filenames PDF (retire accents + caractères non alphanumériques)
+  const clientSlug = clientName
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  const today = new Date().toISOString().slice(0, 10);
   return (
     <>
       {/* Modal d'édition */}
@@ -131,6 +144,7 @@ export function ConsultationModals({
             images={images}
             totalHT={calculateTotal()}
             clientName={clientName}
+            clientInfo={clientInfo}
             preloadedImages={emailPdfImages}
           />
         }
@@ -247,13 +261,13 @@ export function ConsultationModals({
         </DialogContent>
       </Dialog>
 
-      {/* Modal PDF preview */}
+      {/* Modal PDF preview — Proposition commerciale (client) */}
       {showPdfPreview && (
         <PdfPreviewModal
           isOpen={showPdfPreview}
           onClose={() => setShowPdfPreview(false)}
-          title={`Résumé - ${clientName}`}
-          filename={`consultation-${clientName.toLowerCase().replace(/\s+/g, '-')}.pdf`}
+          title={`Proposition commerciale — ${clientName}`}
+          filename={`proposition-${clientSlug}-${today}.pdf`}
           document={
             <ConsultationSummaryPdf
               consultation={consultation}
@@ -261,6 +275,7 @@ export function ConsultationModals({
               images={images}
               totalHT={calculateTotal()}
               clientName={clientName}
+              clientInfo={clientInfo}
               preloadedImages={pdfImages}
             />
           }

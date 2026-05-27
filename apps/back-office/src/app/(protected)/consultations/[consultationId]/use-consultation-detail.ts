@@ -18,7 +18,9 @@ import { useSalesOrders } from '@verone/orders';
 import {
   resolvePartnerForOrder,
   resolvePartnerForQuote,
+  resolveClientInfo,
   buildOrderForDocument,
+  type ConsultationClientInfo,
 } from './consultation-async-handlers';
 import { preloadProductImages } from './helpers';
 
@@ -26,6 +28,8 @@ export type PdfImages = {
   consultationImages: Array<{ id: string; base64: string }>;
   productImages: Record<string, string>;
 };
+
+export type { ConsultationClientInfo };
 
 export function useConsultationDetail(consultationId: string) {
   const router = useRouter();
@@ -58,6 +62,9 @@ export function useConsultationDetail(consultationId: string) {
     consultationImages: [],
     productImages: {},
   });
+  const [clientInfo, setClientInfo] = useState<ConsultationClientInfo | null>(
+    null
+  );
 
   const { consultationItems, calculateTotal, fetchConsultationItems } =
     useConsultationItems(consultationId);
@@ -189,32 +196,52 @@ export function useConsultationDetail(consultationId: string) {
   // ── PDF / Email image preloading ──────────────────────────────────
 
   const handleOpenPdf = () => {
+    if (!consultation) return;
     setPdfLoading(true);
-    void preloadProductImages(consultationItems)
-      .then(productImages => {
+    void Promise.all([
+      preloadProductImages(consultationItems),
+      resolveClientInfo(consultation),
+    ])
+      .then(([productImages, info]) => {
         setPdfImages({ consultationImages: [], productImages });
+        setClientInfo(info);
         setShowPdfPreview(true);
       })
       .catch((err: unknown) => {
-        console.error('[PDF] Image preload failed:', err);
+        console.error('[PDF] Preload failed:', err);
         setShowPdfPreview(true);
       })
       .finally(() => setPdfLoading(false));
   };
 
   const handleOpenEmail = () => {
+    if (!consultation) return;
     setEmailPdfLoading(true);
-    void preloadProductImages(consultationItems)
-      .then(productImages => {
+    void Promise.all([
+      preloadProductImages(consultationItems),
+      resolveClientInfo(consultation),
+    ])
+      .then(([productImages, info]) => {
         setEmailPdfImages({ consultationImages: [], productImages });
+        setClientInfo(info);
       })
       .catch((err: unknown) => {
-        console.error('[Email] Image preload failed:', err);
+        console.error('[Email] Preload failed:', err);
       })
       .finally(() => {
         setEmailPdfLoading(false);
         setShowEmailModal(true);
       });
+  };
+
+  const handleOpenMarginReport = async () => {
+    if (!consultation) return;
+    try {
+      const info = await resolveClientInfo(consultation);
+      setClientInfo(info);
+    } catch (err) {
+      console.error('[MarginReport] Client info preload failed:', err);
+    }
   };
 
   // ── Order creation ─────────────────────────────────────────────────
@@ -386,6 +413,8 @@ export function useConsultationDetail(consultationId: string) {
     // PDF images
     pdfImages,
     emailPdfImages,
+    // PDF client info (legal name, address, contact)
+    clientInfo,
     // Handlers
     handleStatusChange,
     handleUpdateConsultation,
@@ -398,6 +427,7 @@ export function useConsultationDetail(consultationId: string) {
     handleDeleteConsultation,
     handleOpenPdf,
     handleOpenEmail,
+    handleOpenMarginReport,
     handleOpenQuoteModal,
     handleQuoteSuccess,
     handleDeleteQuote,

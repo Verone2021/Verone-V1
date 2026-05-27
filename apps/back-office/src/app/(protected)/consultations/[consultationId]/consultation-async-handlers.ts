@@ -11,6 +11,121 @@ import type {
 import type { IOrderForDocument } from '@verone/finance/components';
 import { createClient } from '@verone/utils/supabase/client';
 
+// ── resolveClientInfo (PDF header) ────────────────────────────────────
+
+export interface ConsultationClientInfo {
+  legalName: string | null;
+  tradeName: string | null;
+  /** Nom le plus pertinent pour affichage : trade_name ?? legal_name */
+  displayName: string;
+  email: string | null;
+  phone: string | null;
+  addressLine1: string | null;
+  postalCode: string | null;
+  city: string | null;
+  country: string | null;
+  siret: string | null;
+  vatNumber: string | null;
+}
+
+/**
+ * Pré-charge les infos client (raison sociale, adresse facturation, contact)
+ * pour les insérer dans le header des PDFs consultation (proposition + marges).
+ * Fallback gracieux : si pas d'organisation rattachée, retourne l'email/phone
+ * de la consultation seuls.
+ */
+export async function resolveClientInfo(
+  consultation: ClientConsultation
+): Promise<ConsultationClientInfo> {
+  const supabase = createClient();
+  const fields =
+    'id, trade_name, legal_name, email, phone, address_line1, postal_code, city, country, siret, vat_number';
+
+  const fallback: ConsultationClientInfo = {
+    legalName: null,
+    tradeName: consultation.enseigne?.name ?? null,
+    displayName: consultation.enseigne?.name ?? 'Client',
+    email: consultation.client_email ?? null,
+    phone: consultation.client_phone ?? null,
+    addressLine1: null,
+    postalCode: null,
+    city: null,
+    country: null,
+    siret: null,
+    vatNumber: null,
+  };
+
+  // Cas 1 : consultation rattachée à une enseigne → org parente
+  if (consultation.enseigne_id) {
+    const { data: parentOrg } = await supabase
+      .from('organisations')
+      .select(fields)
+      .eq('enseigne_id', consultation.enseigne_id)
+      .eq('is_enseigne_parent', true)
+      .maybeSingle();
+
+    const org =
+      parentOrg ??
+      (await (async () => {
+        const { data: firstOrg } = await supabase
+          .from('organisations')
+          .select(fields)
+          .eq('enseigne_id', consultation.enseigne_id!)
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        return firstOrg;
+      })());
+
+    if (!org) return fallback;
+
+    return {
+      legalName: org.legal_name ?? null,
+      tradeName: org.trade_name ?? consultation.enseigne?.name ?? null,
+      displayName:
+        org.trade_name ??
+        org.legal_name ??
+        consultation.enseigne?.name ??
+        'Client',
+      email: consultation.client_email ?? org.email ?? null,
+      phone: consultation.client_phone ?? org.phone ?? null,
+      addressLine1: org.address_line1 ?? null,
+      postalCode: org.postal_code ?? null,
+      city: org.city ?? null,
+      country: org.country ?? null,
+      siret: org.siret ?? null,
+      vatNumber: org.vat_number ?? null,
+    };
+  }
+
+  // Cas 2 : consultation rattachée directement à une organisation
+  if (consultation.organisation_id) {
+    const { data: org } = await supabase
+      .from('organisations')
+      .select(fields)
+      .eq('id', consultation.organisation_id)
+      .maybeSingle();
+
+    if (!org) return fallback;
+
+    return {
+      legalName: org.legal_name ?? null,
+      tradeName: org.trade_name ?? null,
+      displayName: org.trade_name ?? org.legal_name ?? 'Client',
+      email: consultation.client_email ?? org.email ?? null,
+      phone: consultation.client_phone ?? org.phone ?? null,
+      addressLine1: org.address_line1 ?? null,
+      postalCode: org.postal_code ?? null,
+      city: org.city ?? null,
+      country: org.country ?? null,
+      siret: org.siret ?? null,
+      vatNumber: org.vat_number ?? null,
+    };
+  }
+
+  return fallback;
+}
+
 // ── resolvePartnerForOrder ────────────────────────────────────────────
 
 interface PartnerResult {

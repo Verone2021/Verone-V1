@@ -151,7 +151,15 @@ export default function ConsultationDetailPage() {
             onDelete={() => detail.setShowDeleteModal(true)}
             onEmail={detail.handleOpenEmail}
             onPdf={detail.handleOpenPdf}
-            onMarginReport={() => setShowMarginReport(true)}
+            onMarginReport={() => {
+              void detail.handleOpenMarginReport().catch((error: unknown) => {
+                console.error(
+                  '[ConsultationDetailPage] Margin report preload failed:',
+                  error
+                );
+              });
+              setShowMarginReport(true);
+            }}
             onCreateQuote={detail.handleOpenQuoteModal}
             onCreateOrder={() => {
               void detail.handleCreateOrder().catch((error: unknown) => {
@@ -243,18 +251,26 @@ export default function ConsultationDetailPage() {
         }}
       />
 
-      {/* Modal rapport marges PDF */}
+      {/* Modal rapport marges PDF — Rapport interne (avec marges et prix d'achat) */}
       {showMarginReport && detail.consultation && (
         <PdfPreviewModal
           isOpen={showMarginReport}
           onClose={() => setShowMarginReport(false)}
-          title="Rapport Interne — Marges"
-          filename={`rapport-marges-${clientName.replace(/\s+/g, '-').toLowerCase()}.pdf`}
+          title={`Rapport interne — Marges — ${clientName}`}
+          filename={`rapport-marges-${clientName
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')}-${new Date()
+            .toISOString()
+            .slice(0, 10)}.pdf`}
           document={
             <ConsultationMarginReportPdf
               consultation={detail.consultation}
               items={detail.consultationItems}
               clientName={clientName}
+              clientInfo={detail.clientInfo}
             />
           }
         />
@@ -288,6 +304,7 @@ export default function ConsultationDetailPage() {
         showPdfPreview={detail.showPdfPreview}
         setShowPdfPreview={detail.setShowPdfPreview}
         pdfImages={detail.pdfImages}
+        clientInfo={detail.clientInfo}
       />
     </div>
   );

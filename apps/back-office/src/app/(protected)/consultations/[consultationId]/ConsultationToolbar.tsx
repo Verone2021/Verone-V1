@@ -94,24 +94,30 @@ export function ConsultationToolbar({
           </span>
         </button>
 
-        {/* Résumé PDF */}
+        {/* PDF Proposition commerciale (client) */}
         <button
           type="button"
           onClick={onPdf}
           disabled={pdfLoading}
           className={btnGhost}
+          title="Proposition commerciale — version client, sans marges"
         >
           <FileText className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">
-            {pdfLoading ? 'Chargement...' : 'PDF'}
+            {pdfLoading ? 'Chargement...' : 'Proposition'}
           </span>
         </button>
 
-        {/* Rapport marges */}
+        {/* PDF Rapport marges (interne) */}
         {onMarginReport && consultationItemsCount > 0 && (
-          <button type="button" onClick={onMarginReport} className={btnGhost}>
+          <button
+            type="button"
+            onClick={onMarginReport}
+            className={btnGhost}
+            title="Rapport interne — avec prix d'achat et marges (ne pas envoyer au client)"
+          >
             <BarChart2 className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Marges</span>
+            <span className="hidden sm:inline">Marges (interne)</span>
           </button>
         )}
 
