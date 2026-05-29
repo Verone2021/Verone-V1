@@ -18,6 +18,7 @@ import {
 import { useToast } from '@verone/common/hooks';
 import { ABCAnalysisView } from '../../components/reports/ABCAnalysisView';
 import { AgingReportView } from '../../components/reports/AgingReportView';
+import { FournisseursReportView } from '../../components/reports/FournisseursReportView';
 import { HistoriqueReportView } from '../../components/reports/HistoriqueReportView';
 import { NiveauxReportView } from '../../components/reports/NiveauxReportView';
 import { RotationReportView } from '../../components/reports/RotationReportView';
@@ -146,6 +147,14 @@ export function ReportConfigModal({
         );
       case 'abc-xyz':
         return <ABCAnalysisView key={reportKey} />;
+      case 'fournisseurs':
+        return (
+          <FournisseursReportView
+            key={reportKey}
+            dateFrom={config.dateFrom}
+            dateTo={config.dateTo}
+          />
+        );
       default:
         return (
           <div className="flex items-center justify-center h-40 text-gray-500 text-sm">
