@@ -4,6 +4,7 @@ export { HistoriqueReportPdf } from './HistoriqueReportPdf';
 export { RotationReportPdf } from './RotationReportPdf';
 export { RuptureReportPdf } from './RuptureReportPdf';
 export { NiveauxReportPdf } from './NiveauxReportPdf';
+export { FournisseursReportPdf } from './FournisseursReportPdf';
 export {
   colors,
   reportAccentColors,

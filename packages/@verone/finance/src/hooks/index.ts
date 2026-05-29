@@ -23,6 +23,7 @@ export * from './use-valorisation-report';
 export * from './use-rotation-report';
 export * from './use-rupture-report';
 export * from './use-niveaux-report';
+export * from './use-fournisseurs-report';
 export * from './use-library-documents';
 export * from './use-fixed-assets';
 export * from './use-document-emails';
