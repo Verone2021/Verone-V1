@@ -78,6 +78,7 @@ export interface OrderWithDetails {
     quantity: number;
     unit_price_ht: number;
     total_ht: number;
+    tax_rate: number | null;
     product: {
       name: string;
       sku: string;

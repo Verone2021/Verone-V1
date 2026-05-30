@@ -32,6 +32,9 @@ export {
 // Lib - TVA (French VAT)
 export * from './lib/tva';
 
+// Lib - Order item tax rate resolver (cf. .claude/rules/finance.md R8)
+export * from './lib/order-item-tax-rate';
+
 // Lib - Payment Methods
 export * from './lib/payment-methods';
 

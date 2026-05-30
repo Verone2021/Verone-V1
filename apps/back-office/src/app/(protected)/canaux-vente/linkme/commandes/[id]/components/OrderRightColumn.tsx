@@ -1,6 +1,7 @@
 'use client';
 
 import { OrderTimeline, type OrderHistoryEvent } from '@verone/orders';
+import { resolveOrderItemTaxRate } from '@verone/finance';
 
 import { PaymentSection } from '@/components/orders/PaymentSection';
 
@@ -126,7 +127,7 @@ export function OrderRightColumn({
           id: item.id,
           quantity: item.quantity,
           unit_price_ht: item.unit_price_ht,
-          tax_rate: order.tax_rate ?? 20,
+          tax_rate: resolveOrderItemTaxRate(item, order),
           products: item.product ? { name: item.product.name } : null,
         }))}
       />
