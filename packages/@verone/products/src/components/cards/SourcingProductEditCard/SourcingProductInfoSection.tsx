@@ -55,6 +55,7 @@ export function SourcingProductInfoSection({
               size="sm"
               onClick={onCancelEdit}
               disabled={isSaving}
+              aria-label="Annuler la modification"
             >
               <X className="h-4 w-4" />
             </ButtonV2>
@@ -64,6 +65,7 @@ export function SourcingProductInfoSection({
               onClick={() => void onSave()}
               disabled={isSaving || !hasChanges}
               className="bg-black hover:bg-gray-800 text-white"
+              aria-label="Enregistrer"
             >
               {isSaving ? (
                 <span className="animate-spin">⏳</span>
@@ -168,6 +170,7 @@ export function SourcingProductInfoSection({
           size="sm"
           onClick={onStartEdit}
           className="text-gray-500 hover:text-black"
+          aria-label="Modifier les informations produit"
         >
           <Edit className="h-4 w-4" />
         </ButtonV2>
