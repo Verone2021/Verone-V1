@@ -161,11 +161,48 @@ Portée : back-office (`@verone/finance`, routes `/api/qonto/*`, pages `/facture
 
 ---
 
+## R8 — TVA par ligne, JAMAIS depuis `sales_orders.tax_rate`
+
+**Règle** : Pour mapper les `sales_order_items` vers un composant ou un payload API de devis/facture, TOUJOURS utiliser `item.tax_rate` (avec fallback `order.tax_rate ?? 0.2` si nul). JAMAIS écrire `tax_rate: order.tax_rate` ni `tax_rate: order.tax_rate ?? 20` dans le mapping d'un item.
+
+**Pourquoi** : la colonne `sales_orders.tax_rate` est une colonne historique. Sur les commandes B2B / LinkMe, elle vaut `0` car la TVA est portée par chaque article (`sales_order_items.tax_rate`). Écraser `item.tax_rate` par `order.tax_rate` produit des factures à 0% de TVA alors que les items sont à 20%.
+
+**Implémentation** : utiliser l'utilitaire centralisé `resolveOrderItemTaxRate(item, order)` exporté par `@verone/finance` (`packages/@verone/finance/src/lib/order-item-tax-rate.ts`). Test unitaire associé : `packages/@verone/finance/src/lib/__tests__/order-item-tax-rate.test.ts` (verrouille le cas SO-2026-00178 et le piège du `0` explicite).
+
+```tsx
+import { resolveOrderItemTaxRate } from '@verone/finance';
+
+// AUTORISÉ — utilitaire centralisé
+orderItems={order.items.map(item => ({
+  id: item.id,
+  quantity: item.quantity,
+  unit_price_ht: item.unit_price_ht,
+  tax_rate: resolveOrderItemTaxRate(item, order),
+  products: item.product ? { name: item.product.name } : null,
+}))}
+
+// INTERDIT — écrase la TVA item
+tax_rate: order.tax_rate ?? 20,
+tax_rate: order.tax_rate,
+```
+
+**Incident référence (2026-05-29)** : commande LinkMe SO-2026-00178 (devis D-2026-076 correct à 20%, items à `tax_rate=0.2`, commande à `tax_rate=0`). Le modal "Créer une facture" affichait 0% sur chaque ligne car 3 pages (`RightColumn.tsx`, `OrderRightColumn.tsx`, `universal-order-details-modal.tsx`) recopiaient `order.tax_rate` au lieu d'utiliser `item.tax_rate`. La PR #671 (BO-FIN-024, 2026-04-18) avait corrigé le même bug côté devis, mais oublié les 3 chemins facture. Fix définitif : sprint `BO-FIN-INVOICE-VAT-001` (2026-05-31).
+
+**Chemins concernés** :
+
+- `apps/back-office/src/app/(protected)/canaux-vente/linkme/commandes/[id]/details/components/RightColumn.tsx`
+- `apps/back-office/src/app/(protected)/canaux-vente/linkme/commandes/[id]/components/OrderRightColumn.tsx`
+- `apps/back-office/src/components/business/universal-order-details-modal.tsx`
+- Tout nouveau composant qui passe `orderItems` à `PaymentSection`, `InvoiceCreateFromOrderModal`, `QuoteCreateFromOrderModal`.
+
+---
+
 ## Tracking
 
-| Sprint     | Règles couvertes                         | Statut                        |
-| ---------- | ---------------------------------------- | ----------------------------- |
-| BO-FIN-014 | R4 (guard écrasement proforma)           | En cours (PR pending)         |
-| BO-FIN-009 | R1 à R6 (alignement + verrouillages)     | À faire, prio haute, 6 phases |
-| BO-FIN-010 | R5 / R7 (badges visuels différenciation) | À faire                       |
-| BO-FIN-011 | R1 (badge alerte discordance)            | À faire, filet sécurité       |
+| Sprint                 | Règles couvertes                                         | Statut                        |
+| ---------------------- | -------------------------------------------------------- | ----------------------------- |
+| BO-FIN-014             | R4 (guard écrasement proforma)                           | En cours (PR pending)         |
+| BO-FIN-009             | R1 à R6 (alignement + verrouillages)                     | À faire, prio haute, 6 phases |
+| BO-FIN-010             | R5 / R7 (badges visuels différenciation)                 | À faire                       |
+| BO-FIN-011             | R1 (badge alerte discordance)                            | À faire, filet sécurité       |
+| BO-FIN-INVOICE-VAT-001 | R8 (TVA par ligne, utilitaire `resolveOrderItemTaxRate`) | ✅ Fait 2026-05-31            |
