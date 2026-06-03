@@ -270,7 +270,9 @@ export function useCreateConsultation() {
         title: 'Consultation créée',
         description: 'La consultation a été créée avec succès',
       });
-      router.push('/consultations');
+      // Redirige vers la fiche détail (fallback liste si ID manquant)
+      const newId = result.data?.id;
+      router.push(newId ? `/consultations/${newId}` : '/consultations');
     } catch (error) {
       console.error('Erreur lors de la création:', error);
       toast({
