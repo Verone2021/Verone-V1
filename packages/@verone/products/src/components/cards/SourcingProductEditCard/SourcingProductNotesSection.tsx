@@ -1,15 +1,7 @@
 'use client';
 
 import { ButtonV2, Textarea } from '@verone/ui';
-import {
-  AlertCircle,
-  Clock,
-  Edit,
-  Save,
-  StickyNote,
-  User,
-  X,
-} from 'lucide-react';
+import { AlertCircle, Clock, Edit, Save, User, X } from 'lucide-react';
 
 import type { NotesSectionData, SourcingProduct } from './types';
 
@@ -42,38 +34,34 @@ export function SourcingProductNotesSection({
 }: SourcingProductNotesSectionProps) {
   return (
     <>
-      {/* ZONE NOTES INTERNES */}
-      <div className="border-t border-gray-200 pt-4">
+      {/* ZONE NOTES INTERNES — sous-titre redondant supprimé (déjà dans le header accordéon parent) */}
+      <div className="pt-1">
         {isEditing ? (
           <div className="space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-700 flex items-center">
-                <StickyNote className="h-4 w-4 mr-2" />
-                Notes Internes
-              </h3>
-              <div className="flex space-x-1">
-                <ButtonV2
-                  variant="ghost"
-                  size="sm"
-                  onClick={onCancelEdit}
-                  disabled={isSaving}
-                >
-                  <X className="h-4 w-4" />
-                </ButtonV2>
-                <ButtonV2
-                  variant="default"
-                  size="sm"
-                  onClick={() => void onSave()}
-                  disabled={isSaving || !hasChanges}
-                  className="bg-black hover:bg-gray-800 text-white"
-                >
-                  {isSaving ? (
-                    <span className="animate-spin">&#8987;</span>
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                </ButtonV2>
-              </div>
+            <div className="flex justify-end space-x-1">
+              <ButtonV2
+                variant="ghost"
+                size="sm"
+                onClick={onCancelEdit}
+                disabled={isSaving}
+                aria-label="Annuler"
+              >
+                <X className="h-4 w-4" />
+              </ButtonV2>
+              <ButtonV2
+                variant="default"
+                size="sm"
+                onClick={() => void onSave()}
+                disabled={isSaving || !hasChanges}
+                className="bg-black hover:bg-gray-800 text-white"
+                aria-label="Enregistrer"
+              >
+                {isSaving ? (
+                  <span className="animate-spin">&#8987;</span>
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+              </ButtonV2>
             </div>
 
             <Textarea
@@ -93,16 +81,13 @@ export function SourcingProductNotesSection({
           </div>
         ) : (
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-gray-700 flex items-center">
-                <StickyNote className="h-4 w-4 mr-2" />
-                Notes Internes
-              </h3>
+            <div className="flex justify-end mb-2">
               <ButtonV2
                 variant="ghost"
                 size="sm"
                 onClick={onStartEdit}
                 className="text-gray-500 hover:text-black"
+                aria-label="Modifier les notes internes"
               >
                 <Edit className="h-4 w-4" />
               </ButtonV2>
