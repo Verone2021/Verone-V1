@@ -374,6 +374,22 @@ export default function SourcingProductDetailPage() {
               onAdd={notebook.addUrl}
               onRemove={notebook.removeUrl}
             />
+
+            {/* Consultations liées — visible dès l'étape Sourcing pour donner du contexte client (B5, 2026-06-03) */}
+            <SourcingConsultationsSection
+              linkedConsultations={linkedConsultations}
+              consultationsLoading={consultationsLoading}
+              assignedClientId={product.assigned_client_id}
+              productId={productId}
+              onLinkToConsultation={consultationId => {
+                void handleLinkToConsultation(consultationId).catch(error => {
+                  console.error(
+                    '[SourcingDetail] Link consultation failed:',
+                    error
+                  );
+                });
+              }}
+            />
           </TabsContent>
 
           {/* === Étape 2 : Évaluation & négociation === */}
@@ -498,21 +514,6 @@ export default function SourcingProductDetailPage() {
                 )}
               </CardContent>
             </Card>
-
-            <SourcingConsultationsSection
-              linkedConsultations={linkedConsultations}
-              consultationsLoading={consultationsLoading}
-              assignedClientId={product.assigned_client_id}
-              productId={productId}
-              onLinkToConsultation={consultationId => {
-                void handleLinkToConsultation(consultationId).catch(error => {
-                  console.error(
-                    '[SourcingDetail] Link consultation failed:',
-                    error
-                  );
-                });
-              }}
-            />
           </TabsContent>
         </Tabs>
       </div>
