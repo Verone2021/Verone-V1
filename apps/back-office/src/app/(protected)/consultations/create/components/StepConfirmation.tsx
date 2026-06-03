@@ -35,10 +35,10 @@ export function StepConfirmation({
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Eye className="h-5 w-5" />
-          <span>Recapitulatif</span>
+          <span>Récapitulatif</span>
         </CardTitle>
         <CardDescription>
-          Verifiez les informations avant de creer la consultation
+          Vérifiez les informations avant de créer la consultation
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -102,7 +102,7 @@ export function StepConfirmation({
                 </div>
               )}
               <div>
-                <span className="text-gray-500">Priorite :</span>{' '}
+                <span className="text-gray-500">Priorité :</span>{' '}
                 <span className="font-medium">{formData.priority_level}/5</span>
               </div>
               {formData.source_channel && (
@@ -138,7 +138,7 @@ export function StepConfirmation({
               loading={loading}
             >
               <Send className="h-4 w-4 mr-2" />
-              Creer la consultation
+              Créer la consultation
             </ButtonUnified>
           </div>
         </form>

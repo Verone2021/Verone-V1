@@ -172,7 +172,7 @@ export function StepDemande({
           </div>
 
           <div className="space-y-2">
-            <Label>Priorite</Label>
+            <Label>Priorité</Label>
             <Select
               value={formData.priority_level?.toString()}
               onValueChange={value =>
@@ -180,10 +180,10 @@ export function StepDemande({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selectionner" />
+                <SelectValue placeholder="Sélectionner" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="5">Tres urgent (5)</SelectItem>
+                <SelectItem value="5">Très urgent (5)</SelectItem>
                 <SelectItem value="4">Urgent (4)</SelectItem>
                 <SelectItem value="3">Normal+ (3)</SelectItem>
                 <SelectItem value="2">Normal (2)</SelectItem>
@@ -199,12 +199,12 @@ export function StepDemande({
               onValueChange={value => onInputChange('source_channel', value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selectionner" />
+                <SelectValue placeholder="Sélectionner" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="website">Site web</SelectItem>
                 <SelectItem value="email">Email</SelectItem>
-                <SelectItem value="phone">Telephone</SelectItem>
+                <SelectItem value="phone">Téléphone</SelectItem>
                 <SelectItem value="other">Autre</SelectItem>
               </SelectContent>
             </Select>

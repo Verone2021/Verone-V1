@@ -58,7 +58,7 @@ export function StepClient({
           <span>Informations Client</span>
         </CardTitle>
         <CardDescription>
-          Selectionnez le client et ses coordonnees
+          Sélectionnez le client et ses coordonnées
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -97,7 +97,7 @@ export function StepClient({
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              Cliquez sur un contact pour pre-remplir email et telephone
+              Cliquez sur un contact pour pré-remplir email et téléphone
             </p>
           </div>
         )}
@@ -123,7 +123,7 @@ export function StepClient({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="client_phone">Telephone client</Label>
+          <Label htmlFor="client_phone">Téléphone client</Label>
           <Input
             id="client_phone"
             type="tel"
