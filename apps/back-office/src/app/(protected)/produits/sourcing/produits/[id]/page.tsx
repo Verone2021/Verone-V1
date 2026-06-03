@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 
 import { SourcingConsultationsSection } from './SourcingConsultationsSection';
+import { SourcingProductHeaderActions } from './SourcingProductHeaderActions';
 
 /**
  * Mappe le statut workflow sourcing à l'une des 3 grandes étapes UI.
@@ -267,6 +268,7 @@ export default function SourcingProductDetailPage() {
                 </div>
               </div>
             </div>
+            <SourcingProductHeaderActions productId={productId} />
           </div>
         </div>
       </div>
@@ -373,6 +375,22 @@ export default function SourcingProductDetailPage() {
               urls={notebook.urls}
               onAdd={notebook.addUrl}
               onRemove={notebook.removeUrl}
+            />
+
+            {/* Consultations liées — visible dès l'étape Sourcing pour donner du contexte client (B5, 2026-06-03) */}
+            <SourcingConsultationsSection
+              linkedConsultations={linkedConsultations}
+              consultationsLoading={consultationsLoading}
+              assignedClientId={product.assigned_client_id}
+              productId={productId}
+              onLinkToConsultation={consultationId => {
+                void handleLinkToConsultation(consultationId).catch(error => {
+                  console.error(
+                    '[SourcingDetail] Link consultation failed:',
+                    error
+                  );
+                });
+              }}
             />
           </TabsContent>
 
@@ -498,21 +516,6 @@ export default function SourcingProductDetailPage() {
                 )}
               </CardContent>
             </Card>
-
-            <SourcingConsultationsSection
-              linkedConsultations={linkedConsultations}
-              consultationsLoading={consultationsLoading}
-              assignedClientId={product.assigned_client_id}
-              productId={productId}
-              onLinkToConsultation={consultationId => {
-                void handleLinkToConsultation(consultationId).catch(error => {
-                  console.error(
-                    '[SourcingDetail] Link consultation failed:',
-                    error
-                  );
-                });
-              }}
-            />
           </TabsContent>
         </Tabs>
       </div>

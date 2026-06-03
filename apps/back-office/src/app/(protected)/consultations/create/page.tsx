@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import { useSearchParams } from 'next/navigation';
+
 import { ButtonUnified } from '@verone/ui';
 import { ArrowLeft } from 'lucide-react';
 
@@ -13,6 +15,8 @@ import { StepConfirmation } from './components/StepConfirmation';
 
 export default function CreateConsultationPage() {
   const [step, setStep] = useState(1);
+  const searchParams = useSearchParams();
+  const presetProductId = searchParams?.get('productId') ?? null;
 
   const {
     loading,
@@ -21,6 +25,7 @@ export default function CreateConsultationPage() {
     uploadedImages,
     selectedContactId,
     contacts,
+    clientName,
     handleContactSelect,
     handleInputChange,
     handleImageUploadSuccess,
@@ -30,7 +35,7 @@ export default function CreateConsultationPage() {
     handleSubmit,
     handleNavigateBack,
     toast,
-  } = useCreateConsultation();
+  } = useCreateConsultation({ presetProductId });
 
   const canGoToStep2 =
     Boolean(formData.enseigne_id ?? formData.organisation_id) &&
@@ -117,6 +122,7 @@ export default function CreateConsultationPage() {
           {step === 3 && (
             <StepConfirmation
               formData={formData}
+              clientName={clientName}
               uploadedImages={uploadedImages}
               loading={loading}
               onSubmit={e => {

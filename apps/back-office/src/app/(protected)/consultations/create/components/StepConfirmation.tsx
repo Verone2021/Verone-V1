@@ -17,6 +17,7 @@ import type {
 
 interface StepConfirmationProps {
   formData: ConsultationFormData;
+  clientName: string | null;
   uploadedImages: UploadedImage[];
   loading: boolean;
   onSubmit: (e: React.FormEvent) => void;
@@ -25,6 +26,7 @@ interface StepConfirmationProps {
 
 export function StepConfirmation({
   formData,
+  clientName,
   uploadedImages,
   loading,
   onSubmit,
@@ -35,10 +37,10 @@ export function StepConfirmation({
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Eye className="h-5 w-5" />
-          <span>Recapitulatif</span>
+          <span>Récapitulatif</span>
         </CardTitle>
         <CardDescription>
-          Verifiez les informations avant de creer la consultation
+          Vérifiez les informations avant de créer la consultation
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -49,13 +51,19 @@ export function StepConfirmation({
               Client
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+              {clientName && (
+                <div className="sm:col-span-2">
+                  <span className="text-gray-500">Client :</span>{' '}
+                  <span className="font-medium">{clientName}</span>
+                </div>
+              )}
               <div>
                 <span className="text-gray-500">Email :</span>{' '}
                 <span className="font-medium">{formData.client_email}</span>
               </div>
               {formData.client_phone && (
                 <div>
-                  <span className="text-gray-500">Tel :</span>{' '}
+                  <span className="text-gray-500">Tél :</span>{' '}
                   <span className="font-medium">{formData.client_phone}</span>
                 </div>
               )}
@@ -102,7 +110,7 @@ export function StepConfirmation({
                 </div>
               )}
               <div>
-                <span className="text-gray-500">Priorite :</span>{' '}
+                <span className="text-gray-500">Priorité :</span>{' '}
                 <span className="font-medium">{formData.priority_level}/5</span>
               </div>
               {formData.source_channel && (
@@ -138,7 +146,7 @@ export function StepConfirmation({
               loading={loading}
             >
               <Send className="h-4 w-4 mr-2" />
-              Creer la consultation
+              Créer la consultation
             </ButtonUnified>
           </div>
         </form>
