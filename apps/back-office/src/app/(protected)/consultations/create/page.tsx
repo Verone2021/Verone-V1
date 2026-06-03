@@ -21,6 +21,7 @@ export default function CreateConsultationPage() {
     uploadedImages,
     selectedContactId,
     contacts,
+    clientName,
     handleContactSelect,
     handleInputChange,
     handleImageUploadSuccess,
@@ -117,6 +118,7 @@ export default function CreateConsultationPage() {
           {step === 3 && (
             <StepConfirmation
               formData={formData}
+              clientName={clientName}
               uploadedImages={uploadedImages}
               loading={loading}
               onSubmit={e => {

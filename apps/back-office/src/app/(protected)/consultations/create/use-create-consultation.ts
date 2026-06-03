@@ -60,6 +60,9 @@ export function useCreateConsultation() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(
     null
   );
+  // Nom du client (enseigne ou organisation) pour affichage récap. Hors formData
+  // pour éviter de toucher au contrat CreateConsultationData (BO-CONSULT-CORR-006).
+  const [clientName, setClientName] = useState<string | null>(null);
 
   // Fetch contacts when enseigne or organisation is selected
   const { data: enseigneContacts } = useEnseigneContactsBO(
@@ -149,7 +152,7 @@ export function useCreateConsultation() {
 
   const handleEnseigneChange = (
     enseigneId: string | null,
-    _enseigneName: string | null,
+    enseigneName: string | null,
     _parentOrgId: string | null
   ) => {
     setFormData(prev => ({
@@ -158,6 +161,7 @@ export function useCreateConsultation() {
       client_email: '',
       client_phone: '',
     }));
+    setClientName(enseigneName);
     setSelectedContactId(null);
     if (errors.client) {
       setErrors(prev => ({ ...prev, client: '' }));
@@ -166,7 +170,7 @@ export function useCreateConsultation() {
 
   const handleOrganisationChange = (
     organisationId: string | null,
-    _organisationName: string | null
+    organisationName: string | null
   ) => {
     setFormData(prev => ({
       ...prev,
@@ -174,6 +178,7 @@ export function useCreateConsultation() {
       client_email: '',
       client_phone: '',
     }));
+    setClientName(organisationName);
     setSelectedContactId(null);
     if (errors.client) {
       setErrors(prev => ({ ...prev, client: '' }));
@@ -300,6 +305,7 @@ export function useCreateConsultation() {
     uploadedImages,
     selectedContactId,
     contacts,
+    clientName,
     // Handlers
     handleContactSelect,
     handleInputChange,

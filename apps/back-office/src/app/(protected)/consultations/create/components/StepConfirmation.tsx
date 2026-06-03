@@ -17,6 +17,7 @@ import type {
 
 interface StepConfirmationProps {
   formData: ConsultationFormData;
+  clientName: string | null;
   uploadedImages: UploadedImage[];
   loading: boolean;
   onSubmit: (e: React.FormEvent) => void;
@@ -25,6 +26,7 @@ interface StepConfirmationProps {
 
 export function StepConfirmation({
   formData,
+  clientName,
   uploadedImages,
   loading,
   onSubmit,
@@ -49,13 +51,19 @@ export function StepConfirmation({
               Client
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+              {clientName && (
+                <div className="sm:col-span-2">
+                  <span className="text-gray-500">Client :</span>{' '}
+                  <span className="font-medium">{clientName}</span>
+                </div>
+              )}
               <div>
                 <span className="text-gray-500">Email :</span>{' '}
                 <span className="font-medium">{formData.client_email}</span>
               </div>
               {formData.client_phone && (
                 <div>
-                  <span className="text-gray-500">Tel :</span>{' '}
+                  <span className="text-gray-500">Tél :</span>{' '}
                   <span className="font-medium">{formData.client_phone}</span>
                 </div>
               )}
