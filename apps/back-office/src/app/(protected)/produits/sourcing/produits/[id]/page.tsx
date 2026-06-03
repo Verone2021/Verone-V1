@@ -44,7 +44,7 @@ import {
 } from 'lucide-react';
 
 import { SourcingConsultationsSection } from './SourcingConsultationsSection';
-import { SourcingReportButton } from '@/components/business/sourcing-report/SourcingReportButton';
+import { SourcingProductHeaderActions } from './SourcingProductHeaderActions';
 
 /**
  * Mappe le statut workflow sourcing à l'une des 3 grandes étapes UI.
@@ -268,10 +268,7 @@ export default function SourcingProductDetailPage() {
                 </div>
               </div>
             </div>
-            {/* Actions header (B4) — rapport global sourcing accessible depuis chaque fiche */}
-            <div className="flex items-center gap-2">
-              <SourcingReportButton />
-            </div>
+            <SourcingProductHeaderActions productId={productId} />
           </div>
         </div>
       </div>

@@ -37,10 +37,18 @@ export interface ConsultationFormData {
   notes_internes?: string;
 }
 
-export function useCreateConsultation() {
+interface UseCreateConsultationOptions {
+  /** Si fourni, le produit sera lié à la consultation après création (B3, 2026-06-03) */
+  presetProductId?: string | null;
+}
+
+export function useCreateConsultation(
+  options: UseCreateConsultationOptions = {}
+) {
   const router = useRouter();
   const supabase = createClient();
   const { toast } = useToast();
+  const { presetProductId = null } = options;
 
   const [loading, setLoading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
@@ -275,8 +283,33 @@ export function useCreateConsultation() {
         title: 'Consultation créée',
         description: 'La consultation a été créée avec succès',
       });
-      // Redirige vers la fiche détail (fallback liste si ID manquant)
+
       const newId = result.data?.id;
+
+      // Lien automatique au produit pré-sélectionné (depuis fiche sourcing — B3)
+      if (newId && presetProductId) {
+        try {
+          await fetch('/api/consultations/associations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              consultation_id: newId,
+              product_id: presetProductId,
+              quantity: 1,
+              proposed_price: null,
+              is_free: false,
+            }),
+          });
+        } catch (linkErr) {
+          console.error(
+            '[CreateConsultation] Lien produit auto échoué:',
+            linkErr
+          );
+          // On ne bloque pas — la consultation est créée, le lien peut être fait manuellement
+        }
+      }
+
+      // Redirige vers la fiche détail (fallback liste si ID manquant)
       router.push(newId ? `/consultations/${newId}` : '/consultations');
     } catch (error) {
       console.error('Erreur lors de la création:', error);
