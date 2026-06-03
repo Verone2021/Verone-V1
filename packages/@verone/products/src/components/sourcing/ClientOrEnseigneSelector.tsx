@@ -76,13 +76,16 @@ export function ClientOrEnseigneSelector({
     loading: enseignesLoading,
     getEnseigneById,
   } = useEnseignes({ is_active: true });
-  // Filtrer uniquement les organisations indépendantes (sans enseigne)
-  // Les organisations appartenant à une enseigne doivent être sélectionnées via l'onglet Enseignes
+  // BO-CONSULT-CORR-009 (B1, 2026-06-03) : ne PLUS exclure les organisations
+  // rattachées à une enseigne. Cas Pokawa : on doit pouvoir cibler une
+  // organisation précise (ex. Pokawa Montpellier 1) sans passer par toute
+  // l'enseigne, sinon le wizard consultation affichait « Aucune organisation
+  // trouvée » alors que l'org existait en DB (audit 2026-06-03).
   const { organisations, loading: organisationsLoading } = useOrganisations({
     type: 'customer',
     customer_type: 'professional',
     is_active: true,
-    exclude_with_enseigne: true, // Exclure les organisations liées à une enseigne
+    exclude_with_enseigne: false,
   });
 
   // Charger les détails de l'enseigne sélectionnée
