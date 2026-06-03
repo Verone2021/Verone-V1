@@ -165,6 +165,7 @@ Détails dans les règles citées. Résumés courts ici :
 | Style communication       | `.claude/rules/communication-style.md`         |
 | Data fetching & perf      | `.claude/rules/data-fetching.md`               |
 | Workflow git/PR + branche | `.claude/rules/workflow.md`                    |
+| Démarche anti-régression  | `.claude/rules/non-regression.md`              |
 | Zéro donnée fantôme       | `.claude/rules/no-phantom-data.md`             |
 | Autonomie externe         | `.claude/rules/agent-autonomy-external.md`     |
 | Lifecycle mémoires/règles | `.claude/rules/memory-lifecycle.md`            |

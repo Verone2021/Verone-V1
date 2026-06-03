@@ -26,6 +26,7 @@ Règles stables lues automatiquement par l'agent.
 - `.claude/rules/responsive.md` — Breakpoints + 5 techniques responsive obligatoires
 - `.claude/rules/stock-triggers-protected.md` — Triggers stock IMMUABLES
 - `.claude/rules/workflow.md` — Git, PR, merge, 1 PR = 1 bloc cohérent + checklist 4 questions (fusion `branch-strategy.md` 2026-05-02)
+- `.claude/rules/non-regression.md` — Démarche senior anti-régression : audit pré-modif + test AVANT/APRÈS + 1 PR = 1 bug (2026-06-03, sprint `BO-NONREG-001`)
 - `.claude/rules/data-fetching.md` — TanStack Query, useEffect deps, Supabase select
 - `.claude/rules/no-phantom-data.md` — Zéro donnée fantôme en prod
 - `.claude/rules/agent-autonomy-external.md` — Agent fait tout lui-même via CLI/MCP
