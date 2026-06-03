@@ -1,6 +1,8 @@
 /**
  * Test régression Pokawa Montpellier 1 dans combobox Organisations (B1)
  * sur prod après release BO-CONSULT-CORR-009.
+ *
+ * Réf règle agent : .claude/rules/non-regression.md (BO-NONREG-001).
  */
 import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'node:fs';
