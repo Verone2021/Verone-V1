@@ -45,7 +45,11 @@ export function FournisseursTableRow({
   onLinkTransaction,
 }: FournisseursTableRowProps) {
   const items = order.purchase_order_items ?? [];
-  const hasSamples = items.some(item => item.sample_type);
+  // Source de vérité = po_type (colonne discriminator au niveau commande).
+  // Fallback sur item.sample_type pour les rares PO créées avant la migration
+  // 2026-05-27 qui n'auraient pas encore été reclassées.
+  const isSampleOrder =
+    order.po_type === 'sample' || items.some(item => item.sample_type);
 
   return (
     <React.Fragment>
@@ -83,8 +87,11 @@ export function FournisseursTableRow({
             <Badge className={cn('text-xs', statusColors[order.status])}>
               {statusLabels[order.status]}
             </Badge>
-            {hasSamples && (
-              <Badge variant="secondary" className="text-xs">
+            {isSampleOrder && (
+              <Badge
+                className="text-xs bg-[#C9A961] text-white hover:bg-[#B8954A]"
+                title="Commande échantillon issue du workflow sourcing"
+              >
                 Échantillon
               </Badge>
             )}

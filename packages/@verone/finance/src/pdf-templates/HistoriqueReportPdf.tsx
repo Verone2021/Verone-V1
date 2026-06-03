@@ -4,7 +4,7 @@ import { Document, Page, View, Text, Image } from '@react-pdf/renderer';
 import type { HistoriqueReportData } from '../types/historique-report';
 import {
   styles,
-  reportAccentColors,
+  veroneColors,
   formatDate,
   formatDateTime,
   truncate,
@@ -16,22 +16,24 @@ interface HistoriqueReportPdfProps {
   report: HistoriqueReportData;
 }
 
+// Sémantique : entrées en charcoal (positif/stable), sorties en rouge
+// sémantique (signal critique conservé), ajustements en pearl (neutre).
 const TYPE_COLORS: Record<string, string> = {
-  'Entrees (IN)': '#16A34A',
-  'Sorties (OUT)': '#DC2626',
-  'Ajustements (ADJUST)': '#6B7280',
+  'Entrees (IN)': veroneColors.charcoal,
+  'Sorties (OUT)': '#C03030',
+  'Ajustements (ADJUST)': veroneColors.pearl,
 };
 
-// Green palette for reason bars
+// Palette Vérone : dégradé charcoal → or → pearl pour motifs (8 nuances).
 const REASON_COLORS = [
-  '#166534',
-  '#16A34A',
-  '#22C55E',
-  '#4ADE80',
-  '#86EFAC',
-  '#BBF7D0',
-  '#DCFCE7',
-  '#A3A3A3',
+  veroneColors.charcoal,
+  '#3D3D3A',
+  veroneColors.goldDeep,
+  veroneColors.gold,
+  veroneColors.goldLight,
+  '#C4B696',
+  veroneColors.pearl,
+  veroneColors.pearlSoft,
 ];
 
 export function HistoriqueReportPdf({ report }: HistoriqueReportPdfProps) {
@@ -55,21 +57,13 @@ export function HistoriqueReportPdf({ report }: HistoriqueReportPdfProps) {
       {/* Page 1: KPIs + Charts */}
       <Page size="A4" style={styles.page}>
         <View
-          style={[
-            styles.accentBar,
-            { backgroundColor: reportAccentColors.historique.primary },
-          ]}
+          style={[styles.accentBar, { backgroundColor: veroneColors.gold }]}
         />
         {/* Header */}
         <View style={styles.headerContainer}>
           {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image */}
           <Image src={VERONE_LOGO_BASE64} style={styles.logoImage} />
-          <Text
-            style={[
-              styles.reportTitle,
-              { color: reportAccentColors.historique.dark },
-            ]}
-          >
+          <Text style={[styles.reportTitle, { color: veroneColors.charcoal }]}>
             Rapport Historique Mouvements
           </Text>
           <Text style={styles.generatedAt}>
@@ -138,17 +132,14 @@ export function HistoriqueReportPdf({ report }: HistoriqueReportPdfProps) {
       {report.movements.length > 0 && (
         <Page size="A4" style={styles.page}>
           <View
-            style={[
-              styles.accentBar,
-              { backgroundColor: reportAccentColors.historique.primary },
-            ]}
+            style={[styles.accentBar, { backgroundColor: veroneColors.gold }]}
           />
           <Text style={styles.sectionTitle}>Detail des Mouvements</Text>
 
           <View
             style={[
               styles.tableHeader,
-              { backgroundColor: reportAccentColors.historique.dark },
+              { backgroundColor: veroneColors.charcoal },
             ]}
           >
             <Text style={[styles.tableHeaderCell, { width: '12%' }]}>Date</Text>

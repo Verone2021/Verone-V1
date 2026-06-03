@@ -4,8 +4,7 @@ import { Document, Page, View, Text, Image } from '@react-pdf/renderer';
 import type { AgingReportData } from '../hooks/use-aging-report';
 import {
   styles,
-  colors,
-  reportAccentColors,
+  veroneColors,
   formatCurrency,
   formatNumber,
   formatDate,
@@ -19,15 +18,38 @@ interface AgingReportPdfProps {
   report: AgingReportData;
 }
 
+// Palette Vérone : dégradé sain → critique. Sémantique : récent = charcoal
+// (stable), tranches intermédiaires en or progressif, > 180j en rouge
+// (signal critique conservé pour lisibilité comptable).
 const BUCKET_COLORS: Record<
   string,
   { bg: string; text: string; chart: string }
 > = {
-  '0-30': { bg: colors.green100, text: colors.green800, chart: '#16A34A' },
-  '31-60': { bg: colors.blue100, text: colors.blue800, chart: '#2563EB' },
-  '61-90': { bg: colors.yellow100, text: colors.yellow800, chart: '#CA8A04' },
-  '91-180': { bg: colors.orange100, text: colors.orange800, chart: '#EA580C' },
-  '180+': { bg: colors.red100, text: colors.red800, chart: '#DC2626' },
+  '0-30': {
+    bg: veroneColors.pearlSoft,
+    text: veroneColors.charcoal,
+    chart: veroneColors.charcoal,
+  },
+  '31-60': {
+    bg: '#F5EFE0',
+    text: veroneColors.goldDeep,
+    chart: veroneColors.goldLight,
+  },
+  '61-90': {
+    bg: '#EDE2C2',
+    text: veroneColors.goldDeep,
+    chart: veroneColors.gold,
+  },
+  '91-180': {
+    bg: '#E5D8AB',
+    text: '#7A6228',
+    chart: veroneColors.goldDeep,
+  },
+  '180+': {
+    bg: '#FFE5E0',
+    text: '#9F2A1E',
+    chart: '#C03030',
+  },
 };
 
 export function AgingReportPdf({ report }: AgingReportPdfProps) {
@@ -50,21 +72,13 @@ export function AgingReportPdf({ report }: AgingReportPdfProps) {
       {/* Page 1: Metrics + Charts + Distribution */}
       <Page size="A4" style={styles.page}>
         <View
-          style={[
-            styles.accentBar,
-            { backgroundColor: reportAccentColors.aging.primary },
-          ]}
+          style={[styles.accentBar, { backgroundColor: veroneColors.gold }]}
         />
         {/* Header */}
         <View style={styles.headerContainer}>
           {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image */}
           <Image src={VERONE_LOGO_BASE64} style={styles.logoImage} />
-          <Text
-            style={[
-              styles.reportTitle,
-              { color: reportAccentColors.aging.dark },
-            ]}
-          >
+          <Text style={[styles.reportTitle, { color: veroneColors.charcoal }]}>
             Rapport Aging Inventaire
           </Text>
           <Text style={styles.generatedAt}>
@@ -148,10 +162,7 @@ export function AgingReportPdf({ report }: AgingReportPdfProps) {
       {/* Page 2: Top 20 */}
       <Page size="A4" style={styles.page}>
         <View
-          style={[
-            styles.accentBar,
-            { backgroundColor: reportAccentColors.aging.primary },
-          ]}
+          style={[styles.accentBar, { backgroundColor: veroneColors.gold }]}
         />
         <Text style={styles.sectionTitle}>
           Top 20 - Produits les Plus Anciens
@@ -160,7 +171,7 @@ export function AgingReportPdf({ report }: AgingReportPdfProps) {
         <View
           style={[
             styles.tableHeader,
-            { backgroundColor: reportAccentColors.aging.dark },
+            { backgroundColor: veroneColors.charcoal },
           ]}
         >
           <Text style={[styles.tableHeaderCell, { width: '28%' }]}>

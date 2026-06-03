@@ -100,7 +100,11 @@ export function useSourcingSampleOrder({
       // Les échantillons peuvent être commandés plusieurs fois tout au long de la vie du produit
       // (pour différents clients, showroom, tests qualité, etc.)
 
-      // 2. Vérifier s'il existe une commande fournisseur en "draft" pour ce fournisseur
+      // 2. Vérifier s'il existe une commande ÉCHANTILLON draft pour ce fournisseur.
+      // IMPORTANT : on cherche uniquement des PO avec po_type='sample'. Une PO
+      // standard draft (réapprovisionnement) NE DOIT PAS recevoir d'item
+      // échantillon — cf. .claude/rules/database-modeling-patterns.md (Single
+      // Table Inheritance avec discriminator).
       const { data: existingDraftOrders, error: ordersError } = await supabase
         .from('purchase_orders')
         .select(
@@ -108,6 +112,7 @@ export function useSourcingSampleOrder({
         )
         .eq('supplier_id', product.supplier_id)
         .eq('status', 'draft')
+        .eq('po_type', 'sample')
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -198,7 +203,7 @@ export function useSourcingSampleOrder({
           data: { user },
         } = await supabase.auth.getUser();
 
-        // Créer la commande
+        // Créer la commande avec po_type='sample' (Single Table Inheritance)
         const { data: newOrder, error: orderError } = await supabase
           .from('purchase_orders')
           .insert([
@@ -206,6 +211,7 @@ export function useSourcingSampleOrder({
               po_number: poNumber,
               supplier_id: product.supplier_id,
               status: 'draft' as const,
+              po_type: 'sample',
               currency: 'EUR',
               total_ht: totalHT,
               total_ttc: totalTTC,
@@ -260,17 +266,38 @@ export function useSourcingSampleOrder({
         });
       }
 
-      // 4. Mettre à jour le statut du produit
-      const { error: updateError } = await supabase
+      // 4. Avancer le workflow sourcing → 'sample_requested' (sans toucher
+      //    requires_sample qui est un flag immutable défini à la création,
+      //    ni product_status / stock_status qui sont des concepts orthogonaux
+      //    au workflow sourcing). Bug d'origine corrigé 2026-05-27 — cf.
+      //    .claude/rules/database-modeling-patterns.md règle anti-pattern.
+      //    L'update n'est appliqué que si le produit est encore dans une
+      //    étape antérieure du workflow (pour ne pas régresser un produit
+      //    déjà passé sample_received / approved).
+      const earlierStages = [
+        'need_identified',
+        'supplier_search',
+        'initial_contact',
+        'evaluation',
+        'negotiation',
+      ];
+      const { data: currentProduct } = await supabase
         .from('products')
-        .update({
-          product_status: 'preorder', // ✅ FIXED: Use 'preorder' for sample order
-          stock_status: 'coming_soon', // En attente d'échantillon
-          requires_sample: true,
-        })
-        .eq('id', productId);
+        .select('sourcing_status')
+        .eq('id', productId)
+        .single();
 
-      if (updateError) throw updateError;
+      if (
+        currentProduct?.sourcing_status &&
+        earlierStages.includes(currentProduct.sourcing_status)
+      ) {
+        const { error: updateError } = await supabase
+          .from('products')
+          .update({ sourcing_status: 'sample_requested' })
+          .eq('id', productId);
+
+        if (updateError) throw updateError;
+      }
 
       await refetch();
       return true;

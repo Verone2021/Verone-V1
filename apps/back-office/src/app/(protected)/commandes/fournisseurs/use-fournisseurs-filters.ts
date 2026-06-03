@@ -66,6 +66,12 @@ export function useFournisseursFilters({
       )
         return false;
 
+      if (
+        advancedFilters.poType !== 'all' &&
+        order.po_type !== advancedFilters.poType
+      )
+        return false;
+
       const orderDateRef = order.order_date ?? order.created_at;
       if (advancedFilters.filterYear !== null) {
         const orderDate = new Date(orderDateRef);

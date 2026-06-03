@@ -11,7 +11,6 @@ import {
   Package,
   Users,
   BarChart3,
-  Download,
   Calendar,
   ArrowLeft,
   X,
@@ -68,7 +67,7 @@ const AVAILABLE_REPORTS = [
       'Analyser turnover ratio et identifier produits à faible rotation',
     icon: RotateCw,
     priority: 'high',
-    status: 'coming_soon',
+    status: 'available',
     metrics: ['Turnover Ratio', 'Jours moyen rotation', 'Classification FSN'],
     visualizations: ['Graphique rotation', 'Matrice ABC/FSN'],
     filters: ['Période', 'Catégorie'],
@@ -89,10 +88,10 @@ const AVAILABLE_REPORTS = [
   {
     id: 'niveaux',
     name: 'Niveaux de Stock',
-    description: 'Stock actuel vs seuils (min/max/sécurité)',
+    description: 'Stock actuel vs seuils (min/réappro) + jours de couverture',
     icon: BarChart3,
     priority: 'medium',
-    status: 'coming_soon',
+    status: 'available',
     metrics: ['Stock actuel', 'Stock sécurité', 'Jours couverture'],
     visualizations: ['Barres comparatives', 'Jauge'],
     filters: ['Catégorie', 'Emplacement'],
@@ -113,10 +112,10 @@ const AVAILABLE_REPORTS = [
   {
     id: 'out-of-stock',
     name: 'Ruptures de Stock',
-    description: 'Produits en rupture ou risque de rupture',
+    description: 'Produits en rupture ou risque de rupture + perte CA estimée',
     icon: AlertTriangle,
     priority: 'high',
-    status: 'coming_soon',
+    status: 'available',
     metrics: ['Produits en rupture', 'Risque <7j', 'Perte CA estimée'],
     visualizations: ['Tableau urgence', 'Historique ruptures'],
     filters: ['Catégorie', 'Seuil jours'],
@@ -125,14 +124,14 @@ const AVAILABLE_REPORTS = [
   {
     id: 'fournisseurs',
     name: 'Performance Fournisseurs',
-    description: 'Analyse qualité et délais par fournisseur',
+    description: 'Délais, conformité et Quality Index par fournisseur',
     icon: Users,
-    priority: 'low',
-    status: 'coming_soon',
-    metrics: ['Délai moyen', 'Taux conformité', 'Quality Index'],
-    visualizations: ['Tableau scoring', 'Graphique délais'],
-    filters: ['Fournisseur', 'Période'],
-    exports: ['PDF', 'Excel'],
+    priority: 'medium',
+    status: 'available',
+    metrics: ['Délai moyen', 'Taux conformité', 'Manquant %', 'Quality Index'],
+    visualizations: ['Tableau scoring', 'Classification 4 niveaux'],
+    filters: ['Période'],
+    exports: ['PDF'],
   },
   {
     id: 'abc-xyz',
@@ -367,24 +366,21 @@ export function StockReportsModal({ isOpen, onClose }: StockReportsModalProps) {
                         </div>
                       </div>
 
-                      {/* Exports */}
-                      <div>
-                        <p className="text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
-                          <Download className="h-3 w-3" />
-                          Export
-                        </p>
-                        <div className="flex gap-1">
-                          {report.exports.map((format, idx) => (
-                            <Badge
-                              key={idx}
-                              variant="outline"
-                              className="text-xs"
-                            >
-                              {format}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
+                      {/* Action : générer le rapport */}
+                      {!isComingSoon && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="w-full mt-1"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleReportClick(report.id);
+                          }}
+                        >
+                          <FileText className="h-3.5 w-3.5 mr-1.5" />
+                          Générer le rapport
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
                 );

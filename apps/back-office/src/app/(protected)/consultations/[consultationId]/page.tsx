@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
@@ -11,7 +11,8 @@ import { ConsultationTimeline } from '@verone/consultations';
 import { ConsultationMarginReportPdf } from '@verone/consultations/pdf-templates';
 import { ButtonUnified } from '@verone/ui';
 import { Card, CardContent } from '@verone/ui';
-import { AlertCircle, ArrowLeft } from 'lucide-react';
+import { createClient } from '@verone/utils/supabase/client';
+import { AlertCircle, ArrowLeft, Trash2 } from 'lucide-react';
 
 const PdfPreviewModal = dynamic(
   () =>
@@ -45,6 +46,58 @@ export default function ConsultationDetailPage() {
   >([]);
   const [quickPOQueue, setQuickPOQueue] = useState<string[]>([]);
 
+  // Cas « consultation absente » : on vérifie en DB directe si elle existe
+  // mais est supprimée (deleted_at NOT NULL), pour différencier l'UX entre
+  // « n'existe pas » et « supprimée le X ». Évite la confusion utilisateur.
+  const [deletedInfo, setDeletedInfo] = useState<{
+    deletedAt: string;
+    clientLabel: string | null;
+  } | null>(null);
+  const [deletedChecked, setDeletedChecked] = useState(false);
+
+  useEffect(() => {
+    if (detail.loading || detail.consultation) return;
+    if (deletedChecked) return;
+
+    const checkDeleted = async () => {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('client_consultations')
+          .select(
+            'id, deleted_at, client_email, enseigne:enseignes(name), organisation:organisations(legal_name, trade_name)'
+          )
+          .eq('id', consultationId)
+          .not('deleted_at', 'is', null)
+          .maybeSingle();
+
+        if (data?.deleted_at) {
+          const enseigne = data.enseigne as { name: string } | null;
+          const org = data.organisation as {
+            legal_name: string | null;
+            trade_name: string | null;
+          } | null;
+          const clientLabel =
+            enseigne?.name ??
+            org?.trade_name ??
+            org?.legal_name ??
+            data.client_email ??
+            null;
+          setDeletedInfo({
+            deletedAt: data.deleted_at,
+            clientLabel,
+          });
+        }
+      } catch (err) {
+        console.error('[ConsultationDetail] Deleted check failed:', err);
+      } finally {
+        setDeletedChecked(true);
+      }
+    };
+
+    void checkDeleted();
+  }, [detail.loading, detail.consultation, consultationId, deletedChecked]);
+
   if (detail.loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -57,20 +110,81 @@ export default function ConsultationDetailPage() {
   }
 
   if (!detail.consultation) {
+    // Pendant la vérification DB de "supprimée", on garde un spinner discret
+    if (!deletedChecked) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-black mx-auto mb-1" />
+            <p className="text-gray-600">Vérification...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Cas 1 : consultation supprimée (deleted_at NOT NULL)
+    if (deletedInfo) {
+      const deletedDate = new Date(deletedInfo.deletedAt).toLocaleDateString(
+        'fr-FR',
+        { day: '2-digit', month: 'long', year: 'numeric' }
+      );
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <Card className="max-w-md border-amber-200">
+            <CardContent className="text-center p-6 space-y-3">
+              <Trash2 className="h-10 w-10 text-amber-600 mx-auto" />
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">
+                  Consultation supprimée
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {deletedInfo.clientLabel ? (
+                    <>
+                      La consultation de{' '}
+                      <strong>{deletedInfo.clientLabel}</strong> a été supprimée
+                      le <strong>{deletedDate}</strong>.
+                    </>
+                  ) : (
+                    <>
+                      Cette consultation a été supprimée le{' '}
+                      <strong>{deletedDate}</strong>.
+                    </>
+                  )}
+                </p>
+              </div>
+              <ButtonUnified
+                onClick={() => router.push('/consultations')}
+                variant="outline"
+                className="w-full"
+              >
+                <ArrowLeft className="h-3 w-3 mr-2" />
+                Retour aux consultations
+              </ButtonUnified>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // Cas 2 : consultation inexistante (mauvais ID, jamais créée)
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="max-w-md">
-          <CardContent className="text-center p-1">
-            <AlertCircle className="h-3 w-3 text-gray-400 mx-auto mb-1" />
-            <h3 className="text-xs font-medium text-gray-900 mb-1">
-              Consultation non trouvée
-            </h3>
-            <p className="text-gray-600 mb-1">
-              Cette consultation n&apos;existe pas ou a été supprimée.
-            </p>
+          <CardContent className="text-center p-6 space-y-3">
+            <AlertCircle className="h-10 w-10 text-gray-400 mx-auto" />
+            <div>
+              <h3 className="text-base font-semibold text-gray-900 mb-1">
+                Consultation introuvable
+              </h3>
+              <p className="text-sm text-gray-600">
+                Cette consultation n&apos;existe pas dans le système. Vérifie le
+                lien.
+              </p>
+            </div>
             <ButtonUnified
               onClick={() => router.push('/consultations')}
               variant="outline"
+              className="w-full"
             >
               <ArrowLeft className="h-3 w-3 mr-2" />
               Retour aux consultations
@@ -151,7 +265,15 @@ export default function ConsultationDetailPage() {
             onDelete={() => detail.setShowDeleteModal(true)}
             onEmail={detail.handleOpenEmail}
             onPdf={detail.handleOpenPdf}
-            onMarginReport={() => setShowMarginReport(true)}
+            onMarginReport={() => {
+              void detail.handleOpenMarginReport().catch((error: unknown) => {
+                console.error(
+                  '[ConsultationDetailPage] Margin report preload failed:',
+                  error
+                );
+              });
+              setShowMarginReport(true);
+            }}
             onCreateQuote={detail.handleOpenQuoteModal}
             onCreateOrder={() => {
               void detail.handleCreateOrder().catch((error: unknown) => {
@@ -243,18 +365,26 @@ export default function ConsultationDetailPage() {
         }}
       />
 
-      {/* Modal rapport marges PDF */}
+      {/* Modal rapport marges PDF — Rapport interne (avec marges et prix d'achat) */}
       {showMarginReport && detail.consultation && (
         <PdfPreviewModal
           isOpen={showMarginReport}
           onClose={() => setShowMarginReport(false)}
-          title="Rapport Interne — Marges"
-          filename={`rapport-marges-${clientName.replace(/\s+/g, '-').toLowerCase()}.pdf`}
+          title={`Rapport interne — Marges — ${clientName}`}
+          filename={`rapport-marges-${clientName
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')}-${new Date()
+            .toISOString()
+            .slice(0, 10)}.pdf`}
           document={
             <ConsultationMarginReportPdf
               consultation={detail.consultation}
               items={detail.consultationItems}
               clientName={clientName}
+              clientInfo={detail.clientInfo}
             />
           }
         />
@@ -288,6 +418,7 @@ export default function ConsultationDetailPage() {
         showPdfPreview={detail.showPdfPreview}
         setShowPdfPreview={detail.setShowPdfPreview}
         pdfImages={detail.pdfImages}
+        clientInfo={detail.clientInfo}
       />
     </div>
   );

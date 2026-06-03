@@ -4,6 +4,7 @@ import React from 'react';
 
 import { UniversalOrderDetailsModal as BaseModal } from '@verone/orders/components/modals/UniversalOrderDetailsModal';
 import type { OrderItem } from '@verone/orders/hooks';
+import { resolveOrderItemTaxRate } from '@verone/finance';
 
 import { PaymentSection } from '@/components/orders/PaymentSection';
 
@@ -43,7 +44,7 @@ export function UniversalOrderDetailsModal(props: Props) {
               id: item.id,
               quantity: item.quantity,
               unit_price_ht: item.unit_price_ht,
-              tax_rate: order.tax_rate,
+              tax_rate: resolveOrderItemTaxRate(item, order),
               products: item.products
                 ? { name: String(item.products.name ?? '') }
                 : null,

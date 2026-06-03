@@ -7853,6 +7853,7 @@ export type Database = {
             | Database['public']['Enums']['payment_terms_type']
             | null;
           po_number: string;
+          po_type: string;
           received_at: string | null;
           received_by: string | null;
           sent_at: string | null;
@@ -7891,6 +7892,7 @@ export type Database = {
             | Database['public']['Enums']['payment_terms_type']
             | null;
           po_number: string;
+          po_type?: string;
           received_at?: string | null;
           received_by?: string | null;
           sent_at?: string | null;
@@ -7929,6 +7931,7 @@ export type Database = {
             | Database['public']['Enums']['payment_terms_type']
             | null;
           po_number?: string;
+          po_type?: string;
           received_at?: string | null;
           received_by?: string | null;
           sent_at?: string | null;

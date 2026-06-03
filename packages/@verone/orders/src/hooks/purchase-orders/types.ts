@@ -11,10 +11,16 @@ export type PurchaseOrderStatus =
   | 'received'
   | 'cancelled';
 
+export type PurchaseOrderType = 'standard' | 'sample';
+
 export interface PurchaseOrder {
   id: string;
   po_number: string;
   supplier_id: string;
+  /** Discriminator Single Table Inheritance. 'sample' = commande échantillon
+   * issue du workflow sourcing. 'standard' = réapprovisionnement classique.
+   * Voir .claude/rules/database-modeling-patterns.md. Migration 2026-05-27. */
+  po_type: PurchaseOrderType;
   status: PurchaseOrderStatus;
   payment_status_v2?: 'pending' | 'paid' | 'partially_paid' | 'overpaid' | null;
   paid_amount?: number;
