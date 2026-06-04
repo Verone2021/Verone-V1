@@ -91,7 +91,8 @@ function SupplierRow({
             {
               width: '10%',
               color: LEVEL_COLOR[s.level],
-              fontFamily: 'Helvetica-Bold',
+              fontFamily: 'Montserrat',
+              fontWeight: 600,
             },
           ]}
         >
@@ -299,7 +300,8 @@ export function FournisseursReportPdf({ report }: FournisseursReportPdfProps) {
                   style={{
                     fontSize: 7,
                     color: LEVEL_COLOR[lvl],
-                    fontFamily: 'Helvetica-Bold',
+                    fontFamily: 'Montserrat',
+                    fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: 0.5,
                   }}
@@ -309,7 +311,8 @@ export function FournisseursReportPdf({ report }: FournisseursReportPdfProps) {
                 <Text
                   style={{
                     fontSize: 18,
-                    fontFamily: 'Helvetica-Bold',
+                    fontFamily: 'Montserrat',
+                    fontWeight: 600,
                     color: LEVEL_COLOR[lvl],
                     marginTop: 2,
                   }}

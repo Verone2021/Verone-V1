@@ -41,14 +41,14 @@ export function HistoriqueReportPdf({ report }: HistoriqueReportPdfProps) {
   const donutData = report.by_type.map(t => ({
     label: t.type,
     value: t.count,
-    color: TYPE_COLORS[t.type] ?? '#6B7280',
+    color: TYPE_COLORS[t.type] ?? veroneColors.pearl,
   }));
 
   // Prepare bar chart data from top_reasons
   const barData = report.top_reasons.map((r, i) => ({
     label: r.description,
     value: r.count,
-    color: REASON_COLORS[i] ?? '#16A34A',
+    color: REASON_COLORS[i] ?? veroneColors.pearl,
     displayValue: `${r.count} mvts`,
   }));
 
