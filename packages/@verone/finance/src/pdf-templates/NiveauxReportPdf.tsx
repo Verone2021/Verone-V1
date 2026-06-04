@@ -54,7 +54,8 @@ function ProductRow({ p, index }: { p: ProductLevel; index: number }) {
           {
             width: '9%',
             color: LEVEL_COLOR[p.level],
-            fontFamily: 'Helvetica-Bold',
+            fontFamily: 'Montserrat',
+            fontWeight: 600,
           },
         ]}
       >
@@ -231,7 +232,8 @@ export function NiveauxReportPdf({ report }: NiveauxReportPdfProps) {
             <Text
               style={{
                 fontSize: 9,
-                fontFamily: 'Helvetica-Bold',
+                fontFamily: 'Montserrat',
+                fontWeight: 600,
                 marginBottom: 6,
               }}
             >

@@ -77,7 +77,8 @@ const s = StyleSheet.create({
   },
   partyTitle: {
     fontSize: 6.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.pearl,
     textTransform: 'uppercase' as const,
     letterSpacing: 1.5,
@@ -90,7 +91,8 @@ const s = StyleSheet.create({
   },
   partyLineBold: {
     fontSize: 9.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.charcoal,
     marginBottom: 2,
   },
@@ -141,7 +143,8 @@ const s = StyleSheet.create({
   },
   productName: {
     fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.charcoal,
     marginBottom: 2,
   },
@@ -166,12 +169,14 @@ const s = StyleSheet.create({
   },
   productMetaValue: {
     fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.charcoal,
   },
   productMetaValueGold: {
     fontSize: 9.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.gold,
   },
   productNotes: {
@@ -190,7 +195,8 @@ const s = StyleSheet.create({
     marginTop: 4,
     textTransform: 'uppercase' as const,
     letterSpacing: 0.8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
   },
   emptyText: {
     fontSize: 8,
@@ -292,7 +298,9 @@ export function ConsultationSummaryPdf({
           </View>
           <View style={s.metaBlock}>
             <Text style={s.docNumber}>Référence</Text>
-            <Text style={[s.docDate, { fontFamily: 'Helvetica-Bold' }]}>
+            <Text
+              style={[s.docDate, { fontFamily: 'Montserrat', fontWeight: 600 }]}
+            >
               {proposalRef}
             </Text>
             <Text style={[s.docDate, { marginTop: 6 }]}>Émis le {now}</Text>

@@ -52,7 +52,8 @@ function ProductRow({ p, index }: { p: ProductRupture; index: number }) {
           {
             width: '8%',
             color: SEVERITY_COLOR[p.severity],
-            fontFamily: 'Helvetica-Bold',
+            fontFamily: 'Montserrat',
+            fontWeight: 600,
           },
         ]}
       >
@@ -76,7 +77,8 @@ function ProductRow({ p, index }: { p: ProductRupture; index: number }) {
           {
             width: '12%',
             color: SEVERITY_COLOR[p.severity],
-            fontFamily: 'Helvetica-Bold',
+            fontFamily: 'Montserrat',
+            fontWeight: 600,
           },
         ]}
       >
@@ -255,7 +257,8 @@ export function RuptureReportPdf({ report }: RuptureReportPdfProps) {
             <Text
               style={{
                 fontSize: 11,
-                fontFamily: 'Helvetica-Bold',
+                fontFamily: 'Montserrat',
+                fontWeight: 600,
                 color: '#14532D',
               }}
             >

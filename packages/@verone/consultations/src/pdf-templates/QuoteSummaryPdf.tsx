@@ -67,7 +67,8 @@ const s = StyleSheet.create({
   },
   infoSectionTitle: {
     fontSize: 8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: colors.gray700,
     marginBottom: 4,
     textTransform: 'uppercase',
@@ -138,13 +139,15 @@ const s = StyleSheet.create({
   },
   totalsTtcLabel: {
     fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: colors.white,
     width: 100,
   },
   totalsTtcValue: {
     fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: colors.white,
     textAlign: 'right',
     width: 100,
@@ -186,7 +189,13 @@ export function QuoteSummaryPdf({
           {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image src={VERONE_LOGO_BASE64} style={s.logoImage} />
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 14, fontFamily: 'Helvetica-Bold' }}>
+            <Text
+              style={{
+                fontSize: 14,
+                fontFamily: 'Montserrat',
+                fontWeight: 600,
+              }}
+            >
               Devis {quote.document_number}
             </Text>
             <Text style={{ fontSize: 7, color: colors.gray500, marginTop: 2 }}>

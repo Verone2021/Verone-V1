@@ -43,7 +43,8 @@ const s = StyleSheet.create({
   },
   metaValue: {
     fontSize: 8.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.charcoal,
     marginTop: 2,
   },
@@ -75,7 +76,8 @@ const s = StyleSheet.create({
   },
   clientStripValueBold: {
     fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.charcoal,
   },
   // KPI cards Vérone (or accent)
@@ -105,7 +107,8 @@ const s = StyleSheet.create({
   },
   kpiLabel: {
     fontSize: 6,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     textTransform: 'uppercase' as const,
     letterSpacing: 1,
     marginBottom: 3,
@@ -113,7 +116,8 @@ const s = StyleSheet.create({
   },
   kpiLabelOnDark: {
     fontSize: 6,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     textTransform: 'uppercase' as const,
     letterSpacing: 1,
     marginBottom: 3,
@@ -121,17 +125,20 @@ const s = StyleSheet.create({
   },
   kpiValue: {
     fontSize: 13,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.charcoal,
   },
   kpiValueOnDark: {
     fontSize: 13,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.white,
   },
   kpiValueWarn: {
     fontSize: 13,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: '#C03030',
   },
   // Table
@@ -151,7 +158,8 @@ const s = StyleSheet.create({
   },
   th: {
     fontSize: 6.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.white,
     textTransform: 'uppercase' as const,
     letterSpacing: 0.6,
@@ -159,17 +167,20 @@ const s = StyleSheet.create({
   td: { fontSize: 7.5, color: veroneColors.charcoal },
   tdBold: {
     fontSize: 7.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.charcoal,
   },
   tdGold: {
     fontSize: 7.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.gold,
   },
   tdRed: {
     fontSize: 7.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: '#C03030',
   },
   // Analysis block
@@ -181,7 +192,8 @@ const s = StyleSheet.create({
   },
   analysisTitle: {
     fontSize: 8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.charcoal,
     marginBottom: 4,
     textTransform: 'uppercase' as const,
