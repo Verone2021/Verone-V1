@@ -11749,6 +11749,19 @@ export type Database = {
           },
         ];
       };
+      linkme_public_products: {
+        Row: {
+          category: string | null;
+          display_order: number | null;
+          id: string | null;
+          image_url: string | null;
+          is_featured: boolean | null;
+          name: string | null;
+          public_price_ht: number | null;
+          slug: string | null;
+        };
+        Relationships: [];
+      };
       linkme_selection_items_with_pricing: {
         Row: {
           base_price_ht: number | null;
