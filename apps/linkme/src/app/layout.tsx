@@ -8,7 +8,7 @@ import '../styles/driver-theme.css';
 /**
  * Configuration SEO globale LinkMe
  */
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://linkme.verone.io';
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://linkme.network';
 const SITE_NAME = 'LinkMe';
 
 export const metadata: Metadata = {

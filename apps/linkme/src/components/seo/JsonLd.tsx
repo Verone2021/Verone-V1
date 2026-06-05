@@ -8,7 +8,7 @@
  * @since 2026-05-15 - LM-SEO-NAV-BLOG-001
  */
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://linkme.verone.io';
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://linkme.network';
 
 interface IFaqItem {
   q: string;
