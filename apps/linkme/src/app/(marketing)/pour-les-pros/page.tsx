@@ -28,18 +28,18 @@ export const dynamic = 'force-static';
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'LinkMe pour les pros — Commission sur vos prescriptions',
+  title: 'LinkMe pour les pros — Commission sur tes prescriptions',
   description:
-    'Architectes, décorateurs, consultants — vos prescriptions méritent une commission. Créez votre sélection LinkMe en 10 minutes.',
+    'Architectes, décorateurs, consultants — tes prescriptions méritent une commission. Crée ta sélection LinkMe en 10 minutes.',
   keywords: [
     'devenir ambassadeur de marque',
     'commission sur recommandation',
     'affiliation architecte décorateur',
   ],
   openGraph: {
-    title: 'LinkMe pour les pros — Commission sur vos prescriptions',
+    title: 'LinkMe pour les pros — Commission sur tes prescriptions',
     description:
-      'Architectes, décorateurs, consultants — vos prescriptions méritent une commission. Créez votre sélection LinkMe en 10 minutes.',
+      'Architectes, décorateurs, consultants — tes prescriptions méritent une commission. Crée ta sélection LinkMe en 10 minutes.',
     url: '/pour-les-pros',
     type: 'website',
     images: [
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     description:
-      'Architectes, décorateurs, consultants — vos prescriptions méritent une commission. Créez votre sélection LinkMe en 10 minutes.',
+      'Architectes, décorateurs, consultants — tes prescriptions méritent une commission. Crée ta sélection LinkMe en 10 minutes.',
   },
   alternates: {
     canonical: '/pour-les-pros',
@@ -131,7 +131,7 @@ export default function PourLesProsPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-[#3976BB]/10 via-white to-[#7E84C0]/5" />
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#183559] leading-tight">
-            Vos prescriptions ont toujours eu de la valeur.{' '}
+            Tes prescriptions ont toujours eu de la valeur.{' '}
             <span className="bg-gradient-to-r from-[#5DBEBB] via-[#7E84C0] to-[#3976BB] bg-clip-text text-transparent">
               Maintenant elles ont un prix.
             </span>

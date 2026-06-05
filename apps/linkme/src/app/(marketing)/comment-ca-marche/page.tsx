@@ -108,7 +108,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Qu'est-ce qui se passe si un produit est en rupture de stock ?",
-    a: "Le produit en rupture est automatiquement signalé dans ton tableau de bord et masqué dans ta sélection publique. Ton client ne voit pas un produit qu'il ne peut pas commander. Tu es notifié dès que le stock est réapprovisionné.",
+    a: 'Tu gardes la main sur ta sélection : si un produit n’est plus disponible, tu le retires en un clic. Le masquage automatique des produits en rupture et la notification de réapprovisionnement arrivent prochainement.',
   },
 ];
 
