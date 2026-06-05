@@ -127,7 +127,7 @@ export function LandingHowItWorks(): JSX.Element {
                 <div className="w-3 h-3 rounded-full bg-yellow-400" />
                 <div className="w-3 h-3 rounded-full bg-green-400" />
                 <span className="ml-4 text-sm text-gray-400">
-                  dashboard.linkme.verone.io
+                  app.linkme.network
                 </span>
               </div>
 

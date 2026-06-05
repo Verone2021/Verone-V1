@@ -102,8 +102,7 @@ export default function AboutPage() {
           LinkMe connecte un catalogue multi-marques à des ambassadeurs
           qualifiés — créateurs de contenu, professionnels prescripteurs,
           enseignes têtes de réseau. Aucun stock, aucune logistique pour
-          l&apos;ambassadeur. Toute marque qualifiée peut rejoindre le
-          catalogue.
+          l&apos;ambassadeur. Les marques rejoignent le catalogue sur sélection.
         </p>
       </section>
 
@@ -185,23 +184,73 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Notre histoire — storytelling fondateur */}
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 mb-16 lg:mb-24">
+        <h2 className="text-2xl sm:text-3xl font-bold text-[#183559] mb-6 text-center">
+          Notre histoire
+        </h2>
+        <div className="space-y-4 text-[#183559]/70 leading-relaxed">
+          <p>
+            LinkMe est né d&apos;une observation faite en travaillant avec des
+            réseaux de restauration et d&apos;hôtellerie : entre la vision
+            esthétique d&apos;une enseigne et ce que commandait réellement
+            chaque gérant de site, il y avait toujours un écart. Pas par manque
+            de goût, ni de budget. Par manque d&apos;infrastructure.
+          </p>
+          <p>
+            Aucun outil ne permettait à un réseau de dire à ses franchisés :
+            voici ce que tu commandes, voici ton prix, voici ta commission —
+            sans monter une boutique en ligne, sans service achats dédié, sans
+            mois de développement.
+          </p>
+          <p>
+            Alors on l&apos;a construit. Un catalogue sélectionné. Des
+            sélections personnalisables. Un lien à partager. LinkMe gère la
+            logistique. Le réseau fait le reste.
+          </p>
+          <p>
+            Ce qui était une réponse à un problème précis est devenu une
+            plateforme. L&apos;infrastructure qu&apos;il manquait.
+          </p>
+        </div>
+        <blockquote className="mt-8 border-l-4 border-[#5DBEBB] pl-5 italic text-[#183559]/80">
+          « Les réseaux que j&apos;équipais savaient exactement ce qu&apos;ils
+          voulaient. Ils n&apos;avaient aucun moyen de le faire commander par
+          leurs propres franchisés. J&apos;ai construit l&apos;outil qui
+          manquait. »
+          <footer className="mt-2 text-sm not-italic text-[#183559]/60">
+            — Roméo Dos Santos, fondateur de LinkMe
+          </footer>
+        </blockquote>
+      </section>
+
       {/* CTA */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-gradient-to-r from-[#5DBEBB]/10 to-[#7E84C0]/10 rounded-2xl p-8 lg:p-12 text-center">
           <h2 className="text-2xl lg:text-3xl font-bold text-[#183559] mb-4">
-            Prêt à devenir ambassadeur ?
+            Rejoins LinkMe.
           </h2>
           <p className="text-[#183559]/70 mb-8 max-w-xl mx-auto">
-            Accès sur demande. On regarde ton profil, on t&apos;ouvre le
-            catalogue multi-marques, tu commences à recommander.
+            Que tu veuilles recommander des produits ou référencer ton
+            catalogue, l&apos;accès se fait sur demande. On regarde ton profil
+            et on t&apos;ouvre la bonne porte.
           </p>
-          <Link
-            href="/contact"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#5DBEBB] text-white font-semibold rounded-xl hover:bg-[#4CA9A6] transition-colors"
-          >
-            Demander l&apos;accès
-            <ArrowRight className="h-5 w-5" />
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/contact"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#5DBEBB] text-white font-semibold rounded-xl hover:bg-[#4CA9A6] transition-colors"
+            >
+              Demander l&apos;accès
+              <ArrowRight className="h-5 w-5" />
+            </Link>
+            <Link
+              href="/contact?type=fournisseur"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-[#183559]/20 text-[#183559] font-semibold rounded-xl hover:bg-[#183559]/5 transition-colors"
+            >
+              Référencer mon catalogue
+              <ArrowRight className="h-5 w-5" />
+            </Link>
+          </div>
         </div>
       </section>
     </div>

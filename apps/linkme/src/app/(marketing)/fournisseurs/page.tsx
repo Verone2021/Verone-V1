@@ -48,9 +48,9 @@ const BENEFITS = [
       'Vos produits sont recommandés par des enseignes, des prescripteurs professionnels et des créateurs de contenu sélectionnés. Pas de gros affiliés génériques.',
   },
   {
-    title: 'Zéro friction logistique',
+    title: 'Deux modes logistiques au choix',
     description:
-      "Vous gérez vos stocks et vos expéditions comme vous le faites déjà. LinkMe gère la prise de commande, le paiement et la coordination avec l'ambassadeur.",
+      'Vous gérez vous-même les expéditions à chaque commande, ou LinkMe prend en charge le stockage et l’envoi depuis son entrepôt. Dans les deux cas, LinkMe gère la prise de commande, le paiement et la coordination avec l’ambassadeur.',
   },
   {
     title: 'Commission transparente',
@@ -111,7 +111,7 @@ export default function PourLesFournisseursPage() {
 
           <div className="mt-10">
             <Link
-              href="/contact"
+              href="/contact?type=fournisseur"
               className="inline-flex items-center gap-2 px-6 py-3 text-white bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/80 rounded-lg font-medium hover:shadow-lg transition-all"
             >
               Référencer mon catalogue
@@ -189,7 +189,7 @@ export default function PourLesFournisseursPage() {
             On vous rappelle sous 24h pour discuter de votre offre.
           </p>
           <Link
-            href="/contact"
+            href="/contact?type=fournisseur"
             className="inline-flex items-center gap-2 px-6 py-3 text-[#183559] bg-white rounded-lg font-medium hover:shadow-lg transition-all"
           >
             Référencer mon catalogue

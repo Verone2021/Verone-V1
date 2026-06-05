@@ -3,40 +3,35 @@
 /**
  * Landing Page Pricing Section - LinkMe
  *
- * Explication du modele de pricing:
- * - Produits du catalogue multi-marques (modèle public)
- * - Système de feux tricolore interactif
- * - Formule de calcul transparente
- * - Commission LinkMe de 5 %
+ * Simulateur de marge interactif :
+ * - Slider marge en temps réel (0% → marge max du produit)
+ * - Affiche le prix de vente HT et le gain estimé ambassadeur
+ * - Système de feux tricolores (vert/orange/rouge) pour guider
+ * - N'expose PAS le taux de commission interne ni la décomposition TTC
  *
  * @module LandingPricing
  * @since 2026-01-23
- * @updated 2026-05-13 - LM-MKT-002 : rename « Prix base Verone » →
- *                       « Prix base fournisseur » (positionnement
- *                       multi-marques). Aucune logique de calcul
- *                       modifiée.
+ * @updated 2026-06-05 - LINKME-SIMU-001 : simulateur dynamique, sans
+ *                       exposition de la commission interne ni du TTC.
  */
 
 import { useState, useMemo } from 'react';
 
 import { Calculator, Info, CheckCircle2 } from 'lucide-react';
 
-// Constantes de pricing
-const LINKME_COMMISSION_RATE = 0.05; // 5%
-const TVA_RATE = 0.2; // 20%
+// Usage INTERNE uniquement (calcul du plafond de marge) — jamais affiché.
+const PLATFORM_FEE_RATE = 0.05;
+const TVA_RATE = 0.2;
 
-// Exemple de produit pour la demo
+// Produit d'exemple pour la démo
 const EXAMPLE_PRODUCT = {
   name: 'Table basse design',
   basePrice: 180, // Prix base fournisseur HT
-  publicPrice: 299, // Prix public TTC (reference marche)
+  publicPrice: 299, // Prix public TTC (référence marché)
 };
 
-// Types
 interface IPricingResult {
   sellingPriceHT: number;
-  linkmeCommission: number;
-  finalPriceTTC: number;
   affiliateGain: number;
 }
 
@@ -48,46 +43,34 @@ interface ITrafficLightZones {
 }
 
 /**
- * Calcule les prix et zones de marge
+ * Calcule le prix de vente HT et le gain ambassadeur pour une marge donnée.
+ * Aucune décomposition interne (commission, TTC) n'est exposée.
  */
 function calculatePricing(
   basePrice: number,
   marginRate: number
 ): IPricingResult {
-  // Prix de vente HT = prix base * (1 + marge)
   const sellingPriceHT = basePrice * (1 + marginRate / 100);
-
-  // Commission LinkMe
-  const linkmeCommission = sellingPriceHT * LINKME_COMMISSION_RATE;
-
-  // Prix avant TVA
-  const priceBeforeTVA = sellingPriceHT + linkmeCommission;
-
-  // Prix final TTC
-  const finalPriceTTC = priceBeforeTVA * (1 + TVA_RATE);
-
-  // Gain affilié
   const affiliateGain = sellingPriceHT - basePrice;
 
   return {
     sellingPriceHT: Math.round(sellingPriceHT * 100) / 100,
-    linkmeCommission: Math.round(linkmeCommission * 100) / 100,
-    finalPriceTTC: Math.round(finalPriceTTC * 100) / 100,
     affiliateGain: Math.round(affiliateGain * 100) / 100,
   };
 }
 
 /**
- * Calcule les zones du feu tricolore
+ * Calcule les zones du feu tricolore (plafond = 95% du prix public).
  */
 function calculateTrafficLightZones(
   basePrice: number,
   publicPrice: number
 ): ITrafficLightZones {
-  const linkmeBasePrice = basePrice * (1 + LINKME_COMMISSION_RATE);
-  const ceilingPrice = publicPrice * 0.95; // 95% du prix public comme plafond securite
+  const internalBasePrice = basePrice * (1 + PLATFORM_FEE_RATE);
+  const ceilingPrice = publicPrice * 0.95;
   const maxMargin =
-    ((ceilingPrice / (1 + TVA_RATE) - linkmeBasePrice) / linkmeBasePrice) * 100;
+    ((ceilingPrice / (1 + TVA_RATE) - internalBasePrice) / internalBasePrice) *
+    100;
 
   return {
     green: { min: 0, max: Math.max(0, maxMargin / 3) },
@@ -98,7 +81,7 @@ function calculateTrafficLightZones(
 }
 
 /**
- * Determine la zone de couleur pour une marge donnee
+ * Détermine la zone de couleur pour une marge donnée.
  */
 function getMarginZone(
   margin: number,
@@ -111,11 +94,11 @@ function getMarginZone(
 
 const ZONE_LABELS = {
   green: {
-    label: 'Competitif',
+    label: 'Compétitif',
     description: 'Prix attractif, ventes optimales',
   },
-  orange: { label: 'Equilibre', description: 'Bon compromis marge/volume' },
-  red: { label: 'Eleve', description: 'Marge elevee, volume reduit' },
+  orange: { label: 'Équilibré', description: 'Bon compromis marge / volume' },
+  red: { label: 'Élevé', description: 'Marge maximale, volume réduit' },
 };
 
 export function LandingPricing(): JSX.Element {
@@ -143,17 +126,18 @@ export function LandingPricing(): JSX.Element {
         {/* Section header */}
         <div className="text-center mb-12 lg:mb-16">
           <span className="inline-block px-4 py-1.5 bg-[#7E84C0]/10 rounded-full text-sm font-medium text-[#7E84C0] mb-4">
-            Tarification transparente
+            Simulateur de marge
           </span>
           <h2 className="text-3xl sm:text-4xl font-bold text-[#183559]">
-            Vous decidez de{' '}
+            Tu décides de{' '}
             <span className="bg-gradient-to-r from-[#5DBEBB] to-[#7E84C0] bg-clip-text text-transparent">
-              votre marge
+              ta marge
             </span>
           </h2>
           <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-            Commissions affichees sur chaque produit. Vous definissez librement
-            votre marge.
+            Bouge le curseur : ton prix de vente et ton gain se mettent à jour
+            en direct. Le feu tricolore te guide, mais c&apos;est toi qui
+            décides.
           </p>
         </div>
 
@@ -188,7 +172,7 @@ export function LandingPricing(): JSX.Element {
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm font-medium text-[#183559]">
-                  Votre marge
+                  Ta marge
                 </span>
                 <span className="text-lg font-bold text-[#183559]">
                   {margin.toFixed(2)}%
@@ -228,6 +212,7 @@ export function LandingPricing(): JSX.Element {
                 max={zones.maxMargin}
                 step={0.01}
                 value={margin}
+                aria-label="Choisis ta marge"
                 onChange={e =>
                   setMargin(Math.round(Number(e.target.value) * 100) / 100)
                 }
@@ -254,35 +239,19 @@ export function LandingPricing(): JSX.Element {
               </div>
             </div>
 
-            {/* Results */}
+            {/* Results — uniquement prix de vente HT + gain ambassadeur */}
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-sm text-[#183559]/70">
-                  Prix de vente HT
+                  Ton prix de vente HT
                 </span>
                 <span className="font-medium text-[#183559]">
                   {pricing.sellingPriceHT.toFixed(2)} EUR
                 </span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-sm text-[#183559]/70">
-                  Commission LinkMe (5%)
-                </span>
-                <span className="font-medium text-[#183559]">
-                  {pricing.linkmeCommission.toFixed(2)} EUR
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className="text-sm text-[#183559]/70">
-                  Prix client TTC
-                </span>
-                <span className="font-bold text-[#183559]">
-                  {pricing.finalPriceTTC.toFixed(2)} EUR
-                </span>
-              </div>
               <div className="flex justify-between items-center py-3 bg-[#5DBEBB]/10 rounded-lg px-3">
                 <span className="text-sm font-medium text-[#5DBEBB]">
-                  Votre gain
+                  Ton gain estimé
                 </span>
                 <span className="text-lg font-bold text-[#5DBEBB]">
                   +{pricing.affiliateGain.toFixed(2)} EUR
@@ -299,11 +268,11 @@ export function LandingPricing(): JSX.Element {
                 <Info className="h-5 w-5 text-[#7E84C0] mt-0.5" />
                 <div>
                   <h3 className="font-bold text-[#183559]">
-                    Le systeme feux tricolore
+                    Le système feux tricolores
                   </h3>
                   <p className="text-sm text-[#183559]/60 mt-1">
-                    Un indicateur visuel pour vous guider dans le choix de votre
-                    marge. Ce n&apos;est pas bloquant, vous decidez.
+                    Un repère visuel pour t&apos;aider à choisir ta marge. Ce
+                    n&apos;est pas bloquant : tu décides.
                   </p>
                 </div>
               </div>
@@ -313,7 +282,7 @@ export function LandingPricing(): JSX.Element {
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-green-50 border border-green-100">
                   <div className="w-4 h-4 rounded-full bg-green-400 mt-0.5" />
                   <div>
-                    <div className="font-medium text-green-800">Competitif</div>
+                    <div className="font-medium text-green-800">Compétitif</div>
                     <div className="text-sm text-green-700/70">
                       0% - {Math.round(zones.green.max)}% de marge
                     </div>
@@ -327,7 +296,7 @@ export function LandingPricing(): JSX.Element {
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-orange-50 border border-orange-100">
                   <div className="w-4 h-4 rounded-full bg-orange-400 mt-0.5" />
                   <div>
-                    <div className="font-medium text-orange-800">Equilibre</div>
+                    <div className="font-medium text-orange-800">Équilibré</div>
                     <div className="text-sm text-orange-700/70">
                       {Math.round(zones.green.max)}% -{' '}
                       {Math.round(zones.orange.max)}% de marge
@@ -342,13 +311,13 @@ export function LandingPricing(): JSX.Element {
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-red-50 border border-red-100">
                   <div className="w-4 h-4 rounded-full bg-red-400 mt-0.5" />
                   <div>
-                    <div className="font-medium text-red-800">Eleve</div>
+                    <div className="font-medium text-red-800">Élevé</div>
                     <div className="text-sm text-red-700/70">
                       {Math.round(zones.orange.max)}% - {zones.maxMargin}% de
                       marge
                     </div>
                     <div className="text-xs text-red-600 mt-1">
-                      Marge elevee, peut reduire le volume de ventes
+                      Marge maximale, peut réduire le volume de ventes
                     </div>
                   </div>
                 </div>
@@ -358,14 +327,14 @@ export function LandingPricing(): JSX.Element {
             {/* Benefits list */}
             <div className="bg-gradient-to-br from-[#183559] to-[#3976BB] rounded-2xl p-6 text-white">
               <h3 className="font-bold text-lg mb-4">
-                Pourquoi notre modele est different
+                Pourquoi notre modèle est différent
               </h3>
               <ul className="space-y-3">
                 {[
-                  'Commissions affichees sur chaque produit',
-                  'Liberte totale sur votre marge',
-                  "Pas de frais caches ni d'abonnement",
-                  'Suivi transparent en temps reel',
+                  'Ton gain affiché en temps réel sur chaque produit',
+                  'Liberté totale sur ta marge',
+                  "Pas de frais cachés ni d'abonnement",
+                  'Suivi transparent en temps réel',
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-[#5DBEBB] shrink-0" />

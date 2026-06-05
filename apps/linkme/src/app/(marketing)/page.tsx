@@ -21,11 +21,14 @@ import {
   LandingCTA,
 } from '@/components/landing';
 import { OrganizationJsonLd } from '@/components/seo/JsonLd';
+import { getLinkmePublicProducts } from '@/lib/linkme-public-products';
 
 export const dynamic = 'force-static';
 export const revalidate = 3600;
 
-export default function HomePage(): JSX.Element {
+export default async function HomePage(): Promise<JSX.Element> {
+  const products = await getLinkmePublicProducts(8);
+
   return (
     <>
       <OrganizationJsonLd />
@@ -34,7 +37,7 @@ export default function HomePage(): JSX.Element {
       <LandingFeatures />
       <LandingHowItWorks />
       <LandingPricing />
-      <LandingMarketplace />
+      <LandingMarketplace products={products} />
       <LandingCTA />
     </>
   );

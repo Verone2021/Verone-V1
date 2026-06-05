@@ -3,82 +3,83 @@
 /**
  * Landing Page Marketplace Section - LinkMe
  *
- * Section présentant une sélection de produits réels du catalogue :
- * - Produits hardcodés (pas de fetch dynamique)
- * - Images depuis Supabase Storage
- * - CTA vers le catalogue complet
- *
- * Note : les produits affiliés (ex : Pokawa) ne sont pas affichés ici
- * car cette fonctionnalité n'est pas encore publique.
+ * Vitrine catalogue public :
+ * - Vrais produits du catalogue (vue linkme_public_products) si disponibles,
+ *   sinon exemples par défaut.
+ * - Visiteur NON connecté → prix masqués (« Prix sur accès »), conformément
+ *   au catalogue public LinkMe.
+ * - Deux CTA : devenir ambassadeur / référencer son catalogue.
  *
  * @module LandingMarketplace
  * @since 2026-01-23
- * @updated 2026-05-13 - LM-MKT-001 : accents.
- * @updated 2026-05-13 - LM-MKT-002 : catégories et produits showcase
- *                       multi-catégories (déco, éclairage, végétal,
- *                       électronique, mobilier).
+ * @updated 2026-06-05 - LINKME-DB-001 / LINKME-CATALOGUE-001 : vrais produits,
+ *                       prix masqués, CTA ambassadeur + fournisseur.
  */
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { ShoppingBag, ArrowRight, Star, Sparkles } from 'lucide-react';
 
-/**
- * Produits showcase hardcodes
- *
- * A METTRE A JOUR: Ces produits sont des placeholders.
- * L'utilisateur doit choisir 2-3 vrais produits a afficher.
- */
-const SHOWCASE_PRODUCTS = [
+import type { PublicProduct } from '@/lib/linkme-public-products';
+
+interface ICardProduct {
+  id: string;
+  name: string;
+  category: string | null;
+  imageUrl: string | null;
+  badge: string | null;
+}
+
+// Exemples de repli si aucun produit réel n'est disponible
+const FALLBACK_PRODUCTS: ICardProduct[] = [
   {
     id: 'showcase-1',
     name: 'Table basse design',
     category: 'Mobilier',
-    image: '/placeholder-product-1.jpg',
-    basePrice: 280,
-    commission: '5%',
+    imageUrl: null,
     badge: null,
   },
   {
     id: 'showcase-2',
     name: "Lampe d'ambiance LED",
     category: 'Éclairage',
-    image: '/placeholder-product-2.jpg',
-    basePrice: 145,
-    commission: '5%',
+    imageUrl: null,
     badge: 'Populaire',
   },
   {
     id: 'showcase-3',
     name: "Plante d'intérieur grand format",
     category: 'Végétal',
-    image: '/placeholder-product-3.jpg',
-    basePrice: 89,
-    commission: '5%',
+    imageUrl: null,
     badge: null,
   },
   {
     id: 'showcase-4',
     name: 'Enceinte connectée',
     category: 'Électronique',
-    image: '/placeholder-product-4.jpg',
-    basePrice: 195,
-    commission: '5%',
-    badge: 'Nouveau',
+    imageUrl: null,
+    badge: null,
   },
 ];
 
-// Catégories pour le filtre visuel (multi-catégories)
-const CATEGORIES = [
-  'Tous',
-  'Déco',
-  'Éclairage',
-  'Végétal',
-  'Électronique',
-  'Mobilier',
-];
+interface ILandingMarketplaceProps {
+  products?: PublicProduct[];
+}
 
-export function LandingMarketplace(): JSX.Element {
+export function LandingMarketplace({
+  products,
+}: ILandingMarketplaceProps): JSX.Element {
+  const realProducts: ICardProduct[] = (products ?? []).map(p => ({
+    id: p.id,
+    name: p.name,
+    category: p.category,
+    imageUrl: p.imageUrl,
+    badge: p.isFeatured ? 'Mis en avant' : null,
+  }));
+
+  const cards = realProducts.length > 0 ? realProducts : FALLBACK_PRODUCTS;
+
   return (
     <section id="marketplace" className="py-16 lg:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -95,41 +96,33 @@ export function LandingMarketplace(): JSX.Element {
             à vendre
           </h2>
           <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-            Produits sourcés avec soin dans plusieurs catégories — déco,
-            éclairage, végétal, électronique et plus. Commission de 5 % sur
-            chaque vente.
+            Découvre une sélection de notre catalogue. Connecte-toi pour voir
+            les prix et fixer ta marge sur chaque produit.
           </p>
-        </div>
-
-        {/* Category filter (visual only) */}
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
-          {CATEGORIES.map((category, index) => (
-            <button
-              key={category}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                index === 0
-                  ? 'bg-[#183559] text-white'
-                  : 'bg-gray-100 text-[#183559]/70 hover:bg-gray-200'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
         </div>
 
         {/* Products grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {SHOWCASE_PRODUCTS.map(product => (
+          {cards.map(product => (
             <div
               key={product.id}
               className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300"
             >
               {/* Image container */}
               <div className="relative aspect-square bg-gray-100 overflow-hidden">
-                {/* Placeholder image - remplacer par vraies images */}
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                  <ShoppingBag className="h-16 w-16 text-gray-300" />
-                </div>
+                {product.imageUrl ? (
+                  <Image
+                    src={product.imageUrl}
+                    alt={product.name}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                    <ShoppingBag className="h-16 w-16 text-gray-300" />
+                  </div>
+                )}
 
                 {/* Badge */}
                 {product.badge && (
@@ -138,57 +131,48 @@ export function LandingMarketplace(): JSX.Element {
                     {product.badge}
                   </div>
                 )}
-
-                {/* Hover overlay */}
-                <div className="absolute inset-0 bg-[#183559]/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="px-4 py-2 bg-white rounded-lg text-[#183559] font-medium text-sm">
-                    Voir le produit
-                  </span>
-                </div>
               </div>
 
               {/* Content */}
               <div className="p-4">
-                <div className="text-xs text-[#5DBEBB] font-medium mb-1">
-                  {product.category}
-                </div>
-                <h3 className="font-bold text-[#183559] mb-2 line-clamp-1">
+                {product.category && (
+                  <div className="text-xs text-[#5DBEBB] font-medium mb-1">
+                    {product.category}
+                  </div>
+                )}
+                <h3 className="font-bold text-[#183559] mb-3 line-clamp-1">
                   {product.name}
                 </h3>
 
                 <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-lg font-bold text-[#183559]">
-                      {product.basePrice} EUR
-                    </div>
-                    <div className="text-xs text-[#183559]/50">
-                      Prix base HT
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium text-[#5DBEBB]">
-                      {product.commission}
-                    </div>
-                    <div className="text-xs text-[#183559]/50">Commission</div>
-                  </div>
+                  <span className="text-sm font-medium text-[#183559]/50">
+                    Prix sur accès
+                  </span>
+                  <span className="rounded-full bg-[#5DBEBB]/10 px-3 py-1 text-xs font-medium text-[#5DBEBB]">
+                    Marge configurable
+                  </span>
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* CTA */}
-        <div className="mt-12 text-center">
+        {/* CTA — devenir ambassadeur / référencer son catalogue */}
+        <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            href="/contact"
+            href="/contact?type=createur"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[#183559] text-white font-semibold rounded-xl hover:bg-[#183559]/90 transition-colors"
           >
-            Découvrir tout le catalogue
+            Devenir ambassadeur
             <ArrowRight className="h-5 w-5" />
           </Link>
-          <p className="mt-4 text-sm text-[#183559]/50">
-            Plus de 500 produits disponibles dans notre catalogue
-          </p>
+          <Link
+            href="/contact?type=fournisseur"
+            className="inline-flex items-center gap-2 px-6 py-3 border-2 border-[#183559]/20 text-[#183559] font-semibold rounded-xl hover:bg-[#183559]/5 transition-colors"
+          >
+            Référencer mon catalogue
+            <ArrowRight className="h-5 w-5" />
+          </Link>
         </div>
 
         {/* Affiliate products teaser */}
@@ -203,12 +187,12 @@ export function LandingMarketplace(): JSX.Element {
             Vous avez vos propres produits ?
           </h3>
           <p className="text-[#183559]/60 max-w-xl mx-auto mb-6">
-            Nous acceptons les produits de nos affiliés partenaires. Stockage
-            dans nos entrepôts ou expédition par vos soins — nous gérons la
-            logistique pour vous.
+            Nous référençons les produits de nos partenaires. Stockage dans nos
+            entrepôts ou expédition par vos soins — nous gérons la logistique
+            pour vous.
           </p>
           <Link
-            href="/contact"
+            href="/contact?type=fournisseur"
             className="inline-flex items-center gap-2 text-[#7E84C0] font-medium hover:text-[#7E84C0]/80 transition-colors"
           >
             Contactez-nous pour en savoir plus
