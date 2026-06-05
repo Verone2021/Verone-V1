@@ -9,7 +9,7 @@ import '../styles/driver-theme.css';
  * Configuration SEO globale LinkMe
  */
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://linkme.verone.io';
-const SITE_NAME = 'LinkMe by Verone';
+const SITE_NAME = 'LinkMe';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -18,19 +18,16 @@ export const metadata: Metadata = {
     template: '%s | LinkMe',
   },
   description:
-    "Rejoins LinkMe, la marketplace d'affiliation multi-marques. Catalogue déco, éclairage, végétal, électronique et plus. Tu choisis tes marques, tu fixes ta marge, tu touches ta commission. Accès sur demande.",
+    'Ton réseau génère des ventes. LinkMe te les paie. Catalogue multi-marques, marge configurable, zéro stock. Accès sur demande.',
   keywords: [
+    'ambassadeur de marque',
     'affiliation multi-marques',
     'marketplace affiliation',
-    'ambassadeur marques',
     'commission produit physique',
-    'créateur de contenu',
-    'partenariat professionnel',
-    'LinkMe',
   ],
-  authors: [{ name: 'Verone', url: 'https://verone.io' }],
-  creator: 'Verone',
-  publisher: 'Verone',
+  authors: [{ name: 'LinkMe', url: SITE_URL }],
+  creator: 'LinkMe',
+  publisher: 'LinkMe',
   robots: {
     index: true,
     follow: true,
@@ -65,7 +62,6 @@ export const metadata: Metadata = {
     description:
       'Deviens ambassadeur de marques sélectionnées sur LinkMe. Catalogue multi-marques (déco, éclairage, végétal, électronique et plus). Tu fixes ta marge, tu touches ta commission.',
     images: ['/og-image.png'],
-    creator: '@verone_io',
   },
   icons: {
     icon: [

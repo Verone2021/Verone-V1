@@ -31,6 +31,11 @@ export const metadata: Metadata = {
   title: 'LinkMe pour les pros — Commission sur vos prescriptions',
   description:
     'Architectes, décorateurs, consultants — vos prescriptions méritent une commission. Créez votre sélection LinkMe en 10 minutes.',
+  keywords: [
+    'devenir ambassadeur de marque',
+    'commission sur recommandation',
+    'affiliation architecte décorateur',
+  ],
   openGraph: {
     title: 'LinkMe pour les pros — Commission sur vos prescriptions',
     description:
@@ -45,6 +50,10 @@ export const metadata: Metadata = {
         alt: 'LinkMe pour les professionnels',
       },
     ],
+  },
+  twitter: {
+    description:
+      'Architectes, décorateurs, consultants — vos prescriptions méritent une commission. Créez votre sélection LinkMe en 10 minutes.',
   },
   alternates: {
     canonical: '/pour-les-pros',

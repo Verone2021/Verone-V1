@@ -30,6 +30,11 @@ export const metadata: Metadata = {
   title: 'Comment fonctionne LinkMe — Affiliation sans stock',
   description:
     'Choisis tes produits, configure ta marge, partage ton lien. Commission sur chaque vente. Zéro stock, zéro logistique.',
+  keywords: [
+    'affiliation sans stock',
+    "comment fonctionne l'affiliation",
+    'plateforme affiliation',
+  ],
   openGraph: {
     title: 'Comment fonctionne LinkMe — Affiliation sans stock en 3 étapes',
     description:
@@ -44,6 +49,10 @@ export const metadata: Metadata = {
         alt: 'Comment fonctionne LinkMe',
       },
     ],
+  },
+  twitter: {
+    description:
+      'Choisis tes produits, configure ta marge, partage ton lien. Commission sur chaque vente. Zéro stock, zéro logistique.',
   },
   alternates: {
     canonical: '/comment-ca-marche',

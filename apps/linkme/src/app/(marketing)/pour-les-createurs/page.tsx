@@ -32,6 +32,11 @@ export const metadata: Metadata = {
     'LinkMe pour les créateurs — Ambassadeur de marque avec une vraie marge',
   description:
     'LinkMe te donne accès à un catalogue de marques sélectionnées. Tu fixes ta marge, tu partages ta sélection. Commission réelle sur chaque vente.',
+  keywords: [
+    'devenir ambassadeur de marque',
+    'commission affiliation',
+    'monétiser son audience',
+  ],
   openGraph: {
     title:
       'LinkMe pour les créateurs — Ambassadeur de marque avec une vraie marge',
@@ -47,6 +52,10 @@ export const metadata: Metadata = {
         alt: 'LinkMe pour les créateurs',
       },
     ],
+  },
+  twitter: {
+    description:
+      'LinkMe te donne accès à un catalogue de marques sélectionnées. Tu fixes ta marge, tu partages ta sélection. Commission réelle sur chaque vente.',
   },
   alternates: {
     canonical: '/pour-les-createurs',
