@@ -36,7 +36,6 @@ const SHOWCASE_PRODUCTS = [
     category: 'Mobilier',
     image: '/placeholder-product-1.jpg',
     basePrice: 280,
-    commission: '5%',
     badge: null,
   },
   {
@@ -45,7 +44,6 @@ const SHOWCASE_PRODUCTS = [
     category: 'Éclairage',
     image: '/placeholder-product-2.jpg',
     basePrice: 145,
-    commission: '5%',
     badge: 'Populaire',
   },
   {
@@ -54,7 +52,6 @@ const SHOWCASE_PRODUCTS = [
     category: 'Végétal',
     image: '/placeholder-product-3.jpg',
     basePrice: 89,
-    commission: '5%',
     badge: null,
   },
   {
@@ -63,7 +60,6 @@ const SHOWCASE_PRODUCTS = [
     category: 'Électronique',
     image: '/placeholder-product-4.jpg',
     basePrice: 195,
-    commission: '5%',
     badge: 'Nouveau',
   },
 ];
@@ -96,8 +92,8 @@ export function LandingMarketplace(): JSX.Element {
           </h2>
           <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
             Produits sourcés avec soin dans plusieurs catégories — déco,
-            éclairage, végétal, électronique et plus. Commission de 5 % sur
-            chaque vente.
+            éclairage, végétal, électronique et plus. Tu fixes ta marge sur
+            chaque produit.
           </p>
         </div>
 
@@ -165,12 +161,9 @@ export function LandingMarketplace(): JSX.Element {
                       Prix base HT
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium text-[#5DBEBB]">
-                      {product.commission}
-                    </div>
-                    <div className="text-xs text-[#183559]/50">Commission</div>
-                  </div>
+                  <span className="rounded-full bg-[#5DBEBB]/10 px-3 py-1 text-xs font-medium text-[#5DBEBB]">
+                    Marge configurable
+                  </span>
                 </div>
               </div>
             </div>

@@ -13,31 +13,31 @@
  * @updated 2026-05-13 - LM-MKT-001 : accents.
  */
 
-import { Percent, Activity, CreditCard } from 'lucide-react';
+import { SlidersHorizontal, Truck, Activity } from 'lucide-react';
 
 // Features data
 const FEATURES = [
   {
-    icon: Percent,
-    title: 'Marges configurables',
+    icon: SlidersHorizontal,
+    title: 'La marge que tu décides',
     description:
-      'Configurez vos marges produit par produit selon votre stratégie. Transparence totale sur vos gains avec notre système de calcul en temps réel.',
+      'Tu fixes ton prix de vente sur chaque produit. Le système feux tricolores te guide — vert pour le volume, rouge pour la marge maximale. Tu décides.',
     color: '#5DBEBB',
     bgGradient: 'from-[#5DBEBB]/10 to-[#5DBEBB]/5',
   },
   {
-    icon: Activity,
-    title: 'Suivi en temps réel',
+    icon: Truck,
+    title: 'Zéro stock, zéro logistique',
     description:
-      'Dashboard intuitif pour suivre vos ventes, commissions et performances. Données actualisées en continu.',
+      'Tu recommandes. LinkMe gère les commandes, les expéditions, les retours. Tu ne vois jamais un colis, tu ne réponds jamais à un client mécontent.',
     color: '#7E84C0',
     bgGradient: 'from-[#7E84C0]/10 to-[#7E84C0]/5',
   },
   {
-    icon: CreditCard,
-    title: 'Paiement simplifié',
+    icon: Activity,
+    title: 'Dashboard en temps réel',
     description:
-      'Recevez vos commissions directement sur votre compte. Processus de paiement rapide et sécurisé.',
+      'Tes ventes, tes commissions, tes meilleures sélections — mis à jour à la minute. Tu sais exactement où tu en es, avant la fin du mois.',
     color: '#3976BB',
     bgGradient: 'from-[#3976BB]/10 to-[#3976BB]/5',
   },
@@ -57,8 +57,8 @@ export function LandingFeatures() {
             ?
           </h2>
           <p className="mt-4 text-lg text-[#183559]/60 max-w-2xl mx-auto">
-            Notre plateforme vous offre tous les outils nécessaires pour
-            développer votre activité d&apos;affiliation.
+            Pas de promesse marketing creuse. Trois choses concrètes que tu
+            obtiens dès le premier jour.
           </p>
         </div>
 
