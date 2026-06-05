@@ -6,10 +6,9 @@
  * Un seul formulaire pour toutes les demandes entrantes (créateur, pro,
  * enseigne, fournisseur). Champ conditionnel « mode logistique » si fournisseur.
  * À la soumission : POST /api/contact/unified (email Resend + WhatsApp).
- * Page de confirmation avec lien Calendly adapté au type de profil.
+ * Page de confirmation (ContactConfirmation) avec lien Calendly adapté.
  *
- * Le type de profil peut être présélectionné via le query param `?type=`
- * (ex: /contact?type=enseigne depuis les CTA des pages persona).
+ * Le type de profil peut être présélectionné via le query param `?type=`.
  *
  * @module ContactForm
  * @since 2026-01-23
@@ -20,103 +19,21 @@ import { useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
+import { Send, AlertCircle, Clock } from 'lucide-react';
+
+import { ContactConfirmation } from './ContactConfirmation';
 import {
-  Send,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  CalendarCheck,
-  ArrowRight,
-} from 'lucide-react';
+  INITIAL_FORM,
+  PROFILE_OPTIONS,
+  LOGISTICS_OPTIONS,
+  normalizeType,
+  type FormStatus,
+  type IFormData,
+  type ProfileType,
+} from './contact-form.constants';
 
-type FormStatus = 'idle' | 'loading' | 'success' | 'error';
-type ProfileType = 'createur' | 'pro' | 'enseigne' | 'fournisseur';
-type LogisticsMode = 'self' | 'warehouse';
-
-interface IFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  profileType: ProfileType | '';
-  logisticsMode: LogisticsMode | '';
-  message: string;
-}
-
-const INITIAL_FORM: IFormData = {
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  profileType: '',
-  logisticsMode: '',
-  message: '',
-};
-
-const PROFILE_OPTIONS: {
-  value: ProfileType;
-  title: string;
-  hint: string;
-}[] = [
-  {
-    value: 'createur',
-    title: 'Ambassadeur créateur',
-    hint: 'Je crée du contenu, j’ai une audience',
-  },
-  {
-    value: 'pro',
-    title: 'Professionnel prescripteur',
-    hint: 'Architecte, décorateur, consultant…',
-  },
-  {
-    value: 'enseigne',
-    title: 'Enseigne / Réseau',
-    hint: 'Je pilote plusieurs points de vente',
-  },
-  {
-    value: 'fournisseur',
-    title: 'Fournisseur',
-    hint: 'Je veux référencer mes produits',
-  },
-];
-
-const LOGISTICS_OPTIONS: {
-  value: LogisticsMode;
-  label: string;
-}[] = [
-  {
-    value: 'self',
-    label: 'Vous gérez le stock et expédiez directement à chaque commande',
-  },
-  {
-    value: 'warehouse',
-    label: 'Vous souhaitez un stockage en entrepôt LinkMe',
-  },
-];
-
-const CALENDLY_CTA_LABELS: Record<ProfileType, string> = {
-  createur: 'Réserver un créneau ambassadeur (15 min)',
-  pro: 'Réserver un créneau ambassadeur (15 min)',
-  enseigne: 'Réserver une démo réseau (30 min)',
-  fournisseur: 'Réserver un créneau référencement (30 min)',
-};
-
-/** Mappe le query param `?type=` vers un type de profil du formulaire. */
-function normalizeType(raw: string | null): ProfileType | '' {
-  switch (raw) {
-    case 'enseigne':
-      return 'enseigne';
-    case 'fournisseur':
-      return 'fournisseur';
-    case 'pro':
-      return 'pro';
-    case 'createur':
-    case 'ambassadeur':
-      return 'createur';
-    default:
-      return '';
-  }
-}
+const INPUT_CLASS =
+  'w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5DBEBB]/50 focus:border-[#5DBEBB] transition-colors';
 
 export function ContactForm(): JSX.Element {
   const searchParams = useSearchParams();
@@ -177,66 +94,20 @@ export function ContactForm(): JSX.Element {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const inputClass =
-    'w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5DBEBB]/50 focus:border-[#5DBEBB] transition-colors';
-
-  // ----- Page de confirmation -----
   if (status === 'success') {
-    const ctaLabel = submittedType
-      ? CALENDLY_CTA_LABELS[submittedType]
-      : 'Réserver un créneau';
-
     return (
-      <div className="py-16 lg:py-24 bg-gray-50/50">
-        <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-2xl p-6 lg:p-10 border border-green-200 shadow-sm text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
-            </div>
-            <h1 className="text-2xl font-bold text-[#183559] mb-2">
-              Demande bien reçue !
-            </h1>
-            <p className="text-[#183559]/70 mb-8">
-              On revient vers toi sous 24h. Tu peux aussi réserver directement
-              un créneau pour qu’on en discute.
-            </p>
-
-            {calendlyUrl ? (
-              <a
-                href={calendlyUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#5DBEBB] to-[#5DBEBB]/90 text-white font-semibold rounded-xl hover:from-[#4CA9A6] hover:to-[#4CA9A6]/90 transition-all shadow-lg hover:shadow-xl"
-              >
-                <CalendarCheck className="h-5 w-5" />
-                {ctaLabel}
-                <ArrowRight className="h-4 w-4" />
-              </a>
-            ) : (
-              <p className="text-sm text-[#183559]/50">
-                On te recontacte très vite par email.
-              </p>
-            )}
-
-            <div className="mt-8">
-              <button
-                onClick={() => {
-                  setStatus('idle');
-                  setSubmittedType(null);
-                  setCalendlyUrl(null);
-                }}
-                className="text-sm font-semibold text-[#5DBEBB] hover:text-[#4CA9A6]"
-              >
-                Envoyer une autre demande
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ContactConfirmation
+        submittedType={submittedType}
+        calendlyUrl={calendlyUrl}
+        onReset={() => {
+          setStatus('idle');
+          setSubmittedType(null);
+          setCalendlyUrl(null);
+        }}
+      />
     );
   }
 
-  // ----- Formulaire -----
   return (
     <div className="py-16 lg:py-24 bg-gray-50/50">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -382,7 +253,7 @@ export function ContactForm(): JSX.Element {
                 value={form.firstName}
                 onChange={handleChange}
                 required
-                className={inputClass}
+                className={INPUT_CLASS}
                 placeholder="Jean"
               />
             </div>
@@ -400,7 +271,7 @@ export function ContactForm(): JSX.Element {
                 value={form.lastName}
                 onChange={handleChange}
                 required
-                className={inputClass}
+                className={INPUT_CLASS}
                 placeholder="Dupont"
               />
             </div>
@@ -421,7 +292,7 @@ export function ContactForm(): JSX.Element {
                 value={form.email}
                 onChange={handleChange}
                 required
-                className={inputClass}
+                className={INPUT_CLASS}
                 placeholder="jean@entreprise.com"
               />
             </div>
@@ -438,7 +309,7 @@ export function ContactForm(): JSX.Element {
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
-                className={inputClass}
+                className={INPUT_CLASS}
                 placeholder="06 12 34 56 78"
               />
             </div>
@@ -457,7 +328,7 @@ export function ContactForm(): JSX.Element {
               value={form.message}
               onChange={handleChange}
               rows={5}
-              className={`${inputClass} resize-none`}
+              className={`${INPUT_CLASS} resize-none`}
               placeholder="Parlez-nous de votre projet (optionnel)…"
             />
           </div>

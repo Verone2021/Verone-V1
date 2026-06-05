@@ -8,15 +8,17 @@
 --   - is_public_showcase = produit visible dans le catalogue/vitrine public LinkMe
 --   - is_featured        = produit mis en avant sur la homepage (affiché en premier)
 -- Lecture anonyme accordée (anon, authenticated) sur le modèle de linkme_globe_items.
+-- Aucun prix n'est projeté : les prix sont masqués côté public (non connecté).
 
-CREATE OR REPLACE VIEW public.linkme_public_products AS
+DROP VIEW IF EXISTS public.linkme_public_products;
+
+CREATE VIEW public.linkme_public_products AS
 SELECT
   p.id::text AS id,
   p.name,
   p.slug,
   c.name AS category,
   pi.public_url AS image_url,
-  cp.public_price_ht,
   cp.is_featured,
   cp.display_order
 FROM products p

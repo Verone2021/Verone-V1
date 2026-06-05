@@ -22,7 +22,11 @@ export interface PublicProduct {
 }
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+// Clé anon (publique par design). Variable serveur si dispo, sinon la publique.
+const SUPABASE_ANON_KEY =
+  process.env.SUPABASE_ANON_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+  '';
 
 /**
  * Retourne les N premiers produits de la vitrine publique LinkMe

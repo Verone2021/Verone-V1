@@ -11757,7 +11757,6 @@ export type Database = {
           image_url: string | null;
           is_featured: boolean | null;
           name: string | null;
-          public_price_ht: number | null;
           slug: string | null;
         };
         Relationships: [];
