@@ -22,7 +22,7 @@
     "@verone/types": "workspace:*",
     "google-auth-library": "^9.15.0",
     "googleapis": "^144.0.0",
-    "zod": "^4.1.12"
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "react": "^18.2.0"
