@@ -47,6 +47,7 @@ const PUBLIC_ROUTES: RegExp[] = [
   /^\/api\/auth/,
   /^\/api\/health/,
   /^\/api\/globe-items/,
+  /^\/api\/contact\//,
   /^\/api\/page-config/,
   /^\/api\/emails\/order-confirmation/,
   /^\/api\/emails\/step4-confirmed/,
