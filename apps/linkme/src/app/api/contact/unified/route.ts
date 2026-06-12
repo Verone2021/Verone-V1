@@ -167,6 +167,11 @@ async function notifyWhatsApp(data: UnifiedContactData): Promise<void> {
   const phonePart = data.phone ? ` — ${data.phone}` : '';
   const body = `🔔 Nouvelle demande LinkMe — ${PROFILE_LABELS[data.profileType]} — ${data.firstName} ${data.lastName} — ${data.email}${phonePart}`;
 
+  // Délai d'expiration : ne jamais bloquer la réponse du formulaire si Meta
+  // est lent ou indisponible (l'email reste la notif principale).
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
   try {
     const response = await fetch(
       `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`,
@@ -182,6 +187,7 @@ async function notifyWhatsApp(data: UnifiedContactData): Promise<void> {
           type: 'text',
           text: { body },
         }),
+        signal: controller.signal,
       }
     );
 
@@ -191,6 +197,8 @@ async function notifyWhatsApp(data: UnifiedContactData): Promise<void> {
     }
   } catch (error) {
     console.error('[contact/unified] WhatsApp échec réseau:', error);
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -212,7 +220,7 @@ export async function POST(request: NextRequest) {
     // Email (notif principale) — bloquant pour le statut de la requête.
     if (resend) {
       const { error } = await resend.emails.send({
-        from: `LinkMe <${FROM_EMAIL}>`,
+        from: FROM_EMAIL,
         to: [CONTACT_EMAIL],
         replyTo: data.email,
         subject: `[LinkMe] ${PROFILE_LABELS[data.profileType]} — ${data.firstName} ${data.lastName}`,
