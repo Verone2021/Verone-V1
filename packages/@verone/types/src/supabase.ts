@@ -7,31 +7,6 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
   public: {
     Tables: {
       addresses: {
@@ -11749,6 +11724,18 @@ export type Database = {
           },
         ];
       };
+      linkme_public_products: {
+        Row: {
+          category: string | null;
+          display_order: number | null;
+          id: string | null;
+          image_url: string | null;
+          is_featured: boolean | null;
+          name: string | null;
+          slug: string | null;
+        };
+        Relationships: [];
+      };
       linkme_selection_items_with_pricing: {
         Row: {
           base_price_ht: number | null;
@@ -15732,9 +15719,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       affiliate_product_approval_status: [

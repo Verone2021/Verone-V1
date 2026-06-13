@@ -1,7 +1,10 @@
 import { StyleSheet } from '@react-pdf/renderer';
 
-// Register Helvetica (built-in, no custom font needed)
-// @react-pdf/renderer includes Helvetica by default
+import { registerVeronePdfFonts } from './pdf-fonts';
+
+// Enregistre les polices de marque (Bodoni Moda titres + Montserrat texte)
+// dès l'import de ce module, importé par 100 % des templates PDF.
+registerVeronePdfFonts();
 
 export const colors = {
   black: '#000000',
@@ -50,14 +53,14 @@ export const veroneColors = {
 
 /**
  * Styles partagés Vérone — hiérarchie éditoriale (eyebrows UPPERCASE letter-spaced,
- * accent or, séparateurs charcoal). Police Helvetica conservée pour zéro risque
- * réseau ; intégration Bodoni Moda + Montserrat en sous-sprint dédié si besoin.
+ * accent or, séparateurs charcoal). Polices de marque : Bodoni Moda (titres) +
+ * Montserrat (texte), enregistrées via `pdf-fonts.ts` (BO-PDF-FONTS-001).
  */
 export const veroneStyles = StyleSheet.create({
   page: {
     padding: 40,
     fontSize: 9,
-    fontFamily: 'Helvetica',
+    fontFamily: 'Montserrat',
     color: veroneColors.charcoal,
     backgroundColor: veroneColors.white,
   },
@@ -70,16 +73,18 @@ export const veroneStyles = StyleSheet.create({
   // Eyebrow label — Montserrat 500 UPPERCASE letter-spacing 0.32em
   eyebrow: {
     fontSize: 7,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.pearl,
     textTransform: 'uppercase' as const,
     letterSpacing: 2,
     marginBottom: 4,
   },
-  // Document title — Bodoni Moda-style (Helvetica-Bold fallback)
+  // Document title — Bodoni Moda 700
   title: {
     fontSize: 22,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Bodoni Moda',
+    fontWeight: 700,
     color: veroneColors.charcoal,
     letterSpacing: -0.2,
   },
@@ -91,14 +96,16 @@ export const veroneStyles = StyleSheet.create({
   // Section heading
   sectionTitle: {
     fontSize: 11,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.charcoal,
     marginTop: 14,
     marginBottom: 8,
   },
   sectionTitleEyebrow: {
     fontSize: 6.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.pearl,
     textTransform: 'uppercase' as const,
     letterSpacing: 1.5,
@@ -131,7 +138,8 @@ export const veroneStyles = StyleSheet.create({
   },
   clientBlockLegal: {
     fontSize: 9.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.charcoal,
     marginBottom: 2,
   },
@@ -156,7 +164,8 @@ export const veroneStyles = StyleSheet.create({
   },
   totalLabelCharcoal: {
     fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.white,
     textTransform: 'uppercase' as const,
     letterSpacing: 1,
@@ -164,7 +173,8 @@ export const veroneStyles = StyleSheet.create({
   },
   totalValueCharcoal: {
     fontSize: 13,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: veroneColors.gold,
     letterSpacing: 0.5,
   },
@@ -209,7 +219,7 @@ export const styles = StyleSheet.create({
   page: {
     padding: 40,
     fontSize: 10,
-    fontFamily: 'Helvetica',
+    fontFamily: 'Montserrat',
     color: colors.gray900,
   },
   // Header
@@ -222,7 +232,8 @@ export const styles = StyleSheet.create({
   },
   reportTitle: {
     fontSize: 16,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Bodoni Moda',
+    fontWeight: 700,
     marginTop: 12,
   },
   generatedAt: {
@@ -244,7 +255,8 @@ export const styles = StyleSheet.create({
   // Sections
   sectionTitle: {
     fontSize: 12,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     marginBottom: 8,
     marginTop: 16,
   },
@@ -269,7 +281,8 @@ export const styles = StyleSheet.create({
   },
   metricValue: {
     fontSize: 14,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
   },
   metricSubtext: {
     fontSize: 7,
@@ -285,7 +298,8 @@ export const styles = StyleSheet.create({
   },
   tableHeaderCell: {
     fontSize: 8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: colors.white,
   },
   tableRow: {
@@ -316,7 +330,8 @@ export const styles = StyleSheet.create({
   },
   tableCellBold: {
     fontSize: 8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
   },
   // Charts layout
   chartRow: {
@@ -335,7 +350,8 @@ export const styles = StyleSheet.create({
   },
   chartTitle: {
     fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'Montserrat',
+    fontWeight: 600,
     color: '#374151',
     marginBottom: 8,
   },

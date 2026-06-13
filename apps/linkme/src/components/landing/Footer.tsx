@@ -16,14 +16,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import {
-  Send,
-  Mail,
-  MapPin,
-  Instagram,
-  Linkedin,
-  Facebook,
-} from 'lucide-react';
+import { Send, Mail, MapPin } from 'lucide-react';
 
 // Footer links — 3 colonnes
 const LINKS = {
@@ -47,13 +40,8 @@ const LINKS = {
   ],
 };
 
-// Social links - à créer
-// TODO: Créer comptes sociaux LinkMe et mettre à jour les URLs
-const SOCIALS = [
-  { icon: Instagram, href: 'https://instagram.com', label: 'Instagram' },
-  { icon: Linkedin, href: 'https://linkedin.com', label: 'LinkedIn' },
-  { icon: Facebook, href: 'https://facebook.com', label: 'Facebook' },
-];
+// Réseaux sociaux masqués tant que les vrais comptes LinkMe n'existent pas
+// (consigne sprint 2026-06-03 : pas de liens vers des comptes génériques).
 
 export function LandingFooter(): JSX.Element {
   return (
@@ -75,19 +63,6 @@ export function LandingFooter(): JSX.Element {
               Plateforme d&apos;affiliation multi-marques pour les enseignes,
               les professionnels prescripteurs et les créateurs de contenu.
             </p>
-            {/* Social links */}
-            <div className="flex items-center gap-3 mt-6">
-              {SOCIALS.map(social => (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-                  aria-label={social.label}
-                >
-                  <social.icon className="h-4 w-4" />
-                </a>
-              ))}
-            </div>
           </div>
 
           {/* Links - Navigation */}
@@ -161,16 +136,16 @@ export function LandingFooter(): JSX.Element {
               </button>
             </div>
 
-            {/* Contact info - A remplir avec vraies coordonnees */}
+            {/* Contact — renvoie vers le formulaire unifié (pas d'email exposé) */}
             <div className="space-y-2 text-sm text-white/60">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                <a
-                  href="mailto:contact@verone.io"
+                <Link
+                  href="/contact"
                   className="hover:text-white transition-colors"
                 >
-                  contact@verone.io
-                </a>
+                  Nous écrire
+                </Link>
               </div>
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 mt-0.5" />
@@ -183,8 +158,7 @@ export function LandingFooter(): JSX.Element {
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-white/40 text-sm">
-            &copy; {new Date().getFullYear()} LinkMe by Verone. Tous droits
-            réservés.
+            &copy; {new Date().getFullYear()} LinkMe. Tous droits réservés.
           </p>
           <div className="flex items-center gap-6 text-sm text-white/40">
             <Link href="/cgu" className="hover:text-white transition-colors">

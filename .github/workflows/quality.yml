@@ -730,6 +730,10 @@ jobs:
 
       - name: Regenerate types from live DB
         if: env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL != ''
+        # La CLI Supabase (>= mi-2026) exige un access token même avec --db-url,
+        # sinon : "Access token not provided" → fichier généré vide → faux drift.
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           supabase gen types typescript --db-url "$SUPABASE_DB_URL" \
             > packages/@verone/types/src/supabase.ts.generated

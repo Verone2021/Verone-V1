@@ -225,6 +225,9 @@ export default function LinkMeProductDetailPage(): React.JSX.Element {
           <ProductDetailHeader
             product={product}
             onToggleActive={(v): void => void handleToggle('is_enabled', v)}
+            onToggleShowcase={(v): void =>
+              void handleToggle('is_public_showcase', v)
+            }
             onToggleFeatured={(v): void => void handleToggle('is_featured', v)}
             onDelete={() => setShowDeleteDialog(true)}
             isUpdating={toggleField.isPending}

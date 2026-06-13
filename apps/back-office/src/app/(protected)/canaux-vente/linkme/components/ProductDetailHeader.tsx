@@ -6,6 +6,7 @@ import {
   Package,
   Eye,
   Star,
+  Globe,
   Scale,
   Ruler,
   Home,
@@ -67,6 +68,7 @@ function ProductBadges({ product }: { product: LinkMeProductDetail }) {
 function ConfigToggles({
   product,
   onToggleActive,
+  onToggleShowcase,
   onToggleFeatured,
   onDelete,
   isUpdating,
@@ -74,13 +76,14 @@ function ConfigToggles({
 }: {
   product: LinkMeProductDetail;
   onToggleActive: (v: boolean) => void;
+  onToggleShowcase: (v: boolean) => void;
   onToggleFeatured: (v: boolean) => void;
   onDelete?: () => void;
   isUpdating: boolean;
   isDeleting: boolean;
 }) {
   return (
-    <div className="flex items-center gap-6 p-4 bg-muted/50 rounded-lg">
+    <div className="flex items-center gap-6 p-4 bg-muted/50 rounded-lg flex-wrap">
       <div className="flex items-center gap-3">
         <Switch
           id="toggle-enabled"
@@ -97,6 +100,20 @@ function ConfigToggles({
       </div>
       <div className="flex items-center gap-3">
         <Switch
+          id="toggle-showcase"
+          checked={product.is_public_showcase}
+          onCheckedChange={onToggleShowcase}
+          disabled={isUpdating}
+        />
+        <div className="flex items-center gap-2">
+          <Globe className="h-4 w-4 text-[#5DBEBB]" />
+          <Label htmlFor="toggle-showcase" className="text-sm cursor-pointer">
+            Vitrine publique
+          </Label>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <Switch
           id="toggle-featured"
           checked={product.is_featured}
           onCheckedChange={onToggleFeatured}
@@ -105,7 +122,7 @@ function ConfigToggles({
         <div className="flex items-center gap-2">
           <Star className="h-4 w-4 text-yellow-500" />
           <Label htmlFor="toggle-featured" className="text-sm cursor-pointer">
-            Produit vedette
+            Mis en avant accueil
           </Label>
         </div>
       </div>
@@ -128,6 +145,7 @@ function ConfigToggles({
 interface ProductDetailHeaderProps {
   product: LinkMeProductDetail;
   onToggleActive: (value: boolean) => void;
+  onToggleShowcase: (value: boolean) => void;
   onToggleFeatured: (value: boolean) => void;
   onDelete?: () => void;
   isUpdating?: boolean;
@@ -137,6 +155,7 @@ interface ProductDetailHeaderProps {
 export function ProductDetailHeader({
   product,
   onToggleActive,
+  onToggleShowcase,
   onToggleFeatured,
   onDelete,
   isUpdating = false,
@@ -174,6 +193,7 @@ export function ProductDetailHeader({
       <ConfigToggles
         product={product}
         onToggleActive={onToggleActive}
+        onToggleShowcase={onToggleShowcase}
         onToggleFeatured={onToggleFeatured}
         onDelete={onDelete}
         isUpdating={isUpdating}

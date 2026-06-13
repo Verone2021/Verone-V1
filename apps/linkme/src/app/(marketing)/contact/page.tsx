@@ -7,6 +7,8 @@
  * @since 2026-01-23
  */
 
+import { Suspense } from 'react';
+
 import type { Metadata } from 'next';
 
 import { ContactForm } from './ContactForm';
@@ -38,5 +40,9 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage(): JSX.Element {
-  return <ContactForm />;
+  return (
+    <Suspense fallback={<div className="min-h-screen" />}>
+      <ContactForm />
+    </Suspense>
+  );
 }

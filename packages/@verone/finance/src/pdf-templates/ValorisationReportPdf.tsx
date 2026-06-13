@@ -85,7 +85,11 @@ export function ValorisationReportPdf({ report }: ValorisationReportPdfProps) {
             <Text
               style={[
                 styles.generatedAt,
-                { color: veroneColors.goldDeep, fontFamily: 'Helvetica-Bold' },
+                {
+                  color: veroneColors.goldDeep,
+                  fontFamily: 'Montserrat',
+                  fontWeight: 600,
+                },
               ]}
             >
               Snapshot au{' '}
