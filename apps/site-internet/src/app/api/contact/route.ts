@@ -4,12 +4,22 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
+import { notifyContactWhatsApp } from '../emails/_shared/notify-whatsapp';
+
 const contactSchema = z.object({
   name: z.string().min(1).max(200),
   email: z.string().email().max(320),
   subject: z.string().min(1).max(200),
   message: z.string().min(10).max(5000),
 });
+
+/** Libellés lisibles des catégories du formulaire (voir contact/page.tsx). */
+const SUBJECT_LABELS: Record<string, string> = {
+  product: 'Question sur un produit',
+  order: 'Commande ou devis',
+  return: 'Retour ou problème',
+  other: 'Autre',
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,7 +65,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send confirmation email (non-blocking)
+    // Send confirmation email to the visitor (non-blocking)
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001';
     void fetch(`${siteUrl}/api/emails/contact-confirmation`, {
       method: 'POST',
@@ -67,6 +77,27 @@ export async function POST(request: NextRequest) {
       }),
     }).catch(emailError => {
       console.error('[Contact API] Confirmation email failed:', emailError);
+    });
+
+    // Notify the Vérone team by email (non-blocking)
+    void fetch(`${siteUrl}/api/emails/contact-admin-notification`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, subject, message }),
+    }).catch(notifyError => {
+      console.error('[Contact API] Admin notification failed:', notifyError);
+    });
+
+    // Notify the Vérone team on WhatsApp (dormant until WHATSAPP_* configured)
+    void notifyContactWhatsApp({
+      subjectLabel: SUBJECT_LABELS[subject] ?? subject,
+      name,
+      email,
+    }).catch(whatsappError => {
+      console.error(
+        '[Contact API] WhatsApp notification failed:',
+        whatsappError
+      );
     });
 
     return NextResponse.json({ success: true });
