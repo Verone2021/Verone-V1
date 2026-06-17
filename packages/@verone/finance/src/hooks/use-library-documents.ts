@@ -119,7 +119,12 @@ export function useLibraryDocuments(filters?: {
       } else if (filters?.category === 'ventes') {
         query = query.eq('document_direction', 'outbound');
       } else if (filters?.category === 'avoirs') {
-        query = query.eq('document_type', 'credit_note');
+        // Les avoirs sont stockés en 'supplier_credit_note' / 'customer_credit_note'
+        // (jamais le littéral 'credit_note' qui ne renvoyait aucun résultat).
+        query = query.in('document_type', [
+          'supplier_credit_note',
+          'customer_credit_note',
+        ]);
       }
 
       // Search
