@@ -3,11 +3,8 @@
  * Formulaire de contact unifié du site public LinkMe.
  *
  * Toutes les demandes entrantes (créateur, pro, enseigne, fournisseur) passent
- * par ici. Deux notifications en parallèle :
- *   1. Email via Resend (actif si RESEND_API_KEY présent).
- *   2. WhatsApp via WhatsApp Business Cloud API (actif si WHATSAPP_* présents).
- * L'échec de WhatsApp ne fait JAMAIS échouer la requête : l'email reste la
- * source de notification principale.
+ * par ici. La notification se fait par email via Resend (actif si
+ * RESEND_API_KEY présent).
  *
  * La réponse renvoie l'URL Calendly adaptée au type de profil (résolue côté
  * serveur depuis les variables d'environnement) pour la page de confirmation.
@@ -149,59 +146,6 @@ function generateEmailHtml(data: UnifiedContactData): string {
 `;
 }
 
-/**
- * Notifie Roméo sur WhatsApp via WhatsApp Business Cloud API.
- * En veille tant que les variables WHATSAPP_* ne sont pas configurées.
- * Ne lève jamais : un échec est loggé, l'email reste la notif principale.
- */
-async function notifyWhatsApp(data: UnifiedContactData): Promise<void> {
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-  const toNumber = process.env.WHATSAPP_TO_NUMBER;
-
-  if (!phoneNumberId || !accessToken || !toNumber) {
-    // WhatsApp non configuré → on ne fait rien (email assure la notif).
-    return;
-  }
-
-  const phonePart = data.phone ? ` — ${data.phone}` : '';
-  const body = `🔔 Nouvelle demande LinkMe — ${PROFILE_LABELS[data.profileType]} — ${data.firstName} ${data.lastName} — ${data.email}${phonePart}`;
-
-  // Délai d'expiration : ne jamais bloquer la réponse du formulaire si Meta
-  // est lent ou indisponible (l'email reste la notif principale).
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
-
-  try {
-    const response = await fetch(
-      `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: toNumber,
-          type: 'text',
-          text: { body },
-        }),
-        signal: controller.signal,
-      }
-    );
-
-    if (!response.ok) {
-      const detail = await response.text();
-      console.error('[contact/unified] WhatsApp non envoyé:', detail);
-    }
-  } catch (error) {
-    console.error('[contact/unified] WhatsApp échec réseau:', error);
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as unknown;
@@ -243,9 +187,6 @@ export async function POST(request: NextRequest) {
         );
       }
     }
-
-    // WhatsApp (notif secondaire) — n'impacte jamais le statut.
-    await notifyWhatsApp(data);
 
     return NextResponse.json({ success: true, calendlyUrl });
   } catch (error) {
