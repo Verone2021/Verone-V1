@@ -101,16 +101,18 @@ function getResendClient(): Resend {
   return new Resend(apiKey);
 }
 
+// Adresses de collecte Welyb (cabinet Audamex), branchées en dur car stables.
+// Surchargeables par variable d'environnement si elles changent un jour.
+// Aucun envoi n'a lieu tant que ACCOUNTANT_SEND_ENABLED !== 'true' (garde-fou).
+const WELYB_RECIPIENTS = {
+  achats: 'compta+verone@welyb.com',
+  ventes: 'ventes+verone@welyb.fr',
+} as const;
+
 function getRecipient(scope: 'achats' | 'ventes'): string {
-  const key = scope === 'achats' ? 'WELYB_ACHATS_EMAIL' : 'WELYB_VENTES_EMAIL';
-  const email = process.env[key];
-  if (!email) {
-    throw new Error(
-      `Variable d'environnement ${key} manquante. ` +
-        'Configurer dans Vercel et dans .env.local.'
-    );
-  }
-  return email;
+  const envKey =
+    scope === 'achats' ? 'WELYB_ACHATS_EMAIL' : 'WELYB_VENTES_EMAIL';
+  return process.env[envKey] ?? WELYB_RECIPIENTS[scope];
 }
 
 function getFromEmail(): string {
