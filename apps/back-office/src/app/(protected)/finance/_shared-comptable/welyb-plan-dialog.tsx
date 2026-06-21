@@ -19,7 +19,7 @@ import {
 } from '@verone/ui';
 import { AlertTriangle, CheckCircle2, Mail, Package } from 'lucide-react';
 
-import type { WelybDryRunResponse } from '../types';
+import type { WelybDryRunResponse } from './types';
 
 interface WelyBPlanDialogProps {
   data: WelybDryRunResponse | null;

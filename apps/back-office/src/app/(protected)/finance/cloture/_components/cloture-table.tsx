@@ -29,10 +29,10 @@ import { createClient } from '@verone/utils/supabase/client';
 import { Edit2, Eye, EyeOff, FileText, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
-import type { ClotureRow } from '../types';
-import { ClotureRowSignals } from './cloture-row-signals';
-import { ClotureUploadDialog } from './cloture-upload-dialog';
-import { ClotureVatPcgDialog } from './cloture-vat-pcg-dialog';
+import type { ClotureRow } from '../../_shared-comptable/types';
+import { ClotureRowSignals } from '../../_shared-comptable/cloture-row-signals';
+import { ClotureUploadDialog } from '../../_shared-comptable/cloture-upload-dialog';
+import { ClotureVatPcgDialog } from '../../_shared-comptable/cloture-vat-pcg-dialog';
 
 interface ClotureTableProps {
   rows: ClotureRow[];

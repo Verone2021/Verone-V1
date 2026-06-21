@@ -26,7 +26,7 @@ import {
 import { createClient } from '@verone/utils/supabase/client';
 import { toast } from 'sonner';
 
-import type { ClotureRow } from '../types';
+import type { ClotureRow } from './types';
 
 const VAT_OPTIONS = [
   { label: 'Non renseignée', value: 'null' },

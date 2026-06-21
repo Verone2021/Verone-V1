@@ -8,7 +8,7 @@ import { AlertCircle, CheckCircle2, EyeOff } from 'lucide-react';
 
 import { Badge } from '@verone/ui';
 
-import type { ClotureSignals } from '../types';
+import type { ClotureSignals } from './types';
 
 interface ClotureRowSignalsProps {
   signals: ClotureSignals;

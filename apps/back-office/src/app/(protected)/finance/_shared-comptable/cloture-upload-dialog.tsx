@@ -10,7 +10,7 @@
 import { InvoiceUploadModal } from '@verone/finance';
 import type { TransactionForUpload } from '@verone/finance';
 
-import type { ClotureRow } from '../types';
+import type { ClotureRow } from './types';
 
 interface ClotureUploadDialogProps {
   row: ClotureRow | null;

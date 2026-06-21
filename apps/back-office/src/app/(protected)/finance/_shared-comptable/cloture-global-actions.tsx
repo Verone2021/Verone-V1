@@ -13,7 +13,7 @@ import { Button } from '@verone/ui';
 import { Download, Loader2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
-import type { SyncQontoResult, WelybDryRunResponse } from '../types';
+import type { SyncQontoResult, WelybDryRunResponse } from './types';
 import { WelyBPlanDialog } from './welyb-plan-dialog';
 
 interface ClotureGlobalActionsProps {

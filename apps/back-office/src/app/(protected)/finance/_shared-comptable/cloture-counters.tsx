@@ -7,7 +7,7 @@
 
 import { AlertCircle, CheckCircle2, ClipboardList, Send } from 'lucide-react';
 
-import type { ClotureCounters } from '../types';
+import type { ClotureCounters } from './types';
 
 interface ClotureCounterBadgeProps {
   icon: React.ReactNode;

@@ -28,11 +28,11 @@ import {
 } from '@verone/ui';
 import { FileArchive, Search } from 'lucide-react';
 
-import { ClotureCountersBar } from './_components/cloture-counters';
-import { ClotureGlobalActions } from './_components/cloture-global-actions';
+import { ClotureCountersBar } from '../_shared-comptable/cloture-counters';
+import { ClotureGlobalActions } from '../_shared-comptable/cloture-global-actions';
 import { ClotureTable } from './_components/cloture-table';
-import { useClotureData } from './use-cloture-data';
-import type { ClotureCategory } from './types';
+import { useClotureData } from '../_shared-comptable/use-cloture-data';
+import type { ClotureCategory } from '../_shared-comptable/types';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
 
