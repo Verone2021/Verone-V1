@@ -178,6 +178,8 @@ export interface ClotureFilters {
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useClotureData(filters: ClotureFilters): {
+  /** Documents présents bruts (LibraryDocument), pour réutilisation côté Bibliothèque */
+  documents: LibraryDocument[];
   rows: ClotureRow[];
   counters: ClotureCounters;
   isLoading: boolean;
@@ -357,6 +359,7 @@ export function useClotureData(filters: ClotureFilters): {
   }, [refetchPresent]);
 
   return {
+    documents,
     rows,
     counters,
     isLoading: loadingPresent || loadingMissing || loadingEnrich,

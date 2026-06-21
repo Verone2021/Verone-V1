@@ -5,26 +5,40 @@ import { memo, useState } from 'react';
 import { Badge, Button, ConfirmDialog } from '@verone/ui';
 import {
   Download,
+  Edit2,
   ExternalLink,
   FileText,
   MoreVertical,
   Trash2,
+  Upload,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import type { LibraryDocument } from '@verone/finance';
 import { formatDocType, formatMoney, getPdfUrl } from '@verone/finance';
 
+import { CardSignalBadge } from '../../_shared-comptable/card-signal-badge';
+import type { ClotureSignals } from '../../_shared-comptable/types';
+
 interface DocumentCardProps {
   document: LibraryDocument;
   onSelect: (doc: LibraryDocument) => void;
   onPdfDeleted?: () => Promise<void>;
+  /** Signal de statut calculé (BO-COMPTA-001) — affiché en overlay si fourni */
+  signals?: ClotureSignals;
+  /** Déposer / remplacer la pièce — actif seulement pour les transactions bancaires */
+  onUpload?: (doc: LibraryDocument) => void;
+  /** Corriger TVA / code comptable — actif seulement pour les transactions bancaires */
+  onEditVatPcg?: (doc: LibraryDocument) => void;
 }
 
 export const DocumentCard = memo(function DocumentCard({
   document: doc,
   onSelect,
   onPdfDeleted,
+  signals,
+  onUpload,
+  onEditVatPcg,
 }: DocumentCardProps) {
   const pdfUrl = getPdfUrl(doc);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -38,6 +52,7 @@ export const DocumentCard = memo(function DocumentCard({
     : null;
 
   const canDeletePdf = !!doc.pdf_url;
+  const canManageTx = doc.source_table === 'bank_transactions';
 
   const handleDeletePdf = async () => {
     try {
@@ -111,6 +126,13 @@ export const DocumentCard = memo(function DocumentCard({
           )}
         </div>
 
+        {/* Pastille de statut (BO-COMPTA-001) — overlay haut-gauche */}
+        {signals && (
+          <div className="absolute top-2 left-2 z-10">
+            <CardSignalBadge signals={signals} />
+          </div>
+        )}
+
         {/* CTA buttons — visible on hover */}
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
           <div className="relative">
@@ -138,7 +160,33 @@ export const DocumentCard = memo(function DocumentCard({
                     setMenuOpen(false);
                   }}
                 />
-                <div className="absolute right-0 top-8 z-30 w-48 rounded-md border bg-popover p-1 shadow-md">
+                <div className="absolute right-0 top-8 z-30 w-52 rounded-md border bg-popover p-1 shadow-md">
+                  {canManageTx && onUpload && (
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        setMenuOpen(false);
+                        onUpload(doc);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent cursor-pointer"
+                    >
+                      <Upload className="h-3.5 w-3.5" />
+                      {pdfUrl ? 'Remplacer la pièce' : 'Déposer la pièce'}
+                    </button>
+                  )}
+                  {canManageTx && onEditVatPcg && (
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        setMenuOpen(false);
+                        onEditVatPcg(doc);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent cursor-pointer"
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                      Corriger TVA / compta
+                    </button>
+                  )}
                   {pdfUrl && (
                     <>
                       <a
