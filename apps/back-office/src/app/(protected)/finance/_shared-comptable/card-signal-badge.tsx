@@ -7,8 +7,11 @@
  * de la Clôture), ce composant n'affiche qu'UNE pastille — la plus prioritaire —
  * pour rester lisible en overlay sur une carte étroite.
  *
- * Ordre de priorité : ignoré > pièce manquante > PCG manquant > TVA à vérifier
- * > transféré > OK.
+ * Ordre de priorité : ignoré > pièce manquante > transféré (« Envoyé le X »)
+ * > PCG manquant > TVA à vérifier > OK.
+ *
+ * « Envoyé » passe avant PCG/TVA : une fois la pièce transmise au comptable,
+ * c'est le statut que Roméo veut voir en premier sur la vignette.
  */
 
 import { AlertCircle, CheckCircle2, EyeOff } from 'lucide-react';
@@ -29,9 +32,9 @@ type DominantKind =
 export function getDominantSignal(signals: ClotureSignals): DominantKind {
   if (signals.ignored) return 'ignored';
   if (signals.missingPiece) return 'missingPiece';
+  if (signals.transferredAt) return 'transferred';
   if (signals.pcgMissing) return 'pcgMissing';
   if (signals.vatMissing) return 'vatMissing';
-  if (signals.transferredAt) return 'transferred';
   return 'ok';
 }
 

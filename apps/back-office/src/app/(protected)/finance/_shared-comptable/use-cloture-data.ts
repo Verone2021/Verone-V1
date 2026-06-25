@@ -258,6 +258,14 @@ export function useClotureData(filters: ClotureFilters): {
             ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
             : undefined;
 
+        // RLS sur bank_transactions exige is_backoffice_user() : il faut donc
+        // présenter le JWT de la session connectée (pas la clé anonyme, sinon
+        // l'API renvoie 0 ligne et le statut « transféré » reste invisible).
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const accessToken = session?.access_token ?? supabaseKey;
+
         if (supabaseUrl && supabaseKey && ids.length > 0) {
           const idParam = ids.map(id => `"${id}"`).join(',');
           const transferResp = await fetch(
@@ -265,7 +273,7 @@ export function useClotureData(filters: ClotureFilters): {
             {
               headers: {
                 apikey: supabaseKey,
-                Authorization: `Bearer ${supabaseKey}`,
+                Authorization: `Bearer ${accessToken}`,
               },
             }
           );
