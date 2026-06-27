@@ -115,14 +115,21 @@ de synchro en plus).
       quand validé (NE PAS supprimer le fichier ACTIVE.md lui-même).
 - [ ] Rien mis en ligne sans GO Roméo.
 
-## État d'avancement (cocher au fur et à mesure)
+## État d'avancement
 
-- [ ] FIX 1a route
-- [ ] FIX 1b types
-- [ ] FIX 1c global-actions
-- [ ] FIX 1d dialog
-- [ ] FIX 1e env local
-- [ ] FIX 2a upload route
-- [ ] type-check + lint
-- [ ] test runtime
-- [ ] dev-report + ménage ACTIVE.md
+- [x] FIX 1a route (sendAllowed exposé)
+- [x] FIX 1b types (sendAllowed + WelybSendResult)
+- [x] FIX 1c global-actions (handleConfirmSend + props)
+- [x] FIX 1d dialog (case à cocher + bouton actif)
+- [x] FIX 1e env local (ACCOUNTANT_SEND_ENABLED=true — serveur l'a déjà chargé)
+- [x] FIX 2a upload route (raw_data.attachment_ids + local_pdf_path/pdf_stored_at)
+- [x] type-check + lint verts
+- [x] commit local `[BO-COMPTA-003]` (pas de push)
+- [x] **test runtime FIX 1** : modale Welyb Achats 2025 → « 37 pièces, 2 lots », bandeau rouge
+      « Envoi réel activé », case + bouton « Confirmer l'envoi (37) » désactivé tant que non cochée,
+      0 erreur console. Envoi RÉEL non déclenché (volontaire). ✅
+- [ ] **test runtime FIX 2** : NON fait en solo (un dépôt = vrai upload Qonto, effet de bord réel).
+      À faire avec Roméo : déposer 1 pièce sur une transaction manquante 2025 → vérifier qu'elle
+      passe « présente » immédiatement (sans cliquer « Pièces Qonto ») + `has_attachment=true` +
+      `local_pdf_path` non nul en base.
+- [ ] validation Roméo + (plus tard) push/merge → puis ménage entrée BO-COMPTA-003 d'ACTIVE.md
