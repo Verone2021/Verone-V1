@@ -79,6 +79,8 @@ interface DryRunResponse {
   totalPieces: number;
   scope: string;
   year: number;
+  /** true si ACCOUNTANT_SEND_ENABLED='true' côté serveur (l'UI peut proposer l'envoi réel) */
+  sendAllowed: boolean;
 }
 
 interface SendResult {
@@ -269,6 +271,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         totalPieces: 0,
         scope,
         year,
+        sendAllowed: process.env.ACCOUNTANT_SEND_ENABLED === 'true',
         message: 'Aucune pièce éligible à envoyer',
       });
     }
@@ -309,6 +312,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         totalPieces: eligibleTx.length,
         scope,
         year,
+        sendAllowed: process.env.ACCOUNTANT_SEND_ENABLED === 'true',
       };
       return NextResponse.json(response);
     }

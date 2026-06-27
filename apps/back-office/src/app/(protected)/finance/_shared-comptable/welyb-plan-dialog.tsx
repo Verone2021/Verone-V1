@@ -1,12 +1,16 @@
 'use client';
 
 /**
- * Dialog d'aperçu du plan d'envoi Welyb (dry-run) [BO-COMPTA-001]
+ * Dialog d'aperçu du plan d'envoi Welyb [BO-COMPTA-001 / BO-COMPTA-003]
  *
  * Affiche les lots préparés par api/finance/send-to-accountant (mode DRY-RUN).
- * Le bouton "Confirmer l'envoi" est désactivé intentionnellement —
- * activation manuelle par Roméo uniquement (cf. GUARD-FOU serveur).
+ * Si l'envoi réel est autorisé côté serveur (`data.sendAllowed`, piloté par
+ * ACCOUNTANT_SEND_ENABLED), une case à cocher déverrouille le bouton « Confirmer
+ * l'envoi » qui déclenche l'envoi réel via `onConfirmSend`. Sinon le bouton reste
+ * désactivé (garde-fou serveur).
  */
+
+import { useEffect, useState } from 'react';
 
 import {
   Badge,
@@ -17,24 +21,42 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@verone/ui';
-import { AlertTriangle, CheckCircle2, Mail, Package } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
+  Mail,
+  Package,
+} from 'lucide-react';
 
 import type { WelybDryRunResponse } from './types';
 
 interface WelyBPlanDialogProps {
   data: WelybDryRunResponse | null;
   open: boolean;
+  sending: boolean;
+  onConfirmSend: () => void;
   onOpenChange: (open: boolean) => void;
 }
 
 export function WelyBPlanDialog({
   data,
   open,
+  sending,
+  onConfirmSend,
   onOpenChange,
 }: WelyBPlanDialogProps) {
+  const [confirmChecked, setConfirmChecked] = useState(false);
+
+  // Réinitialiser la case de confirmation à chaque ouverture/fermeture.
+  useEffect(() => {
+    if (!open) setConfirmChecked(false);
+  }, [open]);
+
   if (!data) return null;
 
   const scopeLabel = data.scope === 'achats' ? 'Achats' : 'Ventes';
+  const canSend = data.sendAllowed === true && data.totalPieces > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -93,26 +115,64 @@ export function WelyBPlanDialog({
           )}
         </div>
 
-        {/* Avertissement garde-fou */}
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-2 text-sm">
-          <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-          <p className="text-amber-700">
-            Il s'agit d'un plan préparatoire uniquement. Aucun email n'a été
-            envoyé. L'envoi réel doit être activé manuellement par Roméo dans la
-            configuration serveur.
-          </p>
-        </div>
+        {/* Zone confirmation / garde-fou */}
+        {canSend ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 space-y-2 text-sm">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-red-700">
+                Envoi réel activé. En confirmant, ces {data.totalPieces} pièce
+                {data.totalPieces > 1 ? 's' : ''} partiront vraiment au cabinet
+                comptable. Action non annulable.
+              </p>
+            </div>
+            <label className="flex items-center gap-2 text-red-800 font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                className="h-4 w-4"
+                checked={confirmChecked}
+                onChange={e => setConfirmChecked(e.target.checked)}
+                disabled={sending}
+              />
+              Je confirme l'envoi réel au comptable
+            </label>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-2 text-sm">
+            <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+            <p className="text-amber-700">
+              Plan préparatoire uniquement. Aucun email n'a été envoyé. L'envoi
+              réel doit être activé côté serveur (ACCOUNTANT_SEND_ENABLED) avant
+              de pouvoir confirmer depuis cet écran.
+            </p>
+          </div>
+        )}
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={sending}
+          >
             Fermer
           </Button>
           <Button
-            disabled
-            title="Activation manuelle par Roméo — non disponible depuis l'interface"
+            disabled={!canSend || !confirmChecked || sending}
+            title={
+              canSend
+                ? undefined
+                : 'Activation manuelle par Roméo — non disponible depuis l’interface'
+            }
+            onClick={onConfirmSend}
           >
-            <CheckCircle2 className="h-4 w-4 mr-1" />
-            Confirmer l'envoi (désactivé)
+            {sending ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4 mr-1" />
+            )}
+            {canSend
+              ? `Confirmer l'envoi (${data.totalPieces})`
+              : "Confirmer l'envoi (désactivé)"}
           </Button>
         </DialogFooter>
       </DialogContent>

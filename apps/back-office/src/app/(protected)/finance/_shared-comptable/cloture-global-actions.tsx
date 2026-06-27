@@ -13,7 +13,11 @@ import { Button } from '@verone/ui';
 import { Download, Loader2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
-import type { SyncQontoResult, WelybDryRunResponse } from './types';
+import type {
+  SyncQontoResult,
+  WelybDryRunResponse,
+  WelybSendResult,
+} from './types';
 import { WelyBPlanDialog } from './welyb-plan-dialog';
 
 interface ClotureGlobalActionsProps {
@@ -30,6 +34,10 @@ export function ClotureGlobalActions({
   const [welybVentesLoading, setWelybVentesLoading] = useState(false);
   const [welybPlan, setWelybPlan] = useState<WelybDryRunResponse | null>(null);
   const [welybPlanOpen, setWelybPlanOpen] = useState(false);
+  const [welybScope, setWelybScope] = useState<'achats' | 'ventes' | null>(
+    null
+  );
+  const [welybSending, setWelybSending] = useState(false);
 
   const handleSyncQonto = useCallback(async () => {
     setSyncLoading(true);
@@ -83,6 +91,7 @@ export function ClotureGlobalActions({
         }
         const data = (await res.json()) as WelybDryRunResponse;
         setWelybPlan(data);
+        setWelybScope(scope);
         setWelybPlanOpen(true);
       } catch (err) {
         toast.error(
@@ -94,6 +103,50 @@ export function ClotureGlobalActions({
     },
     [year]
   );
+
+  // Envoi RÉEL au comptable — appelé depuis la modale après confirmation explicite.
+  // Ne part que si ACCOUNTANT_SEND_ENABLED='true' côté serveur (sinon réponse dry-run).
+  const handleConfirmSend = useCallback(async () => {
+    if (!welybScope) return;
+    setWelybSending(true);
+    try {
+      const res = await fetch('/api/finance/send-to-accountant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scope: welybScope, year, confirmSend: true }),
+      });
+      if (!res.ok) {
+        const err = (await res.json()) as { error?: string };
+        throw new Error(err.error ?? "Erreur lors de l'envoi");
+      }
+      const data = (await res.json()) as WelybSendResult | WelybDryRunResponse;
+
+      // Sécurité serveur encore active → la route renvoie un dry-run, rien n'est parti.
+      if (data.dryRun) {
+        toast.error(
+          "L'envoi réel n'est pas activé côté serveur (ACCOUNTANT_SEND_ENABLED)."
+        );
+        return;
+      }
+
+      if (data.errors.length > 0) {
+        toast.warning(
+          `${data.piecesSent} pièce(s) envoyée(s), ${data.errors.length} lot(s) en erreur`
+        );
+      } else {
+        toast.success(
+          `${data.piecesSent} pièce${data.piecesSent > 1 ? 's' : ''} envoyée${data.piecesSent > 1 ? 's' : ''} au comptable`
+        );
+      }
+      setWelybPlanOpen(false);
+      setWelybPlan(null);
+      onSyncComplete();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erreur envoi Welyb');
+    } finally {
+      setWelybSending(false);
+    }
+  }, [welybScope, year, onSyncComplete]);
 
   return (
     <>
@@ -163,6 +216,12 @@ export function ClotureGlobalActions({
       <WelyBPlanDialog
         data={welybPlan}
         open={welybPlanOpen}
+        sending={welybSending}
+        onConfirmSend={() => {
+          void handleConfirmSend().catch(err => {
+            console.error('[ClotureGlobalActions] welyb send failed:', err);
+          });
+        }}
         onOpenChange={open => {
           setWelybPlanOpen(open);
           if (!open) setWelybPlan(null);

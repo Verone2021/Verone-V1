@@ -85,7 +85,18 @@ export interface WelybDryRunResponse {
   totalPieces: number;
   scope: 'achats' | 'ventes';
   year: number;
+  /** true si l'envoi réel est autorisé côté serveur (ACCOUNTANT_SEND_ENABLED) */
+  sendAllowed?: boolean;
   message?: string;
+}
+
+/** Résultat d'un envoi réel send-to-accountant (confirmSend:true) */
+export interface WelybSendResult {
+  dryRun: false;
+  batchesSent: number;
+  piecesSent: number;
+  piecesAlreadyTransferred: number;
+  errors: Array<{ batchIndex: number; reason: string }>;
 }
 
 /** Résultat sync-qonto-attachments */

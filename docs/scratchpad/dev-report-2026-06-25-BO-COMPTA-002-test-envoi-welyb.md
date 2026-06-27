@@ -55,8 +55,29 @@ back-office). Le bouton « Confirmer l'envoi » de l'UI reste désactivé de tou
 ## Note Welyb
 
 Email **livré** (preuve Resend). Vérification/suppression dans le portail `audamex.welyb.fr` non
-faite : identifiants Welyb absents de `.claude/test-credentials.md`. À fournir si on veut que
-l'agent gère le portail, sinon Roméo vérifie/supprime côté Welyb.
+faite au moment du test : identifiants Welyb absents de `.claude/test-credentials.md`.
+
+### ADDENDUM 2026-06-26 — INGESTION CÔTÉ WELYB VÉRIFIÉE ✅ (chaîne complète prouvée)
+
+Connexion au portail `audamex.welyb.fr` (Playwright lane-2, login fourni par Roméo). La pièce
+**EST bien arrivée et a été classée automatiquement** par Welyb. Emplacement :
+**Documents → Dossiers comptables annuels → Exercice 2026 → Ventes → Juin 2026**, fichier
+`2026-01-30_S_A_R_L__RESB_verone-4.pdf`.
+
+Preuves (panneau détail Welyb) : nom = format auto de la route (`{date}_{label}_{txid8}.pdf`),
+**taille 27,01 Ko = octet pour octet le PDF stocké** (27009 o), **date de dépôt 25 juin 2026 04:14**
+(≈ 46 min après notre envoi de 02:14 UTC). Captures :
+`.playwright-mcp/screenshots/20260626/welyb-RESB-found-juin2026.png` +
+`welyb-RESB-detail-proof.png`.
+
+**Pourquoi la session précédente a cru à un échec :** le dossier « À classer » était regardé
+quelques minutes après l'envoi. Or Welyb (a) met ~45 min à traiter l'email, et (b) **range les
+factures reconnues directement dans le dossier annuel** (Ventes/mois de réception), PAS dans
+« À classer ». Fausse alerte. **Aucun bug d'envoi.** Le statut base `transferred_to_accountant_at`
+du 25/06 est donc correct — NE PAS le réinitialiser (créerait un doublon chez le comptable).
+
+Détail mineur (comportement normal Welyb, pas un bug) : classée par **mois de réception (Juin)**,
+pas par date de facture (Janvier). La vraie date 30/01 reste dans le nom de fichier + sur la facture.
 
 ## Checks
 
