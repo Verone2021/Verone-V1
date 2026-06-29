@@ -229,7 +229,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // .filter() accepte une colonne arbitraire en string sans vérification TS.
       .filter('transferred_to_accountant_at', 'is', null)
       .gte('settled_at', `${year}-01-01`)
-      .lte('settled_at', `${year}-12-31`)
+      // Borne haute exclusive au 1er janvier suivant : capte tout le 31/12 (heures
+      // de la journée incluses), que `.lte('${year}-12-31')` (= minuit) excluait.
+      .lt('settled_at', `${year + 1}-01-01`)
       .order('settled_at', { ascending: true })
       .limit(500);
 
