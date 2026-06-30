@@ -1,20 +1,24 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 import { ScrollArea } from '@verone/ui';
-import { AlertCircle, FolderArchive } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
-import {
-  useLibraryDocuments,
-  useLibraryMissingDocuments,
-} from '@verone/finance';
 import type { LibraryDocument } from '@verone/finance';
 
-import { LibraryTree } from './_components/library-tree';
-import { LibraryToolbar } from './_components/library-toolbar';
+import { ClotureCountersBar } from '../_shared-comptable/cloture-counters';
+import { ClotureUploadDialog } from '../_shared-comptable/cloture-upload-dialog';
+import { ClotureVatPcgDialog } from '../_shared-comptable/cloture-vat-pcg-dialog';
+import type { ClotureRow } from '../_shared-comptable/types';
+import { useClotureData } from '../_shared-comptable/use-cloture-data';
+
 import { DocumentList } from './_components/document-list';
 import { DocumentModal } from './_components/document-modal';
+import { LibraryHeader } from './_components/library-header';
+import { LibraryToolbar } from './_components/library-toolbar';
+import { LibraryTree } from './_components/library-tree';
+import { MissingDocumentsSection } from './_components/missing-documents-section';
 
 interface TreeSelection {
   year: number;
@@ -65,19 +69,31 @@ export default function BibliothequeComptablePage() {
   const [selectedDoc, setSelectedDoc] = useState<LibraryDocument | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const { documents, isLoading, error, refetch } = useLibraryDocuments({
-    year: treeSelection?.year,
-    month: treeSelection?.month,
-    category: treeSelection?.category,
-    search: search || undefined,
-  });
+  // État partagé des dialogs d'action (galerie + section manquants)
+  const [actionRow, setActionRow] = useState<ClotureRow | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [vatPcgOpen, setVatPcgOpen] = useState(false);
 
-  const { missingDocuments, missingCount } = useLibraryMissingDocuments({
-    year: treeSelection?.year,
-    month: treeSelection?.month,
-    category: treeSelection?.category,
-    search: search || undefined,
-  });
+  const currentYear = new Date().getFullYear();
+  const selectedYear = treeSelection?.year ?? currentYear;
+
+  const { documents, rows, counters, isLoading, error, refetch } =
+    useClotureData({
+      year: selectedYear,
+      month: treeSelection?.month,
+      category: treeSelection?.category,
+      search: search || undefined,
+    });
+
+  // Index des lignes par id pour décorer chaque carte avec son statut
+  const rowsById = useMemo(() => new Map(rows.map(r => [r.id, r])), [rows]);
+
+  const missingRows = useMemo(
+    () => rows.filter(r => r.kind === 'missing'),
+    [rows]
+  );
+
+  const missingCount = missingRows.length;
 
   const handleSelectDocument = useCallback((doc: LibraryDocument) => {
     setSelectedDoc(doc);
@@ -95,22 +111,50 @@ export default function BibliothequeComptablePage() {
     }
   }, []);
 
+  // Ouvre le dépôt de pièce depuis une carte (LibraryDocument → ClotureRow via index)
+  const handleCardUpload = useCallback(
+    (doc: LibraryDocument) => {
+      const row = rowsById.get(doc.id);
+      if (!row) return;
+      setActionRow(row);
+      setUploadOpen(true);
+    },
+    [rowsById]
+  );
+
+  const handleCardEditVatPcg = useCallback(
+    (doc: LibraryDocument) => {
+      const row = rowsById.get(doc.id);
+      if (!row) return;
+      setActionRow(row);
+      setVatPcgOpen(true);
+    },
+    [rowsById]
+  );
+
+  // Depuis la section manquants (déjà une ClotureRow)
+  const handleRowUpload = useCallback((row: ClotureRow) => {
+    setActionRow(row);
+    setUploadOpen(true);
+  }, []);
+
+  const handleRowEditVatPcg = useCallback((row: ClotureRow) => {
+    setActionRow(row);
+    setVatPcgOpen(true);
+  }, []);
+
+  const handleRefetch = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  const handlePdfDeleted = useCallback(async () => {
+    refetch();
+  }, [refetch]);
+
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col">
-      {/* Header */}
-      <div className="px-6 py-4 border-b flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <FolderArchive className="h-5 w-5" />
-            Bibliotheque comptable
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Tous vos justificatifs (factures, recus) classes par annee et type
-            (Achats/Ventes/Avoirs). Le badge orange montre combien il en manque.
-            Cliquez sur un document pour le visualiser ou telecharger le PDF.
-          </p>
-        </div>
-      </div>
+      {/* Header + actions globales */}
+      <LibraryHeader year={selectedYear} onSyncComplete={handleRefetch} />
 
       {/* Main layout: tree + content */}
       <div className="flex-1 grid grid-cols-[280px_1fr] overflow-hidden">
@@ -128,14 +172,17 @@ export default function BibliothequeComptablePage() {
 
         {/* Right: Documents grid */}
         <main className="overflow-hidden flex flex-col">
+          {/* Compteurs de synthèse */}
+          <div className="p-4 border-b">
+            <ClotureCountersBar counters={counters} isLoading={isLoading} />
+          </div>
+
           {/* Toolbar */}
           <div className="p-4 border-b">
             <LibraryToolbar
               search={search}
               onSearchChange={setSearch}
-              onRefresh={() => {
-                void refetch();
-              }}
+              onRefresh={handleRefetch}
             />
           </div>
 
@@ -152,76 +199,50 @@ export default function BibliothequeComptablePage() {
             <DocumentList
               documents={documents}
               onSelectDocument={handleSelectDocument}
-              onPdfDeleted={refetch}
+              onPdfDeleted={handlePdfDeleted}
               loading={isLoading}
               label={getSelectionLabel(treeSelection)}
+              rowsById={rowsById}
+              onUpload={handleCardUpload}
+              onEditVatPcg={handleCardEditVatPcg}
             />
 
-            {/* Missing documents section */}
-            {missingCount > 0 && (
-              <div className="mt-6 border-t pt-4">
-                <div className="flex items-center gap-2 mb-3 px-1">
-                  <AlertCircle className="h-4 w-4 text-amber-500" />
-                  <p className="text-sm font-medium text-amber-700">
-                    {missingCount} justificatif
-                    {missingCount > 1 ? 's' : ''} manquant
-                    {missingCount > 1 ? 's' : ''}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  {missingDocuments.map(doc => (
-                    <div
-                      key={doc.id}
-                      className="flex items-center justify-between px-3 py-2 rounded-md bg-amber-50 border border-amber-100 text-sm"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
-                          {doc.document_direction === 'inbound'
-                            ? 'Achat'
-                            : 'Vente'}
-                        </span>
-                        <span className="font-medium truncate">
-                          {doc.partner_name}
-                        </span>
-                        {doc.document_number && (
-                          <span className="text-muted-foreground truncate">
-                            {doc.document_number}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 flex-shrink-0">
-                        <span className="text-muted-foreground">
-                          {doc.document_date
-                            ? new Date(doc.document_date).toLocaleDateString(
-                                'fr-FR',
-                                { day: '2-digit', month: '2-digit' }
-                              )
-                            : ''}
-                        </span>
-                        <span className="font-medium tabular-nums">
-                          {doc.total_ttc != null
-                            ? new Intl.NumberFormat('fr-FR', {
-                                style: 'currency',
-                                currency: 'EUR',
-                              }).format(doc.total_ttc)
-                            : '—'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Section manquants actionnable */}
+            <MissingDocumentsSection
+              rows={missingRows}
+              onUpload={handleRowUpload}
+              onEditVatPcg={handleRowEditVatPcg}
+            />
           </ScrollArea>
         </main>
       </div>
 
-      {/* Document modal */}
+      {/* Document modal (consultation PDF) */}
       <DocumentModal
         document={selectedDoc}
         open={modalOpen}
         onOpenChange={handleCloseModal}
-        onPdfDeleted={refetch}
+        onPdfDeleted={handlePdfDeleted}
+      />
+
+      {/* Dialogs d'action partagés (dépôt pièce + TVA/PCG) */}
+      <ClotureUploadDialog
+        row={actionRow}
+        open={uploadOpen}
+        onOpenChange={open => {
+          setUploadOpen(open);
+          if (!open) setActionRow(null);
+        }}
+        onUploadComplete={handleRefetch}
+      />
+      <ClotureVatPcgDialog
+        row={actionRow}
+        open={vatPcgOpen}
+        onOpenChange={open => {
+          setVatPcgOpen(open);
+          if (!open) setActionRow(null);
+        }}
+        onSaved={handleRefetch}
       />
     </div>
   );

@@ -18,7 +18,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { QontoClient } from '@verone/integrations/qonto';
-import type { Json as _Json } from '@verone/types/supabase';
+import type { Json } from '@verone/types/supabase';
 import { createServerClient } from '@verone/utils/supabase/server';
 
 export const runtime = 'nodejs';
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 4. Vérifier que la transaction existe et récupérer raw_data pour mise à jour ultérieure
     const { data: txData, error: txError } = await supabase
       .from('bank_transactions')
-      .select('id, raw_data')
+      .select('id, raw_data, attachment_ids')
       .eq('transaction_id', transactionId)
       .single();
 
@@ -167,16 +167,50 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         .eq('id', documentId);
     }
 
-    // 8. Mettre à jour UNIQUEMENT attachment_ids (source de vérité unique)
-    // Note: has_attachment est une colonne GENERATED qui se recalcule automatiquement
-    const txDataWithIds = txData as { attachment_ids?: string[] };
-    const existingIds = txDataWithIds.attachment_ids ?? [];
+    // 8. Rapprochement IMMÉDIAT : mettre à jour la transaction pour que la pièce
+    //    déposée devienne tout de suite « présente » + envoyable au comptable.
+    //    [BO-COMPTA-003 — modif route /api/qonto/* autorisée explicitement par Roméo 2026-06-27]
+    //
+    //    - raw_data.attachment_ids : fait basculer `has_attachment` (colonne GENERATED
+    //      calculée depuis raw_data->'attachments' OU raw_data->'attachment_ids').
+    //      ⚠️ La colonne `attachment_ids` SEULE ne suffit pas (has_attachment ne la lit pas).
+    //    - local_pdf_path / pdf_stored_at : éligibilité à l'envoi Welyb (la route
+    //      send-to-accountant filtre `local_pdf_path IS NOT NULL`). Le PDF est déjà
+    //      sauvé dans le bucket `justificatifs` à `storagePath` (étape 6).
+    const existingIds: string[] = Array.isArray(txData.attachment_ids)
+      ? txData.attachment_ids
+      : [];
+
+    const rawData = txData.raw_data;
+    const rawObj: { [key: string]: Json | undefined } =
+      rawData !== null && typeof rawData === 'object' && !Array.isArray(rawData)
+        ? rawData
+        : {};
+    const prevRawAttIds: Json[] = Array.isArray(rawObj.attachment_ids)
+      ? rawObj.attachment_ids
+      : [];
+    const newRawData: Json = {
+      ...rawObj,
+      attachment_ids: [...prevRawAttIds, attachment.id],
+    };
+
+    const txUpdate: {
+      attachment_ids: string[];
+      raw_data: Json;
+      local_pdf_path?: string;
+      pdf_stored_at?: string;
+    } = {
+      attachment_ids: [...existingIds, attachment.id],
+      raw_data: newRawData,
+    };
+    if (!storageError) {
+      txUpdate.local_pdf_path = storagePath;
+      txUpdate.pdf_stored_at = new Date().toISOString();
+    }
 
     await supabase
       .from('bank_transactions')
-      .update({
-        attachment_ids: [...existingIds, attachment.id],
-      })
+      .update(txUpdate)
       .eq('transaction_id', transactionId);
 
     return NextResponse.json({

@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import { Button, ScrollArea } from '@verone/ui';
 import { Money, StatusPill } from '@verone/ui-business';
 import { Download, ExternalLink, FileText } from 'lucide-react';
@@ -38,12 +40,23 @@ interface PdfFrameProps {
 }
 
 function PdfFrame({ pdfUrl, documentId, documentNumber }: PdfFrameProps) {
+  // Justificatif image (reçu photo) servi en application/pdf : <img> d'abord,
+  // bascule en <iframe> (lecteur PDF) si le contenu n'est pas une image (vrai PDF).
+  const [isPdf, setIsPdf] = useState(false);
   if (pdfUrl) {
-    return (
+    return isPdf ? (
       <iframe
         src={pdfUrl}
         className="w-full h-full min-h-[400px]"
         title={`PDF ${documentNumber ?? documentId}`}
+      />
+    ) : (
+      // eslint-disable-next-line @next/next/no-img-element -- aperçu dynamique d'un justificatif (URL API)
+      <img
+        src={pdfUrl}
+        alt={`Aperçu ${documentNumber ?? documentId}`}
+        className="w-full h-full min-h-[400px] object-contain bg-muted/10"
+        onError={() => setIsPdf(true)}
       />
     );
   }
