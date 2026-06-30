@@ -43,6 +43,11 @@ export const DocumentCard = memo(function DocumentCard({
   const pdfUrl = getPdfUrl(doc);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  // Certains justificatifs sont des images (photos de reçus) servies en application/pdf :
+  // le lecteur PDF de l'iframe ne sait pas les afficher (« Échec de chargement »). On tente
+  // donc d'abord une <img> (qui rend les images), et on bascule en <iframe> seulement si le
+  // contenu n'est pas une image décodable (= un vrai PDF).
+  const [previewIsPdf, setPreviewIsPdf] = useState(false);
 
   const date = doc.document_date
     ? new Date(doc.document_date).toLocaleDateString('fr-FR', {
@@ -109,16 +114,27 @@ export const DocumentCard = memo(function DocumentCard({
           }
         }}
       >
-        {/* PDF preview thumbnail */}
+        {/* Aperçu : image (reçus photo) ou PDF (factures) */}
         <div className="relative h-[180px] bg-muted/30 overflow-hidden border-b">
           {pdfUrl ? (
-            <iframe
-              src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-              className="w-full h-[300px] origin-top-left scale-[0.6] pointer-events-none"
-              title={doc.document_number ?? 'Document'}
-              tabIndex={-1}
-              loading="lazy"
-            />
+            previewIsPdf ? (
+              <iframe
+                src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                className="w-full h-[300px] origin-top-left scale-[0.6] pointer-events-none"
+                title={doc.document_number ?? 'Document'}
+                tabIndex={-1}
+                loading="lazy"
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element -- aperçu dynamique d'un justificatif (URL API), pas un asset statique
+              <img
+                src={pdfUrl}
+                alt={doc.document_number ?? 'Aperçu du justificatif'}
+                className="w-full h-full object-cover object-top pointer-events-none"
+                loading="lazy"
+                onError={() => setPreviewIsPdf(true)}
+              />
+            )
           ) : (
             <div className="flex items-center justify-center h-full">
               <FileText className="h-12 w-12 text-muted-foreground/30" />

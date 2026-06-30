@@ -38,6 +38,9 @@ export function DocumentModal({
 }: DocumentModalProps) {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(true);
+  // Justificatif image (reçu photo) servi en application/pdf → on tente <img> d'abord,
+  // bascule en <iframe> (lecteur PDF) si le contenu n'est pas une image (vrai PDF).
+  const [previewIsPdf, setPreviewIsPdf] = useState(false);
 
   if (!doc) return null;
 
@@ -108,12 +111,23 @@ export function DocumentModal({
                       <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     </div>
                   )}
-                  <iframe
-                    src={pdfUrl}
-                    className="w-full h-full"
-                    title={doc.document_number ?? 'Document PDF'}
-                    onLoad={() => setPdfLoading(false)}
-                  />
+                  {previewIsPdf ? (
+                    <iframe
+                      src={pdfUrl}
+                      className="w-full h-full"
+                      title={doc.document_number ?? 'Document PDF'}
+                      onLoad={() => setPdfLoading(false)}
+                    />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element -- aperçu dynamique d'un justificatif (URL API)
+                    <img
+                      src={pdfUrl}
+                      alt={doc.document_number ?? 'Aperçu du justificatif'}
+                      className="w-full h-full object-contain bg-muted/10"
+                      onLoad={() => setPdfLoading(false)}
+                      onError={() => setPreviewIsPdf(true)}
+                    />
+                  )}
                 </>
               ) : (
                 <div className="flex items-center justify-center h-full bg-muted/30">
