@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send confirmation email (non-blocking)
+    // Send confirmation email to the visitor (non-blocking)
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3001';
     void fetch(`${siteUrl}/api/emails/contact-confirmation`, {
       method: 'POST',
@@ -67,6 +67,15 @@ export async function POST(request: NextRequest) {
       }),
     }).catch(emailError => {
       console.error('[Contact API] Confirmation email failed:', emailError);
+    });
+
+    // Notify the Vérone team by email (non-blocking)
+    void fetch(`${siteUrl}/api/emails/contact-admin-notification`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, subject, message }),
+    }).catch(notifyError => {
+      console.error('[Contact API] Admin notification failed:', notifyError);
     });
 
     return NextResponse.json({ success: true });

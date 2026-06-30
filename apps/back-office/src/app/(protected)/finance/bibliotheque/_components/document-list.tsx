@@ -4,6 +4,7 @@ import { FolderArchive } from 'lucide-react';
 
 import type { LibraryDocument } from '@verone/finance';
 
+import type { ClotureRow } from '../../_shared-comptable/types';
 import { DocumentCard } from './document-card';
 
 interface DocumentListProps {
@@ -12,6 +13,10 @@ interface DocumentListProps {
   onPdfDeleted?: () => Promise<void>;
   loading?: boolean;
   label?: string;
+  /** Index des lignes de clôture par id, pour le statut de chaque carte (BO-COMPTA-001) */
+  rowsById?: Map<string, ClotureRow>;
+  onUpload?: (doc: LibraryDocument) => void;
+  onEditVatPcg?: (doc: LibraryDocument) => void;
 }
 
 export function DocumentList({
@@ -20,6 +25,9 @@ export function DocumentList({
   onPdfDeleted,
   loading,
   label,
+  rowsById,
+  onUpload,
+  onEditVatPcg,
 }: DocumentListProps) {
   if (loading) {
     return (
@@ -55,6 +63,9 @@ export function DocumentList({
             document={doc}
             onSelect={onSelectDocument}
             onPdfDeleted={onPdfDeleted}
+            signals={rowsById?.get(doc.id)?.signals}
+            onUpload={onUpload}
+            onEditVatPcg={onEditVatPcg}
           />
         ))}
       </div>

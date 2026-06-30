@@ -795,6 +795,8 @@ export type Database = {
           settled_at: string | null;
           side: Database['public']['Enums']['transaction_side'];
           transaction_id: string;
+          transferred_to_accountant_at: string | null;
+          transferred_to_accountant_by: string | null;
           updated_at: string;
           vat_breakdown: Json | null;
           vat_rate: number | null;
@@ -839,6 +841,8 @@ export type Database = {
           settled_at?: string | null;
           side: Database['public']['Enums']['transaction_side'];
           transaction_id: string;
+          transferred_to_accountant_at?: string | null;
+          transferred_to_accountant_by?: string | null;
           updated_at?: string;
           vat_breakdown?: Json | null;
           vat_rate?: number | null;
@@ -883,6 +887,8 @@ export type Database = {
           settled_at?: string | null;
           side?: Database['public']['Enums']['transaction_side'];
           transaction_id?: string;
+          transferred_to_accountant_at?: string | null;
+          transferred_to_accountant_by?: string | null;
           updated_at?: string;
           vat_breakdown?: Json | null;
           vat_rate?: number | null;
@@ -3242,6 +3248,8 @@ export type Database = {
           synchronized_at: string | null;
           total_ht: number;
           total_ttc: number;
+          transferred_to_accountant_at: string | null;
+          transferred_to_accountant_by: string | null;
           tva_amount: number;
           updated_at: string;
           upload_status: string | null;
@@ -3310,6 +3318,8 @@ export type Database = {
           synchronized_at?: string | null;
           total_ht: number;
           total_ttc: number;
+          transferred_to_accountant_at?: string | null;
+          transferred_to_accountant_by?: string | null;
           tva_amount: number;
           updated_at?: string;
           upload_status?: string | null;
@@ -3378,6 +3388,8 @@ export type Database = {
           synchronized_at?: string | null;
           total_ht?: number;
           total_ttc?: number;
+          transferred_to_accountant_at?: string | null;
+          transferred_to_accountant_by?: string | null;
           tva_amount?: number;
           updated_at?: string;
           upload_status?: string | null;
@@ -13018,6 +13030,8 @@ export type Database = {
           synchronized_at: string | null;
           total_ht: number;
           total_ttc: number;
+          transferred_to_accountant_at: string | null;
+          transferred_to_accountant_by: string | null;
           tva_amount: number;
           updated_at: string;
           upload_status: string | null;
@@ -13201,6 +13215,8 @@ export type Database = {
           synchronized_at: string | null;
           total_ht: number;
           total_ttc: number;
+          transferred_to_accountant_at: string | null;
+          transferred_to_accountant_by: string | null;
           tva_amount: number;
           updated_at: string;
           upload_status: string | null;

@@ -298,6 +298,11 @@ export const getNavItems = (
         icon: FolderArchive,
       },
       {
+        title: 'Clôture comptable',
+        href: '/finance/cloture',
+        icon: BookOpenCheck,
+      },
+      {
         title: 'Documents',
         href: '/finance/documents',
         icon: BookOpenCheck,
