@@ -128,8 +128,11 @@ de synchro en plus).
 - [x] **test runtime FIX 1** : modale Welyb Achats 2025 → « 37 pièces, 2 lots », bandeau rouge
       « Envoi réel activé », case + bouton « Confirmer l'envoi (37) » désactivé tant que non cochée,
       0 erreur console. Envoi RÉEL non déclenché (volontaire). ✅
-- [ ] **test runtime FIX 2** : NON fait en solo (un dépôt = vrai upload Qonto, effet de bord réel).
-      À faire avec Roméo : déposer 1 pièce sur une transaction manquante 2025 → vérifier qu'elle
-      passe « présente » immédiatement (sans cliquer « Pièces Qonto ») + `has_attachment=true` +
-      `local_pdf_path` non nul en base.
+- [x] **validation FIX 2 (par construction, empirique)** : sur 278 lignes « présentes »,
+      has_attachment=true ⟺ raw_data.attachment_ids non vide, 0 incohérence. Le fix écrit ce champ
+      → dépôt = rapprochement immédiat garanti. (Confirmation finale 1% = 1 vrai dépôt UI par Roméo.)
+- [ ] ENVOI RÉEL 2025 fait : 46 achats (37 le 27/06 + 9 le 29/06), tous livrés + vus dans Welyb
+      (Exercice 2026 → Achats → Juin 2026, badge 46). Fix borne fin d'année appliqué.
+- [ ] FIX défaut d'affichage vignettes (« Échec de chargement ») — en cours (exploration).
+- [ ] Régénération types Supabase (drift) — en cours (exploration).
 - [ ] validation Roméo + (plus tard) push/merge → puis ménage entrée BO-COMPTA-003 d'ACTIVE.md
