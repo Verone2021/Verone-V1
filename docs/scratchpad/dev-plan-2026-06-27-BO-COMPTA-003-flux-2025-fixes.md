@@ -133,6 +133,16 @@ de synchro en plus).
       → dépôt = rapprochement immédiat garanti. (Confirmation finale 1% = 1 vrai dépôt UI par Roméo.)
 - [ ] ENVOI RÉEL 2025 fait : 46 achats (37 le 27/06 + 9 le 29/06), tous livrés + vus dans Welyb
       (Exercice 2026 → Achats → Juin 2026, badge 46). Fix borne fin d'année appliqué.
-- [ ] FIX défaut d'affichage vignettes (« Échec de chargement ») — en cours (exploration).
-- [ ] Régénération types Supabase (drift) — en cours (exploration).
-- [ ] validation Roméo + (plus tard) push/merge → puis ménage entrée BO-COMPTA-003 d'ACTIVE.md
+- [x] FIX défaut d'affichage vignettes : cause = reçus JPEG servis en application/pdf → iframe PDF
+      échoue. Fix = `<img>` d'abord, fallback `<iframe>` (document-card + document-modal + pdf-preview).
+      Testé écran : 6 images OK, 0 cassée, vrais PDF en iframe. type-check + lint verts.
+- [x] Régénération types Supabase (drift) : `pnpm generate:types` (--linked), 4 colonnes
+      transferred*to_accountant*\* ajoutées. type-check vert. Committé.
+- [x] Jeton CI renouvelé : secret repo `SUPABASE_ACCESS_TOKEN` re-posé (jeton valide de linkme/.env.local)
+      le 2026-06-30 → le check « Supabase TS types drift » passera au merge.
+- [x] Envoi : actif en LOCAL (ACCOUNTANT_SEND_ENABLED=true). Activation PROD = au moment de la
+      mise en ligne (sinon envoi réel sur un site sans le bouton). Note pour la PR.
+- [ ] GAP 3 (plus tard, demandé Roméo) : auto-relier les 61 ventes 2025 aux factures Vérone.
+- [ ] validation Roméo + push/merge → puis ménage entrée BO-COMPTA-003 d'ACTIVE.md.
+- [ ] mineur (non bloquant) : route `/api/qonto/attachments/[id]` sert les images en
+      content-type application/pdf (download → .pdf qui est un JPEG). Cosmétique, route protégée.
