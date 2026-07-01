@@ -3,7 +3,8 @@ import type { MetadataRoute } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://verone.fr';
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? 'https://veronecollections.fr';
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [

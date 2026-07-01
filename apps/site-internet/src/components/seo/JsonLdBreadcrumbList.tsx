@@ -8,7 +8,8 @@ interface JsonLdBreadcrumbListProps {
 }
 
 export function JsonLdBreadcrumbList({ items }: JsonLdBreadcrumbListProps) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://verone.fr';
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? 'https://veronecollections.fr';
 
   const jsonLd = {
     '@context': 'https://schema.org',

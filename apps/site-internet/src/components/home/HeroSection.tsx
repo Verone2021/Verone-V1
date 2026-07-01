@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { createClient } from '@supabase/supabase-js';
@@ -56,9 +57,10 @@ export async function HeroSection() {
     cms.cta_secondary_text ?? HERO_DEFAULTS.cta_secondary_text;
   const ctaSecondaryLink =
     cms.cta_secondary_link ?? HERO_DEFAULTS.cta_secondary_link;
+  const imageUrl = cms.image_url ?? null;
 
   return (
-    <section className="flex min-h-[90vh] flex-col items-center justify-center bg-verone-white px-6 py-24 md:px-16 md:py-24">
+    <section className="flex min-h-[90vh] flex-col items-center justify-center gap-16 bg-verone-white px-6 py-24 md:px-16 md:py-24">
       <div className="flex max-w-[1000px] flex-col items-center gap-8 text-center">
         <span className="font-dm-sans text-[11px] font-light uppercase tracking-[0.32em] text-verone-pearl md:text-xs">
           SÉLECTION ÉDITORIALE
@@ -88,6 +90,20 @@ export async function HeroSection() {
           </Link>
         </div>
       </div>
+
+      {/* Visuel éditorial — remplit l'espace sous les CTA (audit 2026-06 : vide blanc) */}
+      {imageUrl && (
+        <div className="relative aspect-[16/10] w-full max-w-[1400px] overflow-hidden rounded-sm sm:aspect-[21/9]">
+          <Image
+            src={imageUrl}
+            alt={title}
+            fill
+            priority
+            sizes="(max-width: 1400px) 100vw, 1400px"
+            className="object-cover"
+          />
+        </div>
+      )}
     </section>
   );
 }

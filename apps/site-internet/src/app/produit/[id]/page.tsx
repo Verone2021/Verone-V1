@@ -355,7 +355,12 @@ export default function ProductPage({
         />
       </div>
 
-      <ProductCrossSell currentProductId={product.product_id} />
+      <ProductCrossSell
+        currentProductId={product.product_id}
+        subcategoryId={product.subcategory_id}
+        variantGroupId={product.variant_group_id}
+        style={product.style}
+      />
 
       {/* Reviews */}
       <ProductReviews

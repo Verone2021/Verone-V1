@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
           D&eacute;couvrez nos derni&egrave;res nouveaut&eacute;s en mobilier et d&eacute;coration, soigneusement s&eacute;lectionn&eacute;es par nos experts.
         </p>
         <p style="font-size: 14px; color: #6b7280; margin: 0;">
-          Livraison offerte d&egrave;s 500&euro; &middot; Retours gratuits 30 jours
+          Livraison offerte d&egrave;s 500&euro; &middot; Retours gratuits 14 jours
         </p>
       `,
       ctaUrl: `${siteUrl}/catalogue`,

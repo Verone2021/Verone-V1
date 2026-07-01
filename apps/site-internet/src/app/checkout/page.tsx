@@ -569,7 +569,7 @@ export default function CheckoutPage() {
               </div>
               <div className="flex items-center gap-1.5 text-verone-gray-400">
                 <Package className="h-3.5 w-3.5" />
-                <span className="text-xs">Retours 30 jours</span>
+                <span className="text-xs">Retours 14 jours</span>
               </div>
             </div>
           </form>

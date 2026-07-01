@@ -97,7 +97,7 @@ export function ProductSidebar({
   const deliveryDelay =
     product.delivery_delay_weeks_min && product.delivery_delay_weeks_max
       ? `Livré en ${product.delivery_delay_weeks_min}-${product.delivery_delay_weeks_max} semaines`
-      : 'Livraison sous 10-14 jours ouvres';
+      : 'Livraison sous 10 à 14 jours ouvrés';
 
   return (
     <div className="lg:sticky lg:top-20 lg:h-fit">
@@ -339,7 +339,7 @@ export function ProductSidebar({
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
             <Shield className="h-4 w-4 flex-shrink-0" />
-            <span>Retours gratuits 30 jours</span>
+            <span>Retours gratuits 14 jours</span>
           </div>
         </div>
       </div>

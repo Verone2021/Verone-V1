@@ -31,7 +31,8 @@ export async function generateMetadata({
     return { title: 'Article introuvable' };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://verone.fr';
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? 'https://veronecollections.fr';
   const ogImage = article.og_image_url ?? article.cover_image_url;
 
   return {
