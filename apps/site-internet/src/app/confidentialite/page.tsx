@@ -21,9 +21,9 @@ export default function ConfidentialitePage() {
           </h2>
           <p>
             La société Vérone SAS s&apos;engage à protéger la vie privée des
-            utilisateurs de son site verone.fr. La présente politique de
-            confidentialité décrit la manière dont nous collectons, utilisons et
-            protégeons vos données personnelles, conformément au Règlement
+            utilisateurs de son site veronecollections.fr. La présente politique
+            de confidentialité décrit la manière dont nous collectons, utilisons
+            et protégeons vos données personnelles, conformément au Règlement
             Général sur la Protection des Données (RGPD) et à la loi
             Informatique et Libertés.
           </p>
@@ -143,8 +143,9 @@ export default function ConfidentialitePage() {
             <li>Droit d&apos;opposition</li>
           </ul>
           <p className="mt-3">
-            Pour exercer ces droits, contactez-nous à : contact@verone.fr. Nous
-            répondrons dans un délai de 30 jours.
+            Pour exercer ces droits, contactez-nous à :
+            contact@veronecollections.fr. Nous répondrons dans un délai de 30
+            jours.
           </p>
         </section>
 

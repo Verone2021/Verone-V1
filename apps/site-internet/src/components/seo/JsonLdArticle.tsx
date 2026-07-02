@@ -17,7 +17,8 @@ interface JsonLdArticleProps {
 }
 
 export function JsonLdArticle({ article }: JsonLdArticleProps) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://verone.fr';
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? 'https://veronecollections.fr';
   const articleUrl = `${siteUrl}/journal/${article.slug}`;
   const imageUrl = article.og_image_url ?? article.cover_image_url;
 

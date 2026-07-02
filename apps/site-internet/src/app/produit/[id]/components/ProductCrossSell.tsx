@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import Link from 'next/link';
 
 import { CloudflareImage } from '@verone/ui';
@@ -11,16 +13,43 @@ import {
 
 interface ProductCrossSellProps {
   currentProductId: string;
+  subcategoryId: string | null;
+  variantGroupId: string | null;
+  style: string | null;
 }
 
-export function ProductCrossSell({ currentProductId }: ProductCrossSellProps) {
+const MAX_RECOMMENDATIONS = 4;
+
+export function ProductCrossSell({
+  currentProductId,
+  subcategoryId,
+  variantGroupId,
+  style,
+}: ProductCrossSellProps) {
   const { data: allProducts } = useCatalogueProducts({ sortBy: 'newest' });
 
-  // Filter out current product and take up to 6
-  const recommendations =
-    allProducts
-      ?.filter((p: CatalogueProduct) => p.product_id !== currentProductId)
-      .slice(0, 6) ?? [];
+  // Recommandations pertinentes : priorité même sous-catégorie, puis même style.
+  // On exclut le produit courant et les variantes de la même pièce (déjà
+  // proposées dans le sélecteur de variantes). On complète avec les nouveautés.
+  const recommendations = useMemo(() => {
+    const pool = (allProducts ?? []).filter(
+      (p: CatalogueProduct) =>
+        p.product_id !== currentProductId &&
+        (variantGroupId === null || p.variant_group_id !== variantGroupId)
+    );
+
+    const scored = pool.map((p: CatalogueProduct) => {
+      let score = 0;
+      if (subcategoryId && p.subcategory_id === subcategoryId) score += 2;
+      if (style && p.style === style) score += 1;
+      return { product: p, score };
+    });
+
+    // Tri stable (JS) : à score égal, l'ordre "newest" est conservé.
+    scored.sort((a, b) => b.score - a.score);
+
+    return scored.slice(0, MAX_RECOMMENDATIONS).map(s => s.product);
+  }, [allProducts, currentProductId, subcategoryId, variantGroupId, style]);
 
   if (recommendations.length === 0) {
     return null;
@@ -28,11 +57,9 @@ export function ProductCrossSell({ currentProductId }: ProductCrossSellProps) {
 
   return (
     <section className="mt-16 mb-8">
-      <h2 className="text-2xl font-semibold mb-6">
-        Les clients ont également consulté
-      </h2>
+      <h2 className="text-2xl font-semibold mb-6">Vous aimerez aussi</h2>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {recommendations.map(product => (
           <Link
             key={product.product_id}

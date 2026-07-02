@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { Facebook, Instagram, Twitter } from 'lucide-react';
@@ -38,9 +39,15 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-5 lg:gap-12">
           {/* Brand */}
           <div>
-            <h3 className="mb-4 font-bodoni text-2xl font-black tracking-tight text-verone-white">
-              Vérone
-            </h3>
+            <Link href="/" className="mb-4 inline-block">
+              <Image
+                src="/logo-verone-clean.png"
+                alt="Vérone"
+                width={244}
+                height={37}
+                className="h-6 w-auto brightness-0 invert"
+              />
+            </Link>
             <p className="font-montserrat text-sm font-light leading-relaxed text-verone-pearl">
               Mille pièces vues, cinquante retenues. Pas un catalogue. Un
               regard.

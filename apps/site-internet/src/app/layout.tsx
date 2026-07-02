@@ -57,7 +57,8 @@ const inter = Inter({
   display: 'swap',
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://verone.fr';
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://veronecollections.fr';
 
 export const metadata: Metadata = {
   verification: {

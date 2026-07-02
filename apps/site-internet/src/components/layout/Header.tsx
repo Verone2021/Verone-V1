@@ -35,12 +35,12 @@ export function Header() {
                 aria-label="Vérone — Accueil"
               >
                 <Image
-                  src="/logo-verone.png"
+                  src="/logo-verone-clean.png"
                   alt="Vérone"
-                  width={120}
-                  height={40}
+                  width={244}
+                  height={37}
                   priority
-                  className="h-10 w-auto brightness-0 invert"
+                  className="h-8 w-auto brightness-0 invert"
                 />
               </Link>
 
