@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 import * as Dialog from '@radix-ui/react-dialog';
@@ -30,9 +31,13 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
           <div className="flex items-center justify-between p-6 border-b border-verone-gray-200">
             <Dialog.Title className="sr-only">Menu de navigation</Dialog.Title>
             <Link href="/" onClick={onClose}>
-              <span className="font-bodoni text-2xl font-black tracking-tight text-verone-black">
-                Vérone
-              </span>
+              <Image
+                src="/logo-verone-clean.png"
+                alt="Vérone"
+                width={244}
+                height={37}
+                className="h-6 w-auto brightness-0"
+              />
             </Link>
             <Dialog.Close asChild>
               <button

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { ShoppingCart, Menu, Search, User, Heart, LogIn } from 'lucide-react';
@@ -33,9 +34,14 @@ export function Header() {
                 className="flex items-center"
                 aria-label="Vérone — Accueil"
               >
-                <span className="font-bodoni text-2xl font-black tracking-tight text-verone-white">
-                  Vérone
-                </span>
+                <Image
+                  src="/logo-verone-clean.png"
+                  alt="Vérone"
+                  width={244}
+                  height={37}
+                  priority
+                  className="h-8 w-auto brightness-0 invert"
+                />
               </Link>
 
               {/* Desktop Navigation */}
