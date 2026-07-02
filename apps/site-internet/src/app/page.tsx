@@ -4,6 +4,10 @@ import { EditorialBannerSection } from '@/components/home/EditorialBannerSection
 import { CollectionsSection } from '@/components/home/CollectionsSection';
 import { NewsletterSection } from '@/components/home/NewsletterSection';
 
+// Revalidation régulière : le hero et la réassurance viennent de site_content
+// (back-office). Sans ça, la page d'accueil reste figée au build.
+export const revalidate = 60;
+
 export default function HomePage() {
   return (
     <div>
