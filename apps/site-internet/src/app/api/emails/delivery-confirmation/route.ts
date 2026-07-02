@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       `,
       ctaUrl: `${siteUrl}/compte`,
       ctaLabel: 'Voir ma commande',
-      footerNote: 'Retours gratuits sous 30 jours.',
+      footerNote: 'Retours gratuits sous 14 jours.',
     });
 
     const result = await resendClient.emails.send({

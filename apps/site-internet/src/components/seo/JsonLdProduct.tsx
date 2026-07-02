@@ -41,7 +41,8 @@ export function JsonLdProduct({
   reviewCount,
   averageRating,
 }: JsonLdProductProps) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://verone.fr';
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? 'https://veronecollections.fr';
   const seoImage = resolveSeoImage(cloudflareImageId, imageUrl);
 
   const jsonLd: Record<string, unknown> = {

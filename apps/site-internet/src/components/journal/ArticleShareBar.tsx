@@ -10,7 +10,8 @@ interface ArticleShareBarProps {
 
 export function ArticleShareBar({ slug }: ArticleShareBarProps) {
   const [copied, setCopied] = useState(false);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://verone.fr';
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? 'https://veronecollections.fr';
   const articleUrl = `${siteUrl}/journal/${slug}`;
 
   const handleCopyLink = () => {

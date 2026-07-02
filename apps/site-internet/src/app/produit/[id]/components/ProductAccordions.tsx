@@ -19,6 +19,13 @@ import {
 import { Truck, Shield, Package } from 'lucide-react';
 
 interface ProductDimensions {
+  // Clés réelles stockées en base (suffixe _cm)
+  length_cm?: number;
+  width_cm?: number;
+  height_cm?: number;
+  depth_cm?: number;
+  diameter_cm?: number;
+  // Clés héritées / fallback éventuels
   length?: number;
   width?: number;
   height?: number;
@@ -40,22 +47,35 @@ interface ProductAccordionsProps {
   };
 }
 
-// Helper: Formatter dimensions au format L x l x H
+// Helper: Formatter les dimensions disponibles (partiel accepté, jamais tout-ou-rien).
+// Gère le diamètre (Ø) pour les pièces rondes et le L × l × H pour les autres.
 const formatDimensions = (dims: ProductDimensions | null): string | null => {
   if (!dims) return null;
 
-  const length = dims.length ?? dims.longueur;
-  const width = dims.width ?? dims.largeur;
-  const height = dims.height ?? dims.hauteur;
-  const depth = dims.depth ?? dims.profondeur;
   const unit = dims.unit ?? 'cm';
-
+  const length = dims.length_cm ?? dims.length ?? dims.longueur;
+  const width = dims.width_cm ?? dims.width ?? dims.largeur;
+  const height = dims.height_cm ?? dims.height ?? dims.hauteur;
+  const depth = dims.depth_cm ?? dims.depth ?? dims.profondeur;
+  const diameter = dims.diameter_cm;
   const h = height ?? depth;
 
-  if (length && width && h) {
-    return `${length} x ${width} x ${h} ${unit}`;
+  // Pièce ronde : diamètre (+ hauteur si disponible)
+  if (diameter != null) {
+    return h != null
+      ? `Ø ${diameter} × H ${h} ${unit}`
+      : `Ø ${diameter} ${unit}`;
   }
-  return null;
+
+  // Pièce rectangulaire : afficher toute dimension disponible
+  const parts = [
+    length != null ? `L ${length}` : null,
+    width != null ? `l ${width}` : null,
+    h != null ? `H ${h}` : null,
+  ].filter((part): part is string => part !== null);
+
+  if (parts.length === 0) return null;
+  return `${parts.join(' × ')} ${unit}`;
 };
 
 export function ProductAccordions({ product }: ProductAccordionsProps) {
@@ -75,11 +95,9 @@ export function ProductAccordions({ product }: ProductAccordionsProps) {
           <AccordionContent className="px-4 pb-4">
             <div className="space-y-2 text-sm">
               {dimensionsFormatted && (
-                <div>
-                  <p className="font-medium mb-1">{dimensionsFormatted}</p>
-                  <p className="text-muted-foreground text-xs">
-                    (L) x (l) x (H)
-                  </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Dimensions</span>
+                  <span className="font-medium">{dimensionsFormatted}</span>
                 </div>
               )}
 
@@ -101,19 +119,8 @@ export function ProductAccordions({ product }: ProductAccordionsProps) {
         </AccordionItem>
       )}
 
-      {/* Détails du produit */}
-      {product.description && (
-        <AccordionItem value="details">
-          <AccordionTrigger className="px-4">
-            Détails du produit
-          </AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-              {product.description}
-            </p>
-          </AccordionContent>
-        </AccordionItem>
-      )}
+      {/* Détails du produit : la description est déjà affichée en clair
+          au-dessus des accordéons (cf. page.tsx) — pas de doublon ici. */}
 
       {/* Matériaux & Finitions */}
       {product.technical_description && (
@@ -165,7 +172,7 @@ export function ProductAccordions({ product }: ProductAccordionsProps) {
                 <span>Retours</span>
               </div>
               <p className="text-muted-foreground pl-6">
-                Retours gratuits sous 30 jours. Le produit doit être dans son
+                Retours gratuits sous 14 jours. Le produit doit être dans son
                 emballage d'origine.
               </p>
             </div>

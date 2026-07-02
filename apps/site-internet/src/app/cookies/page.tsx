@@ -138,7 +138,7 @@ export default function CookiesPage() {
           </h2>
           <p>
             Pour toute question concernant notre politique de cookies,
-            contactez-nous à : contact@verone.fr.
+            contactez-nous à : contact@veronecollections.fr.
           </p>
         </section>
 
