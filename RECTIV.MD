@@ -107,6 +107,21 @@ back-office. On peut le faire ensemble plus tard.
 
 ---
 
+## 🎨 Correction logo — à faire dans Claude Code
+
+Le logo dans le header n'utilise pas la bonne typographie. La Bodoni
+(calligraphie Vérone) est présente dans le footer, mais le header affiche
+un fichier PNG mal dimensionné qui donne "VERONE" en minuscules lettres.
+Sur mobile, aucun logo n'est affiché dans le menu.
+
+Le prompt précis à copier-coller dans Claude Code est ici :
+`docs/scratchpad/prompt-claude-code-logo-site-internet.md`
+
+En résumé : remplacer le PNG par `font-bodoni text-2xl font-black tracking-tight`
+dans `Header.tsx` et `MobileNav.tsx`, comme c'est déjà fait dans `Footer.tsx`.
+
+---
+
 ## Comment ça se met en ligne
 
 Toutes ces corrections sont regroupées dans une seule demande de mise en

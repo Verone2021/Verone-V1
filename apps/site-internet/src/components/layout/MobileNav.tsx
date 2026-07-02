@@ -28,9 +28,12 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
         <Dialog.Overlay className="fixed inset-0 z-50 bg-verone-black/60 backdrop-blur-sm md:hidden animate-fade-in" />
         <Dialog.Content className="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-verone-white shadow-luxury-xl md:hidden animate-slide-in-right">
           <div className="flex items-center justify-between p-6 border-b border-verone-gray-200">
-            <Dialog.Title className="font-playfair text-2xl font-bold text-verone-black tracking-tight">
-              Menu
-            </Dialog.Title>
+            <Dialog.Title className="sr-only">Menu de navigation</Dialog.Title>
+            <Link href="/" onClick={onClose}>
+              <span className="font-bodoni text-2xl font-black tracking-tight text-verone-black">
+                Vérone
+              </span>
+            </Link>
             <Dialog.Close asChild>
               <button
                 type="button"
