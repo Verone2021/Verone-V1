@@ -66,7 +66,8 @@ export async function fetchLinkMeCatalogProducts(): Promise<
         assigned_client_id,
         created_by_affiliate,
         affiliate_commission_rate,
-        affiliate_payout_ht
+        affiliate_payout_ht,
+        is_visible_in_linkme_catalog
       )
     `
     )
@@ -276,6 +277,10 @@ export async function fetchLinkMeCatalogProducts(): Promise<
         affiliate_commission_rate:
           cp.products?.affiliate_commission_rate ?? null,
         affiliate_payout_ht: cp.products?.affiliate_payout_ht ?? null,
+        // Kill-switch catalogue LinkMe (BO-LINKME-CATVIS-001) : exposé pour
+        // affichage/réactivation côté staff, NON filtré ici.
+        is_visible_in_linkme_catalog:
+          cp.products?.is_visible_in_linkme_catalog ?? true,
         selections_price_mismatch: mismatchCountMap.get(cp.product_id) ?? 0,
       };
     })
