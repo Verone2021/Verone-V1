@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@verone/utils/supabase/client';
-import { cn } from '@verone/ui';
+import { ClientOrEnseigneSelector } from '@verone/products';
+import { cn, Switch } from '@verone/ui';
 import {
   Globe,
   ShoppingBag,
@@ -10,9 +11,13 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Eye,
+  EyeOff,
+  Lock,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
-import type { Product } from './types';
+import type { Product, ProductRow } from './types';
 
 interface ChannelStatus {
   channel_code: string;
@@ -23,11 +28,60 @@ interface ChannelStatus {
 
 interface ProductPublicationTabProps {
   product: Product;
+  onProductUpdate: (data: Partial<ProductRow>) => Promise<void> | void;
 }
 
-export function ProductPublicationTab({ product }: ProductPublicationTabProps) {
+export function ProductPublicationTab({
+  product,
+  onProductUpdate,
+}: ProductPublicationTabProps) {
   const [channels, setChannels] = useState<ChannelStatus[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // ── Catalogue LinkMe : visibilité + réservation client ────────────────
+  const isVisibleInLinkMe = product.is_visible_in_linkme_catalog !== false;
+  const isReserved = Boolean(product.assigned_client_id ?? product.enseigne_id);
+  const isAffiliateProduct = Boolean(product.created_by_affiliate);
+
+  const applyUpdate = (data: Partial<ProductRow>, successMsg: string) => {
+    void Promise.resolve(onProductUpdate(data))
+      .then(() => toast.success(successMsg))
+      .catch((err: unknown) => {
+        console.error('[ProductPublicationTab] update failed:', err);
+        toast.error('Erreur lors de la mise à jour');
+      });
+  };
+
+  const handleVisibilityChange = (next: boolean) => {
+    applyUpdate(
+      { is_visible_in_linkme_catalog: next },
+      next
+        ? 'Produit affiché au catalogue LinkMe'
+        : 'Produit caché du catalogue LinkMe'
+    );
+  };
+
+  const handleEnseigneChange = (enseigneId: string | null) => {
+    applyUpdate(
+      {
+        enseigne_id: enseigneId,
+        assigned_client_id: null,
+        product_type: enseigneId ? 'custom' : 'standard',
+      },
+      enseigneId ? 'Produit réservé à cette enseigne' : 'Réservation retirée'
+    );
+  };
+
+  const handleOrganisationChange = (organisationId: string | null) => {
+    applyUpdate(
+      {
+        assigned_client_id: organisationId,
+        enseigne_id: null,
+        product_type: organisationId ? 'custom' : 'standard',
+      },
+      organisationId ? 'Produit réservé à ce client' : 'Réservation retirée'
+    );
+  };
 
   useEffect(() => {
     const fetchChannels = async () => {
@@ -136,6 +190,70 @@ export function ProductPublicationTab({ product }: ProductPublicationTabProps) {
 
   return (
     <div className="space-y-6">
+      {/* Catalogue LinkMe — visibilité + réservation client */}
+      <section className="bg-white rounded-lg border border-neutral-200 p-5">
+        <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <ShoppingBag className="h-4 w-4 text-gray-500" />
+          Catalogue LinkMe
+        </h3>
+
+        {/* Interrupteur afficher / cacher */}
+        <div className="flex items-start justify-between gap-4 p-3 rounded-lg border border-gray-200 bg-gray-50">
+          <div className="flex items-start gap-3">
+            {isVisibleInLinkMe ? (
+              <Eye className="h-5 w-5 text-green-600 mt-0.5" />
+            ) : (
+              <EyeOff className="h-5 w-5 text-gray-400 mt-0.5" />
+            )}
+            <div>
+              <p className="text-sm font-medium text-gray-900">
+                Afficher au catalogue LinkMe
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {isVisibleInLinkMe
+                  ? 'Ce produit peut apparaître dans le catalogue LinkMe.'
+                  : 'Ce produit est masqué du catalogue LinkMe, quel que soit son prix.'}
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={isVisibleInLinkMe}
+            onCheckedChange={handleVisibilityChange}
+            aria-label="Afficher au catalogue LinkMe"
+          />
+        </div>
+
+        {/* Réservation à un client (sur mesure) */}
+        <div className="mt-4">
+          {isAffiliateProduct ? (
+            <div className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 bg-gray-50 text-xs text-gray-500">
+              <Lock className="h-4 w-4 flex-shrink-0" />
+              Produit créé par un affilié : géré via le workflow
+              d&apos;affiliation.
+            </div>
+          ) : (
+            <>
+              <ClientOrEnseigneSelector
+                enseigneId={product.enseigne_id}
+                organisationId={product.assigned_client_id}
+                onEnseigneChange={enseigneId =>
+                  handleEnseigneChange(enseigneId)
+                }
+                onOrganisationChange={organisationId =>
+                  handleOrganisationChange(organisationId)
+                }
+                label="Réservé à un client (sur mesure)"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                {isReserved
+                  ? 'Ce produit est invisible dans le catalogue général : seul le client sélectionné le voit.'
+                  : 'Laisser vide pour un produit du catalogue général (visible par tous). Sélectionner un client réserve le produit à ce client uniquement.'}
+              </p>
+            </>
+          )}
+        </div>
+      </section>
+
       {/* Readiness score */}
       <section className="bg-white rounded-lg border border-neutral-200 p-5">
         <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
