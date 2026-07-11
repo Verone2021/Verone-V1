@@ -37,9 +37,12 @@ Contrôle post-migration : 234 visibles / 0 caché, 4 custom, 0 incohérent, 18 
 
 Back-office :
 
-- `.../produits/catalogue/[id]/_components/product-publication-tab.tsx` — section « Catalogue
-  LinkMe » (Switch visibilité + ClientOrEnseigneSelector réservation), prop `onProductUpdate`.
-- `.../produits/catalogue/[id]/page.tsx` — passe `onProductUpdate={handleProductUpdate}`.
+- `.../produits/catalogue/detail/[id]/_components/product-publication-tab.tsx` — section
+  « Catalogue LinkMe » (Switch visibilité + ClientOrEnseigneSelector réservation), prop
+  `onProductUpdate`. **NB : la vraie fiche produit est `catalogue/detail/[id]` (réécriture
+  d'URL `next.config.js` L84-92 : `/catalogue/<uuid>` → `/catalogue/detail/<uuid>`, commit #978).
+  Le dossier `catalogue/[id]` est du code mort (non touché).**
+- `.../produits/catalogue/detail/[id]/page.tsx` — passe `onProductUpdate={handleProductUpdate}`.
 - `.../canaux-vente/linkme/hooks/catalog/fetchers-list.ts` — select + expose le champ (NON filtré).
 - `.../canaux-vente/linkme/hooks/catalog/types.ts` — champ ajouté au Pick + interface.
 
@@ -51,9 +54,13 @@ LinkMe (filtre effectif) :
 
 ## Vérifications
 
-- Type-check back-office : (à compléter)
-- Type-check linkme : (à compléter)
-- Test navigateur : fiche produit (toggle + réservation) + catalogue LinkMe (absence produit caché).
+- Type-check back-office : ✅ vert.
+- Type-check linkme : ✅ vert.
+- Test navigateur (Playwright, produit COU-0009 Coussin beige) : section « Catalogue LinkMe »
+  affichée sur la fiche ; toggle OFF → `is_visible_in_linkme_catalog=false` en base + produit
+  exclu de la requête filtrée du catalogue LinkMe (résultat vide) ; réservation Pokawa Cergy →
+  `assigned_client_id` set + `product_type='custom'`. 0 erreur console. Produit remis à son
+  état d'origine après test.
 
 ## Points de vigilance
 
