@@ -7,15 +7,23 @@
 -- compte. Décision Roméo (2026-07-20) : masquage GLOBAL — un produit masqué disparaît
 -- de TOUTES les surfaces publiques.
 --
--- Cette migration ajoute la clause `is_visible_in_linkme_catalog = true` à :
+-- Cette migration ajoute DEUX garde-fous côté public à :
 --   1. la vue `linkme_public_products` (vitrine d'accueil)
 --   2. get_public_selection(uuid)                 — page sélection publique
 --   3. get_public_selection(text, text)           — page sélection publique (slug + token)
 --   4. get_public_selection_by_slug(text)         — page sélection publique (slug)
 --
--- Non-régression : la colonne vaut `true` par défaut → tous les produits existants
--- restent visibles. Seuls les produits explicitement masqués par Roméo disparaissent.
--- Les objets sont recréés à l'identique (corps intégral) avec la seule clause en plus ;
+-- Garde-fou 1 — visibilité : `is_visible_in_linkme_catalog = true`.
+-- Garde-fou 2 — pas de produit sur-mesure/réservé au public (décision Roméo 2026-07-22) :
+--   `assigned_client_id IS NULL AND enseigne_id IS NULL AND created_by_affiliate IS NULL`.
+--   Un produit « public général » = exactement la définition de la logique affilié
+--   (apps/linkme/src/lib/hooks/use-linkme-catalog.ts). Vérifié en base : 4 produits
+--   réservés apparaissaient dans la vitrine, 6 dans des sélections publiées — ils
+--   disparaissent avec ce filtre.
+--
+-- Non-régression : `is_visible` vaut `true` par défaut et les produits Vérone généraux
+-- n'ont ni client, ni enseigne, ni affilié assigné → ils restent visibles (19 en vitrine).
+-- Les objets sont recréés à l'identique (corps intégral) avec les seules clauses en plus ;
 -- CREATE OR REPLACE préserve propriétaire et droits (anon SELECT sur la vue, EXECUTE des
 -- fonctions).
 
@@ -35,6 +43,9 @@ CREATE OR REPLACE VIEW public.linkme_public_products AS
      LEFT JOIN categories c ON c.id = sc.category_id
   WHERE p.product_status = 'active'::product_status_type
     AND p.is_visible_in_linkme_catalog = true
+    AND p.assigned_client_id IS NULL
+    AND p.enseigne_id IS NULL
+    AND p.created_by_affiliate IS NULL
   ORDER BY cp.is_featured DESC, cp.display_order, p.name;
 
 -- 2) Sélection publique par id -----------------------------------------------
@@ -85,6 +96,7 @@ BEGIN
     WHERE lsi.selection_id = p_selection_id AND lsi.is_hidden_by_staff = false
       AND (cp.is_active IS NULL OR cp.is_active = true)
       AND p.is_visible_in_linkme_catalog = true
+      AND p.assigned_client_id IS NULL AND p.enseigne_id IS NULL AND p.created_by_affiliate IS NULL
   ) sub;
 
   v_branding := jsonb_build_object(
@@ -172,6 +184,7 @@ BEGIN
       LEFT JOIN subcategories sc ON sc.id = p.subcategory_id
       WHERE si.selection_id = s.id AND p.product_status = 'active'
         AND p.is_visible_in_linkme_catalog = true
+        AND p.assigned_client_id IS NULL AND p.enseigne_id IS NULL AND p.created_by_affiliate IS NULL
     )
   ) INTO v_result FROM linkme_selections s
   JOIN linkme_affiliates a ON a.id = s.affiliate_id WHERE s.id = v_selection_id;
@@ -228,6 +241,7 @@ BEGIN
     WHERE lsi.selection_id = v_selection.id AND lsi.is_hidden_by_staff = false
       AND (cp.is_active IS NULL OR cp.is_active = true)
       AND p.is_visible_in_linkme_catalog = true
+      AND p.assigned_client_id IS NULL AND p.enseigne_id IS NULL AND p.created_by_affiliate IS NULL
   ) sub;
 
   v_branding := jsonb_build_object(
