@@ -15,7 +15,7 @@
  * @updated 2026-06-05 - LINKME-CONTACT-001 : formulaire unifié + Calendly.
  */
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -47,9 +47,42 @@ export function ContactForm(): JSX.Element {
   const [submittedType, setSubmittedType] = useState<ProfileType | null>(null);
   const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null);
 
+  // Anti-spam : champ piège invisible + horodatage d'affichage du formulaire.
+  // L'horodatage est posé au montage (et non au rendu) car la page est
+  // prérendue statiquement : une valeur calculée au build serait figée.
+  const [trapValue, setTrapValue] = useState('');
+  const formLoadedAtRef = useRef(0);
+
+  useEffect(() => {
+    formLoadedAtRef.current = Date.now();
+  }, []);
+
+  // Champ fautif quand la soumission est bloquée côté navigateur.
+  const [fieldError, setFieldError] = useState<
+    'profileType' | 'logisticsMode' | null
+  >(null);
+
+  // La page est prérendue statiquement : au premier rendu client, le paramètre
+  // `?type=` de l'URL n'est pas encore connu de l'état initial. On l'applique
+  // après montage, sans écraser un choix déjà fait par le visiteur.
+  useEffect(() => {
+    if (!initialType) return;
+    setForm(prev =>
+      prev.profileType ? prev : { ...prev, profileType: initialType }
+    );
+  }, [initialType]);
+
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
+    setFieldError(null);
+
     if (!form.profileType) {
+      setFieldError('profileType');
+      setStatus('error');
+      return;
+    }
+    if (form.profileType === 'fournisseur' && !form.logisticsMode) {
+      setFieldError('logisticsMode');
       setStatus('error');
       return;
     }
@@ -67,6 +100,8 @@ export function ContactForm(): JSX.Element {
             ? form.logisticsMode
             : undefined,
         message: form.message || undefined,
+        company: trapValue || undefined,
+        formLoadedAt: formLoadedAtRef.current || undefined,
       };
 
       const response = await fetch('/api/contact/unified', {
@@ -132,19 +167,35 @@ export function ContactForm(): JSX.Element {
           onSubmit={e => void handleSubmit(e)}
           className="bg-white rounded-2xl p-6 lg:p-8 shadow-sm border border-gray-100"
         >
-          {status === 'error' && (
+          {status === 'error' && fieldError === null && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium text-red-800 text-sm">
-                  Un souci est survenu
+                  L&apos;envoi n&apos;a pas abouti
                 </p>
                 <p className="text-sm text-red-700">
-                  Vérifiez votre profil et vos coordonnées, puis réessayez.
+                  Votre demande n&apos;a pas pu être transmise. Réessayez dans
+                  un instant, ou écrivez-nous à contact@linkme.network.
                 </p>
               </div>
             </div>
           )}
+
+          {/* Champ piège anti-spam : invisible et inaccessible aux humains,
+              rempli par les robots qui parcourent le DOM. */}
+          <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0">
+            <label htmlFor="company">Société (ne pas remplir)</label>
+            <input
+              type="text"
+              id="company"
+              name="company"
+              value={trapValue}
+              onChange={e => setTrapValue(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </div>
 
           {/* Type de profil */}
           <fieldset className="mb-6">
@@ -193,6 +244,12 @@ export function ContactForm(): JSX.Element {
                 );
               })}
             </div>
+            {fieldError === 'profileType' && (
+              <p className="mt-2 flex items-center gap-2 text-sm text-red-700">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                Choisissez le profil qui vous correspond pour continuer.
+              </p>
+            )}
           </fieldset>
 
           {/* Mode logistique (conditionnel fournisseur) */}
@@ -234,6 +291,12 @@ export function ContactForm(): JSX.Element {
                   );
                 })}
               </div>
+              {fieldError === 'logisticsMode' && (
+                <p className="mt-2 flex items-center gap-2 text-sm text-red-700">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  Précisez comment vous gérez la logistique.
+                </p>
+              )}
             </fieldset>
           )}
 

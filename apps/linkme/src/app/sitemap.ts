@@ -15,7 +15,7 @@ import type { MetadataRoute } from 'next';
 
 import { getPublishedArticles } from '@/lib/blog/articles';
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://linkme.verone.io';
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://linkme.network';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -39,6 +39,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/mentions-legales`,
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.3,
     },
     {
       url: `${SITE_URL}/cgu`,
@@ -88,22 +94,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
-    {
-      url: `${SITE_URL}/blog`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    },
   ];
 
-  // Articles blog publiés
+  // Articles blog publiés. L'index /blog n'est référencé que s'il a du contenu :
+  // proposer une page vide à Google dessert le référencement du site.
   const articles = getPublishedArticles();
-  const articlePages: MetadataRoute.Sitemap = articles.map(article => ({
-    url: `${SITE_URL}/blog/${article.slug}`,
-    lastModified: new Date(article.date),
-    changeFrequency: 'monthly',
-    priority: 0.6,
-  }));
+  const blogPages: MetadataRoute.Sitemap =
+    articles.length === 0
+      ? []
+      : [
+          {
+            url: `${SITE_URL}/blog`,
+            lastModified: now,
+            changeFrequency: 'weekly',
+            priority: 0.7,
+          },
+          ...articles.map(article => ({
+            url: `${SITE_URL}/blog/${article.slug}`,
+            lastModified: new Date(article.date),
+            changeFrequency: 'monthly' as const,
+            priority: 0.6,
+          })),
+        ];
 
-  return [...staticPages, ...articlePages];
+  return [...staticPages, ...blogPages];
 }

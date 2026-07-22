@@ -16,7 +16,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { Send, Mail, MapPin } from 'lucide-react';
+import { Mail, MapPin } from 'lucide-react';
 
 // Footer links — 3 colonnes
 const LINKS = {
@@ -26,7 +26,6 @@ const LINKS = {
     { label: 'Pour les pros', href: '/pour-les-pros' },
     { label: 'Pour les créateurs', href: '/pour-les-createurs' },
     { label: 'Comment ça marche', href: '/comment-ca-marche' },
-    { label: 'Blog', href: '/blog' },
   ],
   partners: [
     { label: 'Pour les fournisseurs', href: '/fournisseurs' },
@@ -34,9 +33,10 @@ const LINKS = {
     { label: 'Contact', href: '/contact' },
   ],
   legal: [
-    { label: 'Mentions légales', href: '/cgu' },
+    { label: 'Mentions légales', href: '/mentions-legales' },
     { label: 'CGU', href: '/cgu' },
     { label: 'Politique de confidentialité', href: '/privacy' },
+    { label: 'Cookies', href: '/cookies' },
   ],
 };
 
@@ -112,29 +112,12 @@ export function LandingFooter(): JSX.Element {
             </ul>
           </div>
 
-          {/* Newsletter & Contact */}
+          {/* Contact */}
           <div>
-            <h3 className="font-semibold text-base mb-4">Newsletter</h3>
+            <h3 className="font-semibold text-base mb-4">Contact</h3>
             <p className="text-white/60 text-sm mb-4">
-              Bientôt disponible — inscrivez-vous pour recevoir nos actualités.
+              Une question sur LinkMe ? On répond sous 24h (jours ouvrés).
             </p>
-            {/* Newsletter desactivee pour l'instant */}
-            <div className="relative mb-6 opacity-50 pointer-events-none">
-              <input
-                type="email"
-                disabled
-                placeholder="Votre email"
-                className="w-full px-4 py-2.5 pr-12 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder:text-white/40"
-              />
-              <button
-                type="button"
-                disabled
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-md bg-[#5DBEBB]/50 text-white"
-                aria-label="S'inscrire"
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            </div>
 
             {/* Contact — renvoie vers le formulaire unifié (pas d'email exposé) */}
             <div className="space-y-2 text-sm text-white/60">
@@ -160,7 +143,13 @@ export function LandingFooter(): JSX.Element {
           <p className="text-white/40 text-sm">
             &copy; {new Date().getFullYear()} LinkMe. Tous droits réservés.
           </p>
-          <div className="flex items-center gap-6 text-sm text-white/40">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/40">
+            <Link
+              href="/mentions-legales"
+              className="hover:text-white transition-colors"
+            >
+              Mentions légales
+            </Link>
             <Link href="/cgu" className="hover:text-white transition-colors">
               CGU
             </Link>

@@ -16,6 +16,7 @@
 import { useState, useEffect, Suspense } from 'react';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 import { LogIn, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
@@ -322,20 +323,20 @@ function LoginContent(): JSX.Element {
 
             {/* Liens */}
             <div className="mt-6 text-center space-y-3">
-              <a
-                href="#"
+              <Link
+                href="/contact"
                 className="text-sm text-[#3976BB] hover:text-[#5DBEBB] hover:underline block transition-colors duration-200"
               >
-                Mot de passe oublie ?
-              </a>
+                Mot de passe oublié ?
+              </Link>
               <p className="text-sm text-gray-500">
                 Pas encore partenaire ?{' '}
-                <a
-                  href="#"
+                <Link
+                  href="/contact"
                   className="text-[#5DBEBB] hover:underline font-medium"
                 >
                   Contactez-nous
-                </a>
+                </Link>
               </p>
             </div>
 
@@ -343,13 +344,16 @@ function LoginContent(): JSX.Element {
             <div className="mt-8 pt-6 border-t border-gray-100">
               <p className="text-xs text-gray-400 text-center">
                 En vous connectant, vous acceptez nos{' '}
-                <a href="#" className="text-[#3976BB] hover:underline">
+                <Link href="/cgu" className="text-[#3976BB] hover:underline">
                   conditions d&apos;utilisation
-                </a>{' '}
+                </Link>{' '}
                 et notre{' '}
-                <a href="#" className="text-[#3976BB] hover:underline">
-                  politique de confidentialite
-                </a>
+                <Link
+                  href="/privacy"
+                  className="text-[#3976BB] hover:underline"
+                >
+                  politique de confidentialité
+                </Link>
                 .
               </p>
             </div>
