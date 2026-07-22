@@ -135,5 +135,8 @@ module.exports = {
         /^(fill-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/,
     },
   ],
-  plugins: [],
+  // @tailwindcss/typography : indispensable aux classes `prose` utilisées par
+  // les 4 pages légales et les articles de blog. Sans ce module, `prose` n'a
+  // aucun effet et les titres s'affichent comme du texte courant.
+  plugins: [require('@tailwindcss/typography')],
 };
