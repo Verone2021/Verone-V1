@@ -51,3 +51,6 @@ export * from './dashboard';
 
 // Treasury
 export * from './treasury';
+
+// Rapprochement proactif — inbox de suggestions sur la page Factures
+export * from './InvoiceReconciliationSuggestionsPanel';
