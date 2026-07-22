@@ -34,9 +34,10 @@ const LINKS = {
     { label: 'Contact', href: '/contact' },
   ],
   legal: [
-    { label: 'Mentions légales', href: '/cgu' },
+    { label: 'Mentions légales', href: '/mentions-legales' },
     { label: 'CGU', href: '/cgu' },
     { label: 'Politique de confidentialité', href: '/privacy' },
+    { label: 'Cookies', href: '/cookies' },
   ],
 };
 
@@ -160,7 +161,13 @@ export function LandingFooter(): JSX.Element {
           <p className="text-white/40 text-sm">
             &copy; {new Date().getFullYear()} LinkMe. Tous droits réservés.
           </p>
-          <div className="flex items-center gap-6 text-sm text-white/40">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/40">
+            <Link
+              href="/mentions-legales"
+              className="hover:text-white transition-colors"
+            >
+              Mentions légales
+            </Link>
             <Link href="/cgu" className="hover:text-white transition-colors">
               CGU
             </Link>

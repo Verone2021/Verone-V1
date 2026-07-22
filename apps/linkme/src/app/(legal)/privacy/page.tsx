@@ -1,9 +1,12 @@
 /**
- * Page Politique de Confidentialite - LinkMe
+ * Page Politique de Confidentialité - LinkMe
  *
  * @module PrivacyPage
  * @since 2026-01-23
+ * @updated 2026-07-22 - LM-LEGAL-001 : contenu finalisé, accents, contact marque
  */
+
+import Link from 'next/link';
 
 import type { Metadata } from 'next';
 
@@ -18,118 +21,188 @@ export const metadata: Metadata = {
     index: true,
     follow: false,
   },
+  openGraph: {
+    title: 'Politique de Confidentialité — LinkMe',
+    description:
+      'Comment LinkMe collecte, utilise et protège vos données personnelles.',
+    url: '/privacy',
+    type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Politique de confidentialité LinkMe',
+      },
+    ],
+  },
   alternates: {
     canonical: '/privacy',
   },
 };
 
-export default function PrivacyPage() {
+export default function PrivacyPage(): JSX.Element {
   return (
     <article className="prose prose-lg max-w-none">
-      <h1>Politique de Confidentialite</h1>
-      <p className="lead text-gray-600">Derniere mise a jour : Janvier 2026</p>
+      <h1>Politique de confidentialité</h1>
+      <p className="lead text-gray-600">Dernière mise à jour : juillet 2026</p>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 my-8">
-        <p className="text-amber-800 m-0">
-          <strong>Note :</strong> Cette page est en cours de redaction. La
-          politique complete sera disponible prochainement.
-        </p>
-      </div>
-
-      <h2>1. Introduction</h2>
+      <h2>1. Responsable du traitement</h2>
       <p>
-        LinkMe by Verone (ci-apres &quot;nous&quot;) s&apos;engage a proteger la
-        vie privee des utilisateurs de sa plateforme. Cette politique de
-        confidentialite explique comment nous collectons, utilisons et
-        protegeons vos donnees personnelles.
+        Le responsable du traitement est la société <strong>Vérone</strong>,
+        éditrice de la marque LinkMe, dont les coordonnées complètes figurent
+        dans les <Link href="/mentions-legales">mentions légales</Link>. Pour
+        toute question relative à vos données :{' '}
+        <a href="mailto:contact@linkme.network">contact@linkme.network</a>.
       </p>
 
-      <h2>2. Donnees collectees</h2>
-      <p>Nous collectons les donnees suivantes :</p>
+      <h2>2. Données collectées</h2>
+      <p>Nous collectons uniquement les données nécessaires au service :</p>
       <ul>
         <li>
-          <strong>Donnees d&apos;identification :</strong> nom, prenom, email,
-          telephone
+          <strong>Identification :</strong> nom, prénom, adresse e-mail,
+          téléphone.
         </li>
         <li>
-          <strong>Donnees professionnelles :</strong> nom de l&apos;entreprise,
-          SIRET, adresse
+          <strong>Données professionnelles :</strong> enseigne ou organisation,
+          fonction, adresse, numéro SIRET, coordonnées de facturation.
         </li>
         <li>
-          <strong>Donnees de navigation :</strong> pages visitees, temps passe,
-          actions effectuees
+          <strong>Données de compte :</strong> identifiants de connexion,
+          sélections créées, préférences d&apos;affichage.
         </li>
         <li>
-          <strong>Donnees transactionnelles :</strong> commandes, commissions,
-          paiements
+          <strong>Données transactionnelles :</strong> commandes rattachées,
+          commissions calculées, demandes de versement, pièces comptables.
+        </li>
+        <li>
+          <strong>Données de contact :</strong> informations transmises via le
+          formulaire de contact ou lors d&apos;un rendez-vous.
+        </li>
+      </ul>
+      <p>
+        Nous ne collectons aucune donnée sensible au sens du RGPD et
+        n&apos;utilisons aucun outil de profilage publicitaire.
+      </p>
+
+      <h2>3. Finalités</h2>
+      <ul>
+        <li>Créer et gérer votre compte et vos accès.</li>
+        <li>
+          Rattacher les commandes générées, calculer et verser vos commissions.
+        </li>
+        <li>Répondre à vos demandes et assurer le support.</li>
+        <li>Assurer la sécurité de la plateforme et prévenir la fraude.</li>
+        <li>Respecter nos obligations légales, comptables et fiscales.</li>
+      </ul>
+
+      <h2>4. Bases légales</h2>
+      <ul>
+        <li>
+          <strong>Exécution du contrat</strong> : gestion du compte, des
+          commandes et des commissions.
+        </li>
+        <li>
+          <strong>Intérêt légitime</strong> : sécurité de la plateforme,
+          prévention de la fraude, réponse aux demandes entrantes.
+        </li>
+        <li>
+          <strong>Obligation légale</strong> : conservation des pièces
+          comptables et fiscales.
+        </li>
+        <li>
+          <strong>Consentement</strong> : lorsqu&apos;il est requis, pour des
+          communications non indispensables au service.
         </li>
       </ul>
 
-      <h2>3. Finalites du traitement</h2>
-      <p>Vos donnees sont utilisees pour :</p>
-      <ul>
-        <li>Gerer votre compte et vos acces a la plateforme</li>
-        <li>Calculer et verser vos commissions</li>
-        <li>Ameliorer nos services et votre experience utilisateur</li>
-        <li>Vous envoyer des communications relatives a votre compte</li>
-        <li>Respecter nos obligations legales</li>
-      </ul>
-
-      <h2>4. Base legale du traitement</h2>
-      <p>Le traitement de vos donnees est fonde sur :</p>
-      <ul>
-        <li>L&apos;execution du contrat d&apos;affiliation</li>
-        <li>Votre consentement (pour les communications marketing)</li>
-        <li>Notre interet legitime (amelioration des services)</li>
-        <li>Le respect d&apos;obligations legales</li>
-      </ul>
-
-      <h2>5. Partage des donnees</h2>
+      <h2>5. Destinataires et sous-traitants</h2>
       <p>
-        Vos donnees peuvent etre partagees avec nos sous-traitants techniques
-        (hebergement, paiement) dans le strict respect de la reglementation.
-        Nous ne vendons jamais vos donnees a des tiers.
+        Vos données sont accessibles à l&apos;équipe Vérone habilitée et à nos
+        sous-traitants techniques, dans la stricte limite de leur mission :
+      </p>
+      <ul>
+        <li>
+          <strong>Supabase</strong> — base de données et authentification
+          (hébergement au sein de l&apos;Union européenne).
+        </li>
+        <li>
+          <strong>Vercel Inc.</strong> — hébergement et diffusion du site
+          (États-Unis).
+        </li>
+        <li>
+          <strong>Resend</strong> — envoi des e-mails transactionnels et des
+          notifications.
+        </li>
+        <li>
+          <strong>Calendly</strong> — prise de rendez-vous, lorsque vous
+          choisissez de réserver un créneau.
+        </li>
+      </ul>
+      <p>
+        Certains de ces prestataires sont établis hors de l&apos;Union
+        européenne. Les transferts correspondants sont encadrés par les clauses
+        contractuelles types de la Commission européenne ou un mécanisme
+        équivalent. <strong>Nous ne vendons jamais vos données</strong> et ne
+        les transmettons à aucun tiers à des fins publicitaires.
       </p>
 
-      <h2>6. Conservation des donnees</h2>
-      <p>
-        Vos donnees sont conservees pendant la duree de votre compte, puis
-        archivees conformement aux obligations legales (10 ans pour les donnees
-        comptables).
-      </p>
+      <h2>6. Durées de conservation</h2>
+      <ul>
+        <li>
+          <strong>Compte actif :</strong> pendant toute la durée de la relation,
+          puis 3 ans après le dernier contact.
+        </li>
+        <li>
+          <strong>Demandes de contact sans suite :</strong> 3 ans à compter de
+          la dernière prise de contact.
+        </li>
+        <li>
+          <strong>Pièces comptables et factures :</strong> 10 ans, conformément
+          au code de commerce.
+        </li>
+        <li>
+          <strong>Journaux techniques de sécurité :</strong> 12 mois maximum.
+        </li>
+      </ul>
 
       <h2>7. Vos droits</h2>
       <p>
-        Conformement au RGPD, vous disposez des droits suivants sur vos donnees
-        :
+        Conformément au règlement général sur la protection des données, vous
+        disposez des droits d&apos;accès, de rectification, d&apos;effacement,
+        de limitation, d&apos;opposition et de portabilité, ainsi que du droit
+        de définir des directives relatives au sort de vos données après votre
+        décès.
       </p>
-      <ul>
-        <li>Droit d&apos;acces</li>
-        <li>Droit de rectification</li>
-        <li>Droit a l&apos;effacement</li>
-        <li>Droit a la portabilite</li>
-        <li>Droit d&apos;opposition</li>
-        <li>Droit a la limitation du traitement</li>
-      </ul>
-
-      <h2>8. Securite</h2>
       <p>
-        Nous mettons en oeuvre des mesures techniques et organisationnelles
-        appropriees pour proteger vos donnees contre les acces non autorises, la
-        perte ou la destruction.
+        Pour les exercer, écrivez à{' '}
+        <a href="mailto:contact@linkme.network">contact@linkme.network</a>. Nous
+        répondons dans un délai d&apos;un mois. Si la réponse ne vous satisfait
+        pas, vous pouvez introduire une réclamation auprès de la CNIL —{' '}
+        <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer">
+          www.cnil.fr
+        </a>
+        .
       </p>
 
-      <h2>9. Contact DPO</h2>
+      <h2>8. Sécurité</h2>
       <p>
-        Pour exercer vos droits ou pour toute question relative a la protection
-        de vos donnees, contactez-nous a :{' '}
-        <a href="mailto:contact@verone.io">contact@verone.io</a>
+        Nous mettons en œuvre des mesures techniques et organisationnelles
+        adaptées : chiffrement des échanges, cloisonnement des accès par compte
+        et par organisation, contrôle des habilitations et journalisation des
+        opérations sensibles.
+      </p>
+
+      <h2>9. Cookies</h2>
+      <p>
+        L&apos;usage des cookies est détaillé dans notre{' '}
+        <Link href="/cookies">politique cookies</Link>.
       </p>
 
       <h2>10. Modifications</h2>
       <p>
-        Cette politique peut etre modifiee a tout moment. Les modifications
-        seront publiees sur cette page avec une nouvelle date de mise a jour.
+        Cette politique peut évoluer. Toute modification est publiée sur cette
+        page avec une nouvelle date de mise à jour.
       </p>
     </article>
   );

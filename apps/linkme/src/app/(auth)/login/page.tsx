@@ -323,15 +323,15 @@ function LoginContent(): JSX.Element {
             {/* Liens */}
             <div className="mt-6 text-center space-y-3">
               <a
-                href="#"
+                href="/contact"
                 className="text-sm text-[#3976BB] hover:text-[#5DBEBB] hover:underline block transition-colors duration-200"
               >
-                Mot de passe oublie ?
+                Mot de passe oublié ?
               </a>
               <p className="text-sm text-gray-500">
                 Pas encore partenaire ?{' '}
                 <a
-                  href="#"
+                  href="/contact"
                   className="text-[#5DBEBB] hover:underline font-medium"
                 >
                   Contactez-nous
@@ -343,12 +343,12 @@ function LoginContent(): JSX.Element {
             <div className="mt-8 pt-6 border-t border-gray-100">
               <p className="text-xs text-gray-400 text-center">
                 En vous connectant, vous acceptez nos{' '}
-                <a href="#" className="text-[#3976BB] hover:underline">
+                <a href="/cgu" className="text-[#3976BB] hover:underline">
                   conditions d&apos;utilisation
                 </a>{' '}
                 et notre{' '}
-                <a href="#" className="text-[#3976BB] hover:underline">
-                  politique de confidentialite
+                <a href="/privacy" className="text-[#3976BB] hover:underline">
+                  politique de confidentialité
                 </a>
                 .
               </p>
