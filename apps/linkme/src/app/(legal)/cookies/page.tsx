@@ -1,9 +1,16 @@
 /**
  * Page Politique Cookies - LinkMe
  *
+ * Inventaire réel : seuls des cookies strictement nécessaires sont déposés
+ * (session Supabase). Aucun cookie de mesure d'audience ni publicitaire →
+ * aucun bandeau de consentement requis (art. 82 loi Informatique et Libertés).
+ *
  * @module CookiesPage
  * @since 2026-01-23
+ * @updated 2026-07-22 - LM-LEGAL-001 : inventaire réel, accents, contact marque
  */
+
+import Link from 'next/link';
 
 import type { Metadata } from 'next';
 
@@ -17,130 +24,130 @@ export const metadata: Metadata = {
     index: true,
     follow: false,
   },
+  openGraph: {
+    title: 'Politique Cookies — LinkMe',
+    description: 'Les cookies utilisés par la plateforme LinkMe.',
+    url: '/cookies',
+    type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Politique cookies LinkMe',
+      },
+    ],
+  },
   alternates: {
     canonical: '/cookies',
   },
 };
 
-export default function CookiesPage() {
+export default function CookiesPage(): JSX.Element {
   return (
     <article className="prose prose-lg max-w-none">
-      <h1>Politique Cookies</h1>
-      <p className="lead text-gray-600">Derniere mise a jour : Janvier 2026</p>
-
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 my-8">
-        <p className="text-amber-800 m-0">
-          <strong>Note :</strong> Cette page est en cours de redaction. La
-          politique complete sera disponible prochainement.
-        </p>
-      </div>
+      <h1>Politique cookies</h1>
+      <p className="lead text-gray-600">Dernière mise à jour : juillet 2026</p>
 
       <h2>1. Qu&apos;est-ce qu&apos;un cookie ?</h2>
       <p>
-        Un cookie est un petit fichier texte depose sur votre appareil lors de
-        la visite d&apos;un site web. Il permet de stocker des informations
-        relatives a votre navigation.
+        Un cookie est un petit fichier déposé sur votre appareil lors de la
+        visite d&apos;un site. Il permet de conserver des informations liées à
+        votre navigation, par exemple pour vous maintenir connecté d&apos;une
+        page à l&apos;autre.
       </p>
 
-      <h2>2. Types de cookies utilises</h2>
-      <h3>Cookies essentiels</h3>
+      <h2>2. Les cookies que nous utilisons</h2>
       <p>
-        Ces cookies sont necessaires au fonctionnement de la plateforme. Ils
-        permettent notamment de :
+        LinkMe n&apos;utilise{' '}
+        <strong>que des cookies strictement nécessaires</strong> au
+        fonctionnement du service. Nous ne déposons aucun cookie publicitaire,
+        aucun cookie de réseau social et aucun outil de mesure d&apos;audience.
+        Aucun de vos parcours n&apos;est revendu ni exploité à des fins de
+        ciblage.
       </p>
-      <ul>
-        <li>Maintenir votre session connectee</li>
-        <li>Memoriser vos preferences d&apos;affichage</li>
-        <li>Assurer la securite de votre compte</li>
-      </ul>
-
-      <h3>Cookies analytiques</h3>
-      <p>
-        Ces cookies nous permettent de comprendre comment vous utilisez la
-        plateforme afin d&apos;ameliorer nos services :
-      </p>
-      <ul>
-        <li>Pages visitees</li>
-        <li>Temps passe sur chaque page</li>
-        <li>Actions effectuees</li>
-      </ul>
-
-      <h3>Cookies de performance</h3>
-      <p>
-        Ces cookies aident a optimiser les performances techniques de la
-        plateforme.
-      </p>
-
-      <h2>3. Duree de conservation</h2>
       <table className="border-collapse border border-gray-300">
         <thead>
           <tr>
-            <th className="border border-gray-300 px-4 py-2">Type de cookie</th>
-            <th className="border border-gray-300 px-4 py-2">Duree</th>
+            <th className="border border-gray-300 px-4 py-2">Cookie</th>
+            <th className="border border-gray-300 px-4 py-2">Rôle</th>
+            <th className="border border-gray-300 px-4 py-2">Durée</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td className="border border-gray-300 px-4 py-2">
-              Session (essentiels)
+              Session d&apos;authentification (Supabase)
             </td>
             <td className="border border-gray-300 px-4 py-2">
-              Jusqu&apos;a fermeture du navigateur
+              Maintenir votre connexion et sécuriser votre compte
+            </td>
+            <td className="border border-gray-300 px-4 py-2">
+              Jusqu&apos;à 30 jours, renouvelée à chaque connexion
             </td>
           </tr>
           <tr>
             <td className="border border-gray-300 px-4 py-2">
-              Authentification
+              Préférences d&apos;affichage
             </td>
-            <td className="border border-gray-300 px-4 py-2">30 jours</td>
-          </tr>
-          <tr>
-            <td className="border border-gray-300 px-4 py-2">Analytiques</td>
-            <td className="border border-gray-300 px-4 py-2">13 mois</td>
+            <td className="border border-gray-300 px-4 py-2">
+              Mémoriser vos choix d&apos;interface
+            </td>
+            <td className="border border-gray-300 px-4 py-2">
+              Jusqu&apos;à la fermeture du navigateur
+            </td>
           </tr>
         </tbody>
       </table>
 
-      <h2>4. Gestion des cookies</h2>
+      <h2>3. Pourquoi aucun bandeau de consentement</h2>
       <p>
-        Vous pouvez a tout moment modifier vos preferences concernant les
-        cookies :
+        Les cookies strictement nécessaires à la fourniture d&apos;un service
+        expressément demandé par l&apos;utilisateur sont dispensés de
+        consentement préalable. Comme nous n&apos;en déposons pas d&apos;autres,
+        aucun bandeau ne vous est présenté. Si nous introduisions un jour un
+        outil de mesure d&apos;audience ou de publicité, un bandeau de
+        consentement serait mis en place et cette page mise à jour au préalable.
+      </p>
+
+      <h2>4. Services tiers</h2>
+      <p>
+        Certains prestataires techniques peuvent déposer des cookies
+        indispensables à leur propre fonctionnement :
       </p>
       <ul>
         <li>
-          Via les parametres de votre navigateur (Chrome, Firefox, Safari, etc.)
-        </li>
-        <li>En utilisant notre bandeau de consentement</li>
-      </ul>
-      <p>
-        <strong>Attention :</strong> La desactivation de certains cookies peut
-        affecter le fonctionnement de la plateforme.
-      </p>
-
-      <h2>5. Cookies tiers</h2>
-      <p>
-        Nous utilisons des services tiers qui peuvent deposer leurs propres
-        cookies :
-      </p>
-      <ul>
-        <li>
-          <strong>Supabase :</strong> Authentification et base de donnees
+          <strong>Supabase</strong> — authentification et session.
         </li>
         <li>
-          <strong>Vercel :</strong> Hebergement et analytics
+          <strong>Vercel</strong> — hébergement et sécurité de la diffusion.
+        </li>
+        <li>
+          <strong>Calendly</strong> — uniquement si vous ouvrez une page de
+          réservation de rendez-vous.
         </li>
       </ul>
 
-      <h2>6. Mises a jour</h2>
+      <h2>5. Gérer les cookies</h2>
       <p>
-        Cette politique peut etre modifiee pour refleter les evolutions de nos
-        pratiques. Nous vous encourageons a la consulter regulierement.
+        Vous pouvez à tout moment supprimer les cookies déjà déposés ou les
+        bloquer depuis les réglages de votre navigateur (Chrome, Firefox,
+        Safari, Edge). <strong>Attention :</strong> bloquer les cookies
+        d&apos;authentification empêche la connexion à votre espace.
+      </p>
+
+      <h2>6. Données personnelles</h2>
+      <p>
+        Le traitement de vos données est décrit dans notre{' '}
+        <Link href="/privacy">politique de confidentialité</Link>. Les
+        informations sur l&apos;éditeur figurent dans les{' '}
+        <Link href="/mentions-legales">mentions légales</Link>.
       </p>
 
       <h2>7. Contact</h2>
       <p>
-        Pour toute question concernant notre utilisation des cookies :{' '}
-        <a href="mailto:contact@verone.io">contact@verone.io</a>
+        Pour toute question sur les cookies :{' '}
+        <a href="mailto:contact@linkme.network">contact@linkme.network</a>.
       </p>
     </article>
   );

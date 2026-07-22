@@ -35,6 +35,7 @@ export type ChannelPricingWithProduct = ChannelPricing & {
     | 'affiliate_commission_rate'
     | 'affiliate_payout_ht'
     | 'affiliate_approval_status'
+    | 'is_visible_in_linkme_catalog'
   >;
 };
 
@@ -96,6 +97,8 @@ export interface LinkMeCatalogProduct {
   affiliate_commission_rate: number | null;
   /** Payout affilié par unité vendue (HT) */
   affiliate_payout_ht: number | null;
+  /** false = produit masqué du catalogue LinkMe (kill-switch BO-LINKME-CATVIS-001) */
+  is_visible_in_linkme_catalog: boolean;
   /** Nombre de sélections avec base_price_ht != public_price_ht */
   selections_price_mismatch: number;
 }

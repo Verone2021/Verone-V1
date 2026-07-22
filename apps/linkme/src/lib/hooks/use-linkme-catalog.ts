@@ -49,6 +49,7 @@ export interface LinkMeCatalogProduct {
   assigned_client_id: string | null; // Produit exclusif à une organisation
   is_custom: boolean; // true si produit sur mesure (is_sourced && !created_by_affiliate)
   is_sourced: boolean; // true si produit exclusif à enseigne/organisation
+  is_visible_in_linkme_catalog: boolean; // false = masqué du catalogue LinkMe (kill-switch)
   created_by_affiliate: string | null; // ID affilié créateur (produit créé par affilié)
   // Style et pièces (nouveaux champs 2026-01)
   style: string | null; // minimaliste, contemporain, moderne, etc.
@@ -98,6 +99,7 @@ interface ChannelPricingWithProduct {
     enseigne_id: string | null;
     assigned_client_id: string | null;
     created_by_affiliate: string | null;
+    is_visible_in_linkme_catalog: boolean | null;
     style: string | null;
     suitable_rooms: string[] | null;
   } | null;
@@ -134,6 +136,7 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
         enseigne_id,
         assigned_client_id,
         created_by_affiliate,
+        is_visible_in_linkme_catalog,
         style,
         suitable_rooms
       )
@@ -141,6 +144,9 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     )
     .eq('channel_id', LINKME_CHANNEL_ID)
     .eq('is_active', true)
+    // Kill-switch par produit : les produits cachés au catalogue LinkMe
+    // (BO-LINKME-CATVIS-001) sont exclus côté serveur.
+    .eq('products.is_visible_in_linkme_catalog', true)
     .order('display_order', { ascending: true })
     .limit(500) // PERF: Safety cap — catalogue has ~200 products currently
     .returns<ChannelPricingWithProduct[]>();
@@ -288,6 +294,8 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     const isSourced = !!(enseigneId ?? assignedClientId);
     // is_custom = produit sur mesure (sourcé par Verone, PAS créé par affilié)
     const isCustom = isSourced && !createdByAffiliate;
+    // Kill-switch catalogue LinkMe (BO-LINKME-CATVIS-001) : NULL = visible
+    const isVisibleInCatalog = product?.is_visible_in_linkme_catalog !== false;
 
     const supplierId = product?.supplier_id ?? null;
     const supplierName = supplierId ? supplierMap.get(supplierId) : null;
@@ -316,6 +324,7 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
       assigned_client_id: assignedClientId,
       is_custom: isCustom,
       is_sourced: isSourced,
+      is_visible_in_linkme_catalog: isVisibleInCatalog,
       created_by_affiliate: createdByAffiliate,
       // Style et pièces
       style: product?.style ?? null,
@@ -540,6 +549,12 @@ export function categorizeProducts(
   const generalProducts: LinkMeCatalogProduct[] = [];
 
   for (const product of products) {
+    // EXCLUSION: Produit masqué du catalogue LinkMe (kill-switch BO-LINKME-CATVIS-001).
+    // Défense en profondeur : le filtre serveur exclut déjà ces produits.
+    if (!product.is_visible_in_linkme_catalog) {
+      continue;
+    }
+
     // EXCLUSION: Produits créés par un affilié (ne doivent PAS apparaître dans le catalogue)
     if (product.created_by_affiliate) {
       continue; // Invisible dans le catalogue LinkMe

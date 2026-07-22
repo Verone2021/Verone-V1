@@ -96,6 +96,8 @@ export default function CatalogueProductDetailPage({
       assigned_client_id: null,
       is_custom: false,
       is_sourced: false,
+      // Un produit consulté sur sa fiche est nécessairement visible.
+      is_visible_in_linkme_catalog: true,
       created_by_affiliate: null,
       style: null,
       suitable_rooms: null,

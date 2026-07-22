@@ -7198,6 +7198,7 @@ export type Database = {
           internal_notes: string | null;
           is_featured_home: boolean;
           is_published_online: boolean | null;
+          is_visible_in_linkme_catalog: boolean;
           item_group_id: string | null;
           manufacturer: string | null;
           margin_percentage: number | null;
@@ -7302,6 +7303,7 @@ export type Database = {
           internal_notes?: string | null;
           is_featured_home?: boolean;
           is_published_online?: boolean | null;
+          is_visible_in_linkme_catalog?: boolean;
           item_group_id?: string | null;
           manufacturer?: string | null;
           margin_percentage?: number | null;
@@ -7406,6 +7408,7 @@ export type Database = {
           internal_notes?: string | null;
           is_featured_home?: boolean;
           is_published_online?: boolean | null;
+          is_visible_in_linkme_catalog?: boolean;
           item_group_id?: string | null;
           manufacturer?: string | null;
           margin_percentage?: number | null;

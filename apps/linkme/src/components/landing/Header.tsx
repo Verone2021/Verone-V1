@@ -31,9 +31,11 @@ const PRIMARY_NAV = [
   { label: 'Comment ça marche', href: '/comment-ca-marche' },
 ];
 
+// Blog masqué de la navigation tant qu'aucun article n'est publié (page vide
+// = mauvaise impression). Les pages /blog et /blog/[slug] restent en place :
+// il suffit de remettre l'entrée ici le jour de la première publication.
 const SECONDARY_NAV = [
   { label: 'Pour les fournisseurs', href: '/fournisseurs' },
-  { label: 'Blog', href: '/blog' },
   { label: 'À propos', href: '/about' },
 ];
 
