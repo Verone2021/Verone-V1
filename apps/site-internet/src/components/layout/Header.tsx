@@ -40,7 +40,7 @@ export function Header() {
                   width={244}
                   height={37}
                   priority
-                  className="h-8 w-auto brightness-0 invert"
+                  className="h-6 w-auto brightness-0 invert"
                 />
               </Link>
 
