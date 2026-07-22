@@ -15,7 +15,7 @@
  * @updated 2026-06-05 - LINKME-CONTACT-001 : formulaire unifié + Calendly.
  */
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -47,6 +47,16 @@ export function ContactForm(): JSX.Element {
   const [submittedType, setSubmittedType] = useState<ProfileType | null>(null);
   const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null);
 
+  // Anti-spam : champ piège invisible + horodatage d'affichage du formulaire.
+  // L'horodatage est posé au montage (et non au rendu) car la page est
+  // prérendue statiquement : une valeur calculée au build serait figée.
+  const [trapValue, setTrapValue] = useState('');
+  const formLoadedAtRef = useRef(0);
+
+  useEffect(() => {
+    formLoadedAtRef.current = Date.now();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (!form.profileType) {
@@ -67,6 +77,8 @@ export function ContactForm(): JSX.Element {
             ? form.logisticsMode
             : undefined,
         message: form.message || undefined,
+        company: trapValue || undefined,
+        formLoadedAt: formLoadedAtRef.current || undefined,
       };
 
       const response = await fetch('/api/contact/unified', {
@@ -145,6 +157,21 @@ export function ContactForm(): JSX.Element {
               </div>
             </div>
           )}
+
+          {/* Champ piège anti-spam : invisible et inaccessible aux humains,
+              rempli par les robots qui parcourent le DOM. */}
+          <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0">
+            <label htmlFor="company">Société (ne pas remplir)</label>
+            <input
+              type="text"
+              id="company"
+              name="company"
+              value={trapValue}
+              onChange={e => setTrapValue(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </div>
 
           {/* Type de profil */}
           <fieldset className="mb-6">

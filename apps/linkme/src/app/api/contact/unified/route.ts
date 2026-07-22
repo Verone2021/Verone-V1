@@ -22,6 +22,13 @@ import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { z } from 'zod';
 
+import {
+  antiSpamSchemaShape,
+  getClientIp,
+  isLikelyBot,
+  isRateLimited,
+} from '@/lib/anti-spam';
+
 const PROFILE_TYPES = ['createur', 'pro', 'enseigne', 'fournisseur'] as const;
 const LOGISTICS_MODES = ['self', 'warehouse'] as const;
 
@@ -34,6 +41,7 @@ const unifiedContactSchema = z
     profileType: z.enum(PROFILE_TYPES),
     logisticsMode: z.enum(LOGISTICS_MODES).optional(),
     message: z.string().max(4000).optional().or(z.literal('')),
+    ...antiSpamSchemaShape,
   })
   .refine(
     data => data.profileType !== 'fournisseur' || data.logisticsMode != null,
@@ -160,6 +168,17 @@ export async function POST(request: NextRequest) {
 
     const data = parsed.data;
     const calendlyUrl = resolveCalendlyUrl(data.profileType);
+
+    // Robot détecté : on renvoie un succès neutre sans envoyer d'email, pour ne
+    // pas indiquer au spammeur quel garde-fou l'a arrêté.
+    if (isLikelyBot(data)) {
+      console.warn('[contact/unified] Soumission écartée (anti-spam)');
+      return NextResponse.json({ success: true, calendlyUrl });
+    }
+
+    if (isRateLimited(getClientIp(request.headers))) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
 
     // Email (notif principale) — bloquant pour le statut de la requête.
     if (resend) {
