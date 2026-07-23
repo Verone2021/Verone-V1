@@ -25,6 +25,7 @@ import Link from 'next/link';
 import { Menu, X, LogIn, ArrowRight, ChevronDown } from 'lucide-react';
 
 const PRIMARY_NAV = [
+  { label: 'Catalogue', href: '/produits' },
   { label: 'Pour les enseignes', href: '/pour-les-enseignes' },
   { label: 'Pour les pros', href: '/pour-les-pros' },
   { label: 'Pour les créateurs', href: '/pour-les-createurs' },

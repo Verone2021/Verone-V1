@@ -22,6 +22,7 @@ import { Mail, MapPin } from 'lucide-react';
 const LINKS = {
   navigation: [
     { label: 'Accueil', href: '/' },
+    { label: 'Catalogue', href: '/produits' },
     { label: 'Pour les enseignes', href: '/pour-les-enseignes' },
     { label: 'Pour les pros', href: '/pour-les-pros' },
     { label: 'Pour les créateurs', href: '/pour-les-createurs' },

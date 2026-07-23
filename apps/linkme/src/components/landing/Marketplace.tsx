@@ -157,6 +157,17 @@ export function LandingMarketplace({
           ))}
         </div>
 
+        {/* Lien vers le catalogue public complet */}
+        <div className="mt-10 flex justify-center">
+          <Link
+            href="/produits"
+            className="inline-flex items-center gap-2 rounded-xl border-2 border-[#5DBEBB] px-6 py-3 font-semibold text-[#5DBEBB] transition-colors hover:bg-[#5DBEBB]/5"
+          >
+            Voir tout le catalogue
+            <ArrowRight className="h-5 w-5" />
+          </Link>
+        </div>
+
         {/* CTA — devenir ambassadeur / référencer son catalogue */}
         <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
