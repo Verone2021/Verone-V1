@@ -90,6 +90,31 @@ source .mcp.env && psql "$DATABASE_URL" -c "\df public.*"
 
 ---
 
+## Historique du carnet de suivi (schema_migrations) — réaligné 2026-07-23
+
+**Cause racine de la désynchronisation** : appliquer une migration via `psql -f`
+(ou via `mcp__supabase__execute_sql`) applique bien le SQL en base mais **n'écrit
+PAS** de ligne dans `supabase_migrations.schema_migrations`. Résultat : au
+2026-07-23, la base contenait 770 fichiers de migration appliqués mais le carnet
+de suivi n'en enregistrait que **14**. Rien n'était cassé (tous les effets étaient
+en base), mais l'outil `supabase db push` aurait cru devoir tout rejouer.
+
+**Réalignement 2026-07-23** : le carnet a été complété (14 → 435 lignes) pour
+enregistrer toutes les versions de migration présentes en local (étiquetage pur,
+sauvegarde `supabase_migrations.schema_migrations_backup_20260723`). Détail dans
+`docs/scratchpad/dev-report-2026-07-23-migrations-realign.md`.
+
+**Limite connue** : 418 fichiers utilisent l'ancien format `AAAAMMJJ_NNN` (au lieu
+du format standard `AAAAMMJJHHMMSS`). Plusieurs fichiers d'un même jour se ramènent
+au même identifiant de version pour l'outil (76 groupes). Tant que ces fichiers ne
+sont pas renommés au format 14 chiffres, **`supabase db push` reste déconseillé**.
+On continue d'appliquer via `execute_sql`/`psql`.
+
+**Recommandation pour toute nouvelle migration** : (1) nommer au format standard
+`AAAAMMJJHHMMSS_description.sql` ; (2) après application, enregistrer la ligne dans
+le carnet :
+`INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES ('<14 chiffres>', '<description>') ON CONFLICT (version) DO NOTHING;`
+
 ## References
 
 - `supabase/migrations/` - Fichiers migrations
