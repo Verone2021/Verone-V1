@@ -61,6 +61,48 @@ export function FaqJsonLd({ items }: IFaqJsonLdProps): JSX.Element {
   );
 }
 
+interface IProductJsonLdProps {
+  name: string;
+  slug: string;
+  description?: string | null;
+  category?: string | null;
+  image?: string | null;
+}
+
+/**
+ * JSON-LD `Product` pour une fiche produit publique.
+ * SANS `offers` : les prix sont réservés aux comptes connectés, on ne déclare
+ * donc aucune offre de prix aux moteurs de recherche.
+ */
+export function ProductJsonLd({
+  name,
+  slug,
+  description,
+  category,
+  image,
+}: IProductJsonLdProps): JSX.Element {
+  const data: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name,
+    url: `${SITE_URL}/produits/${slug}`,
+    brand: {
+      '@type': 'Brand',
+      name: 'LinkMe',
+    },
+  };
+  if (description) data.description = description;
+  if (category) data.category = category;
+  if (image) data.image = image;
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
 interface IArticleJsonLdProps {
   title: string;
   description: string;
