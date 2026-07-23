@@ -1,14 +1,14 @@
 name: Quality Checks
 
 on:
+  # NB: pas de `paths-ignore` ici. Une PR qui ne touche que des chemins ignorés
+  # (docs/**, .claude/**, *.md) ne déclencherait AUCUN job → les required status
+  # checks ne sont jamais rapportés → la branch protection bloque la PR à vie
+  # (10 PRs doc bloquées depuis mai 2026). Le workflow tourne donc TOUJOURS ;
+  # les jobs coûteux (quality) se court-circuitent en no-op success quand aucun
+  # code applicatif n'a changé (voir output `code` de detect-changes). Réf. BO-CI-DOC-PR-CHECKS-001.
   pull_request:
     branches: [main, staging, integration/*]
-    paths-ignore:
-      - 'docs/**'
-      - '.claude/**'
-      - '**/*.md'
-      - 'LICENSE'
-      - '.gitignore'
   workflow_dispatch:
 
 permissions:
@@ -34,6 +34,10 @@ jobs:
       packages: ${{ steps.filter.outputs.packages }}
       migrations: ${{ steps.filter.outputs.migrations }}
       e2e-needed: ${{ steps.filter.outputs.e2e-needed }}
+      # code = true dès qu'un chemin de code applicatif a changé. Sert au job
+      # `quality` pour décider s'il fait le build réel ou un no-op success
+      # (PR doc-only : code=false → build court-circuité).
+      code: ${{ steps.code.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -84,8 +88,23 @@ jobs:
               - 'packages/@verone/hooks/**'
               - 'pnpm-lock.yaml'
 
+      - name: Compute code-changed flag
+        id: code
+        run: |
+          if [ "${{ steps.filter.outputs.back-office }}" = "true" ] \
+            || [ "${{ steps.filter.outputs.linkme }}" = "true" ] \
+            || [ "${{ steps.filter.outputs.site-internet }}" = "true" ] \
+            || [ "${{ steps.filter.outputs.packages }}" = "true" ] \
+            || [ "${{ steps.filter.outputs.migrations }}" = "true" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # ----------------------------------------------------------------
   # 2. Quality checks — only on affected apps
+  #    PR doc-only (code=false) → no-op success (pas de build) pour ne pas
+  #    bloquer la branch protection. Voir BO-CI-DOC-PR-CHECKS-001.
   # ----------------------------------------------------------------
   quality:
     name: ESLint + Type-Check + Build
@@ -97,25 +116,36 @@ jobs:
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
     steps:
+      - name: No-op (PR sans code applicatif — docs/.claude/*.md uniquement)
+        if: needs.detect-changes.outputs.code != 'true'
+        run: |
+          echo "## ✅ PR documentation-seule — build non nécessaire" >> "$GITHUB_STEP_SUMMARY"
+          echo "Aucun code applicatif modifié (apps/**, packages/**, migrations). Check rapporté vert." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Checkout code
+        if: needs.detect-changes.outputs.code == 'true'
         uses: actions/checkout@v4
 
       - name: Setup pnpm
+        if: needs.detect-changes.outputs.code == 'true'
         uses: pnpm/action-setup@v2
         with:
           version: 10.13.1
 
       - name: Setup Node.js
+        if: needs.detect-changes.outputs.code == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
 
       - name: Install dependencies
+        if: needs.detect-changes.outputs.code == 'true'
         run: pnpm install --frozen-lockfile
 
       # ---- Next.js build cache per app (narrow keys = better cache hit ratio) ----
       - name: Cache Next.js back-office
+        if: needs.detect-changes.outputs.code == 'true'
         uses: actions/cache@v5
         with:
           path: apps/back-office/.next/cache
@@ -125,6 +155,7 @@ jobs:
             ${{ runner.os }}-nextjs-bo-
 
       - name: Cache Next.js linkme
+        if: needs.detect-changes.outputs.code == 'true'
         uses: actions/cache@v5
         with:
           path: apps/linkme/.next/cache
@@ -134,6 +165,7 @@ jobs:
             ${{ runner.os }}-nextjs-lm-
 
       - name: Cache Next.js site-internet
+        if: needs.detect-changes.outputs.code == 'true'
         uses: actions/cache@v5
         with:
           path: apps/site-internet/.next/cache
@@ -144,6 +176,7 @@ jobs:
 
       # ---- ESLint cache (content-based, invalidated when files change) ----
       - name: Cache ESLint
+        if: needs.detect-changes.outputs.code == 'true'
         uses: actions/cache@v5
         with:
           path: |
@@ -158,6 +191,7 @@ jobs:
 
       # ---- TypeScript incremental cache (tsbuildinfo) ----
       - name: Cache tsbuildinfo
+        if: needs.detect-changes.outputs.code == 'true'
         uses: actions/cache@v5
         with:
           path: |
@@ -173,6 +207,7 @@ jobs:
       # ---- Determine which --filter flags to use ----
       - name: Build filter flags
         id: flags
+        if: needs.detect-changes.outputs.code == 'true'
         run: |
           FILTERS=""
           APPS_CHANGED=""
@@ -212,6 +247,7 @@ jobs:
       # + lint utilise désormais le même --filter que type-check/build (avant
       #   `pnpm lint` lintait les 30 packages systématiquement).
       - name: Lint + Type-Check + Build (${{ steps.flags.outputs.apps }})
+        if: needs.detect-changes.outputs.code == 'true'
         run: pnpm turbo run lint type-check build ${{ steps.flags.outputs.filters }} --concurrency=100%
         env:
           NODE_OPTIONS: --max-old-space-size=8192
@@ -267,7 +303,7 @@ jobs:
             });
 
       - name: Summary
-        if: success()
+        if: success() && needs.detect-changes.outputs.code == 'true'
         run: |
           echo "## ✅ Quality Checks Passed" >> $GITHUB_STEP_SUMMARY
           echo "Apps checked: **${{ steps.flags.outputs.apps }}**" >> $GITHUB_STEP_SUMMARY
