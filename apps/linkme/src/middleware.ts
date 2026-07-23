@@ -31,6 +31,8 @@ const PUBLIC_ROUTES: RegExp[] = [
   /^\/pour-les-pros$/,
   /^\/pour-les-enseignes$/,
   /^\/fournisseurs$/,
+  /^\/produits$/,
+  /^\/produits\//,
   /^\/blog$/,
   /^\/blog\//,
   /^\/cgu$/,

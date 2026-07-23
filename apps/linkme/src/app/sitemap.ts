@@ -14,10 +14,11 @@
 import type { MetadataRoute } from 'next';
 
 import { getPublishedArticles } from '@/lib/blog/articles';
+import { getAllLinkmePublicProducts } from '@/lib/linkme-public-products';
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://linkme.network';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   // Pages statiques
@@ -96,6 +97,30 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
+  // Catalogue public : la page /produits + une entrée par fiche produit cochée
+  // en vitrine. L'index n'est référencé que s'il y a au moins un produit
+  // (proposer un catalogue vide à Google dessert le référencement).
+  const products = await getAllLinkmePublicProducts();
+  const catalogPages: MetadataRoute.Sitemap =
+    products.length === 0
+      ? []
+      : [
+          {
+            url: `${SITE_URL}/produits`,
+            lastModified: now,
+            changeFrequency: 'weekly',
+            priority: 0.9,
+          },
+          ...products
+            .filter((p): p is typeof p & { slug: string } => Boolean(p.slug))
+            .map(p => ({
+              url: `${SITE_URL}/produits/${p.slug}`,
+              lastModified: now,
+              changeFrequency: 'weekly' as const,
+              priority: 0.7,
+            })),
+        ];
+
   // Articles blog publiés. L'index /blog n'est référencé que s'il a du contenu :
   // proposer une page vide à Google dessert le référencement du site.
   const articles = getPublishedArticles();
@@ -117,5 +142,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
           })),
         ];
 
-  return [...staticPages, ...blogPages];
+  return [...staticPages, ...catalogPages, ...blogPages];
 }

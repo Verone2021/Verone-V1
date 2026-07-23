@@ -11742,10 +11742,13 @@ export type Database = {
       linkme_public_products: {
         Row: {
           category: string | null;
+          cloudflare_image_id: string | null;
+          description: string | null;
           display_order: number | null;
           id: string | null;
           image_url: string | null;
           is_featured: boolean | null;
+          meta_description: string | null;
           name: string | null;
           slug: string | null;
         };
