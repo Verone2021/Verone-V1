@@ -12,7 +12,7 @@ import { expect, test } from '@playwright/test';
  */
 
 const ADMIN_EMAIL = 'veronebyromeo@gmail.com';
-const ADMIN_PASSWORD = 'Abc123456';
+const ADMIN_PASSWORD = process.env.E2E_TEST_PASSWORD!;
 
 test.describe('SI-PRICING-001 minimum guard', () => {
   test('API rejects price below minimum, accepts with override', async ({

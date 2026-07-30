@@ -225,14 +225,14 @@ Principaux changements:
 
 - URL: `http://localhost:3000/login`
 - Bouton "Accès test MVP"
-- Email: `veronebyromeo@gmail.com` / Pwd: `Abc123456`
+- Email: `veronebyromeo@gmail.com` / Pwd: `<credential retire 2026-07-30 — voir .claude/local/test-credentials.md>`
 
 ### LinkMe (Port 3002)
 
 - URL: `http://localhost:3002/login`
 - Bouton jaune "Comptes de test (DEV)"
-- **Enseigne Admin**: `admin@pokawa-test.fr` / `TestLinkMe2025`
-- **Org Indépendante**: `test-org@verone.fr` / `TestLinkMe2025`
+- **Enseigne Admin**: `admin@pokawa-test.fr` / `<credential retire 2026-07-30>`
+- **Org Indépendante**: `test-org@verone.fr` / `<credential retire 2026-07-30>`
 
 **Note**: Sessions isolées avec cookies distincts (back-office et LinkMe séparés).
 

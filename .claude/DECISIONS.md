@@ -1249,3 +1249,78 @@ Autres FEU ROUGE de l'ancien fichier confirmés déjà couverts ailleurs (pas be
 - Compaction règles à 8-10 fichiers — voir ADR-031 pour la suite.
 
 **Référence** : verbatim Roméo 2026-05-09 « je veux tout corriger », « comment font les développeurs seniors pour que Claude Code et les agents prennent cela en compte ? ». Sources : Anthropic Best Practices, GitHub anthropics/claude-code#32163, typescript-eslint.io.
+
+---
+
+## ADR-034 — `[BO-AUDIT-002]` Aucune valeur de credential dans un fichier versionné (2026-07-30)
+
+**Contexte** : audit complet du back-office le 2026-07-30 (note 22/100, rapport dans `docs/audit-2026-07-30/`). Découverte en cours d'audit : le dépôt `Verone2021/Verone-V1` était **public** (`gh repo view` → `"visibility":"PUBLIC"`), et **15 fichiers versionnés contenaient des mots de passe en clair**, dont :
+
+- `.claude/rules/agent-autonomy-external.md:73` — e-mail et mot de passe du compte back-office (rôle owner), dans un tableau « Credentials connus ».
+- `.claude/test-credentials.md` — 5 mots de passe. Le fichier se déclarait « LOCAL ONLY - never commit » **en première ligne** et était suivi par git depuis sa création. `agent-autonomy-external.md` affirmait de son côté qu'il était « local only, gitignored ». Deux fichiers qui se rassuraient mutuellement sur une protection inexistante.
+- 3 scripts `scripts/test-*.mjs`, `tests/auth.setup.ts`, 5 specs Playwright, `packages/e2e-linkme/fixtures/auth.fixture.ts` + README + QUICKSTART, `supabase/scripts/create-owner-user.sql`, `.claude/guides/cross-app-protection.md`, 4 archives de `docs/scratchpad/`.
+
+Aggravation vérifiée en base : les 3 comptes LinkMe listés (`admin@pokawa-test.fr`, `admin@bwburger-test.fr`, `collaborateur@pokawa-test.fr`) **existent réellement**, ont des rôles actifs (`linkme:enseigne_admin`, `linkme:enseigne_collaborateur`) et se sont déjà connectés. Or la policy `linkme_users_view_catalog_products` (migration `20260314220000`) leur donne un `SELECT` sur **toutes les lignes et toutes les colonnes** de `products` — la RLS PostgreSQL filtre les lignes, pas les colonnes. Ces comptes lisaient donc `cost_price`, `margin_percentage`, `supplier_reference` et `supplier_page_url` de tout le catalogue. Le chemin d'attaque était complet : lire le dépôt public → prendre les identifiants → se connecter → exfiltrer la structure de coûts.
+
+Contexte historique lié, même mécanisme : trois fichiers `.env.local.backup-*` (419 lignes, `service_role` Supabase, clé Qonto, PAT GitHub, token Vercel) ont été committés le 2026-01-15 (`170aecf0`, PR #37) et retirés le 2026-01-20 (`b07283b7`, PR #82) — donc toujours présents dans l'historique public. **Cause technique** : le `.gitignore` racine listait des **noms exacts** (`.env`, `.env.local`, `.env.*.local`), et aucun ne correspond à `.env.local.backup-20260114-065620`.
+
+**Décision** : un fichier versionné ne contient jamais une **valeur** de credential, seulement un **emplacement**.
+
+1. **`.gitignore` en globs** au lieu de noms exacts : `.env*` + `!.env.example`, plus `*.backup`, `*.bak`, `*.orig`. Un nom exact est un filtre qui ne couvre que le cas qu'on a imaginé.
+2. **`.claude/test-credentials.md` sorti du suivi git** (`git rm --cached`) et déplacé vers `.claude/local/test-credentials.md`, où `.gitignore:113` l'ignore réellement.
+3. **Les 15 fichiers lisent l'environnement**, avec une convention unique par app : `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` (back-office) et `LINKME_TEST_PASSWORD` (LinkMe). Deux fichiers utilisaient déjà `E2E_TEST_PASSWORD` avec un fallback en dur (`?? 'Abc123456'`) — le fallback est retiré plutôt qu'une troisième variable créée.
+4. **`packages/e2e-linkme/fixtures/auth.fixture.ts`** utilise des getters avec un helper `required(name)` qui lève une erreur explicite pointant vers `.claude/local/test-credentials.md`, au lieu d'un échec de connexion opaque.
+5. **La rotation des clés d'API reste hors de ce lot**, volontairement (arbitrage Roméo, `docs/audit-2026-07-30/PLAN-CORRECTION.md` § Lot 9) : c'est le seul chantier dont chaque étape peut interrompre le travail des deux salariés qui utilisent l'application quotidiennement, et il n'apporte aucune amélioration fonctionnelle. Le passage du dépôt en privé ferme le vecteur d'exposition en un clic ; l'urgence retombe alors.
+
+**Conséquence** :
+
+- Vérification finale : `git ls-files -z | xargs -0 rg -l -e 'Abc123456' -e 'TestLinkMe2025'` ne retourne plus **aucun** fichier. `type-check` sur les 3 apps : 8 tâches, 8 succès.
+- **Les tests ne fonctionneront plus sans variables d'environnement.** C'est voulu : un test qui s'authentifie avec un secret en dur est un secret qui fuit. Variables à définir dans `apps/back-office/.env.local`, documentées dans `.claude/local/test-credentials.md`.
+- Mots de passe changés : compte back-office le 2026-07-30 par Roméo. Les 3 comptes LinkMe restent à changer.
+- Le nettoyage empêche les **prochaines** fuites ; il ne retire rien de l'historique git. C'est le passage du dépôt en privé qui referme la porte, et la rotation (Lot 9) qui neutralise réellement.
+- **Gate à venir** : `gitleaks` en pre-commit et en CI bloquant (Lot 9). `.husky/pre-push:8-9` annonce déjà l'emplacement prévu — « pour permettre l'ajout de hooks futurs (ex: scan secrets) ». Tant que ce gate n'existe pas, cette décision reste une règle markdown, donc un vœu au sens de l'ADR-033.
+
+**Convention d'identifiants** : les lots de l'audit sont numérotés `[BO-AUDIT-001]` à `[BO-AUDIT-013]`. Les identifiants initiaux (`L00`, `L00b`, `L01`…) ont été remplacés parce que le pattern de `.husky/commit-msg:17` exige `-[0-9]{3}[a-z]?` et refusait un suffixe commençant par une lettre. Table de correspondance dans `docs/audit-2026-07-30/PLAN-CORRECTION.md`.
+
+**Référence** : Roméo 2026-07-30, « Je veux que tu fasses les choses dans les règles de l'art et, surtout, qu'on puisse revenir en arrière au cas où tu casses quelque chose. » Sauvegarde complète avant manipulation git dans `~/verone-backups/2026-07-30-audit-002/`.
+
+---
+
+## ADR-035 — `[BO-AUDIT-005]` Retrait des documents qui induisent en erreur (2026-07-30)
+
+**Contexte** : l'audit du 2026-07-30 a cherché _pourquoi_ 86 routes API sur 151 n'ont aucun contrôle d'accès. La réponse est documentaire. `docs/current/security-auth.md:86-92`, daté du 2026-03-27, affirmait :
+
+> **Middleware** — `apps/back-office/src/middleware.ts` — Vérifie session Supabase sur chaque requête — Redirige vers `/login` si non authentifié
+
+Ce fichier n'a jamais existé dans le back-office. Un agent — ou un humain — qui lit cette ligne conclut que l'authentification est centralisée et écrit une route API sans `getUser()`, de bonne foi. Répété 86 fois, c'est l'état mesuré. Le même document annonçait 239 policies RLS (il y en a 336), inventait une colonne `user_profiles.role`, et enseignait un pattern RLS que `.husky/pre-commit:21-28` rejette activement.
+
+Cinq autres documents dans le même cas :
+
+| Document                                             | Affirmait                                        | Réalité                                                                                                                                                 |
+| ---------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stack.md:43`                                        | « Repo — GitHub — **Private** »                  | **public** — c'est l'affirmation qui a masqué la fuite de secrets pendant six mois                                                                      |
+| `deploy-runbooks.md:95`                              | rollback = `git revert` + `git push origin main` | interdit par `CLAUDE.md:129`, bloqué par `.husky/pre-commit:14-17`. La seule procédure de retour arrière du dépôt était infaisable                      |
+| `dev-workflow.md`, `QUICKSTART-GIT-HOOKS.md`         | 5 étapes de workflow git                         | chacune interdite ou rejetée par un hook (`npm run dev`, build global, format de commit `feat(module):` refusé par `commit-msg:17`, travail sur `main`) |
+| `DATABASE-SCHEMA-COMPLETE.md` (racine de `current/`) | « 91 tables »                                    | **159**. Doublon manuel périmé du fichier **généré** correct dans `docs/current/database/`                                                              |
+
+**Décision** : les six documents sont supprimés (`git rm` — récupérables dans l'historique), et le principe suivant est adopté.
+
+> **Un document qui compte, liste ou chemine doit être généré, ou ne pas exister. Un document écrit à la main n'a le droit de contenir qu'un invariant, une décision, ou un geste.**
+
+Vérification par l'exemple : `docs/current/serena/database-schema-mappings.md`, daté du 2026-01-10, est encore intégralement exact après six mois et demi — parce qu'il n'énonce que des invariants de nommage (`organisations.legal_name` et non `name`, pas de table `suppliers`). `database/triggers-stock-reference.md` est faux d'un facteur cinq (48 triggers annoncés, 243 réels) parce qu'il **compte**. L'ancienneté n'est pas le problème ; compter l'est.
+
+Deux fichiers créés en remplacement :
+
+- **`docs/runbooks/rollback.md`** — procédure réelle, écrite depuis la configuration vérifiée (`vercel.json`, `protect-main-source.yml`) et le seul rollback réellement exécuté dans ce projet (ADR-020 : `vercel promote <njqx4dcu9-url>`). Couvre aussi le cas jamais documenté : annuler une migration append-only. Signale les deux trous restants — aucun plan de reprise, et aucune préproduction (`vercel.json:7-13` désactive les déploiements de `staging`).
+- **`docs/current/DOCS-RETIREES-2026-07-30.md`** — ce qui a été retiré, pourquoi, où est la vérité désormais. Pour qu'aucun agent ne les recrée de bonne foi.
+
+Les 9 liens pointant vers les documents supprimés ont été corrigés dans `docs/README.md`, `docs/current/index.md`, `docs/current/integrations.md`, `docs/current/database/database.md`.
+
+**Conséquence** :
+
+- 817 lignes de documentation fausse retirées. Aucun lien cassé (vérifié).
+- **Ce lot ne corrige pas les 86 routes** — il retire la cause qui les a produites. Le correctif applicatif est le Lot 3 (`[BO-AUDIT-003]`, middleware en trois temps dont un mode observation, pour ne pas casser l'extension Chrome de sourcing qui s'authentifie par `Authorization: Bearer` en omettant volontairement les cookies).
+- **Reste à faire, non fait dans ce lot** : brancher `scripts/generate-docs.py` en gate CI bloquant. Le générateur est écrit, correct, doté de 7 sous-commandes, et **déclenché par rien** — ni hook, ni CI, ni cron. Il produirait `INDEX-COMPOSANTS-FORMULAIRES.md` et `DEPENDANCES-PACKAGES.md`, deux fichiers **déclarés sources de vérité par `CLAUDE.md:160-161` et absents du disque**. Leur régénération automatique a été désactivée le 2026-04-25 (`.husky/pre-commit:38-45`, 4 conflits de merge : PR #762, #767, #768, #769) en annonçant un « cron post-merge sur staging » qui n'a jamais été écrit ; les fichiers n'étant pas versionnés, ils ont disparu. Le bon remède est une régénération **une fois par PR en CI** avec `git diff --exit-code` — même patron que `supabase-types-drift`, l'un des deux seuls gates qui fonctionnent dans ce dépôt.
+- Environ 60 autres fichiers de `docs/current/` restent à traiter (instantanés datés, mémoires du MCP Serena retiré, 5 récits d'installation responsive). Cible : ~34 fichiers dont ~15 générés, contre 106 aujourd'hui. Détail dans `docs/audit-2026-07-30/SYSTEME.md` § 4.
+
+**Référence** : `docs/audit-2026-07-30/SYSTEME.md` (audit du système de travail : 15 règles, 3 agents, 5 workflows, hooks, 1 038 fichiers markdown). Constat central : sur 15 règles, 2 sont réellement outillées ; les 8 qui protègent le chiffre d'affaires reposent sur la bonne volonté de l'agent.

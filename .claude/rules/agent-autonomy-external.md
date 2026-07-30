@@ -8,7 +8,7 @@ Romeo est novice. Chaque fois que l'agent lui demande « va sur le dashboard Ver
 
 ## Principe
 
-**L'agent fait TOUT lui-même.** Il utilise les CLI officielles déjà installées, les MCP disponibles (Supabase, Playwright), les credentials déjà configurés dans `.env.local` ou `.claude/test-credentials.md`, et ne sollicite Romeo qu'à la toute fin pour valider le résultat.
+**L'agent fait TOUT lui-même.** Il utilise les CLI officielles déjà installées, les MCP disponibles (Supabase, Playwright), les credentials déjà configurés dans `.env.local` ou `.claude/local/test-credentials.md`, et ne sollicite Romeo qu'à la toute fin pour valider le résultat.
 
 Si la tâche semble exiger une interaction UI, l'agent utilise **MCP Playwright Browser** et pilote le navigateur lui-même. Romeo n'ouvre jamais un onglet, n'entre jamais un identifiant, ne clique jamais sur un bouton.
 
@@ -30,7 +30,7 @@ Si la tâche semble exiger une interaction UI, l'agent utilise **MCP Playwright 
 
 - `curl` direct sur `https://api.packlink.com/v1/*` avec l'API key dans `apps/back-office/.env.local` (variable `PACKLINK_API_KEY`)
 - **MCP Playwright** sur https://pro.packlink.fr pour le wizard web (cf. l'approche validée dans `docs/scratchpad/rapport-2026-04-23-packlink-bug-pour-claude-haiku.md`)
-- Credentials Packlink PRO : dans `.claude/test-credentials.md`
+- Credentials Packlink PRO : dans `.claude/local/test-credentials.md`
 
 ### Qonto
 
@@ -61,26 +61,32 @@ Si la tâche semble exiger une interaction UI, l'agent utilise **MCP Playwright 
 ### Toute autre plateforme
 
 - **MCP Playwright** (`playwright-lane-1` ou `playwright-lane-2`) sur l'URL concernée
-- Credentials dans `.claude/test-credentials.md` (local only, gitignored)
+- Credentials dans `.claude/local/test-credentials.md` (hors suivi git — `.claude/local/` est gitignored)
 - Screenshots dans `.playwright-mcp/screenshots/YYYYMMDD/` (cf. `.claude/rules/playwright.md` section Artefacts)
 
 ---
 
 ## Credentials connus (ne jamais demander à Romeo)
 
-| Plateforme    | Credential / emplacement                                          |
-| ------------- | ----------------------------------------------------------------- |
-| Back-office   | `veronebyromeo@gmail.com` / `Abc123456` (cf. test-credentials.md) |
-| LinkMe        | cf. `.claude/test-credentials.md`                                 |
-| Site-Internet | cf. `.claude/test-credentials.md`                                 |
-| Packlink API  | `PACKLINK_API_KEY` dans `apps/back-office/.env.local`             |
-| Packlink web  | cf. `.claude/test-credentials.md`                                 |
-| Qonto API     | `QONTO_*` dans `apps/back-office/.env.local`                      |
-| Vercel CLI    | déjà authentifié (`vercel whoami` pour vérifier)                  |
-| GitHub CLI    | déjà authentifié (`gh auth status` pour vérifier)                 |
-| Supabase MCP  | déjà branché dans `.claude/settings.json` `enabledMcpServers`     |
+> ⚠️ **[BO-AUDIT-002] 2026-07-30 — aucun mot de passe dans ce fichier.**
+> Ce fichier est **versionné**, donc publié. Le mot de passe du compte back-office y figurait
+> en clair (ligne 73) et a été exposé sur le repo public. Il a été changé le 2026-07-30.
+> Les identifiants vivent désormais dans `.claude/local/test-credentials.md`, hors suivi git.
+> Ne jamais réintroduire une valeur de credential ici : mettre un **emplacement**, jamais un secret.
 
-Si un credential manque, l'agent **lit** `apps/*/.env.local` ou `.claude/test-credentials.md` — il ne demande PAS à Romeo.
+| Plateforme    | Credential / emplacement                                      |
+| ------------- | ------------------------------------------------------------- |
+| Back-office   | cf. `.claude/local/test-credentials.md`                       |
+| LinkMe        | cf. `.claude/local/test-credentials.md`                       |
+| Site-Internet | cf. `.claude/local/test-credentials.md`                       |
+| Packlink API  | `PACKLINK_API_KEY` dans `apps/back-office/.env.local`         |
+| Packlink web  | cf. `.claude/local/test-credentials.md`                       |
+| Qonto API     | `QONTO_*` dans `apps/back-office/.env.local`                  |
+| Vercel CLI    | déjà authentifié (`vercel whoami` pour vérifier)              |
+| GitHub CLI    | déjà authentifié (`gh auth status` pour vérifier)             |
+| Supabase MCP  | déjà branché dans `.claude/settings.json` `enabledMcpServers` |
+
+Si un credential manque, l'agent **lit** `apps/*/.env.local` ou `.claude/local/test-credentials.md` — il ne demande PAS à Romeo.
 
 Si le credential est absent de ces deux endroits, l'agent dit une seule phrase : « Il manque le credential X, peux-tu le coller ici ou le mettre dans `.env.local` sous la clé `NOM_DE_LA_VAR` ? » — et attend. Aucune autre question.
 

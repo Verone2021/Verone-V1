@@ -12,8 +12,15 @@ import { join } from 'node:path';
 
 const BASE_URL = 'http://localhost:3000';
 const ORDER_URL = `${BASE_URL}/canaux-vente/linkme/commandes/16bced8e-d7f4-4437-98b4-b7d0564171f8/details`;
-const LOGIN_EMAIL = 'veronebyromeo@gmail.com';
-const LOGIN_PASSWORD = 'Abc123456';
+// [BO-AUDIT-002] 2026-07-30 — identifiants sortis du code : ce dépôt a été public.
+// Valeurs dans .claude/local/test-credentials.md (gitignored).
+// Usage : E2E_TEST_EMAIL=... E2E_TEST_PASSWORD=... node scripts/test-invoice-vat-so178.mjs
+const LOGIN_EMAIL = process.env.E2E_TEST_EMAIL;
+const LOGIN_PASSWORD = process.env.E2E_TEST_PASSWORD;
+if (!LOGIN_EMAIL || !LOGIN_PASSWORD) {
+  console.error('Manque E2E_TEST_EMAIL ou E2E_TEST_PASSWORD — voir .claude/local/test-credentials.md');
+  process.exit(1);
+}
 
 const SHOT_DIR = join(process.cwd(), '.playwright-mcp/screenshots/20260531');
 mkdirSync(SHOT_DIR, { recursive: true });

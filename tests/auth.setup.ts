@@ -20,7 +20,7 @@ setup('authenticate', async ({ page }) => {
 
   // Creds : env vars en CI, fallback sur creds locales MVP
   const email = process.env.E2E_TEST_EMAIL ?? 'veronebyromeo@gmail.com';
-  const password = process.env.E2E_TEST_PASSWORD ?? 'Abc123456';
+  const password = process.env.E2E_TEST_PASSWORD;
 
   // Remplir le formulaire de login avec sélecteurs robustes
   await page.getByRole('textbox', { name: /email/i }).fill(email);

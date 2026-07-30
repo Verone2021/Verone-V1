@@ -1,20 +1,46 @@
-import { test as base, Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { test as base } from '@playwright/test';
 
 /**
- * Authentication credentials for test accounts
+ * Authentication credentials for test accounts.
+ *
+ * [BO-AUDIT-002] 2026-07-30 — credentials moved out of source: this repository was public,
+ * and these accounts are real (linkme:enseigne_admin, linkme:enseigne_collaborateur).
+ * Values live in .claude/local/test-credentials.md (gitignored) and must be provided as
+ * environment variables. Never hardcode them again.
+ *
+ * Usage: LINKME_TEST_PASSWORD=... E2E_TEST_EMAIL=... E2E_TEST_PASSWORD=... pnpm test:e2e
  */
+function required(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `Missing environment variable ${name}. See .claude/local/test-credentials.md`
+    );
+  }
+  return value;
+}
+
 export const CREDENTIALS = {
   pokawa: {
-    email: 'admin@pokawa-test.fr',
-    password: 'TestLinkMe2025',
+    email: process.env.LINKME_POKAWA_EMAIL ?? 'admin@pokawa-test.fr',
+    get password() {
+      return required('LINKME_TEST_PASSWORD');
+    },
   },
   testOrg: {
-    email: 'test-org@verone.fr',
-    password: 'TestLinkMe2025',
+    email: process.env.LINKME_TESTORG_EMAIL ?? 'test-org@verone.fr',
+    get password() {
+      return required('LINKME_TEST_PASSWORD');
+    },
   },
   backOffice: {
-    email: 'veronebyromeo@gmail.com',
-    password: 'Abc123456',
+    get email() {
+      return required('E2E_TEST_EMAIL');
+    },
+    get password() {
+      return required('E2E_TEST_PASSWORD');
+    },
   },
 };
 

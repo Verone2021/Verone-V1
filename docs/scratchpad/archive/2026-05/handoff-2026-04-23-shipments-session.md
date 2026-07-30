@@ -160,7 +160,7 @@ Exemple : commande 60 articles en 4 colis de 15 articles chacun
 
 ## Credentials test local
 
-- Back-office : `veronebyromeo@gmail.com` / `Abc123456`
+- Back-office : `veronebyromeo@gmail.com` / `<credential retire 2026-07-30>`
 - Port dev : `http://localhost:3000` (turbo dev : 3000 back-office, 3001 site-internet, 3002 linkme)
 - Supabase : projet `aorroydfjsrygmosnzrl` (partagé local/prod)
 - Packlink API key : `5f0be75668e78f6c4ac49b21969cf0241545278db885c4b6479dc3e04acb2cee` (à mettre dans `.env.local`)
