@@ -13,7 +13,7 @@ import { test, expect } from '@playwright/test';
  */
 
 const EMAIL = process.env.E2E_USER_EMAIL ?? 'veronebyromeo@gmail.com';
-const PASSWORD = process.env.E2E_USER_PASSWORD ?? 'Abc123456';
+const PASSWORD = process.env.E2E_USER_PASSWORD ?? process.env.E2E_TEST_PASSWORD;
 
 test.describe('Authentication Flow', () => {
   // This test does NOT use the shared auth state

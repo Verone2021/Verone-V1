@@ -146,7 +146,7 @@ COMMIT;
 
 ## RLS (Row Level Security)
 
-Voir [security-auth.md](./security-auth.md) pour les details RLS.
+Voir [../audit-2026-07-30/FINDINGS.md](../../audit-2026-07-30/FINDINGS.md) pour les details RLS.
 
 ---
 

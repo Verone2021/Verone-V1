@@ -15,7 +15,7 @@ test.describe('Back-Office Finance Smoke Tests', () => {
       'input[name="email"], input[placeholder*="email"]',
       'veronebyromeo@gmail.com'
     );
-    await page.fill('input[type="password"]', 'Abc123456');
+    await page.fill('input[type="password"]', process.env.E2E_TEST_PASSWORD!);
     await page.click('button:has-text("Se connecter")');
     await page.waitForURL('**/dashboard', { timeout: 15000 });
   });

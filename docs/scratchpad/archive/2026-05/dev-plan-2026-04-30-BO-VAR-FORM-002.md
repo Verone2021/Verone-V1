@@ -121,7 +121,7 @@ pnpm --filter @verone/back-office build
 pnpm --filter @verone/back-office lint
 ```
 
-Playwright lane-2 (login `veronebyromeo@gmail.com` / `Abc123456`) — 6 cas :
+Playwright lane-2 (login `veronebyromeo@gmail.com` / `<credential retire 2026-07-30>`) — 6 cas :
 
 1. **Produit témoin complet** : sélectionner un produit avec poids + dimensions + style + suitable_rooms + supplier + cost_price → 7 champs pré-remplis aux étapes 2/3 + 6 chips bleus actifs en étape 1
 2. **Produit partiel** : produit avec style mais pas de dimensions → seuls les champs présents pré-remplis, chips inactifs sur les autres

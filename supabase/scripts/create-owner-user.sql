@@ -7,7 +7,7 @@
 -- ========================================
 
 -- Note: This assumes the user has already been created via Supabase Auth
--- with email: veronebyromeo@gmail.com and password: Abc123456
+-- with email: veronebyromeo@gmail.com and password: <voir .claude/local/test-credentials.md>
 
 -- Get the Vérone organisation ID
 DO $$
@@ -154,7 +154,7 @@ MANUAL STEPS REQUIRED:
 
 1. Create user in Supabase Auth Dashboard:
    - Email: veronebyromeo@gmail.com
-   - Password: Abc123456
+   - Password: <voir .claude/local/test-credentials.md>
    - Confirm email verification
 
 2. Get the actual auth.users.id for the created user

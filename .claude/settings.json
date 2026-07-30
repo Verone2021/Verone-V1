@@ -85,7 +85,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'BRANCH=$(git branch --show-current); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"INTERDIT de commit sur main. Creer une feature branch: git checkout -b feat/XXX\"; exit 1; fi; if ! echo \"$TOOL_INPUT\" | grep -qE \"\\[(BO|LM|WEB|SI|NO|INFRA)-[A-Z0-9]+-[0-9]{3}\\]|\\[NO-TASK\\]|\\[INFRA\\]\"; then echo \"Task ID manquant. Format: [APP-XXX-001] ou [NO-TASK]\"; exit 1; fi'"
+            "command": "bash -c 'INPUT=$(cat); BRANCH=$(git branch --show-current); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"master\" ]; then echo \"INTERDIT de commit sur main. Creer une branche: git checkout -b feat/XXX\" >&2; exit 2; fi; CMD=$(printf \"%s\" \"$INPUT\" | jq -r \".tool_input.command // empty\"); case \"$CMD\" in *\" -F \"*|*\" --file\"*|*\" -t \"*|*\"--template\"*) exit 0;; esac; if ! printf \"%s\" \"$CMD\" | grep -qE \"\\[(BO|LM|WEB|SI|NO|INFRA)-[A-Z0-9-]+-[0-9]{3}[a-z]?\\]|\\[NO-TASK\\]|\\[INFRA\\]\"; then echo \"Task ID manquant. Format attendu: [APP-DOMAINE-001] type: message  (ou [NO-TASK])\" >&2; exit 2; fi'"
           },
           {
             "type": "command",
@@ -98,7 +98,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"origin (main|master)\"; then echo \"INTERDIT: Push direct sur main. Creer une PR via: gh pr create\"; exit 1; fi'"
+            "command": "bash -c 'INPUT=$(cat); CMD=$(printf \"%s\" \"$INPUT\" | jq -r \".tool_input.command // empty\"); if printf \"%s\" \"$CMD\" | grep -qE \"push +([^ ]+ +)?(origin +)?(main|master)( |$)\"; then echo \"INTERDIT: push direct sur main. Passer par une PR: gh pr create --base staging\" >&2; exit 2; fi'"
           }
         ]
       },
@@ -116,7 +116,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"--base main|gh pr merge\"; then echo \"BLOQUE: PRs doivent cibler staging (--base staging), JAMAIS main.\nWorkflow : feature -> staging -> validation Romeo -> main\nCorrige avec : gh pr create --base staging\"; exit 2; fi'"
+            "command": "bash -c 'INPUT=$(cat); CMD=$(printf \"%s\" \"$INPUT\" | jq -r \".tool_input.command // empty\"); if printf \"%s\" \"$CMD\" | grep -qE \"\\-\\-base +main|gh pr merge[^|]*(--base +main|main *$)\"; then echo \"BLOQUE: les PR ciblent staging, jamais main. Workflow: feature -> staging -> PR release -> main. Utiliser --base staging\" >&2; exit 2; fi'"
           }
         ]
       },
@@ -125,7 +125,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -qE \"(pnpm|npm|yarn|turbo)\\s+(dev|start)\"; then echo \"INTERDIT: Seul l utilisateur peut lancer les serveurs. Demandez a l utilisateur d executer: pnpm dev:safe\"; exit 1; fi'"
+            "command": "bash -c 'INPUT=$(cat); CMD=$(printf \"%s\" \"$INPUT\" | jq -r \".tool_input.command // empty\"); if printf \"%s\" \"$CMD\" | grep -qE \"(pnpm|npm|yarn|turbo) +(run +)?(dev|start)( |$)\"; then echo \"INTERDIT: seul l utilisateur lance les serveurs. Lui demander d executer: pnpm dev:safe\" >&2; exit 2; fi'"
           }
         ]
       },
@@ -134,7 +134,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'ALERTE DUPLICATION \u2014 Vous creez un formulaire/modal dans un package non-source.\n\nRegles :\n- Formulaires Organisation \u2192 @verone/organisations UNIQUEMENT\n- Formulaires Produit \u2192 @verone/products UNIQUEMENT\n- JAMAIS de formulaire de creation d entite dans @verone/orders ou apps/\n\nVerifier INDEX-COMPOSANTS-FORMULAIRES.md AVANT de continuer.\nSi le composant existe deja, le REUTILISER.' && exit 0"
+            "command": "echo 'ALERTE DUPLICATION — Vous creez un formulaire/modal dans un package non-source.\n\nRegles :\n- Formulaires Organisation → @verone/organisations UNIQUEMENT\n- Formulaires Produit → @verone/products UNIQUEMENT\n- JAMAIS de formulaire de creation d entite dans @verone/orders ou apps/\n\nVerifier INDEX-COMPOSANTS-FORMULAIRES.md AVANT de continuer.\nSi le composant existe deja, le REUTILISER.' && exit 0"
           }
         ]
       },
@@ -143,7 +143,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo 'FICHIER @protected \u2014 Ce fichier est valide et teste en production.\n\nAvant de modifier :\n1. As-tu lu le commentaire @protected en tete du fichier ?\n2. Les deps de useEffect sont-elles toutes STABLES (useState setter ou useCallback) ?\n3. Incident du 16 avril 2026 : resetNewCustomerForm sans useCallback = 48h de casse.\n\nModification autorisee UNIQUEMENT avec approbation Romeo.' && exit 0"
+            "command": "echo 'FICHIER @protected — Ce fichier est valide et teste en production.\n\nAvant de modifier :\n1. As-tu lu le commentaire @protected en tete du fichier ?\n2. Les deps de useEffect sont-elles toutes STABLES (useState setter ou useCallback) ?\n3. Incident du 16 avril 2026 : resetNewCustomerForm sans useCallback = 48h de casse.\n\nModification autorisee UNIQUEMENT avec approbation Romeo.' && exit 0"
           }
         ]
       },
@@ -170,7 +170,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'CONTENT=$(echo \"$TOOL_INPUT\" | jq -r \".new_string // .content // empty\"); if echo \"$CONTENT\" | grep -qE \"(: any([^A-Za-z]|$)|as any([^A-Za-z]|$)|as unknown as|<any>|any\\[\\]|eslint-disable.*no-explicit-any)\"; then echo \"BLOQUE: TypeScript any detecte\n\nPatterns interdits :\n- : any\n- as any\n- as unknown as\n- any[]\n- eslint-disable no-explicit-any\n\nSolutions :\n1. Types DB : Database[public][Tables][table][Row]\n2. unknown + validation Zod\n\nREFUS.\"; exit 1; fi'"
+            "command": "bash -c 'INPUT=$(cat); CONTENT=$(printf \"%s\" \"$INPUT\" | jq -r \".tool_input.new_string // .tool_input.content // empty\"); if printf \"%s\" \"$CONTENT\" | grep -qE \"(: any([^A-Za-z]|$)|as any([^A-Za-z]|$)|as unknown as|<any>|any\\[\\]|eslint-disable[^\\n]*no-explicit-any)\"; then echo \"BLOQUE: TypeScript any detecte. Utiliser Database[\\\"public\\\"][\\\"Tables\\\"][t][\\\"Row\\\"], ou unknown + validation Zod. Voir .claude/rules/code-standards.md\" >&2; exit 2; fi'"
           }
         ]
       },
@@ -208,7 +208,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'FILE_PATH=$(echo \"$TOOL_INPUT\" | jq -r \".file_path // empty\"); if echo \"$FILE_PATH\" | grep -qE \"apps/back-office/\"; then timeout 15 pnpm --filter @verone/back-office type-check 2>&1 | head -30 || true; elif echo \"$FILE_PATH\" | grep -qE \"apps/linkme/\"; then timeout 15 pnpm --filter @verone/linkme type-check 2>&1 | head -30 || true; elif echo \"$FILE_PATH\" | grep -qE \"apps/site-internet/\"; then timeout 15 pnpm --filter @verone/site-internet type-check 2>&1 | head -30 || true; fi; exit 0'"
+            "command": "bash -c 'INPUT=$(cat); FILE_PATH=$(printf \"%s\" \"$INPUT\" | jq -r \".tool_input.file_path // empty\"); case \"$FILE_PATH\" in *apps/back-office/*) pnpm --filter @verone/back-office type-check 2>&1 | head -30 || true;; *apps/linkme/*) pnpm --filter @verone/linkme type-check 2>&1 | head -30 || true;; *apps/site-internet/*) pnpm --filter @verone/site-internet type-check 2>&1 | head -30 || true;; esac; exit 0'"
           }
         ]
       },

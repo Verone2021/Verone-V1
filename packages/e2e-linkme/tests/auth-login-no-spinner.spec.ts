@@ -22,7 +22,7 @@ const DASHBOARD_URL = `${BASE_URL}/dashboard`;
 const TEST_USERS = {
   enseigne_admin: {
     email: 'admin@pokawa-test.fr',
-    password: 'TestLinkMe2025',
+    password: process.env.LINKME_TEST_PASSWORD!,
     expectedRole: 'enseigne_admin',
   },
 };

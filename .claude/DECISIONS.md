@@ -1249,3 +1249,308 @@ Autres FEU ROUGE de l'ancien fichier confirmés déjà couverts ailleurs (pas be
 - Compaction règles à 8-10 fichiers — voir ADR-031 pour la suite.
 
 **Référence** : verbatim Roméo 2026-05-09 « je veux tout corriger », « comment font les développeurs seniors pour que Claude Code et les agents prennent cela en compte ? ». Sources : Anthropic Best Practices, GitHub anthropics/claude-code#32163, typescript-eslint.io.
+
+---
+
+## ADR-034 — `[BO-AUDIT-002]` Aucune valeur de credential dans un fichier versionné (2026-07-30)
+
+**Contexte** : audit complet du back-office le 2026-07-30 (note 22/100, rapport dans `docs/audit-2026-07-30/`). Découverte en cours d'audit : le dépôt `Verone2021/Verone-V1` était **public** (`gh repo view` → `"visibility":"PUBLIC"`), et **15 fichiers versionnés contenaient des mots de passe en clair**, dont :
+
+- `.claude/rules/agent-autonomy-external.md:73` — e-mail et mot de passe du compte back-office (rôle owner), dans un tableau « Credentials connus ».
+- `.claude/test-credentials.md` — 5 mots de passe. Le fichier se déclarait « LOCAL ONLY - never commit » **en première ligne** et était suivi par git depuis sa création. `agent-autonomy-external.md` affirmait de son côté qu'il était « local only, gitignored ». Deux fichiers qui se rassuraient mutuellement sur une protection inexistante.
+- 3 scripts `scripts/test-*.mjs`, `tests/auth.setup.ts`, 5 specs Playwright, `packages/e2e-linkme/fixtures/auth.fixture.ts` + README + QUICKSTART, `supabase/scripts/create-owner-user.sql`, `.claude/guides/cross-app-protection.md`, 4 archives de `docs/scratchpad/`.
+
+Aggravation vérifiée en base : les 3 comptes LinkMe listés (`admin@pokawa-test.fr`, `admin@bwburger-test.fr`, `collaborateur@pokawa-test.fr`) **existent réellement**, ont des rôles actifs (`linkme:enseigne_admin`, `linkme:enseigne_collaborateur`) et se sont déjà connectés. Or la policy `linkme_users_view_catalog_products` (migration `20260314220000`) leur donne un `SELECT` sur **toutes les lignes et toutes les colonnes** de `products` — la RLS PostgreSQL filtre les lignes, pas les colonnes. Ces comptes lisaient donc `cost_price`, `margin_percentage`, `supplier_reference` et `supplier_page_url` de tout le catalogue. Le chemin d'attaque était complet : lire le dépôt public → prendre les identifiants → se connecter → exfiltrer la structure de coûts.
+
+Contexte historique lié, même mécanisme : trois fichiers `.env.local.backup-*` (419 lignes, `service_role` Supabase, clé Qonto, PAT GitHub, token Vercel) ont été committés le 2026-01-15 (`170aecf0`, PR #37) et retirés le 2026-01-20 (`b07283b7`, PR #82) — donc toujours présents dans l'historique public. **Cause technique** : le `.gitignore` racine listait des **noms exacts** (`.env`, `.env.local`, `.env.*.local`), et aucun ne correspond à `.env.local.backup-20260114-065620`.
+
+**Décision** : un fichier versionné ne contient jamais une **valeur** de credential, seulement un **emplacement**.
+
+1. **`.gitignore` en globs** au lieu de noms exacts : `.env*` + `!.env.example`, plus `*.backup`, `*.bak`, `*.orig`. Un nom exact est un filtre qui ne couvre que le cas qu'on a imaginé.
+2. **`.claude/test-credentials.md` sorti du suivi git** (`git rm --cached`) et déplacé vers `.claude/local/test-credentials.md`, où `.gitignore:113` l'ignore réellement.
+3. **Les 15 fichiers lisent l'environnement**, avec une convention unique par app : `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` (back-office) et `LINKME_TEST_PASSWORD` (LinkMe). Deux fichiers utilisaient déjà `E2E_TEST_PASSWORD` avec un fallback en dur (`?? 'Abc123456'`) — le fallback est retiré plutôt qu'une troisième variable créée.
+4. **`packages/e2e-linkme/fixtures/auth.fixture.ts`** utilise des getters avec un helper `required(name)` qui lève une erreur explicite pointant vers `.claude/local/test-credentials.md`, au lieu d'un échec de connexion opaque.
+5. **La rotation des clés d'API reste hors de ce lot**, volontairement (arbitrage Roméo, `docs/audit-2026-07-30/PLAN-CORRECTION.md` § Lot 9) : c'est le seul chantier dont chaque étape peut interrompre le travail des deux salariés qui utilisent l'application quotidiennement, et il n'apporte aucune amélioration fonctionnelle. Le passage du dépôt en privé ferme le vecteur d'exposition en un clic ; l'urgence retombe alors.
+
+**Conséquence** :
+
+- Vérification finale : `git ls-files -z | xargs -0 rg -l -e 'Abc123456' -e 'TestLinkMe2025'` ne retourne plus **aucun** fichier. `type-check` sur les 3 apps : 8 tâches, 8 succès.
+- **Les tests ne fonctionneront plus sans variables d'environnement.** C'est voulu : un test qui s'authentifie avec un secret en dur est un secret qui fuit. Variables à définir dans `apps/back-office/.env.local`, documentées dans `.claude/local/test-credentials.md`.
+- Mots de passe changés : compte back-office le 2026-07-30 par Roméo. Les 3 comptes LinkMe restent à changer.
+- Le nettoyage empêche les **prochaines** fuites ; il ne retire rien de l'historique git. C'est le passage du dépôt en privé qui referme la porte, et la rotation (Lot 9) qui neutralise réellement.
+- **Gate à venir** : `gitleaks` en pre-commit et en CI bloquant (Lot 9). `.husky/pre-push:8-9` annonce déjà l'emplacement prévu — « pour permettre l'ajout de hooks futurs (ex: scan secrets) ». Tant que ce gate n'existe pas, cette décision reste une règle markdown, donc un vœu au sens de l'ADR-033.
+
+**Convention d'identifiants** : les lots de l'audit sont numérotés `[BO-AUDIT-001]` à `[BO-AUDIT-013]`. Les identifiants initiaux (`L00`, `L00b`, `L01`…) ont été remplacés parce que le pattern de `.husky/commit-msg:17` exige `-[0-9]{3}[a-z]?` et refusait un suffixe commençant par une lettre. Table de correspondance dans `docs/audit-2026-07-30/PLAN-CORRECTION.md`.
+
+**Référence** : Roméo 2026-07-30, « Je veux que tu fasses les choses dans les règles de l'art et, surtout, qu'on puisse revenir en arrière au cas où tu casses quelque chose. » Sauvegarde complète avant manipulation git dans `~/verone-backups/2026-07-30-audit-002/`.
+
+---
+
+## ADR-035 — `[BO-AUDIT-005]` Retrait des documents qui induisent en erreur (2026-07-30)
+
+**Contexte** : l'audit du 2026-07-30 a cherché _pourquoi_ 86 routes API sur 151 n'ont aucun contrôle d'accès. La réponse est documentaire. `docs/current/security-auth.md:86-92`, daté du 2026-03-27, affirmait :
+
+> **Middleware** — `apps/back-office/src/middleware.ts` — Vérifie session Supabase sur chaque requête — Redirige vers `/login` si non authentifié
+
+Ce fichier n'a jamais existé dans le back-office. Un agent — ou un humain — qui lit cette ligne conclut que l'authentification est centralisée et écrit une route API sans `getUser()`, de bonne foi. Répété 86 fois, c'est l'état mesuré. Le même document annonçait 239 policies RLS (il y en a 336), inventait une colonne `user_profiles.role`, et enseignait un pattern RLS que `.husky/pre-commit:21-28` rejette activement.
+
+Cinq autres documents dans le même cas :
+
+| Document                                             | Affirmait                                        | Réalité                                                                                                                                                 |
+| ---------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stack.md:43`                                        | « Repo — GitHub — **Private** »                  | **public** — c'est l'affirmation qui a masqué la fuite de secrets pendant six mois                                                                      |
+| `deploy-runbooks.md:95`                              | rollback = `git revert` + `git push origin main` | interdit par `CLAUDE.md:129`, bloqué par `.husky/pre-commit:14-17`. La seule procédure de retour arrière du dépôt était infaisable                      |
+| `dev-workflow.md`, `QUICKSTART-GIT-HOOKS.md`         | 5 étapes de workflow git                         | chacune interdite ou rejetée par un hook (`npm run dev`, build global, format de commit `feat(module):` refusé par `commit-msg:17`, travail sur `main`) |
+| `DATABASE-SCHEMA-COMPLETE.md` (racine de `current/`) | « 91 tables »                                    | **159**. Doublon manuel périmé du fichier **généré** correct dans `docs/current/database/`                                                              |
+
+**Décision** : les six documents sont supprimés (`git rm` — récupérables dans l'historique), et le principe suivant est adopté.
+
+> **Un document qui compte, liste ou chemine doit être généré, ou ne pas exister. Un document écrit à la main n'a le droit de contenir qu'un invariant, une décision, ou un geste.**
+
+Vérification par l'exemple : `docs/current/serena/database-schema-mappings.md`, daté du 2026-01-10, est encore intégralement exact après six mois et demi — parce qu'il n'énonce que des invariants de nommage (`organisations.legal_name` et non `name`, pas de table `suppliers`). `database/triggers-stock-reference.md` est faux d'un facteur cinq (48 triggers annoncés, 243 réels) parce qu'il **compte**. L'ancienneté n'est pas le problème ; compter l'est.
+
+Deux fichiers créés en remplacement :
+
+- **`docs/runbooks/rollback.md`** — procédure réelle, écrite depuis la configuration vérifiée (`vercel.json`, `protect-main-source.yml`) et le seul rollback réellement exécuté dans ce projet (ADR-020 : `vercel promote <njqx4dcu9-url>`). Couvre aussi le cas jamais documenté : annuler une migration append-only. Signale les deux trous restants — aucun plan de reprise, et aucune préproduction (`vercel.json:7-13` désactive les déploiements de `staging`).
+- **`docs/current/DOCS-RETIREES-2026-07-30.md`** — ce qui a été retiré, pourquoi, où est la vérité désormais. Pour qu'aucun agent ne les recrée de bonne foi.
+
+Les 9 liens pointant vers les documents supprimés ont été corrigés dans `docs/README.md`, `docs/current/index.md`, `docs/current/integrations.md`, `docs/current/database/database.md`.
+
+**Conséquence** :
+
+- 817 lignes de documentation fausse retirées. Aucun lien cassé (vérifié).
+- **Ce lot ne corrige pas les 86 routes** — il retire la cause qui les a produites. Le correctif applicatif est le Lot 3 (`[BO-AUDIT-003]`, middleware en trois temps dont un mode observation, pour ne pas casser l'extension Chrome de sourcing qui s'authentifie par `Authorization: Bearer` en omettant volontairement les cookies).
+- **Reste à faire, non fait dans ce lot** : brancher `scripts/generate-docs.py` en gate CI bloquant. Le générateur est écrit, correct, doté de 7 sous-commandes, et **déclenché par rien** — ni hook, ni CI, ni cron. Il produirait `INDEX-COMPOSANTS-FORMULAIRES.md` et `DEPENDANCES-PACKAGES.md`, deux fichiers **déclarés sources de vérité par `CLAUDE.md:160-161` et absents du disque**. Leur régénération automatique a été désactivée le 2026-04-25 (`.husky/pre-commit:38-45`, 4 conflits de merge : PR #762, #767, #768, #769) en annonçant un « cron post-merge sur staging » qui n'a jamais été écrit ; les fichiers n'étant pas versionnés, ils ont disparu. Le bon remède est une régénération **une fois par PR en CI** avec `git diff --exit-code` — même patron que `supabase-types-drift`, l'un des deux seuls gates qui fonctionnent dans ce dépôt.
+- Environ 60 autres fichiers de `docs/current/` restent à traiter (instantanés datés, mémoires du MCP Serena retiré, 5 récits d'installation responsive). Cible : ~34 fichiers dont ~15 générés, contre 106 aujourd'hui. Détail dans `docs/audit-2026-07-30/SYSTEME.md` § 4.
+
+**Référence** : `docs/audit-2026-07-30/SYSTEME.md` (audit du système de travail : 15 règles, 3 agents, 5 workflows, hooks, 1 038 fichiers markdown). Constat central : sur 15 règles, 2 sont réellement outillées ; les 8 qui protègent le chiffre d'affaires reposent sur la bonne volonté de l'agent.
+
+---
+
+## ADR-036 — `[BO-AUDIT-004]` Réparer les gardes avant de les durcir (2026-07-30)
+
+**Contexte** : l'audit du 2026-07-30 avait conclu que « sur 15 règles de `.claude/rules/`, 2 sont réellement outillées ». La vérification a montré que c'est encore pire : **les gardes Claude Code n'ont jamais fonctionné du tout**.
+
+Deux bugs cumulés, confirmés par la [documentation officielle](https://code.claude.com/docs/en/hooks) :
+
+1. **L'input d'un hook arrive sur stdin, en JSON. Il n'existe aucune variable `$TOOL_INPUT`** — verbatim : _« Environment variables are not used for passing the tool input itself—there are no `$TOOL_INPUT` style variables. »_ Or six hooks de `.claude/settings.json` faisaient `echo "$TOOL_INPUT" | grep`. La variable étant vide, le `grep` échouait, la condition n'était jamais vraie, et rien n'était bloqué.
+2. **Seul `exit 2` bloque.** _« Claude Code treats exit code 1 as a non-blocking error and proceeds with the action, even though 1 is the conventional Unix failure code. »_ Cinq de ces six hooks utilisaient `exit 1`. Ils étaient donc morts deux fois.
+
+Ce qui n'a jamais rien bloqué : le blocage des `any` (`:173`), des `eslint-disable`, du push direct sur `main` (`:101`), de `gh pr merge` (`:119`), de `pnpm dev` (`:128`), le type-check automatique après édition (`:211`), et la validation du Task-ID sur les commits (`:88` — qui affichait son message d'erreur à chaque commit sans bloquer).
+
+Cela explique sans recourir à un manque de discipline : 96 `any`, 354 `eslint-disable`, 222 fichiers de plus de 400 lignes. Les règles étaient écrites, correctes et bonnes ; les mécanismes censés les appliquer étaient inertes.
+
+Défaut supplémentaire trouvé sur le type-check automatique : sa commande était `timeout 15 pnpm --filter …`. **`timeout` n'existe pas sur macOS** (c'est `gtimeout`, via coreutils). Même avec un `$TOOL_INPUT` peuplé, ce hook aurait échoué sur `command not found`.
+
+**Décision** : réparer d'abord, durcir ensuite — en deux temps, comme pour le middleware du lot `[BO-AUDIT-003]`. Ce lot est le temps 1 : **plus rien n'est ajouté comme bloquant.**
+
+### Hooks
+
+Les six hooks lisent désormais stdin (`INPUT=$(cat)` puis `jq -r ".tool_input.command"`) et utilisent `exit 2` avec le message sur **stderr** — la doc précise que sur `exit 2`, stdout est ignoré et stderr est renvoyé à Claude.
+
+Trois ajustements de fond au passage :
+
+- **Tolérance sur `git commit -F`/`--file`/`-t`** : un commit dont le message vient d'un fichier ou d'un heredoc n'a pas ce message dans la ligne de commande. Le hook le laissait passer par accident avant ; il le laisse passer volontairement maintenant, puisque `.husky/commit-msg` valide le format de toute façon. Sans cette tolérance, on cassait un usage légitime.
+- **Résolution de la contradiction sur le merge** relevée à l'audit : l'ADR-032 prescrit l'auto-merge vers `staging`, alors que le hook bloquait **tout** `gh pr merge`. Il ne bloque désormais que ce qui cible `main`. Les deux règles deviennent compatibles.
+- **`pnpm dev:stop` et `turbo run build` ne sont plus faussement bloqués** (le motif exigeait `dev` ou `start` suivi d'une fin de mot).
+
+**14 tests d'acceptation** écrits et passés, en simulant exactement ce que Claude Code envoie sur stdin : message avec et sans Task-ID, `commit -F -`, push sur `main` et sur une branche, PR vers `main` et vers `staging`, `pnpm dev` et `pnpm dev:stop`, code avec `: any` / `as any` / propre, et un faux positif potentiel (le mot « company » contient « any »).
+
+### CI
+
+- **Les 4 `if: false` sont retirés.** Le quatrième était en tête d'une expression `if: >` multiligne sur `smoke-domaine`, ce qui l'avait fait manquer d'un premier passage — et explique pourquoi l'audit initial n'en comptait que 3.
+- **Le job `e2e-smoke-aggregate` ne mentira plus.** Il porte le nom du check requis par la branch protection (`E2E Smoke (Playwright — back-office)`) et sortait en succès sur 100 % des PR : ses dépendances étant `skipped`, elles n'étaient jamais `failure`. Il émet désormais un `::warning` visible quand les E2E étaient nécessaires et n'ont pas tourné. Il reste non bloquant dans ce lot.
+- **Cause de la lenteur CI identifiée et corrigée.** Le run 30543586686 (PR #1128) a dépassé 25 minutes là où les huit runs précédents prenaient 2 à 6 minutes. Raison : `turbo run lint type-check build --concurrency=100%` avec `NODE_OPTIONS=--max-old-space-size=8192` sur un runner `ubuntu-latest` (2 vCPU, 7 Go). Quand les trois apps sont concernées, cela réclame jusqu'à 24 Go de heap : le runner swappe au lieu de compiler. Désormais `lint`+`type-check` d'un côté (léger, 4 Go, concurrency 100 %, retour en ~90 s), `build` de l'autre (`--concurrency=1`, 6 Go). Trois builds séquentiels coûtent ~4 min, contre 25 de thrashing.
+- **Un changement dans `packages/e2e-linkme` ne déclenche plus le build des 3 apps.** Ce package ne contient que des tests E2E et n'est consommé par aucune app (vérifié : aucun `apps/*/package.json` ne le déclare), mais il matchait le filtre `packages/**`. C'est la cause immédiate du run de 25 minutes.
+- **Diagnostic du cache Turborepo ajouté.** `turbo.json` a `remoteCache.enabled: true`, mais si `TURBO_TOKEN` ou `TURBO_TEAM` manque côté GitHub, turbo continue sans cache, silencieusement. Un step émet maintenant un `::warning` explicite. À vérifier : c'est le plus gros levier de temps CI restant (un build passe de ~4 min à ~20 s sur cache chaud).
+- **`pnpm validate:types` branché, en `continue-on-error`.**
+
+### Correction d'une affirmation fausse de l'audit
+
+`docs/audit-2026-07-30/` et `SYSTEME.md` affirmaient que `scripts/check-db-type-alignment.ts` (`validate:types`) « aurait attrapé à lui seul trois des douze bugs bloquants » — la colonne `status` inexistante du wizard produit, l'option `backorder`, les segments fournisseur `TACTICAL`. **C'est faux, et l'exécution le prouve** : le script rapporte 950 lignes de diagnostic dont 273 « Query Supabase sans type », et **zéro** détection de colonne inexistante ou d'enum écrit en dur. Son en-tête annonce ces détections (« Colonnes inexistantes dans schema », « Enums hardcodés au lieu d'enums générés ») ; elles ne sont pas implémentées, ou ne fonctionnent pas.
+
+Conséquence : le gate qui aurait vraiment attrapé ces trois bugs **reste à écrire**. Il doit comparer les colonnes et les valeurs d'enum utilisées dans le code à `packages/@verone/types/src/supabase.ts`. C'est le seul gate de la liste des six de `PLAN-CORRECTION.md` § 2 qui ne soit pas un branchement d'existant. Ajouté au lot `[BO-AUDIT-004]` temps 2.
+
+`validate:types` reste utile comme indicateur de dette (273 queries non typées) mais ne pourra pas devenir bloquant sans corriger ces 273 occurrences au préalable.
+
+**Ce que ce lot ne fait pas** : ne rend rien bloquant, ne purge pas la baseline advisors (719 entrées acceptées dont 315 fonctions exposées à `anon`), ne branche pas `generate-docs.py`, ne corrige pas `CODEOWNERS` (`@owner` n'est pas un handle GitHub valide, donc aucune règle ne désigne personne). Tout cela est le temps 2, après avoir mesuré ce que les E2E réactivés donnent réellement.
+
+**Référence** : Roméo 2026-07-30, « je veux vraiment pouvoir avancer un peu plus rapide, parce qu'on va perdre à chaque fois 20 minutes pour les CI ». Sauvegarde avant modification dans `~/verone-backups/2026-07-30-audit-004/`.
+
+---
+
+## ADR-037 — `continue-on-error: true` fait mentir `needs.<job>.result`, et le gate DB se passe de baseline
+
+**Date** : 2026-07-30 (après-midi) · **Lot** : `[BO-AUDIT-004]` temps 2
+**Statut** : appliqué · **Contexte** : premier run après retrait des `if: false`
+
+### Constat 1 — le gate E2E mentait pour une deuxième raison
+
+Le run `30545876019` est le premier depuis le 2026-05-13 où les tests E2E ont
+réellement tourné. Résultat : **5 jobs sur 5 en `failure`** dans l'onglet
+Actions, et le job agrégateur `E2E Smoke (Playwright — back-office)` — le check
+requis par la branch protection de `main` **et** de `staging` — en `success` en
+2 secondes, avec dans son log `golden=success domaine=success`.
+
+Cause : quand un job porte `continue-on-error: true`, GitHub renvoie `success`
+dans le contexte `needs` des jobs dépendants, **même si le job a échoué**. La
+logique `if [ "$GOLDEN" = "failure" ]` du commit précédent était donc
+inatteignable par construction.
+
+C'est un deuxième mensonge, indépendant du premier (les `if: false`). Le
+premier faisait que les tests ne tournaient pas ; le second fait que, même
+quand ils tournent et échouent, le gate reste vert. Corrigé en interrogeant
+`repos/{repo}/actions/runs/{run_id}/jobs`, qui expose la conclusion réelle.
+Vérifié sur le run `30548871312` : `golden=failure domaine=failure jobs=5
+echecs=5 skips=0` + `::warning` visible.
+
+**Le check reste non bloquant.** Il est requis sur `main` et sur `staging` :
+le passer en `exit 1` aujourd'hui bloquerait tous les merges, puisque les 5
+jobs échouent pour une raison unique et sans rapport avec la qualité du code —
+les secrets `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` n'existent pas côté GitHub
+depuis que le Lot 002 a sorti les mots de passe du dépôt. Passage en bloquant
+prévu à la fin du Lot 006, avec un compte de test dédié.
+
+`tests/auth.setup.ts` échouait sur « locator.fill: value: expected string, got
+undefined », message qui ne dit rien de la cause. Garde ajouté : le nom de la
+variable manquante figure maintenant dans l'erreur.
+
+### Constat 2 — le gate DB manquant est écrit, et il paie immédiatement
+
+`scripts/validation/check-db-schema-usage.ts` (le gate identifié comme « restant
+à écrire » dans l'entrée précédente) lit
+`packages/@verone/types/src/supabase.ts` comme source de vérité et détecte les
+écritures vers une colonne ou une valeur d'enum inexistante.
+
+**31 écritures impossibles trouvées, 31 confirmées** contre la base de
+production (`information_schema.columns`, `pg_enum`). Zéro faux positif dans
+cette catégorie. Dont la cause du symptôme nº1 de Roméo :
+`app/actions/bank-matching.ts:137` et `:339` écrivent
+`financial_documents.payment_status`, colonne inexistante — le code crée la
+facture, échoue sur la mise à jour, puis **supprime la facture qu'il vient de
+créer** (ligne 137) ou la laisse orpheline non payée (ligne 339, rapprochement
+par lot). Le bouton « rapprocher » n'a jamais pu fonctionner, et le
+rapprochement par lot génère de la donnée fantôme au sens de
+`.claude/rules/no-phantom-data.md`.
+
+Inventaire complet, vérification et ordre de correction :
+`docs/audit-2026-07-30/ECRITURES-DB-IMPOSSIBLES.md`.
+
+### Décision — pas de baseline sur ce gate
+
+La première version du script verrouillait l'existant dans
+`db-schema-usage-baseline.json`, sur le modèle de
+`scripts/supabase-advisors-check.py`. **Abandonné.** La baseline aurait
+enseveli les 31 bugs — c'est-à-dire exactement le défaut reproché à
+`supabase-advisors-baseline.json`, qui accepte 719 anomalies dont 315 fonctions
+exécutables par `anon`. Un gate dont la baseline contient le bug qu'on cherche
+n'est pas un gate.
+
+À la place, deux niveaux de confiance :
+
+- **HAUTE** — détections A et B : colonne ou valeur d'enum écrite dans un
+  `.insert()` / `.update()` / `.upsert()` explicitement rattaché à une table.
+  Aucune ambiguïté, la table est nommée dans le même chaînage. Précision
+  mesurée : 100 % sur 31 cas. **Pilote le code de sortie.**
+- **À VÉRIFIER** — détections C et D, heuristiques (rattachement d'une option
+  de `<Select>` par proximité JSX ; devinette de payload par ressemblance à
+  80 %). 11 signalements, dont 2 vrais. Affichés, jamais bloquants.
+
+Branché dans `quality.yml` en `continue-on-error: true`. **Passage en bloquant
+à la fin du Lot 005**, quand le compte sera à zéro — sans baseline, pour que la
+règle reste « zéro écriture impossible » et non « pas plus qu'hier ».
+
+### Deux bugs de la première version du script, corrigés
+
+- Les commentaires n'étaient pas sautés lors de l'extraction des clés d'un
+  littéral objet : `// ✅ FIXED: utilisation du vrai prix` était lu comme la
+  clé `FIXED`.
+- La détection par ressemblance matchait aussi `=> ({ … })` et `return { … }`,
+  donc les objets de **présentation** construits depuis un résultat de query.
+  Un objet de vue ressemble par nature à 80 % aux colonnes de la table dont il
+  vient : 114 faux positifs. Restreinte aux variables nommées `xxxData`,
+  `xxxPayload`, `xxxUpdate`, ce qui couvre le cas visé (le payload du wizard
+  produit) sans le bruit.
+
+### Mesures
+
+|                                    | Avant le lot                 | Après                         |
+| ---------------------------------- | ---------------------------- | ----------------------------- |
+| `ESLint + Type-Check + Build`      | 895 s                        | 322 s                         |
+| Jobs E2E exécutés                  | 0 depuis le 2026-05-13       | 5                             |
+| Vérité du check requis E2E         | vert inconditionnel          | conclusions réelles + warning |
+| Écritures DB impossibles détectées | 0 (aucun outil ne regardait) | 31, toutes confirmées         |
+
+### Reste au temps 2
+
+Purge de la baseline advisors (719 entrées, et le format « compteur par
+règle » laisse passer un échange à somme nulle : corriger une anomalie et en
+introduire une autre garde le compteur constant). `CODEOWNERS` : les 30 règles
+désignent `@owner`, qui n'est pas un handle GitHub — **proposition : supprimer
+le fichier plutôt que le corriger.** Aucune protection de revue n'est active
+(`required_pull_request_reviews: null` sur `main` et `staging`, vérifié), Roméo
+travaille seul, et un CODEOWNERS valide ne produirait que des demandes de revue
+automatiques qu'il devrait fermer une par une. La protection réelle de ces
+chemins est `PROTECTED_FILES.json`, les en-têtes `@protected` et les hooks
+husky. Décision Roméo attendue.
+
+### Addendum ADR-037 — l'analyse statique ne dit pas si le code tourne
+
+Rédigé le même jour, quelques heures après. L'ADR ci-dessus affirmait que les
+deux écritures de `bank-matching.ts` étaient « la cause du symptôme nº1 de
+Roméo ». **C'est faux.** L'audit pré-modification imposé par
+`.claude/rules/non-regression.md` § 1 a montré que ce fichier **n'a aucun
+appelant** : `matchTransactionToOrder` et `matchTransactionToMultipleOrders`
+n'apparaissent nulle part ailleurs que dans leur propre déclaration, il n'y a
+pas d'`index.ts` dans `app/actions/`, et les 5 exports de
+`bank-matching-helpers.ts` n'ont pas d'autre consommateur.
+
+La faute de méthode est nette : j'ai lu un défaut réel dans un code qui
+ressemblait exactement au symptôme décrit par Roméo, et j'ai conclu sans
+exécuter l'étape 1 de la règle non-régression — celle qui existe précisément
+pour ça. Le message envoyé à Roméo a été corrigé dans la conversation dès la
+découverte.
+
+**Traçage complet des 31 cas** (hook → barrel → composant → libellé du bouton) :
+
+| Catégorie               | Cas |
+| ----------------------- | --- |
+| Bugs actifs             | 13  |
+| Code mort               | 14  |
+| Atteignable mais inerte | 3   |
+| Faux positif du script  | 1   |
+
+Détail dans `docs/audit-2026-07-30/ECRITURES-DB-IMPOSSIBLES.md` § Correction.
+
+**Conséquence sur la règle de travail** — à ajouter à
+`.claude/rules/non-regression.md` : tout signalement d'un outil d'analyse
+statique doit être tracé jusqu'à un **libellé de bouton à l'écran** avant
+d'être classé par gravité. Un outil statique répond à « ce code est-il faux ? »,
+jamais à « ce code tourne-t-il ? ». Sur ce dépôt, où 14 des 31 signalements
+sont des doublons non branchés d'une fonctionnalité qui existe ailleurs sous un
+autre nom, l'écart entre les deux questions est la moitié du travail.
+
+**Conséquence sur le Lot 005** — le lot se scinde en deux natures de travail :
+
+1. **13 corrections** sur du code actif, chacune avec test de référence avant
+   modification. Priorité : le wizard produit complet (seul chemin de création
+   complète, échoue toujours), l'archivage des groupes de variantes (affiche un
+   succès mensonger), la création de compte ambassadeur (affiche un mot de passe
+   temporaire alors que le profil n'est pas créé).
+2. **14 suppressions** de code mort, en une seule PR. Ces fichiers n'ont pas
+   besoin de test de référence — ils n'ont pas de comportement. Ils sont en
+   revanche un risque de diagnostic actif, comme cet épisode le démontre.
+
+**Défaut du script à corriger** : il résout la table même quand l'argument de
+`.from()` est une variable et non une chaîne littérale
+(`use-linkme-page-config.ts:312-320`, table calculée parmi `products` /
+`enseignes` / `organisations`). À rendre silencieux dans ce cas.
+
+**Question ouverte pour Roméo** : le paiement Revolut de LinkMe est-il en
+service ? `api/create-order` n'écrit rien dans `sales_orders` — la seule
+écriture de la commande est celle du webhook, dont 7 champs sur 8 sont faux. Si
+le paiement est actif, un paiement réussi ne crée aucune commande, et Revolut
+ne réessaie pas (le handler retourne `{ received: true }` même en échec). Le
+dépôt ne permet pas de trancher : les variables `REVOLUT_*` n'existent que dans
+`apps/linkme/.env.example`, et l'URL du webhook se déclare à la main chez
+Revolut.

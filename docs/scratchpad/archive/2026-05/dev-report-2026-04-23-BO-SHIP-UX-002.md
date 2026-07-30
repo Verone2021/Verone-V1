@@ -85,7 +85,7 @@ ces lignes.
 
 ## Test manuel à faire en preview Vercel
 
-1. Login `veronebyromeo@gmail.com` / `Abc123456`
+1. Login `veronebyromeo@gmail.com` / `<credential retire 2026-07-30>`
 2. Aller sur une commande validée avec déjà 1 shipment Packlink (ex : SO-2026-00158)
 3. Ouvrir le wizard "Nouvelle expédition" / "Reste"
 4. Étape 1 : vérifier l'affichage de la card visuelle de l'expédition précédente

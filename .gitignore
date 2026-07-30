@@ -23,11 +23,20 @@ build/
 .turbo/
 
 # Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# [BO-AUDIT-002] 2026-07-30 — passage en globs.
+# Les motifs exacts précédents (.env, .env.local, .env.*.local) ne couvraient PAS
+# `.env.local.backup-20260114-065620`, qui a donc été committé le 2026-01-15 sur un
+# repo public avec la service_role Supabase, la clé Qonto et le PAT GitHub
+# (commit 170aecf0, retiré par b07283b7 — mais toujours dans l'historique).
+# Détail : docs/audit-2026-07-30/FINDINGS.md § Lot 0.
+.env*
+!.env.example
+
+# Sauvegardes et copies de travail — même raison
+*.backup
+*.bak
+*.orig
+*~
 
 # MCP Server credentials (DO NOT COMMIT)
 .mcp.json

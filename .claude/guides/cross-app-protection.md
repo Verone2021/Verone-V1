@@ -393,7 +393,7 @@ git push
 
 # 1. Supprimer cookies Supabase (DevTools → Application → Cookies)
 # 2. Visiter http://localhost:3000/login
-# 3. Login avec admin@pokawa-test.fr / TestLinkMe2025
+# 3. Login avec admin@pokawa-test.fr / <credential retire 2026-07-30>
 # 4. Vérifier redirect vers /unauthorized ✅
 # 5. Vérifier message "Accès refusé" ✅
 # 6. Vérifier pas de sidebar ✅

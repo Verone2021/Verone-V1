@@ -85,7 +85,10 @@ test.describe('Auth Stability - Anti Loop', () => {
 
     // Remplir formulaire avec utilisateur test Pokawa
     await emailField.fill('admin@pokawa-test.fr');
-    await page.fill('input[type="password"]', 'TestLinkMe2025');
+    await page.fill(
+      'input[type="password"]',
+      process.env.LINKME_TEST_PASSWORD!
+    );
     await page.click('button[type="submit"]');
 
     // Attendre redirection vers dashboard

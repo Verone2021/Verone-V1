@@ -107,4 +107,4 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 ---
 
-_Voir [deploy-runbooks.md](./deploy-runbooks.md) pour les variables Vercel_
+_Voir [runbooks/rollback.md](../runbooks/rollback.md) pour les variables Vercel_

@@ -180,17 +180,17 @@ Les tests utilisent 3 comptes :
 **Pokawa (Enseigne)** :
 
 - Email : `admin@pokawa-test.fr`
-- Password : `TestLinkMe2025`
+- Password : `<credential retire 2026-07-30>`
 
 **Organisation Indépendante** :
 
 - Email : `test-org@verone.fr`
-- Password : `TestLinkMe2025`
+- Password : `<credential retire 2026-07-30>`
 
 **Back-Office** :
 
 - Email : `veronebyromeo@gmail.com`
-- Password : `Abc123456`
+- Password : `<credential retire 2026-07-30 — voir .claude/local/test-credentials.md>`
 
 **Si échec** : Vérifier que ces comptes existent dans Supabase
 
@@ -239,7 +239,7 @@ Ce script vérifie que tous les fichiers sont en place.
 
 ```
 Email: admin@pokawa-test.fr
-Password: TestLinkMe2025
+Password: <credential retire 2026-07-30>
 ```
 
 **À Vérifier** :
@@ -253,7 +253,7 @@ Password: TestLinkMe2025
 
 ```
 Email: test-org@verone.fr
-Password: TestLinkMe2025
+Password: <credential retire 2026-07-30>
 ```
 
 **À Vérifier** :
@@ -268,7 +268,7 @@ Password: TestLinkMe2025
 
 ```
 Email: veronebyromeo@gmail.com
-Password: Abc123456
+Password: <credential retire 2026-07-30 — voir .claude/local/test-credentials.md>
 ```
 
 **À Vérifier** :
