@@ -1493,3 +1493,64 @@ travaille seul, et un CODEOWNERS valide ne produirait que des demandes de revue
 automatiques qu'il devrait fermer une par une. La protection réelle de ces
 chemins est `PROTECTED_FILES.json`, les en-têtes `@protected` et les hooks
 husky. Décision Roméo attendue.
+
+### Addendum ADR-037 — l'analyse statique ne dit pas si le code tourne
+
+Rédigé le même jour, quelques heures après. L'ADR ci-dessus affirmait que les
+deux écritures de `bank-matching.ts` étaient « la cause du symptôme nº1 de
+Roméo ». **C'est faux.** L'audit pré-modification imposé par
+`.claude/rules/non-regression.md` § 1 a montré que ce fichier **n'a aucun
+appelant** : `matchTransactionToOrder` et `matchTransactionToMultipleOrders`
+n'apparaissent nulle part ailleurs que dans leur propre déclaration, il n'y a
+pas d'`index.ts` dans `app/actions/`, et les 5 exports de
+`bank-matching-helpers.ts` n'ont pas d'autre consommateur.
+
+La faute de méthode est nette : j'ai lu un défaut réel dans un code qui
+ressemblait exactement au symptôme décrit par Roméo, et j'ai conclu sans
+exécuter l'étape 1 de la règle non-régression — celle qui existe précisément
+pour ça. Le message envoyé à Roméo a été corrigé dans la conversation dès la
+découverte.
+
+**Traçage complet des 31 cas** (hook → barrel → composant → libellé du bouton) :
+
+| Catégorie               | Cas |
+| ----------------------- | --- |
+| Bugs actifs             | 13  |
+| Code mort               | 14  |
+| Atteignable mais inerte | 3   |
+| Faux positif du script  | 1   |
+
+Détail dans `docs/audit-2026-07-30/ECRITURES-DB-IMPOSSIBLES.md` § Correction.
+
+**Conséquence sur la règle de travail** — à ajouter à
+`.claude/rules/non-regression.md` : tout signalement d'un outil d'analyse
+statique doit être tracé jusqu'à un **libellé de bouton à l'écran** avant
+d'être classé par gravité. Un outil statique répond à « ce code est-il faux ? »,
+jamais à « ce code tourne-t-il ? ». Sur ce dépôt, où 14 des 31 signalements
+sont des doublons non branchés d'une fonctionnalité qui existe ailleurs sous un
+autre nom, l'écart entre les deux questions est la moitié du travail.
+
+**Conséquence sur le Lot 005** — le lot se scinde en deux natures de travail :
+
+1. **13 corrections** sur du code actif, chacune avec test de référence avant
+   modification. Priorité : le wizard produit complet (seul chemin de création
+   complète, échoue toujours), l'archivage des groupes de variantes (affiche un
+   succès mensonger), la création de compte ambassadeur (affiche un mot de passe
+   temporaire alors que le profil n'est pas créé).
+2. **14 suppressions** de code mort, en une seule PR. Ces fichiers n'ont pas
+   besoin de test de référence — ils n'ont pas de comportement. Ils sont en
+   revanche un risque de diagnostic actif, comme cet épisode le démontre.
+
+**Défaut du script à corriger** : il résout la table même quand l'argument de
+`.from()` est une variable et non une chaîne littérale
+(`use-linkme-page-config.ts:312-320`, table calculée parmi `products` /
+`enseignes` / `organisations`). À rendre silencieux dans ce cas.
+
+**Question ouverte pour Roméo** : le paiement Revolut de LinkMe est-il en
+service ? `api/create-order` n'écrit rien dans `sales_orders` — la seule
+écriture de la commande est celle du webhook, dont 7 champs sur 8 sont faux. Si
+le paiement est actif, un paiement réussi ne crée aucune commande, et Revolut
+ne réessaie pas (le handler retourne `{ received: true }` même en échec). Le
+dépôt ne permet pas de trancher : les variables `REVOLUT_*` n'existent que dans
+`apps/linkme/.env.example`, et l'URL du webhook se déclare à la main chez
+Revolut.

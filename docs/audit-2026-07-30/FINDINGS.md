@@ -237,13 +237,20 @@ Signature inchangée → aucune policy modifiée, aucun risque de replanificatio
 > **Ajout du 2026-07-30, après-midi.** Le nouveau contrôle
 > `pnpm validate:db-usage` (créé au Lot 004) a trouvé **31 écritures en base
 > impossibles** dans le dépôt, toutes confirmées une par une contre la base de
-> production. La plus coûteuse est dans le rapprochement bancaire et constitue
-> une **deuxième** cause au symptôme nº1 de Roméo, indépendante de celle
-> décrite juste en dessous : `app/actions/bank-matching.ts:137` et `:339`
-> écrivent `financial_documents.payment_status`, colonne qui n'existe pas. Le
-> code crée la facture, échoue sur la mise à jour, puis **supprime la facture
-> qu'il vient de créer** (ligne 137) ou la laisse orpheline (ligne 339).
-> Liste complète et ordre de correction : `ECRITURES-DB-IMPOSSIBLES.md`.
+> production. Après traçage de l'atteignabilité de chacun : **13 sont des bugs
+> actifs, 14 sont du code mort, 3 sont inertes, 1 est un faux positif.**
+>
+> **Aucun ne concerne le rapprochement bancaire.** Une première version de cette
+> note affirmait le contraire — que `app/actions/bank-matching.ts:137` et `:339`
+> constituaient une deuxième cause au symptôme nº1 de Roméo. C'était faux :
+> ce fichier n'a aucun appelant dans le dépôt, c'est du code mort qui n'a jamais
+> tourné. La cause du symptôme nº1 reste celle décrite juste en dessous.
+>
+> Les 13 bugs actifs touchent : la création de produit complet, l'archivage des
+> groupes de variantes, la saisie de TVA sur transaction, la création de compte
+> ambassadeur, la synchronisation Qonto des factures et le webhook Revolut
+> LinkMe. Détail, atteignabilité et ordre de correction :
+> `ECRITURES-DB-IMPOSSIBLES.md`.
 
 **[CRITIQUE] Le bouton « Rapprocher » de la fiche facture n'écrit rien en base** — `api/qonto/invoices/[id]/reconcile/route.ts:112-124` — appelle `markClientInvoiceAsPaid(id)` chez Qonto et s'arrête. Aucune ligne dans `transaction_document_links`, aucun `bank_transactions.matching_status`/`matched_document_id`, aucun `financial_documents.amount_paid`. `ReconcileTransactionModal.tsx:161` affiche « Rapprochement effectué » puis `window.location.reload()`. Body casté sans Zod (`:38`), et le commentaire « verify it exists and has matching amount » est faux — aucun contrôle de montant. → appeler le RPC `link_transaction_to_document` dans la même route + Zod.
 

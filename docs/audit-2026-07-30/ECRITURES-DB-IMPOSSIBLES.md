@@ -3,7 +3,98 @@
 **Date** : 2026-07-30 · **Lot** : découvert au 004, corrigé au 005
 **Outil** : `scripts/validation/check-db-schema-usage.ts` (`pnpm validate:db-usage`)
 **Vérification** : chacun des 31 cas a été confirmé contre la base de production
-via `information_schema.columns` et `pg_enum`. **Zéro faux positif.**
+via `information_schema.columns` et `pg_enum`.
+
+---
+
+## ⚠ Correction du 2026-07-30, fin de journée — lire avant tout le reste
+
+La première version de ce document classait les 31 cas par impact supposé
+**sans avoir vérifié que le code était atteint depuis un écran**. Étape sautée,
+conclusion fausse en tête de document : le défaut du rapprochement bancaire y
+était présenté comme la cause du symptôme nº1 de Roméo. **C'est faux.**
+`app/actions/bank-matching.ts` n'a aucun appelant dans le dépôt — vérifié deux
+fois, par deux méthodes. C'est du code mort, et il n'a jamais tourné.
+
+L'atteignabilité des 31 cas a ensuite été tracée un par un, du hook jusqu'au
+libellé du bouton. Résultat :
+
+| Catégorie                   | Cas | Ce que ça veut dire                                                                                                            |
+| --------------------------- | --- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Bugs actifs**             | 13  | Le code tourne, la base refuse, l'utilisateur subit                                                                            |
+| **Code mort**               | 14  | Jamais appelé. À supprimer, pas à corriger                                                                                     |
+| **Atteignable mais inerte** | 3   | Les colonnes fautives partent toujours à `undefined`, donc retirées du JSON : l'écriture réussit. Bombe à retardement, pas bug |
+| **Faux positif du script**  | 1   | Table résolue dynamiquement, mal interprétée par l'outil                                                                       |
+
+### Les 13 bugs actifs, par gravité réelle
+
+| #    | Où                                                 | Effet vécu                                                                                                                                                                                                                                                                                                                                                                                                                        | Erreur visible ?                                                                                                                                 |
+| ---- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1    | `use-products.ts:241` (`createProduct`)            | Le wizard « Nouveau produit complet » (`/produits/catalogue/nouveau`, boutons « Sauvegarder », « Suivant », « Finaliser ») envoie `status: 'coming_soon'` en dur. **Échoue toujours.** C'est le seul chemin de création complète de produit.                                                                                                                                                                                      | Oui, toast rouge                                                                                                                                 |
+| 2-3  | `use-variant-group-archive.ts:75` et `:136`        | Archiver ou restaurer un groupe de variantes (`/produits/catalogue/variantes`, bouton icône « Archiver le groupe » et bouton « Restaurer »). `status` en dur → **échoue toujours**. Le groupe lui-même est bien archivé, mais **aucun produit du groupe ne suit**.                                                                                                                                                                | Partiellement : un toast « Avertissement » passe, **puis un toast de succès s'affiche quand même**. L'utilisateur croit que c'est fait           |
+| 4    | `api/transactions/update-vat/route.ts:74`          | Saisie de TVA sur une transaction. `vat_amount` et `amount_vat` sont dans le **même** objet : tout l'enregistrement est rejeté. Deux écrans concernés                                                                                                                                                                                                                                                                             | Un écran : oui (toast). L'autre (`payment-notifications-tab`) : **totalement silencieux**, pas de `else` sur le `res.ok`                         |
+| 5    | `api/ambassadors/create-auth/route.ts:145`         | Création d'un compte ambassadeur (`canaux-vente/site-internet`). Le compte d'authentification est créé, **le profil ne l'est pas**                                                                                                                                                                                                                                                                                                | **Non — et c'est le pire cas du lot** : le résultat n'est même pas déstructuré, et l'écran affiche « Compte créé ! Mot de passe temporaire : … » |
+| 6    | `api/qonto/sync-invoices/route.ts:166`             | Bouton « Sync Qonto » de la page Factures. Quand une facture Qonto porte un client inconnu du CRM, le code tente de créer une organisation de secours et échoue → **la facture est sautée**                                                                                                                                                                                                                                       | Non. Les erreurs sont collectées dans un tableau qui n'est jamais affiché                                                                        |
+| 7-13 | `apps/linkme/.../webhook/revolut/route.ts:114-122` | 7 champs sur 8 sont faux. **Statut de mise en service indéterminé** depuis le dépôt : les variables `REVOLUT_*` ne sont que dans le fichier d'exemple, l'URL du webhook se déclare à la main chez Revolut. Point critique : `api/create-order` n'écrit **rien** dans `sales_orders` — la seule écriture de la commande est celle du webhook. Si le paiement LinkMe est en service, **un paiement réussi ne crée aucune commande** | Non. `console.error` puis retour `{ received: true }` → Revolut ne réessaie jamais                                                               |
+
+### Les 3 cas inertes — à ne pas corriger, à surveiller
+
+`packages/@verone/orders/src/actions/purchase-receptions.ts:115-117`
+(`carrier_name`, `tracking_number`, `delivery_note`). La fonction
+`validatePurchaseReception` est bien atteinte (page Réceptions, bouton
+« Recevoir » puis « Valider Réception Complète »), mais son unique appelant
+(`PurchaseOrderReceptionForm.tsx:204-211`) énumère explicitement cinq clés qui
+n'incluent aucune des trois. Elles partent donc toujours à `undefined`, que
+`JSON.stringify` retire : l'INSERT réussit.
+
+**Le jour où quelqu'un ajoute un champ « transporteur » à ce formulaire, toute
+réception fournisseur cesse de fonctionner.** C'est exactement le genre de
+piège que le gate doit garder sous surveillance : à retirer du code plutôt qu'à
+laisser en embuscade.
+
+### Le faux positif
+
+`apps/back-office/.../use-linkme-page-config.ts:320` — le script a cru que la
+table cible était `linkme_globe_items`. En réalité elle est calculée
+dynamiquement aux lignes 312-317 (`products`, `enseignes` ou `organisations`
+selon le type), et `show_on_linkme_globe` existe bien sur ces trois tables.
+`linkme_globe_items` est une vue en lecture seule. **Défaut du script** : il ne
+doit pas résoudre la table quand l'argument de `.from()` n'est pas une chaîne
+littérale. À corriger.
+
+### Les 14 cas de code mort
+
+`bank-matching.ts:137` et `:339` · `use-archived-products.ts:137`, `:138`,
+`:163`, `:164` · `use-variant-products.ts:201`, `:294`, `:302` ·
+`use-variant-products-create.ts:138` · `use-quick-variant-form.ts:120`,
+`:122`, `:131` · `sample-order-validation.api.ts:25`
+
+Chacun est un doublon non branché d'une fonctionnalité qui existe ailleurs,
+sous un autre nom, et qui fonctionne. Exemples : le détachement de variante
+réellement utilisé est `removeProductFromGroup`
+(`use-variant-group-products.ts:232`), pas `removeProductFromVariantGroup` ;
+l'archivage de produit réellement utilisé vient de `@verone/categories`
+(`use-catalogue-mutations.ts:48`), pas de `@verone/products`. `QuickVariantForm`
+n'est monté par aucune page. Le module `sample-order-validation` est un
+brouillon : une de ses fonctions lance `throw new Error('not yet
+implemented')`, une autre écrit dans `product_drafts` via un cast
+`'product_drafts' as 'sample_orders'`.
+
+**Ces 14 cas ne se corrigent pas, ils se suppriment.** Les garder « au cas où »
+est ce qui a permis à ce document de raconter une erreur : du code faux qui
+ressemble exactement à un symptôme réel est un piège de diagnostic, pas un
+actif.
+
+### Ce que cet épisode dit de la méthode
+
+Le gate fait son travail : les 31 écritures sont bien impossibles, et la
+vérification contre la base l'a confirmé 31 fois sur 31. **Ce qui manquait,
+c'est la seconde question** — « ce code tourne-t-il ? ». Un outil d'analyse
+statique répond à la première, jamais à la seconde. Toute écriture signalée
+doit désormais être tracée jusqu'à un libellé de bouton avant d'être classée.
+
+Le reste de ce document conserve la description technique de chaque cas, qui
+reste exacte. Seul le classement par impact de la première version était faux.
 
 ---
 
@@ -34,7 +125,36 @@ incompréhensible, ou avalée en silence.
 
 ## Par impact utilisateur
 
-### 1. Rapprochement bancaire — le bouton ne marchera jamais
+### 1. Rapprochement bancaire — CODE MORT, corrigé le 2026-07-30 en fin de journée
+
+> **Cette section était fausse dans sa conclusion.** `bank-matching.ts` n'a
+> **aucun appelant** : ni `matchTransactionToOrder` ni
+> `matchTransactionToMultipleOrders` n'est importé où que ce soit dans le dépôt,
+> il n'y a pas de barrel dans `app/actions/`, et les 5 exports de
+> `bank-matching-helpers.ts` n'ont pas d'autre consommateur que ce fichier. Le
+> défaut décrit ci-dessous est réel dans le code, mais **il n'a jamais tourné**.
+> Ce n'est donc pas la cause du symptôme nº1 de Roméo.
+>
+> Le rapprochement réellement utilisé passe par `/finance/rapprochement` et le
+> RPC `link_transaction_to_document`
+> (`use-rapprochement-actions.ts:63`, `:124`, `:195`), chemin de code entièrement
+> distinct. Ses défauts sont documentés dans `FINDINGS.md` § Rapprochement
+> bancaire — dont celui-ci, qui reste la cause la plus probable du symptôme :
+> le bouton de la fiche facture appelle Qonto et n'écrit rien en base
+> (`api/qonto/invoices/[id]/reconcile/route.ts:112-124`).
+>
+> **Action : supprimer les trois fichiers** (`bank-matching.ts`,
+> `bank-matching-helpers.ts`, et vérifier `bank-matching-ignore.ts` — son
+> `ignoreTransaction` est lui aussi doublonné par une fonction locale dans
+> `use-messages-items.ts:488`, qui est celle réellement branchée sur le bouton
+> « Ignorer »).
+>
+> Note annexe trouvée au passage : `generateInvoiceNumber`
+> (`bank-matching-helpers.ts:34-42`) dérive le numéro de facture d'un `count`
+> sans lire `error` — deux appels simultanés produiraient le même numéro. Sans
+> effet aujourd'hui, puisque le fichier ne tourne pas.
+
+Description du défaut, conservée pour mémoire :
 
 `apps/back-office/src/app/actions/bank-matching.ts:137` et `:339`
 → écrit `financial_documents.payment_status`. La table a `status`,
