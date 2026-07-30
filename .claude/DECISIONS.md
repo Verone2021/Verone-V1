@@ -1376,3 +1376,120 @@ Conséquence : le gate qui aurait vraiment attrapé ces trois bugs **reste à é
 **Ce que ce lot ne fait pas** : ne rend rien bloquant, ne purge pas la baseline advisors (719 entrées acceptées dont 315 fonctions exposées à `anon`), ne branche pas `generate-docs.py`, ne corrige pas `CODEOWNERS` (`@owner` n'est pas un handle GitHub valide, donc aucune règle ne désigne personne). Tout cela est le temps 2, après avoir mesuré ce que les E2E réactivés donnent réellement.
 
 **Référence** : Roméo 2026-07-30, « je veux vraiment pouvoir avancer un peu plus rapide, parce qu'on va perdre à chaque fois 20 minutes pour les CI ». Sauvegarde avant modification dans `~/verone-backups/2026-07-30-audit-004/`.
+
+---
+
+## ADR-037 — `continue-on-error: true` fait mentir `needs.<job>.result`, et le gate DB se passe de baseline
+
+**Date** : 2026-07-30 (après-midi) · **Lot** : `[BO-AUDIT-004]` temps 2
+**Statut** : appliqué · **Contexte** : premier run après retrait des `if: false`
+
+### Constat 1 — le gate E2E mentait pour une deuxième raison
+
+Le run `30545876019` est le premier depuis le 2026-05-13 où les tests E2E ont
+réellement tourné. Résultat : **5 jobs sur 5 en `failure`** dans l'onglet
+Actions, et le job agrégateur `E2E Smoke (Playwright — back-office)` — le check
+requis par la branch protection de `main` **et** de `staging` — en `success` en
+2 secondes, avec dans son log `golden=success domaine=success`.
+
+Cause : quand un job porte `continue-on-error: true`, GitHub renvoie `success`
+dans le contexte `needs` des jobs dépendants, **même si le job a échoué**. La
+logique `if [ "$GOLDEN" = "failure" ]` du commit précédent était donc
+inatteignable par construction.
+
+C'est un deuxième mensonge, indépendant du premier (les `if: false`). Le
+premier faisait que les tests ne tournaient pas ; le second fait que, même
+quand ils tournent et échouent, le gate reste vert. Corrigé en interrogeant
+`repos/{repo}/actions/runs/{run_id}/jobs`, qui expose la conclusion réelle.
+Vérifié sur le run `30548871312` : `golden=failure domaine=failure jobs=5
+echecs=5 skips=0` + `::warning` visible.
+
+**Le check reste non bloquant.** Il est requis sur `main` et sur `staging` :
+le passer en `exit 1` aujourd'hui bloquerait tous les merges, puisque les 5
+jobs échouent pour une raison unique et sans rapport avec la qualité du code —
+les secrets `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` n'existent pas côté GitHub
+depuis que le Lot 002 a sorti les mots de passe du dépôt. Passage en bloquant
+prévu à la fin du Lot 006, avec un compte de test dédié.
+
+`tests/auth.setup.ts` échouait sur « locator.fill: value: expected string, got
+undefined », message qui ne dit rien de la cause. Garde ajouté : le nom de la
+variable manquante figure maintenant dans l'erreur.
+
+### Constat 2 — le gate DB manquant est écrit, et il paie immédiatement
+
+`scripts/validation/check-db-schema-usage.ts` (le gate identifié comme « restant
+à écrire » dans l'entrée précédente) lit
+`packages/@verone/types/src/supabase.ts` comme source de vérité et détecte les
+écritures vers une colonne ou une valeur d'enum inexistante.
+
+**31 écritures impossibles trouvées, 31 confirmées** contre la base de
+production (`information_schema.columns`, `pg_enum`). Zéro faux positif dans
+cette catégorie. Dont la cause du symptôme nº1 de Roméo :
+`app/actions/bank-matching.ts:137` et `:339` écrivent
+`financial_documents.payment_status`, colonne inexistante — le code crée la
+facture, échoue sur la mise à jour, puis **supprime la facture qu'il vient de
+créer** (ligne 137) ou la laisse orpheline non payée (ligne 339, rapprochement
+par lot). Le bouton « rapprocher » n'a jamais pu fonctionner, et le
+rapprochement par lot génère de la donnée fantôme au sens de
+`.claude/rules/no-phantom-data.md`.
+
+Inventaire complet, vérification et ordre de correction :
+`docs/audit-2026-07-30/ECRITURES-DB-IMPOSSIBLES.md`.
+
+### Décision — pas de baseline sur ce gate
+
+La première version du script verrouillait l'existant dans
+`db-schema-usage-baseline.json`, sur le modèle de
+`scripts/supabase-advisors-check.py`. **Abandonné.** La baseline aurait
+enseveli les 31 bugs — c'est-à-dire exactement le défaut reproché à
+`supabase-advisors-baseline.json`, qui accepte 719 anomalies dont 315 fonctions
+exécutables par `anon`. Un gate dont la baseline contient le bug qu'on cherche
+n'est pas un gate.
+
+À la place, deux niveaux de confiance :
+
+- **HAUTE** — détections A et B : colonne ou valeur d'enum écrite dans un
+  `.insert()` / `.update()` / `.upsert()` explicitement rattaché à une table.
+  Aucune ambiguïté, la table est nommée dans le même chaînage. Précision
+  mesurée : 100 % sur 31 cas. **Pilote le code de sortie.**
+- **À VÉRIFIER** — détections C et D, heuristiques (rattachement d'une option
+  de `<Select>` par proximité JSX ; devinette de payload par ressemblance à
+  80 %). 11 signalements, dont 2 vrais. Affichés, jamais bloquants.
+
+Branché dans `quality.yml` en `continue-on-error: true`. **Passage en bloquant
+à la fin du Lot 005**, quand le compte sera à zéro — sans baseline, pour que la
+règle reste « zéro écriture impossible » et non « pas plus qu'hier ».
+
+### Deux bugs de la première version du script, corrigés
+
+- Les commentaires n'étaient pas sautés lors de l'extraction des clés d'un
+  littéral objet : `// ✅ FIXED: utilisation du vrai prix` était lu comme la
+  clé `FIXED`.
+- La détection par ressemblance matchait aussi `=> ({ … })` et `return { … }`,
+  donc les objets de **présentation** construits depuis un résultat de query.
+  Un objet de vue ressemble par nature à 80 % aux colonnes de la table dont il
+  vient : 114 faux positifs. Restreinte aux variables nommées `xxxData`,
+  `xxxPayload`, `xxxUpdate`, ce qui couvre le cas visé (le payload du wizard
+  produit) sans le bruit.
+
+### Mesures
+
+|                                    | Avant le lot                 | Après                         |
+| ---------------------------------- | ---------------------------- | ----------------------------- |
+| `ESLint + Type-Check + Build`      | 895 s                        | 322 s                         |
+| Jobs E2E exécutés                  | 0 depuis le 2026-05-13       | 5                             |
+| Vérité du check requis E2E         | vert inconditionnel          | conclusions réelles + warning |
+| Écritures DB impossibles détectées | 0 (aucun outil ne regardait) | 31, toutes confirmées         |
+
+### Reste au temps 2
+
+Purge de la baseline advisors (719 entrées, et le format « compteur par
+règle » laisse passer un échange à somme nulle : corriger une anomalie et en
+introduire une autre garde le compteur constant). `CODEOWNERS` : les 30 règles
+désignent `@owner`, qui n'est pas un handle GitHub — **proposition : supprimer
+le fichier plutôt que le corriger.** Aucune protection de revue n'est active
+(`required_pull_request_reviews: null` sur `main` et `staging`, vérifié), Roméo
+travaille seul, et un CODEOWNERS valide ne produirait que des demandes de revue
+automatiques qu'il devrait fermer une par une. La protection réelle de ces
+chemins est `PROTECTED_FILES.json`, les en-têtes `@protected` et les hooks
+husky. Décision Roméo attendue.
