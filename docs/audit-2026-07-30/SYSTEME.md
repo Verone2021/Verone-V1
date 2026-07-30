@@ -219,3 +219,19 @@ Nouveau **Lot 8bis — les agents manquants** : sécurité, migration DB, test. 
 ---
 
 _Complément produit le 2026-07-30. Lecture seule, aucun fichier modifié hors ce dossier et `.claude/work/ACTIVE.md`._
+
+---
+
+## 10. Révisions du 2026-07-30 (après vérification)
+
+Deux affirmations de ce document ont été corrigées après exécution réelle.
+
+**1. Les hooks ne sont pas « peut-être morts » : ils sont morts, tous les six.** Le § 2 posait la question ; la [documentation officielle](https://code.claude.com/docs/en/hooks) y répond : _« there are no `$TOOL_INPUT` style variables »_, l'input arrive sur stdin. Et _« Claude Code treats exit code 1 as a non-blocking error »_ — seul `exit 2` bloque. Les six hooks cumulaient les deux défauts. Réparés et testés (14 tests) dans le lot `[BO-AUDIT-004]`, ADR-036.
+
+Défaut supplémentaire : le hook de type-check automatique appelait `timeout 15 pnpm …`, or **`timeout` n'existe pas sur macOS**. Il aurait échoué même avec un input correct.
+
+**2. `validate:types` ne fait pas ce que ce document lui prêtait.** Il était présenté comme le gate qui « aurait attrapé à lui seul trois des douze bugs bloquants ». Exécution du 2026-07-30 : 950 lignes de diagnostic, dont 273 « Query Supabase sans type », et **zéro** détection de colonne inexistante ou d'enum écrit en dur — alors que son en-tête annonce ces deux détections. Elles ne sont pas implémentées.
+
+Conséquence sur le § 2 du `PLAN-CORRECTION.md` : sur les six gates de la table « un bug → une règle », cinq sont bien des branchements d'existant, mais celui qui couvre la classe « valeur envoyée à la DB qui n'existe pas » **est à écrire**. Il doit comparer colonnes et valeurs d'enum utilisées dans le code à `packages/@verone/types/src/supabase.ts`.
+
+**3. Il y avait 4 `if: false` dans `quality.yml`, pas 3.** Le quatrième était en tête d'une expression `if: >` multiligne sur `smoke-domaine`, invisible à une recherche sur `if: false &&`. Les quatre sont retirés.

@@ -1324,3 +1324,55 @@ Les 9 liens pointant vers les documents supprimés ont été corrigés dans `doc
 - Environ 60 autres fichiers de `docs/current/` restent à traiter (instantanés datés, mémoires du MCP Serena retiré, 5 récits d'installation responsive). Cible : ~34 fichiers dont ~15 générés, contre 106 aujourd'hui. Détail dans `docs/audit-2026-07-30/SYSTEME.md` § 4.
 
 **Référence** : `docs/audit-2026-07-30/SYSTEME.md` (audit du système de travail : 15 règles, 3 agents, 5 workflows, hooks, 1 038 fichiers markdown). Constat central : sur 15 règles, 2 sont réellement outillées ; les 8 qui protègent le chiffre d'affaires reposent sur la bonne volonté de l'agent.
+
+---
+
+## ADR-036 — `[BO-AUDIT-004]` Réparer les gardes avant de les durcir (2026-07-30)
+
+**Contexte** : l'audit du 2026-07-30 avait conclu que « sur 15 règles de `.claude/rules/`, 2 sont réellement outillées ». La vérification a montré que c'est encore pire : **les gardes Claude Code n'ont jamais fonctionné du tout**.
+
+Deux bugs cumulés, confirmés par la [documentation officielle](https://code.claude.com/docs/en/hooks) :
+
+1. **L'input d'un hook arrive sur stdin, en JSON. Il n'existe aucune variable `$TOOL_INPUT`** — verbatim : _« Environment variables are not used for passing the tool input itself—there are no `$TOOL_INPUT` style variables. »_ Or six hooks de `.claude/settings.json` faisaient `echo "$TOOL_INPUT" | grep`. La variable étant vide, le `grep` échouait, la condition n'était jamais vraie, et rien n'était bloqué.
+2. **Seul `exit 2` bloque.** _« Claude Code treats exit code 1 as a non-blocking error and proceeds with the action, even though 1 is the conventional Unix failure code. »_ Cinq de ces six hooks utilisaient `exit 1`. Ils étaient donc morts deux fois.
+
+Ce qui n'a jamais rien bloqué : le blocage des `any` (`:173`), des `eslint-disable`, du push direct sur `main` (`:101`), de `gh pr merge` (`:119`), de `pnpm dev` (`:128`), le type-check automatique après édition (`:211`), et la validation du Task-ID sur les commits (`:88` — qui affichait son message d'erreur à chaque commit sans bloquer).
+
+Cela explique sans recourir à un manque de discipline : 96 `any`, 354 `eslint-disable`, 222 fichiers de plus de 400 lignes. Les règles étaient écrites, correctes et bonnes ; les mécanismes censés les appliquer étaient inertes.
+
+Défaut supplémentaire trouvé sur le type-check automatique : sa commande était `timeout 15 pnpm --filter …`. **`timeout` n'existe pas sur macOS** (c'est `gtimeout`, via coreutils). Même avec un `$TOOL_INPUT` peuplé, ce hook aurait échoué sur `command not found`.
+
+**Décision** : réparer d'abord, durcir ensuite — en deux temps, comme pour le middleware du lot `[BO-AUDIT-003]`. Ce lot est le temps 1 : **plus rien n'est ajouté comme bloquant.**
+
+### Hooks
+
+Les six hooks lisent désormais stdin (`INPUT=$(cat)` puis `jq -r ".tool_input.command"`) et utilisent `exit 2` avec le message sur **stderr** — la doc précise que sur `exit 2`, stdout est ignoré et stderr est renvoyé à Claude.
+
+Trois ajustements de fond au passage :
+
+- **Tolérance sur `git commit -F`/`--file`/`-t`** : un commit dont le message vient d'un fichier ou d'un heredoc n'a pas ce message dans la ligne de commande. Le hook le laissait passer par accident avant ; il le laisse passer volontairement maintenant, puisque `.husky/commit-msg` valide le format de toute façon. Sans cette tolérance, on cassait un usage légitime.
+- **Résolution de la contradiction sur le merge** relevée à l'audit : l'ADR-032 prescrit l'auto-merge vers `staging`, alors que le hook bloquait **tout** `gh pr merge`. Il ne bloque désormais que ce qui cible `main`. Les deux règles deviennent compatibles.
+- **`pnpm dev:stop` et `turbo run build` ne sont plus faussement bloqués** (le motif exigeait `dev` ou `start` suivi d'une fin de mot).
+
+**14 tests d'acceptation** écrits et passés, en simulant exactement ce que Claude Code envoie sur stdin : message avec et sans Task-ID, `commit -F -`, push sur `main` et sur une branche, PR vers `main` et vers `staging`, `pnpm dev` et `pnpm dev:stop`, code avec `: any` / `as any` / propre, et un faux positif potentiel (le mot « company » contient « any »).
+
+### CI
+
+- **Les 4 `if: false` sont retirés.** Le quatrième était en tête d'une expression `if: >` multiligne sur `smoke-domaine`, ce qui l'avait fait manquer d'un premier passage — et explique pourquoi l'audit initial n'en comptait que 3.
+- **Le job `e2e-smoke-aggregate` ne mentira plus.** Il porte le nom du check requis par la branch protection (`E2E Smoke (Playwright — back-office)`) et sortait en succès sur 100 % des PR : ses dépendances étant `skipped`, elles n'étaient jamais `failure`. Il émet désormais un `::warning` visible quand les E2E étaient nécessaires et n'ont pas tourné. Il reste non bloquant dans ce lot.
+- **Cause de la lenteur CI identifiée et corrigée.** Le run 30543586686 (PR #1128) a dépassé 25 minutes là où les huit runs précédents prenaient 2 à 6 minutes. Raison : `turbo run lint type-check build --concurrency=100%` avec `NODE_OPTIONS=--max-old-space-size=8192` sur un runner `ubuntu-latest` (2 vCPU, 7 Go). Quand les trois apps sont concernées, cela réclame jusqu'à 24 Go de heap : le runner swappe au lieu de compiler. Désormais `lint`+`type-check` d'un côté (léger, 4 Go, concurrency 100 %, retour en ~90 s), `build` de l'autre (`--concurrency=1`, 6 Go). Trois builds séquentiels coûtent ~4 min, contre 25 de thrashing.
+- **Un changement dans `packages/e2e-linkme` ne déclenche plus le build des 3 apps.** Ce package ne contient que des tests E2E et n'est consommé par aucune app (vérifié : aucun `apps/*/package.json` ne le déclare), mais il matchait le filtre `packages/**`. C'est la cause immédiate du run de 25 minutes.
+- **Diagnostic du cache Turborepo ajouté.** `turbo.json` a `remoteCache.enabled: true`, mais si `TURBO_TOKEN` ou `TURBO_TEAM` manque côté GitHub, turbo continue sans cache, silencieusement. Un step émet maintenant un `::warning` explicite. À vérifier : c'est le plus gros levier de temps CI restant (un build passe de ~4 min à ~20 s sur cache chaud).
+- **`pnpm validate:types` branché, en `continue-on-error`.**
+
+### Correction d'une affirmation fausse de l'audit
+
+`docs/audit-2026-07-30/` et `SYSTEME.md` affirmaient que `scripts/check-db-type-alignment.ts` (`validate:types`) « aurait attrapé à lui seul trois des douze bugs bloquants » — la colonne `status` inexistante du wizard produit, l'option `backorder`, les segments fournisseur `TACTICAL`. **C'est faux, et l'exécution le prouve** : le script rapporte 950 lignes de diagnostic dont 273 « Query Supabase sans type », et **zéro** détection de colonne inexistante ou d'enum écrit en dur. Son en-tête annonce ces détections (« Colonnes inexistantes dans schema », « Enums hardcodés au lieu d'enums générés ») ; elles ne sont pas implémentées, ou ne fonctionnent pas.
+
+Conséquence : le gate qui aurait vraiment attrapé ces trois bugs **reste à écrire**. Il doit comparer les colonnes et les valeurs d'enum utilisées dans le code à `packages/@verone/types/src/supabase.ts`. C'est le seul gate de la liste des six de `PLAN-CORRECTION.md` § 2 qui ne soit pas un branchement d'existant. Ajouté au lot `[BO-AUDIT-004]` temps 2.
+
+`validate:types` reste utile comme indicateur de dette (273 queries non typées) mais ne pourra pas devenir bloquant sans corriger ces 273 occurrences au préalable.
+
+**Ce que ce lot ne fait pas** : ne rend rien bloquant, ne purge pas la baseline advisors (719 entrées acceptées dont 315 fonctions exposées à `anon`), ne branche pas `generate-docs.py`, ne corrige pas `CODEOWNERS` (`@owner` n'est pas un handle GitHub valide, donc aucune règle ne désigne personne). Tout cela est le temps 2, après avoir mesuré ce que les E2E réactivés donnent réellement.
+
+**Référence** : Roméo 2026-07-30, « je veux vraiment pouvoir avancer un peu plus rapide, parce qu'on va perdre à chaque fois 20 minutes pour les CI ». Sauvegarde avant modification dans `~/verone-backups/2026-07-30-audit-004/`.

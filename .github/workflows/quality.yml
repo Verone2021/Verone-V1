@@ -58,6 +58,12 @@ jobs:
               - 'apps/site-internet/**'
             packages:
               - 'packages/**'
+              # [BO-AUDIT-004] packages/e2e-linkme ne contient que des tests E2E
+              # et n'est consommé par aucune app (vérifié : aucun apps/*/package.json
+              # ne le déclare). Sans cette exclusion, modifier une fixture de test
+              # déclenchait le build des 3 apps — cause du run de 25 min sur la
+              # PR #1128, là où les runs habituels prennent 2 à 6 min.
+              - '!packages/e2e-linkme/**'
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'tsconfig.json'
@@ -241,18 +247,58 @@ jobs:
           echo "apps=$APPS_CHANGED" >> $GITHUB_OUTPUT
           echo "📦 Apps to check: $APPS_CHANGED"
 
-      # ---- Lint + Type-Check + Build (parallel via Turbo) — INFRA-CI-TURBO-001
-      # Avant : 3 steps séquentiels (~6 min : 60s lint + 90s type-check + 180s build)
-      # Après : 1 invocation turbo qui parallélise au DAG (~3 min wall-clock)
-      # + lint utilise désormais le même --filter que type-check/build (avant
-      #   `pnpm lint` lintait les 30 packages systématiquement).
-      - name: Lint + Type-Check + Build (${{ steps.flags.outputs.apps }})
+      # ---- Diagnostic du cache distant Turborepo — [BO-AUDIT-004]
+      # turbo.json a `remoteCache.enabled: true`, mais si TURBO_TOKEN ou
+      # TURBO_TEAM n'est pas configuré côté GitHub, turbo émet un avertissement
+      # et continue SANS cache — silencieusement. Chaque run repart alors de
+      # zéro. Ce step rend le fait visible en une ligne.
+      - name: Diagnostic cache Turborepo
         if: needs.detect-changes.outputs.code == 'true'
-        run: pnpm turbo run lint type-check build ${{ steps.flags.outputs.filters }} --concurrency=100%
+        run: |
+          if [ -z "$TURBO_TOKEN" ] || [ -z "$TURBO_TEAM" ]; then
+            echo "::warning title=Cache Turborepo inactif::TURBO_TOKEN ou TURBO_TEAM manquant. Chaque run recompile tout depuis zéro. Configurer dans Settings > Secrets and variables > Actions."
+          else
+            echo "✅ Cache distant Turborepo configuré (team: $TURBO_TEAM)"
+          fi
+
+      # ---- Lint + Type-Check — [BO-AUDIT-004]
+      # Séparé du build : ces deux tâches sont légères et rapides (~90 s). Les
+      # avoir en premier donne un retour immédiat sur 90 % des erreurs, sans
+      # attendre les 3 builds Next.js.
+      - name: Lint + Type-Check (${{ steps.flags.outputs.apps }})
+        if: needs.detect-changes.outputs.code == 'true'
+        run: pnpm turbo run lint type-check ${{ steps.flags.outputs.filters }} --concurrency=100%
         env:
-          NODE_OPTIONS: --max-old-space-size=8192
+          NODE_OPTIONS: --max-old-space-size=4096
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      # ---- Build — [BO-AUDIT-004] : séquentiel, et voici pourquoi.
+      # Avant : `--concurrency=100%` avec NODE_OPTIONS=8192 sur un runner
+      # ubuntu-latest (2 vCPU / 7 Go). Quand les 3 apps sont concernées, cela
+      # demande jusqu'à 24 Go de heap : le runner passe son temps à swapper.
+      # Constaté sur le run 30543586686 (PR #1128) : > 25 min au lieu de 2 à 6.
+      # Après : un build à la fois, 6 Go de heap chacun. Trois builds séquentiels
+      # coûtent ~4 min, contre 25 min de thrashing.
+      - name: Build (${{ steps.flags.outputs.apps }})
+        if: needs.detect-changes.outputs.code == 'true'
+        run: pnpm turbo run build ${{ steps.flags.outputs.filters }} --concurrency=1
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      # ---- Alignement DB <-> TypeScript — [BO-AUDIT-004]
+      # scripts/check-db-type-alignment.ts existe depuis des mois et n'était
+      # branché nulle part. Il détecte les colonnes inexistantes et les enums
+      # écrits en dur — soit à lui seul 3 des 12 bugs bloquants de l'audit
+      # (colonne `status` du wizard produit, `backorder`, segments fournisseur).
+      # NON BLOQUANT dans ce lot, volontairement : on mesure d'abord l'ampleur,
+      # on durcit ensuite. Voir docs/audit-2026-07-30/PLAN-CORRECTION.md § Lot 004.
+      - name: Alignement types DB (informational)
+        if: needs.detect-changes.outputs.code == 'true'
+        continue-on-error: true
+        run: pnpm validate:types
 
       # ---- Type Coverage Gate (baseline-protected) ----
       # Bloque le merge si la couverture de types descend sous le seuil par app.
@@ -280,7 +326,7 @@ jobs:
 
       # [INFRA-CI-NO-E2E-001] Upload .next pour E2E désactivé (jobs E2E off).
       - name: Upload back-office .next artifact (for E2E jobs)
-        if: false && needs.detect-changes.outputs.e2e-needed == 'true'
+        if: needs.detect-changes.outputs.e2e-needed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: back-office-build
@@ -324,7 +370,7 @@ jobs:
     # E2E ralentissaient la CI (~10 min) sans détecter les vraies régressions
     # (cf. PR #942 BO-RLS-PERF-002 qui a cassé les photos commandes en prod
     # pendant 6 jours sans que le smoke ne sourcille). Roméo teste lui-même.
-    if: false && needs.detect-changes.outputs.e2e-needed == 'true' && github.event_name == 'pull_request'
+    if: needs.detect-changes.outputs.e2e-needed == 'true' && github.event_name == 'pull_request'
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -425,9 +471,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     continue-on-error: true
-    # [INFRA-CI-NO-E2E-001] Désactivé — voir smoke-golden ci-dessus.
+    # [BO-AUDIT-004] Réactivé le 2026-07-30. Le `false &&` d'INFRA-CI-NO-E2E-001
+    # (2026-05-13) était en tête de cette expression multiligne, ce qui rendait
+    # le job systématiquement `skipped` — donc jamais `failure`, donc le check
+    # requis e2e-smoke-aggregate passait au vert sans qu'aucun test ne tourne.
+    # Reste continue-on-error: true dans ce lot : on mesure avant de durcir.
     if: >
-      false &&
       needs.detect-changes.outputs.e2e-needed == 'true' &&
       (github.event_name == 'pull_request' || github.ref == 'refs/heads/main')
     strategy:
@@ -549,7 +598,7 @@ jobs:
     timeout-minutes: 15
     continue-on-error: true
     # [INFRA-CI-NO-E2E-001] Désactivé — voir smoke-golden ci-dessus.
-    if: false && github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
@@ -902,13 +951,23 @@ jobs:
           GOLDEN="${{ needs.smoke-golden.result }}"
           DOMAINE="${{ needs.smoke-domaine.result }}"
           echo "e2e-needed=$E2E_NEEDED golden=$GOLDEN domaine=$DOMAINE"
-          # On fail UNIQUEMENT en cas d'échec réel d'un job E2E.
-          # Les autres états (success, skipped, cancelled non-erreur) passent.
-          # - skipped : la condition `if:` du job a refusé (PR backend pure,
-          #   ou release PR qui ne déclenche pas le sharding) — c'est attendu.
-          # - success : tout est vert, parfait.
+
+          # [BO-AUDIT-004] 2026-07-30 — ce job portait le nom du check requis par
+          # la branch protection et sortait en succès sur 100 % des PR, parce que
+          # smoke-golden et smoke-domaine étaient désactivés en dur (if: false)
+          # depuis le 2026-05-13 : leur `result` valait `skipped`, jamais
+          # `failure`. La protection affichait donc un gate E2E vert alors
+          # qu'aucun test n'avait tourné depuis deux mois et demi.
+          #
+          # Les if: false sont retirés dans ce même lot. Ce job reste NON
+          # BLOQUANT pour l'instant (on mesure avant de durcir), mais il ne
+          # mentira plus : un skip inattendu est désormais signalé en warning
+          # visible dans l'onglet Actions et dans le résumé de la PR.
           if [ "$GOLDEN" = "failure" ] || [ "$DOMAINE" = "failure" ]; then
             echo "❌ smoke-golden=$GOLDEN smoke-domaine=$DOMAINE"
             exit 1
+          fi
+          if [ "$E2E_NEEDED" = "true" ] && { [ "$GOLDEN" = "skipped" ] || [ "$DOMAINE" = "skipped" ]; }; then
+            echo "::warning title=Gate E2E non concluant::Les tests E2E etaient necessaires (e2e-needed=true) mais n ont pas tourne (golden=$GOLDEN, domaine=$DOMAINE). Ce check ne prouve rien sur cette PR."
           fi
           echo "✅ E2E smoke OK (golden=$GOLDEN domaine=$DOMAINE)"
