@@ -234,6 +234,17 @@ Signature inchangée → aucune policy modifiée, aucun risque de replanificatio
 
 ### Rapprochement bancaire
 
+> **Ajout du 2026-07-30, après-midi.** Le nouveau contrôle
+> `pnpm validate:db-usage` (créé au Lot 004) a trouvé **31 écritures en base
+> impossibles** dans le dépôt, toutes confirmées une par une contre la base de
+> production. La plus coûteuse est dans le rapprochement bancaire et constitue
+> une **deuxième** cause au symptôme nº1 de Roméo, indépendante de celle
+> décrite juste en dessous : `app/actions/bank-matching.ts:137` et `:339`
+> écrivent `financial_documents.payment_status`, colonne qui n'existe pas. Le
+> code crée la facture, échoue sur la mise à jour, puis **supprime la facture
+> qu'il vient de créer** (ligne 137) ou la laisse orpheline (ligne 339).
+> Liste complète et ordre de correction : `ECRITURES-DB-IMPOSSIBLES.md`.
+
 **[CRITIQUE] Le bouton « Rapprocher » de la fiche facture n'écrit rien en base** — `api/qonto/invoices/[id]/reconcile/route.ts:112-124` — appelle `markClientInvoiceAsPaid(id)` chez Qonto et s'arrête. Aucune ligne dans `transaction_document_links`, aucun `bank_transactions.matching_status`/`matched_document_id`, aucun `financial_documents.amount_paid`. `ReconcileTransactionModal.tsx:161` affiche « Rapprochement effectué » puis `window.location.reload()`. Body casté sans Zod (`:38`), et le commentaire « verify it exists and has matching amount » est faux — aucun contrôle de montant. → appeler le RPC `link_transaction_to_document` dans la même route + Zod.
 
 **[CRITIQUE] Une transaction partiellement allouée disparaît définitivement** — `supabase/migrations/20260512120000_fix_v_transactions_unified_matched_status.sql:39-42` (la vue calcule `matched` dès `manual_matched`) + `20260403100000_fix_reconciliation_amount_paid_cap.sql:119-123` (le RPC passe `manual_matched` dès le premier lien) — tous les écrans de candidats filtrent `.in('unified_status', ['to_process','classified'])` : `useRapprochementFetchers.ts:64,72`, `useRapprochementData.ts:135`, `use-invoice-reconciliation-suggestions.ts:157`. Un virement de 5 000 € alloué à une facture de 1 200 € n'apparaît plus jamais ; les 3 800 € sont inaccessibles, alors que c'est le cas d'usage documenté de la table (`20251230_transaction_document_links.sql:8-10`). → inclure `'matched'` quand `reconciliation_remaining > 0.01`, ou statut `partial` calculé depuis `SUM(allocated_amount) < ABS(amount)`.

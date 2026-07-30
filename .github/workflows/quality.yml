@@ -300,6 +300,29 @@ jobs:
         continue-on-error: true
         run: pnpm validate:types
 
+      # ---- Ecritures DB impossibles (informational) ----
+      # [BO-AUDIT-004] 2026-07-30 — nouveau gate. `validate:types` ci-dessus
+      # annonce dans son en-tete qu'il detecte les colonnes inexistantes et les
+      # valeurs d'enum invalides : verification faite, il n'en detecte AUCUNE
+      # (950 diagnostics emis, dont 273 « Query Supabase sans type », zero
+      # colonne, zero enum). Ce script-la le fait vraiment, en lisant
+      # packages/@verone/types/src/supabase.ts comme source de verite.
+      #
+      # Ce qu'il attrape est invisible pour tsc, ESLint et next build : le code
+      # compile, se deploie, et echoue seulement au clic de l'utilisateur avec
+      # une erreur PostgREST PGRST204 ou 22P02. C'est la categorie de bug qui a
+      # casse le rapprochement bancaire, l'archivage des variantes, la reception
+      # fournisseur et le webhook Revolut sans qu'aucun controle ne bronche.
+      #
+      # NON BLOQUANT dans ce lot : 31 ecritures impossibles existent deja dans
+      # le code. Elles sont la matiere du Lot 005. Passage en bloquant a la fin
+      # du Lot 005, quand le compte sera a zero — sans baseline, pour ne pas
+      # reproduire le defaut de la baseline advisors.
+      - name: Ecritures DB impossibles (informational)
+        if: needs.detect-changes.outputs.code == 'true'
+        continue-on-error: true
+        run: pnpm validate:db-usage:ci
+
       # ---- Type Coverage Gate (baseline-protected) ----
       # Bloque le merge si la couverture de types descend sous le seuil par app.
       # Méthode senior : pas de big bang strict mode — verrou progressif sur le
@@ -946,11 +969,42 @@ jobs:
     if: always()
     steps:
       - name: Aggregate result
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           E2E_NEEDED="${{ needs.detect-changes.outputs.e2e-needed }}"
-          GOLDEN="${{ needs.smoke-golden.result }}"
-          DOMAINE="${{ needs.smoke-domaine.result }}"
-          echo "e2e-needed=$E2E_NEEDED golden=$GOLDEN domaine=$DOMAINE"
+
+          # [BO-AUDIT-004] 2026-07-30 (correctif nº2) — on NE PEUT PAS lire
+          # `needs.smoke-golden.result` : quand un job porte
+          # `continue-on-error: true`, GitHub renvoie `success` dans le
+          # contexte `needs` même lorsque le job a échoué. Vérifié sur le run
+          # 30545876019 : les 5 jobs E2E étaient en `failure` dans l'onglet
+          # Actions, et ce job lisait golden=success domaine=success. Le gate
+          # mentait donc une deuxième fois, pour une raison différente des
+          # `if: false` retirés plus haut.
+          #
+          # On interroge l'API du run courant, qui expose la conclusion réelle
+          # de chaque job indépendamment de continue-on-error.
+          JOBS_JSON=$(gh api \
+            "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs?per_page=100" \
+            --jq '.jobs[] | select(.name | startswith("E2E smoke-")) | "\(.conclusion)\t\(.name)"')
+
+          echo "--- Conclusions réelles des jobs E2E de ce run ---"
+          printf '%s\n' "$JOBS_JSON"
+          echo "--------------------------------------------------"
+
+          FAILED=$(printf '%s\n' "$JOBS_JSON" | grep -c '^failure' || true)
+          SKIPPED=$(printf '%s\n' "$JOBS_JSON" | grep -c '^skipped' || true)
+          TOTAL=$(printf '%s\n' "$JOBS_JSON" | grep -c . || true)
+
+          GOLDEN=$(printf '%s\n' "$JOBS_JSON" | grep 'smoke-golden' | cut -f1 | head -1)
+          DOMAINE="ok"
+          if printf '%s\n' "$JOBS_JSON" | grep 'smoke-domaine' | grep -q '^failure'; then
+            DOMAINE="failure"
+          fi
+          [ -n "$GOLDEN" ] || GOLDEN="absent"
+
+          echo "e2e-needed=$E2E_NEEDED golden=$GOLDEN domaine=$DOMAINE jobs=$TOTAL echecs=$FAILED skips=$SKIPPED"
 
           # [BO-AUDIT-004] 2026-07-30 — ce job portait le nom du check requis par
           # la branch protection et sortait en succès sur 100 % des PR, parce que
@@ -963,11 +1017,26 @@ jobs:
           # BLOQUANT pour l'instant (on mesure avant de durcir), mais il ne
           # mentira plus : un skip inattendu est désormais signalé en warning
           # visible dans l'onglet Actions et dans le résumé de la PR.
-          if [ "$GOLDEN" = "failure" ] || [ "$DOMAINE" = "failure" ]; then
-            echo "❌ smoke-golden=$GOLDEN smoke-domaine=$DOMAINE"
-            exit 1
+          # Passage en bloquant (exit 1) : prévu en fin de Lot 006, quand les
+          # tests E2E disposeront d'un compte de test dédié et d'un jeu de
+          # données de référence. Aujourd'hui ils échouent tous pour une seule
+          # raison — les secrets E2E_TEST_EMAIL / E2E_TEST_PASSWORD ne sont pas
+          # renseignés dans les secrets GitHub depuis le Lot 002 — donc bloquer
+          # maintenant arrêterait tout le travail sans rien prouver.
+          # Voir docs/audit-2026-07-30/PLAN-CORRECTION.md § Lot 006.
+          if [ "$FAILED" -gt 0 ]; then
+            echo "::warning title=Gate E2E en echec ($FAILED job(s))::Les tests E2E ont echoue reellement sur cette PR. Ce check reste non bloquant jusqu a la fin du Lot 006 (compte de test dedie). Detail dans les jobs E2E smoke-*."
+            {
+              echo "### ⚠ Gate E2E : $FAILED job(s) en échec sur $TOTAL"
+              echo ""
+              printf '%s\n' "$JOBS_JSON" | sed 's/^/- /'
+              echo ""
+              echo "Check non bloquant jusqu'à la fin du Lot 006."
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
-          if [ "$E2E_NEEDED" = "true" ] && { [ "$GOLDEN" = "skipped" ] || [ "$DOMAINE" = "skipped" ]; }; then
-            echo "::warning title=Gate E2E non concluant::Les tests E2E etaient necessaires (e2e-needed=true) mais n ont pas tourne (golden=$GOLDEN, domaine=$DOMAINE). Ce check ne prouve rien sur cette PR."
+          if [ "$E2E_NEEDED" = "true" ] && [ "$SKIPPED" -gt 0 ]; then
+            echo "::warning title=Gate E2E non concluant::Les tests E2E etaient necessaires (e2e-needed=true) mais $SKIPPED job(s) n ont pas tourne. Ce check ne prouve rien sur cette PR."
           fi
-          echo "✅ E2E smoke OK (golden=$GOLDEN domaine=$DOMAINE)"
+          if [ "$FAILED" -eq 0 ] && [ "$SKIPPED" -eq 0 ] && [ "$TOTAL" -gt 0 ]; then
+            echo "✅ E2E smoke OK ($TOTAL job(s), 0 echec)"
+          fi

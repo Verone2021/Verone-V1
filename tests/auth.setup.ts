@@ -9,6 +9,23 @@ import { test as setup, expect } from '@playwright/test';
 
 const authFile = './tests/.auth/user.json';
 
+/**
+ * Échoue immédiatement avec un message actionnable si la variable manque.
+ * En CI, ces valeurs viennent des secrets GitHub `E2E_TEST_EMAIL` /
+ * `E2E_TEST_PASSWORD`. En local, de `.env.local` ou de l'environnement shell.
+ */
+function required(name: string, value: string | undefined): string {
+  if (!value) {
+    throw new Error(
+      `[auth.setup] Variable d'environnement ${name} absente. ` +
+        `En CI : ajouter le secret GitHub ${name}. ` +
+        `En local : l'exporter avant de lancer Playwright. ` +
+        `Aucun mot de passe n'est plus écrit en dur dans le dépôt (Lot 002).`
+    );
+  }
+  return value;
+}
+
 setup('authenticate', async ({ page }) => {
   // Aller sur la page de login
   await page.goto('/login');
@@ -18,9 +35,13 @@ setup('authenticate', async ({ page }) => {
   await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(500);
 
-  // Creds : env vars en CI, fallback sur creds locales MVP
-  const email = process.env.E2E_TEST_EMAIL ?? 'veronebyromeo@gmail.com';
-  const password = process.env.E2E_TEST_PASSWORD;
+  // Creds : env vars uniquement (Lot 002 — plus aucun mot de passe en dur).
+  // [BO-AUDIT-004] 2026-07-30 — sans ce garde, `password` valait `undefined`
+  // et Playwright échouait sur « locator.fill: value: expected string, got
+  // undefined », message qui ne dit rien de la cause réelle. Constaté sur le
+  // run 30545876019 : les 5 jobs E2E rouges pour cette seule raison.
+  const email = required('E2E_TEST_EMAIL', process.env.E2E_TEST_EMAIL);
+  const password = required('E2E_TEST_PASSWORD', process.env.E2E_TEST_PASSWORD);
 
   // Remplir le formulaire de login avec sélecteurs robustes
   await page.getByRole('textbox', { name: /email/i }).fill(email);

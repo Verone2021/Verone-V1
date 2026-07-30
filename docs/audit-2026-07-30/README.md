@@ -4,12 +4,13 @@ Point d'entrée. **Lire ce fichier en premier**, puis `PLAN-CORRECTION.md`.
 
 ## Ce dossier contient
 
-| Fichier              | Quoi                                                                                                 | Quand le lire                                          |
-| -------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| `PLAN-CORRECTION.md` | La méthode, les 9 lots, les critères de sortie, la trajectoire de note                               | **Toujours**, au début de chaque session de correction |
-| `FINDINGS.md`        | Les ~90 défauts avec `fichier:ligne`, groupés par lot                                                | La section du lot en cours, uniquement                 |
-| `AUDIT.md`           | Le rapport d'origine : note 22/100, méthode, mesures, ce qui est bien fait                           | Pour comprendre le contexte, une fois                  |
-| `PLAN-TESTS.md`      | La stratégie de test, les 8 parcours Playwright, et pourquoi ils viennent en Lot 7 et pas en premier | Aux lots 6 et 7                                        |
+| Fichier                       | Quoi                                                                                                                                                                                    | Quand le lire                                          |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `PLAN-CORRECTION.md`          | La méthode, les 9 lots, les critères de sortie, la trajectoire de note                                                                                                                  | **Toujours**, au début de chaque session de correction |
+| `FINDINGS.md`                 | Les ~90 défauts avec `fichier:ligne`, groupés par lot                                                                                                                                   | La section du lot en cours, uniquement                 |
+| `AUDIT.md`                    | Le rapport d'origine : note 22/100, méthode, mesures, ce qui est bien fait                                                                                                              | Pour comprendre le contexte, une fois                  |
+| `PLAN-TESTS.md`               | La stratégie de test, les 8 parcours Playwright, et pourquoi ils viennent en Lot 7 et pas en premier                                                                                    | Aux lots 6 et 7                                        |
+| `ECRITURES-DB-IMPOSSIBLES.md` | Les 31 écritures en base qui échouent à l'exécution, trouvées par le contrôle créé au Lot 004 et confirmées une par une contre la base. Contient la cause du bug nº1 signalé par Roméo. | **Au Lot 005, en premier**                             |
 
 ## ⚠ Deux clics à faire avant tout le reste
 
