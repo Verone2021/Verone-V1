@@ -892,11 +892,14 @@ jobs:
           echo "⚠️ SUPABASE_DB_URL secret not set — types drift skipped." >> $GITHUB_STEP_SUMMARY
 
   # ----------------------------------------------------------------
-  # 6. Supabase security advisors — informationnel (non-bloquant)
+  # 6. Supabase security advisors
   #    Appelle le Supabase Management API pour lister les lints
-  #    (security_definer_view, rls_policy_always_true, function_search_path_mutable,
-  #    etc.). Ne bloque pas la PR mais commente avec un delta si le
-  #    nombre total d'issues augmente vs la dernière mesure sur `main`.
+  #    (security_definer_view, function_search_path_mutable, etc.) et commente
+  #    la PR avec le delta vs scripts/supabase-advisors-baseline.json.
+  #    BLOQUANT uniquement si une fonction SECURITY DEFINER redevient exécutable
+  #    par anon ou authenticated au-delà de la baseline ([BO-AUDIT-SEC-S1],
+  #    ADR-039). Les autres régressions restent un avertissement. Pas de
+  #    continue-on-error : il fait mentir le résultat du job (ADR-037).
   #
   #    Source : https://supabase.com/docs/guides/database/database-advisors
   #    API : GET /v1/projects/{ref}/advisors/lints?type=security
@@ -906,11 +909,10 @@ jobs:
   #      - SUPABASE_PROJECT_REF (ex. `aorroydfjsrygmosnzrl`)
   # ----------------------------------------------------------------
   supabase-advisors-security:
-    name: Supabase security advisors (informational)
+    name: Supabase security advisors (SECURITY DEFINER blocking)
     runs-on: ubuntu-latest
     timeout-minutes: 3
     if: github.event_name == 'pull_request'
-    continue-on-error: true
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
@@ -926,7 +928,18 @@ jobs:
 
       - name: Fetch security advisors
         if: env.SUPABASE_ACCESS_TOKEN != '' && env.SUPABASE_PROJECT_REF != ''
-        run: python3 scripts/supabase-advisors-check.py --type security --baseline scripts/supabase-advisors-baseline.json
+        run: |
+          set +e
+          python3 scripts/supabase-advisors-check.py --type security \
+            --baseline scripts/supabase-advisors-baseline.json \
+            --blocking-lints anon_security_definer_function_executable,authenticated_security_definer_function_executable
+          code=$?
+          set -e
+          if [ "$code" -eq 1 ]; then
+            echo "::warning::Régression advisors hors SECURITY DEFINER (non bloquant) — voir le commentaire de PR."
+            exit 0
+          fi
+          exit "$code"
 
       - name: Comment PR with summary
         if: always() && env.SUPABASE_ACCESS_TOKEN != '' && env.SUPABASE_PROJECT_REF != ''
