@@ -46,6 +46,10 @@ build/
 # Logs
 logs
 *.log
+# [INFRA-HOOK-001] 2026-09-11 — le motif `logs` couvrait aussi la route de code suivie
+# apps/back-office/src/app/api/logs/route.ts : tout commit la modifiant échouait dans
+# .husky/pre-commit (`git add` refuse un chemin ignoré). Détail : .claude/DECISIONS.md ADR-038.
+!apps/back-office/src/app/api/logs/
 
 # IDE
 .vscode/
