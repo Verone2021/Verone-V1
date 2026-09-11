@@ -1611,3 +1611,55 @@ logs
 
 Ils ne bloquent aucun commit tant qu'ils ne sont pas modifiés. Non corrigés ici
 pour garder ce lot minimal.
+
+---
+
+## ADR-039 — `[BO-AUDIT-SEC-S1]` Fonctions fermées au public par défaut, garde CI bloquante sur SECURITY DEFINER
+
+**Date** : 2026-09-11 → 2026-09-12 · **Statut** : appliqué en production (accords écrits de Roméo, lot par lot)
+**Fichiers** : `supabase/migrations/20260911213000_…` à `20260912030000_…`, `scripts/supabase-advisors-*`,
+`.github/workflows/quality.yml`, `.claude/rules/database.md` (R-GRANT)
+
+### Constat
+
+332 fonctions `SECURITY DEFINER` de `public` exécutables sans connexion (baseline CI acceptée : 315). Cause double :
+la révocation de masse du 2026-04-30 a retiré `anon` mais pas `PUBLIC` (330 droits venaient de `PUBLIC`), et les
+droits par défaut donnaient `EXECUTE` à `PUBLIC` + `anon` à toute nouvelle fonction. Dont des actions destructrices
+sans garde (suppression d'organisations, paiements, clôture d'exercice, séquences, resynchronisation du stock).
+
+### Décision — 6 lots, chacun montré puis appliqué sur accord écrit
+
+| Lot | Objet                                                                                                            | anon SD                     |
+| --- | ---------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| 1   | 13 signatures dangereuses : fermées au public                                                                    | 332 → 319                   |
+| 2   | Garde owner/admin dans `delete_organisation_safe`, `mark_payment_received`, `mark_po_payment_received` ×2        | —                           |
+| 3   | 72 fonctions sans aucun appelant : `PUBLIC, anon, authenticated` retirés                                         | 319 → 247                   |
+| 4   | 120 fonctions des écrans connectés : `PUBLIC, anon` retirés, `authenticated` gardé                               | 247 → 127                   |
+| 5   | 108 fonctions de déclencheurs : `PUBLIC, anon, authenticated` retirés (démontré sans effet sur le déclenchement) | 127 → 19                    |
+| 6   | Droits par défaut : `PUBLIC` retiré (global), `anon` retiré (schéma `public`)                                    | nouvelles fonctions fermées |
+
+Résultat mesuré par l'API advisors : `anon_security_definer_function_executable` 19,
+`authenticated_security_definer_function_executable` 144. Les 19 restantes sont les fonctions publiques nécessaires
+(site, pages LinkMe publiques, règles RLS visibles d'anon).
+
+Vérifications à chaque lot : appel HTTP sans connexion refusé (401/42501) sur les fonctions fermées, fonctions
+publiques 200, veronecollections.fr et linkme.network 200, salarié connecté OK, pg_cron `succeeded` au créneau suivant,
+empreinte des 246 déclencheurs identique avant/après le lot 5.
+
+### Garde CI
+
+Le job advisors perd `continue-on-error` (ADR-037) et devient **bloquant sur les deux compteurs SECURITY DEFINER**
+(`--blocking-lints`, code 3) ; les autres régressions restent un avertissement. Baseline abaissée aux valeurs mesurées
+le 2026-09-12 (lints disparus retirés : une réapparition compte comme régression).
+
+### Écarté
+
+- Branche Supabase pour démontrer le lot 5 : payante, bloquée dans les réglages agent ; remplacée par un essai dans un
+  bloc annulé par exception (0 objet restant, vérifié), choix de Roméo.
+- `REVOKE … FROM authenticated` sur les 120 fonctions du lot 4 : casserait les écrans connectés. La garde interne
+  (modèle lot 2) sera ajoutée fonction par fonction dans des lots suivants.
+
+### Hors lot, relevé
+
+`get_best_mcp_strategy` (SECURITY INVOKER) : ~35 900 appels `anon` via l'API sans appelant trouvé dans le code — à
+identifier.
