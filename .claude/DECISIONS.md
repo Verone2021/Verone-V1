@@ -1554,3 +1554,60 @@ ne réessaie pas (le handler retourne `{ received: true }` même en échec). Le
 dépôt ne permet pas de trancher : les variables `REVOLUT_*` n'existent que dans
 `apps/linkme/.env.example`, et l'URL du webhook se déclare à la main chez
 Revolut.
+
+---
+
+## ADR-038 — `[INFRA-HOOK-001]` Le motif `.gitignore` `logs` bloquait tout commit touchant la route des journaux
+
+**Date** : 2026-09-11 · **Statut** : appliqué · **Fichier** : `.gitignore` (raison documentée, cf. CLAUDE.md « Modifier `.gitignore` »)
+
+### Constat
+
+Un commit incluant une modification de `apps/back-office/src/app/api/logs/route.ts`
+échoue systématiquement dans `.husky/pre-commit` :
+
+```
+The following paths are ignored by one of your .gitignore files:
+apps/back-office/src/app/api/logs
+husky - pre-commit script failed (code 1)
+```
+
+Cause : `.gitignore:47` contient le motif nu `logs`, qui ignore **tout dossier
+nommé `logs`**, y compris le dossier de la route API. Le fichier est pourtant suivi.
+Le hook réexécute `git add` sur les fichiers indexés après Prettier (étape 4,
+`xargs git add`), et lint-staged fait de même après `prettier --write` /
+`eslint --fix` : `git add` refuse un chemin ignoré sans `-f`, le hook sort en
+erreur. Trouvé le 2026-09-11 en voulant mettre à l'abri le travail en cours de
+`[BO-AUDIT-005]`, qui modifie cette route.
+
+### Décision
+
+Corriger la cause (la règle d'exclusion), pas le symptôme (le hook) :
+
+```gitignore
+logs
+*.log
+!apps/back-office/src/app/api/logs/
+```
+
+- Les vrais dossiers de journaux restent ignorés (vérifié : `logs/app.log`,
+  `apps/back-office/logs/x.txt`, `packages/foo/logs/y.json`).
+- `git check-ignore` ne signale plus la route ; `git add --dry-run` l'accepte.
+- Écarté : ajouter `-f` au `git add` du hook. Cela masquerait le défaut pour le
+  hook mais pas pour lint-staged, et laisserait d'autres outils (IDE, scripts)
+  traiter la route comme ignorée.
+- Écarté : contourner avec `--no-verify`. Roméo a choisi de réparer d'abord
+  (2026-09-11).
+
+### Relevé au passage — 4 autres fichiers suivis couverts par une exclusion
+
+`git ls-files -ci --exclude-standard` :
+
+| Fichier                                                                   | Règle                | Portée                                                       |
+| ------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------ |
+| `.playwright-mcp/screenshots/.gitkeep`                                    | `.playwright-mcp/**` | aucune (jamais modifié)                                      |
+| `reports/AUDIT-SUMMARY-2026-01-23.md`, `reports/baseline-2026-01-23.json` | `/reports/`          | aucune (figés)                                               |
+| `docs/assets/Clients Pro – Liste.csv`                                     | `docs/assets/*.csv`  | **données clients publiées** — traité à part, décision Roméo |
+
+Ils ne bloquent aucun commit tant qu'ils ne sont pas modifiés. Non corrigés ici
+pour garder ce lot minimal.
