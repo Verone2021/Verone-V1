@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import type { SourcingProduct } from '@verone/products';
 import { Card, CardContent } from '@verone/ui';
 import { cn } from '@verone/ui';
@@ -88,7 +90,10 @@ export function SourcingProductList({
   onSort,
 }: SourcingProductListProps) {
   // « Supprimer » n'existe que pour les produits archivés : on ne vérifie qu'eux.
-  const archivedIds = products.filter(p => p.archived_at).map(p => p.id);
+  const archivedIds = useMemo(
+    () => products.filter(p => p.archived_at).map(p => p.id),
+    [products]
+  );
   const { canDelete } = useProductsWithHistory(archivedIds);
 
   if (loading) {
