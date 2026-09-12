@@ -174,12 +174,11 @@ export default function SourcingProductDetailPage() {
 
   const handleValidateSourcing = async () => {
     try {
-      await validateSourcing(productId);
-      toast({
-        title: 'Sourcing validé',
-        description: 'Le produit a été validé et ajouté au catalogue',
-      });
-      router.push('/catalogue');
+      // Le hook affiche lui-même le succès ou la raison du refus
+      // (prix d'achat ou fournisseur manquant) et renvoie false sans lever.
+      const ok = await validateSourcing(productId);
+      if (!ok) return;
+      router.push('/produits/catalogue');
     } catch (error) {
       toast({
         title: 'Erreur',
