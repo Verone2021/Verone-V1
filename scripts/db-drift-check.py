@@ -57,13 +57,14 @@ SQL_KEYWORDS_BLACKLIST = {
 #   FOREIGN KEY (sales_order_id) REFERENCES sales_orders(id) ON DELETE SET NULL
 #   column_name UUID REFERENCES products(id) ON DELETE CASCADE,
 #   CONSTRAINT fk_x FOREIGN KEY (col) REFERENCES t(id) ON DELETE RESTRICT,
+# La table référencée peut être qualifiée par son schéma (`REFERENCES public.products(id)`).
 FK_INLINE_PATTERN = re.compile(
-    r"\b([a-z_][a-z0-9_]*)\s+[A-Z]+\s+(?:NOT\s+NULL\s+)?(?:UNIQUE\s+)?REFERENCES\s+([a-z_][a-z0-9_]*)\s*\(\s*([a-z_][a-z0-9_]*)\s*\)\s*(?:ON\s+DELETE\s+(CASCADE|SET\s+NULL|RESTRICT|NO\s+ACTION|SET\s+DEFAULT))?",
+    r"\b([a-z_][a-z0-9_]*)\s+[A-Z]+\s+(?:NOT\s+NULL\s+)?(?:UNIQUE\s+)?REFERENCES\s+(?:public\.)?([a-z_][a-z0-9_]*)\s*\(\s*([a-z_][a-z0-9_]*)\s*\)\s*(?:ON\s+DELETE\s+(CASCADE|SET\s+NULL|RESTRICT|NO\s+ACTION|SET\s+DEFAULT))?",
     re.IGNORECASE,
 )
 
 FK_EXPLICIT_PATTERN = re.compile(
-    r"FOREIGN\s+KEY\s*\(\s*([a-z_][a-z0-9_]*)\s*\)\s*REFERENCES\s+([a-z_][a-z0-9_]*)\s*\(\s*([a-z_][a-z0-9_]*)\s*\)\s*(?:ON\s+DELETE\s+(CASCADE|SET\s+NULL|RESTRICT|NO\s+ACTION|SET\s+DEFAULT))?",
+    r"FOREIGN\s+KEY\s*\(\s*([a-z_][a-z0-9_]*)\s*\)\s*REFERENCES\s+(?:public\.)?([a-z_][a-z0-9_]*)\s*\(\s*([a-z_][a-z0-9_]*)\s*\)\s*(?:ON\s+DELETE\s+(CASCADE|SET\s+NULL|RESTRICT|NO\s+ACTION|SET\s+DEFAULT))?",
     re.IGNORECASE,
 )
 
