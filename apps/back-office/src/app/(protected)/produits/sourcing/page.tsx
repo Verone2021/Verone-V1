@@ -276,7 +276,7 @@ export default function SourcingPage() {
               error={error}
               onView={id => router.push(`/produits/sourcing/produits/${id}`)}
               onViewSupplier={supplierId =>
-                router.push(`/organisations/${supplierId}`)
+                router.push(`/contacts-organisations/suppliers/${supplierId}`)
               }
               onEdit={id => router.push(`/produits/sourcing/produits/${id}`)}
               onValidate={handleValidate}
