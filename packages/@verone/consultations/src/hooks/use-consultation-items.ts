@@ -6,6 +6,11 @@ import { useToast } from '@verone/common/hooks';
 import { associateProductToConsultation } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 
+import {
+  computeConsultationEconomics,
+  type ConsultationEconomicsLineInput,
+} from '../lib/consultation-economics';
+
 import type {
   ConsultationItem,
   CreateConsultationItemData,
@@ -309,12 +314,24 @@ export function useConsultationItems(consultationId?: string) {
   };
 
   const calculateTotal = () => {
-    // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du total
-    return consultationItems.reduce((total, item) => {
-      if (item.is_free || item.status === 'rejected') return total;
-      const price = item.unit_price ?? 0;
-      return total + price * item.quantity;
-    }, 0);
+    // Décision BO-CONSULT-P2-001 : toujours via la fonction d'économie (source unique).
+    // totals.billed = Σ(unitPrice × quantity) pour les lignes incluses, non gratuites, avec prix.
+    const econInputs: ConsultationEconomicsLineInput[] = consultationItems.map(
+      item => ({
+        id: item.id,
+        quantity: item.quantity,
+        unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
+        ecoTax: item.product?.eco_tax_default ?? 0,
+        shippingCost: item.shipping_cost ?? 0,
+        sellingShippingCost: item.selling_shipping_cost ?? 0,
+        proposedPrice: item.unit_price ?? null,
+        isFree: item.is_free,
+        isSample: item.is_sample,
+        status: item.status ?? 'pending',
+        supplierId: item.product?.supplier_id ?? null,
+      })
+    );
+    return computeConsultationEconomics(econInputs).totals.billed;
   };
 
   const getTotalItemsCount = () => {
