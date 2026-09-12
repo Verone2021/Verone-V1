@@ -20,6 +20,7 @@ import {
 import type { ClientConsultation } from '../hooks/use-consultations';
 import type { ConsultationItem } from '../hooks/use-consultations';
 import type { ConsultationPdfClientInfo } from './ConsultationSummaryPdf';
+import { filterActiveItems } from '../lib/consultation-order-guards';
 
 const s = StyleSheet.create({
   headerRow: {
@@ -220,6 +221,8 @@ export function ConsultationMarginReportPdf({
   clientName,
   clientInfo,
 }: ConsultationMarginReportPdfProps) {
+  // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du rapport marges
+  const activeItems = filterActiveItems(items);
   // Sémantique : item.shipping_cost = TOTAL LIGNE (pas par unité)
   const getCostPrice = (item: ConsultationItem): number =>
     item.cost_price_override ?? item.product?.cost_price ?? 0;
@@ -246,9 +249,9 @@ export function ConsultationMarginReportPdf({
     return ((getRevenue(item) - cost) / cost) * 100;
   };
 
-  const totalRevenue = items.reduce((sum, i) => sum + getRevenue(i), 0);
-  const totalCost = items.reduce((sum, i) => sum + getCostTotal(i), 0);
-  const totalShipping = items.reduce(
+  const totalRevenue = activeItems.reduce((sum, i) => sum + getRevenue(i), 0);
+  const totalCost = activeItems.reduce((sum, i) => sum + getCostTotal(i), 0);
+  const totalShipping = activeItems.reduce(
     (sum, i) => (i.is_sample ? sum : sum + i.shipping_cost),
     0
   );
@@ -416,7 +419,7 @@ export function ConsultationMarginReportPdf({
             </Text>
           </View>
 
-          {items.map(item => {
+          {activeItems.map(item => {
             const costPrice = getCostPrice(item);
             const shippingPerUnit = item.is_sample
               ? 0
@@ -484,7 +487,7 @@ export function ConsultationMarginReportPdf({
         <Text style={veroneStyles.sectionTitleEyebrow}>Analyse</Text>
         <View style={s.analysisBlock}>
           <Text style={s.analysisTitle}>Produits les plus rentables</Text>
-          {items
+          {activeItems
             .filter(i => !i.is_free && !i.is_sample && getMarginPercent(i) > 0)
             .sort((a, b) => getMarginPercent(b) - getMarginPercent(a))
             .slice(0, 5)

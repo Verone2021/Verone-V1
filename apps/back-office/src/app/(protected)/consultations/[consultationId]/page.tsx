@@ -3,20 +3,19 @@
 import { useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
-import { useParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 
-import { ConsultationOrderInterface } from '@verone/consultations';
-import { ConsultationTimeline } from '@verone/consultations';
+import {
+  ConsultationOrderInterface,
+  ConsultationTimeline,
+} from '@verone/consultations';
 import { ConsultationMarginReportPdf } from '@verone/consultations/pdf-templates';
-import { ButtonUnified } from '@verone/ui';
-import { Card, CardContent } from '@verone/ui';
+import { ButtonUnified, Card, CardContent } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { AlertCircle, ArrowLeft, Trash2 } from 'lucide-react';
 
 const PdfPreviewModal = dynamic(
-  () =>
-    import('@verone/finance').then(mod => ({ default: mod.PdfPreviewModal })),
+  () => import('@verone/finance').then(m => ({ default: m.PdfPreviewModal })),
   { ssr: false }
 );
 
@@ -209,7 +208,10 @@ export default function ConsultationDetailPage() {
           />
           <ConsultationToolbar
             consultation={detail.consultation}
-            consultationItemsCount={detail.consultationItems.length}
+            consultationItemsCount={
+              detail.consultationItems.filter(i => i.status !== 'rejected')
+                .length
+            }
             emailPdfLoading={detail.emailPdfLoading}
             pdfLoading={detail.pdfLoading}
             creatingOrder={detail.creatingOrder}
@@ -292,7 +294,6 @@ export default function ConsultationDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Colonne gauche — Produits & Marges */}
           <div className="lg:col-span-8 space-y-4">
-            {/* Décision 1 BO-CONSULT-P2-001 : items + mutations depuis source unique */}
             <ConsultationOrderInterface
               consultationId={consultationId}
               consultationItems={detail.consultationItems}
@@ -349,7 +350,6 @@ export default function ConsultationDetailPage() {
         />
       )}
 
-      {/* Dialog choix type commande */}
       <ConsultationOrderDialog
         open={showOrderDialog}
         onClose={() => setShowOrderDialog(false)}
@@ -373,7 +373,6 @@ export default function ConsultationDetailPage() {
         }}
       />
 
-      {/* Modal rapport marges PDF — Rapport interne (avec marges et prix d'achat) */}
       {showMarginReport && detail.consultation && (
         <PdfPreviewModal
           isOpen={showMarginReport}
@@ -397,7 +396,6 @@ export default function ConsultationDetailPage() {
           }
         />
       )}
-
       <ConsultationModals
         consultation={detail.consultation}
         consultationId={consultationId}

@@ -20,6 +20,10 @@ import {
 import type { ClientConsultation } from '../hooks/use-consultations';
 import type { ConsultationItem } from '../hooks/use-consultations';
 import type { ConsultationImage } from '../hooks/use-consultation-images';
+import {
+  filterActiveItems,
+  filterBillableItems,
+} from '../lib/consultation-order-guards';
 
 // ── Client info shape (mirror of resolveClientInfo) ──────────────────
 export interface ConsultationPdfClientInfo {
@@ -261,10 +265,19 @@ export function ConsultationSummaryPdf({
 
   const proposalRef = `PROP-${consultation.id.slice(0, 8).toUpperCase()}`;
   const productBase64 = preloadedImages?.productImages ?? {};
+  // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du PDF client
+  const activeItems = filterActiveItems(items);
+  // Total calculé sur les lignes facturables uniquement (non-gratuites, avec prix)
+  const computedTotalHT = filterBillableItems(activeItems).reduce(
+    (sum, item) => sum + item.unit_price * item.quantity,
+    0
+  );
   const tvaRate =
     consultation.tva_rate != null ? Number(consultation.tva_rate) : 0;
-  const tvaAmount = (totalHT * tvaRate) / 100;
-  const totalTTC = totalHT + tvaAmount;
+  const tvaAmount = (computedTotalHT * tvaRate) / 100;
+  const totalTTC = computedTotalHT + tvaAmount;
+  // Param totalHT conservé pour compatibilité appellants (unused en interne)
+  void totalHT;
 
   // Fallback minimal si pas de clientInfo pré-chargé
   const info: ConsultationPdfClientInfo = clientInfo ?? {
@@ -371,18 +384,21 @@ export function ConsultationSummaryPdf({
 
         {/* Produits — version client : prix de vente uniquement */}
         <Text style={veroneStyles.sectionTitleEyebrow}>
-          Sélection ({items.length})
+          Sélection ({activeItems.length})
         </Text>
 
-        {items.length === 0 ? (
+        {activeItems.length === 0 ? (
           <Text style={s.emptyText}>
             Aucun produit dans cette proposition pour le moment.
           </Text>
         ) : (
           <View>
-            {items.map(item => {
-              const unitPrice = item.unit_price ?? 0;
-              const lineTotal = item.is_free ? 0 : unitPrice * item.quantity;
+            {activeItems.map(item => {
+              const unitPrice = item.unit_price; // null → « À fixer »
+              const lineTotal =
+                item.is_free || unitPrice === null
+                  ? null
+                  : unitPrice * item.quantity;
 
               return (
                 <View key={item.id} style={s.productCard} wrap={false}>
@@ -420,13 +436,17 @@ export function ConsultationSummaryPdf({
                         <Text style={s.productMetaValue}>
                           {item.is_free
                             ? 'Offert'
-                            : formatVeronePrice(unitPrice, 2)}
+                            : unitPrice !== null
+                              ? formatVeronePrice(unitPrice, 2)
+                              : 'À fixer'}
                         </Text>
                       </View>
                       <View style={s.productMetaItem}>
                         <Text style={s.productMetaLabel}>Total HT</Text>
                         <Text style={s.productMetaValueGold}>
-                          {item.is_free ? '—' : formatVeronePrice(lineTotal, 2)}
+                          {lineTotal !== null
+                            ? formatVeronePrice(lineTotal, 2)
+                            : '—'}
                         </Text>
                       </View>
                     </View>
@@ -447,7 +467,7 @@ export function ConsultationSummaryPdf({
             <View style={[veroneStyles.totalBarPearl, { marginTop: 14 }]}>
               <Text style={veroneStyles.totalLabelPearl}>Total HT</Text>
               <Text style={veroneStyles.totalValuePearl}>
-                {formatVeronePrice(totalHT, 2)}
+                {formatVeronePrice(computedTotalHT, 2)}
               </Text>
             </View>
             {tvaRate > 0 && (

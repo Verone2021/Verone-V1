@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { toast } from 'sonner';
+
 import type { ClientConsultation } from '@verone/consultations';
 import { useConsultations } from '@verone/consultations';
 import { useConsultationHistory } from '@verone/consultations';
@@ -11,6 +13,7 @@ import { useConsultationImages } from '@verone/consultations';
 import { useConsultationItems } from '@verone/consultations';
 import { useConsultationQuotes } from '@verone/consultations';
 import { useConsultationSalesOrders } from '@verone/consultations';
+import { filterBillableItems, countUnpricedLines } from '@verone/consultations';
 import { useQuotes } from '@verone/finance/hooks';
 import type { IOrderForDocument } from '@verone/finance/components';
 import { useSalesOrders } from '@verone/orders';
@@ -66,7 +69,6 @@ export function useConsultationDetail(consultationId: string) {
     null
   );
 
-  // Décision 1 BO-CONSULT-P2-001 : source unique — on destructure tout ici
   const {
     consultationItems,
     loading: itemsLoading,
@@ -125,8 +127,6 @@ export function useConsultationDetail(consultationId: string) {
       setConsultation(foundConsultation ?? null);
     }
   }, [consultations, consultationId]);
-
-  // ── Simple handlers ───────────────────────────────────────────────
 
   const handleStatusChange = async (
     newStatus: ClientConsultation['status']
@@ -204,8 +204,6 @@ export function useConsultationDetail(consultationId: string) {
     }
   };
 
-  // ── PDF / Email image preloading ──────────────────────────────────
-
   const handleOpenPdf = () => {
     if (!consultation) return;
     setPdfLoading(true);
@@ -255,34 +253,31 @@ export function useConsultationDetail(consultationId: string) {
     }
   };
 
-  // ── Order creation ─────────────────────────────────────────────────
-
   const handleCreateOrder = async () => {
     if (!consultation || consultationItems.length === 0) return;
     setCreatingOrder(true);
     try {
+      // Décision 2 BO-CONSULT-P2-001 : refus explicite si prix manquants
+      const n = countUnpricedLines(consultationItems);
+      if (n > 0) {
+        toast.error(`Prix de vente à fixer pour ${n} ligne(s)`);
+        return;
+      }
+
       const partner = await resolvePartnerForOrder(consultation);
       if (!partner) {
         console.error('[ConsultationDetail] No partner found for order');
         return;
       }
 
-      // Décision 2 BO-CONSULT-P2-001 : lignes refusées et sans prix exclues
-      const items = consultationItems
-        .filter(
-          item =>
-            !item.is_free &&
-            item.status !== 'rejected' &&
-            item.unit_price !== null
-        )
-        .map(item => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price_ht: item.unit_price ?? 0,
-          tax_rate: 0.2,
-          discount_percentage: 0,
-          eco_tax: 0,
-        }));
+      const items = filterBillableItems(consultationItems).map(item => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unit_price_ht: item.unit_price,
+        tax_rate: 0.2,
+        discount_percentage: 0,
+        eco_tax: 0,
+      }));
 
       if (items.length === 0) {
         console.error('[ConsultationDetail] No billable items for order');
@@ -310,12 +305,14 @@ export function useConsultationDetail(consultationId: string) {
     }
   };
 
-  // ── Quote modal ────────────────────────────────────────────────────
-
   const handleOpenQuoteModal = () => {
     void (async () => {
       if (!consultation) return;
-
+      const n = countUnpricedLines(consultationItems);
+      if (n > 0) {
+        toast.error(`Prix de vente à fixer pour ${n} ligne(s)`);
+        return;
+      }
       const activeQuotes = linkedQuotes.filter(
         q => q.quote_status === 'draft' || q.quote_status === 'sent'
       );
@@ -393,13 +390,9 @@ export function useConsultationDetail(consultationId: string) {
     }
   };
 
-  // ── Return ─────────────────────────────────────────────────────────
-
   return {
-    // Data
     consultation,
     loading,
-    // Items (source unique — Décision 1 BO-CONSULT-P2-001)
     consultationItems,
     itemsLoading,
     itemsError,

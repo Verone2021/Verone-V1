@@ -4,3 +4,4 @@
  */
 
 export * from './consultation-economics';
+export * from './consultation-order-guards';

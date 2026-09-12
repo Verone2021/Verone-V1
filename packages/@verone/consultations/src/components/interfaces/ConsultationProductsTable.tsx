@@ -57,6 +57,8 @@ const STATUS_LABELS: Record<string, string> = {
   ordered: 'Cmdé',
 };
 
+const fmt = (p: number | null) => (p === null ? 'À fixer' : `${p.toFixed(2)}€`);
+
 export function ConsultationProductsTable({
   items,
   editingItem,
@@ -379,11 +381,7 @@ export function ConsultationProductsTable({
                       <span
                         className={`text-[12px] font-medium ${item.is_free ? 'text-zinc-400' : 'text-zinc-900'}`}
                       >
-                        {item.is_free
-                          ? 'Gratuit'
-                          : item.unit_price === null
-                            ? 'À fixer'
-                            : `${item.unit_price.toFixed(2)}€`}
+                        {item.is_free ? 'Gratuit' : fmt(item.unit_price)}
                       </span>
                       {/* Sous-total vente si plusieurs unités et payant */}
                       {!item.is_free &&
@@ -431,9 +429,7 @@ export function ConsultationProductsTable({
                   ) : item.is_sample ? (
                     <div className="flex items-center gap-1">
                       <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[9px] font-bold uppercase tracking-wider rounded shadow-sm">
-                        {item.unit_price !== null
-                          ? `${item.unit_price.toFixed(2)}€`
-                          : 'À fixer'}
+                        {fmt(item.unit_price)}
                       </span>
                       <button
                         type="button"

@@ -8,6 +8,7 @@ import type {
   ClientConsultation,
   ConsultationItem,
 } from '@verone/consultations';
+import { filterBillableItems } from '@verone/consultations';
 import type { IOrderForDocument } from '@verone/finance/components';
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -265,15 +266,17 @@ export function buildOrderForDocument(
   partnerId: string,
   org: Record<string, string | null | boolean | number>
 ): IOrderForDocument {
+  // Décision 2 BO-CONSULT-P2-001 : seules les lignes facturables dans le devis
+  const billableItems = filterBillableItems(consultationItems);
   return {
     id: consultationId,
     order_number: `CONSULT-${consultationId.slice(0, 8).toUpperCase()}`,
-    total_ht: consultationItems.reduce(
-      (sum, item) => sum + (item.unit_price ?? 0) * item.quantity,
+    total_ht: billableItems.reduce(
+      (sum, item) => sum + item.unit_price * item.quantity,
       0
     ),
-    total_ttc: consultationItems.reduce(
-      (sum, item) => sum + (item.unit_price ?? 0) * item.quantity * 1.2,
+    total_ttc: billableItems.reduce(
+      (sum, item) => sum + item.unit_price * item.quantity * 1.2,
       0
     ),
     tax_rate: 0.2,
@@ -301,14 +304,12 @@ export function buildOrderForDocument(
       siret: org.siret as string | null,
       vat_number: org.vat_number as string | null,
     },
-    sales_order_items: consultationItems
-      .filter(item => !item.is_free)
-      .map(item => ({
-        id: item.id,
-        quantity: item.quantity,
-        unit_price_ht: item.unit_price ?? 0,
-        tax_rate: 0.2,
-        products: item.product ? { name: item.product.name } : null,
-      })),
+    sales_order_items: billableItems.map(item => ({
+      id: item.id,
+      quantity: item.quantity,
+      unit_price_ht: item.unit_price,
+      tax_rate: 0.2,
+      products: item.product ? { name: item.product.name } : null,
+    })),
   };
 }
