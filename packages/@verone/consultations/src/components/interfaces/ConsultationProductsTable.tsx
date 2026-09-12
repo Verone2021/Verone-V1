@@ -292,8 +292,7 @@ export function ConsultationProductsTable({
                       {/* Sous-total si plusieurs unités */}
                       {item.quantity > 1 && (
                         <span className="text-[9px] text-zinc-400 mt-0.5">
-                          × {item.quantity} ={' '}
-                          {(econ.unitCost * item.quantity).toFixed(2)}€
+                          × {item.quantity} = {econ.purchaseAmount.toFixed(2)}€
                         </span>
                       )}
                       {/* Badge "Modifié" uniquement si une vraie valeur d'origine existait */}
@@ -402,10 +401,9 @@ export function ConsultationProductsTable({
                       {/* Sous-total vente si plusieurs unités et payant */}
                       {!item.is_free &&
                         item.quantity > 1 &&
-                        econ.unitPrice != null && (
+                        econ.salesAmount !== null && (
                           <span className="text-[9px] text-zinc-400 mt-0.5">
-                            × {item.quantity} ={' '}
-                            {(econ.unitPrice * item.quantity).toFixed(2)}€
+                            × {item.quantity} = {econ.salesAmount.toFixed(2)}€
                           </span>
                         )}
                     </div>

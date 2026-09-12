@@ -73,6 +73,10 @@ export interface LineEconomics {
   margin: number;
   /** Marge % = margin / cost × 100, null si gratuit/échantillon/priceToFix/cost=0 */
   marginPercent: number | null;
+  /** Sous-total achat = unitCost × quantity (affiché dans le tableau) */
+  purchaseAmount: number;
+  /** Sous-total vente = unitPrice × quantity, null si prix à fixer */
+  salesAmount: number | null;
   /**
    * Montant facturé au client (décision 5 BO-CONSULT-P2-001) :
    * incluse, non gratuite, unitPrice != null ⇒ unitPrice × quantity ; sinon 0.
@@ -173,6 +177,11 @@ export function computeLineEconomics(
       ? unitPrice * line.quantity
       : 0;
 
+  // --- Sous-totaux affichés ---
+  const purchaseAmount: number = unitCost * line.quantity;
+  const salesAmount: number | null =
+    unitPrice === null ? null : unitPrice * line.quantity;
+
   return {
     lineId: line.id,
     included,
@@ -188,6 +197,8 @@ export function computeLineEconomics(
     cost,
     margin,
     marginPercent,
+    purchaseAmount,
+    salesAmount,
     billedAmount,
   };
 }

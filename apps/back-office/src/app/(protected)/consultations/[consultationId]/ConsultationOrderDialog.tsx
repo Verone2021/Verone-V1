@@ -83,7 +83,7 @@ export function ConsultationOrderDialog({
       group.items.push(item);
       // unitCost issu de computeLineEconomics — source unique des formules B2
       const econ = econMap.get(item.id);
-      group.totalHT += (econ?.unitCost ?? 0) * item.quantity;
+      group.totalHT += econ?.purchaseAmount ?? 0;
     }
 
     return {
