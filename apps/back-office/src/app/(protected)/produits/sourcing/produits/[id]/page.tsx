@@ -78,14 +78,8 @@ export default function SourcingProductDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
-  const {
-    products,
-    loading,
-    validateSourcing,
-    orderSample,
-    updateSourcingProduct,
-    refetch,
-  } = useSourcingProducts();
+  const { products, loading, validateSourcing, orderSample, refetch } =
+    useSourcingProducts();
   const [isPhotosModalOpen, setIsPhotosModalOpen] = useState(false);
 
   const productId = params.id as string;
@@ -351,21 +345,14 @@ export default function SourcingProductDetailPage() {
               primaryImage={primaryImage}
               images={images}
               imagesLoading={imagesLoading}
-              onProductUpdate={async updates => {
-                try {
-                  await updateSourcingProduct(productId, updates);
-                  toast({
-                    title: 'Produit mis à jour',
-                    description: 'Les modifications ont été sauvegardées',
-                  });
-                  await refetch();
-                } catch (_error) {
-                  toast({
-                    title: 'Erreur',
-                    description: 'Impossible de mettre à jour le produit',
-                    variant: 'destructive',
-                  });
-                }
+              onProductUpdate={async () => {
+                // La carte a déjà écrit en base (useInlineEdit) : ici on se
+                // contente de recharger, sans seconde écriture.
+                await refetch();
+                toast({
+                  title: 'Produit mis à jour',
+                  description: 'Les modifications ont été sauvegardées',
+                });
               }}
               onOpenPhotosModal={() => setIsPhotosModalOpen(true)}
             />
