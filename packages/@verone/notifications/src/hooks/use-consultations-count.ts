@@ -12,6 +12,7 @@
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { MENU_COUNT_QUERY_KEYS } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 export interface ConsultationsCountHook {
@@ -26,7 +27,7 @@ export interface ConsultationsCountHook {
   };
 }
 
-const CONSULTATIONS_COUNT_QUERY_KEY = ['consultations', 'count'] as const;
+const CONSULTATIONS_COUNT_QUERY_KEY = MENU_COUNT_QUERY_KEYS.consultations;
 
 /**
  * Hook pour compter les consultations actives en temps réel.

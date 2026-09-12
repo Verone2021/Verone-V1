@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { useToast } from '@verone/common/hooks';
+import { invalidateMenuCounts } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 const supabase = createClient();
@@ -169,6 +171,7 @@ export function useConsultations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Charger toutes les consultations
   const fetchConsultations = useCallback(
@@ -261,6 +264,8 @@ export function useConsultations() {
         ...prev,
       ]);
 
+      await invalidateMenuCounts(queryClient, 'consultations');
+
       toast({
         title: 'Consultation créée',
         description: 'La consultation a été créée avec succès',
@@ -305,6 +310,8 @@ export function useConsultations() {
             : consultation
         )
       );
+
+      await invalidateMenuCounts(queryClient, 'consultations');
 
       toast({
         title: 'Consultation mise à jour',
@@ -381,6 +388,8 @@ export function useConsultations() {
         )
       );
 
+      await invalidateMenuCounts(queryClient, 'consultations');
+
       toast({
         title: 'Consultation validée',
         description: 'La consultation a été marquée comme validée',
@@ -433,6 +442,8 @@ export function useConsultations() {
         )
       );
 
+      await invalidateMenuCounts(queryClient, 'consultations');
+
       toast({
         title: 'Consultation dévalidée',
         description: 'Tu peux à nouveau modifier les prix et quantités',
@@ -477,6 +488,8 @@ export function useConsultations() {
         )
       );
 
+      await invalidateMenuCounts(queryClient, 'consultations');
+
       toast({
         title: 'Consultation archivée',
         description: 'La consultation a été archivée',
@@ -518,6 +531,8 @@ export function useConsultations() {
             : consultation
         )
       );
+
+      await invalidateMenuCounts(queryClient, 'consultations');
 
       toast({
         title: 'Consultation désarchivée',
@@ -603,6 +618,8 @@ export function useConsultations() {
       setConsultations(prev =>
         prev.filter(consultation => consultation.id !== consultationId)
       );
+
+      await invalidateMenuCounts(queryClient, 'consultations');
 
       const devisCount = linkedDevis?.length ?? 0;
       toast({

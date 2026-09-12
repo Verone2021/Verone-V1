@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
+import { invalidateMenuCounts } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 import { toast } from 'sonner';
 
@@ -58,6 +60,7 @@ interface ISubmitParams {
 
 export function useQuickClassificationSubmit() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleSubmit = useCallback(
     async (params: ISubmitParams): Promise<void> => {
@@ -213,6 +216,7 @@ export function useQuickClassificationSubmit() {
           );
         }
 
+        await invalidateMenuCounts(queryClient, 'bankTransactions');
         params.onSuccess?.();
         params.onClose();
       } catch (err) {
@@ -221,7 +225,7 @@ export function useQuickClassificationSubmit() {
         setIsSubmitting(false);
       }
     },
-    []
+    [queryClient]
   );
 
   return { isSubmitting, handleSubmit };

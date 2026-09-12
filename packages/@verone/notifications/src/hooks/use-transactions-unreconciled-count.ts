@@ -12,6 +12,7 @@
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { MENU_COUNT_QUERY_KEYS } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 export interface TransactionsUnreconciledCountHook {
@@ -22,10 +23,8 @@ export interface TransactionsUnreconciledCountHook {
   lastUpdated: Date | null;
 }
 
-const TRANSACTIONS_UNRECONCILED_QUERY_KEY = [
-  'bank_transactions',
-  'unreconciled_count',
-] as const;
+const TRANSACTIONS_UNRECONCILED_QUERY_KEY =
+  MENU_COUNT_QUERY_KEYS.bankTransactions;
 
 /**
  * Hook pour compter les transactions bancaires non rapprochées.

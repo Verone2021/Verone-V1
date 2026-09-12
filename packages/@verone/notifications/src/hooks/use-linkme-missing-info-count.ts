@@ -12,6 +12,7 @@
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { MENU_COUNT_QUERY_KEYS } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 export interface LinkmeMissingInfoCountHook {
@@ -22,10 +23,7 @@ export interface LinkmeMissingInfoCountHook {
   lastUpdated: Date | null;
 }
 
-const LINKME_MISSING_INFO_QUERY_KEY = [
-  'linkme_info_requests',
-  'pending_count',
-] as const;
+const LINKME_MISSING_INFO_QUERY_KEY = MENU_COUNT_QUERY_KEYS.linkmeInfoRequests;
 
 /**
  * Compte les enregistrements `linkme_info_requests` qui sont :

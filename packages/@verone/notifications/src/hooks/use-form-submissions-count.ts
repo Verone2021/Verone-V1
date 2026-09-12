@@ -12,6 +12,7 @@
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { MENU_COUNT_QUERY_KEYS } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 export interface FormSubmissionsCountHook {
@@ -22,7 +23,7 @@ export interface FormSubmissionsCountHook {
   lastUpdated: Date | null;
 }
 
-const FORM_SUBMISSIONS_QUERY_KEY = ['form_submissions', 'new_count'] as const;
+const FORM_SUBMISSIONS_QUERY_KEY = MENU_COUNT_QUERY_KEYS.formSubmissions;
 
 /**
  * Hook pour compter les soumissions de formulaire non traitées.

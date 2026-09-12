@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 
+import { invalidateMenuCounts } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 import {
@@ -17,6 +19,7 @@ import type { FormSubmission, FormType } from './types';
 
 export function useSubmissionDetail(params: Promise<{ id: string }>) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [id, setId] = useState<string>('');
   const [submission, setSubmission] = useState<FormSubmission | null>(null);
   const [formType, setFormType] = useState<FormType | null>(null);
@@ -104,6 +107,7 @@ export function useSubmissionDetail(params: Promise<{ id: string }>) {
 
       if (error) throw error;
 
+      await invalidateMenuCounts(queryClient, 'formSubmissions');
       setSubmission({ ...submission, status: newStatus });
       setEditingStatus(false);
     } catch (error: unknown) {
@@ -175,6 +179,7 @@ export function useSubmissionDetail(params: Promise<{ id: string }>) {
     ) {
       const result = await convertToOrder(submission.id, {});
       if (result.success) {
+        await invalidateMenuCounts(queryClient, 'formSubmissions');
         alert(`Commande créée avec succès! ID: ${result.orderId}`);
         router.refresh();
       } else {
@@ -193,6 +198,11 @@ export function useSubmissionDetail(params: Promise<{ id: string }>) {
     ) {
       const result = await convertToConsultation(submission.id, {});
       if (result.success) {
+        await invalidateMenuCounts(
+          queryClient,
+          'formSubmissions',
+          'consultations'
+        );
         alert(`Consultation créée avec succès! ID: ${result.consultationId}`);
         router.refresh();
       } else {
@@ -219,6 +229,7 @@ export function useSubmissionDetail(params: Promise<{ id: string }>) {
     });
 
     if (result.success) {
+      await invalidateMenuCounts(queryClient, 'formSubmissions', 'sourcing');
       alert(`Sourcing créé avec succès! ID: ${result.productId}`);
       router.refresh();
     } else {
@@ -236,6 +247,7 @@ export function useSubmissionDetail(params: Promise<{ id: string }>) {
     ) {
       const result = await convertToContact(submission.id);
       if (result.success) {
+        await invalidateMenuCounts(queryClient, 'formSubmissions');
         alert(`Contact créé avec succès! ID: ${result.contactId}`);
         router.refresh();
       } else {
@@ -250,6 +262,7 @@ export function useSubmissionDetail(params: Promise<{ id: string }>) {
     if (confirm('Marquer cette soumission comme résolue ?')) {
       const result = await markAsResolved(submission.id);
       if (result.success) {
+        await invalidateMenuCounts(queryClient, 'formSubmissions');
         alert('Soumission marquée comme résolue');
         router.refresh();
       } else {

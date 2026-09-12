@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
+import { MENU_COUNT_QUERY_KEYS } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { useDebouncedInvalidate } from './use-debounce-invalidate';
@@ -25,12 +26,10 @@ const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
 
 /**
  * Clé de cache TanStack Query pour les compteurs sidebar.
- * Exportée pour permettre l'invalidation depuis les mutations métier.
+ * Alias de `MENU_COUNT_QUERY_KEYS.sidebar` : les mutations métier passent par
+ * `invalidateMenuCounts` (`@verone/utils/query`).
  */
-export const SIDEBAR_COUNTS_QUERY_KEY = [
-  'notifications',
-  'sidebar_counts',
-] as const;
+export const SIDEBAR_COUNTS_QUERY_KEY = MENU_COUNT_QUERY_KEYS.sidebar;
 
 export interface SidebarCounts {
   stockAlerts: number;

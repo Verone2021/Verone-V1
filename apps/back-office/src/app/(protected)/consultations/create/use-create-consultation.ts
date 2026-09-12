@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { useToast } from '@verone/common';
 import type { CreateConsultationData } from '@verone/consultations';
@@ -11,6 +12,7 @@ import {
   useEnseigneContactsBO,
   useOrganisationContactsBO,
 } from '@verone/orders';
+import { invalidateMenuCounts } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { createConsultation as createConsultationAction } from '@/app/actions/consultations';
@@ -46,6 +48,7 @@ export function useCreateConsultation(
   options: UseCreateConsultationOptions = {}
 ) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const supabase = createClient();
   const { toast } = useToast();
   const { presetProductId = null } = options;
@@ -278,6 +281,8 @@ export function useCreateConsultation(
       if (!result.success) {
         throw new Error(result.error ?? 'Erreur lors de la création');
       }
+
+      await invalidateMenuCounts(queryClient, 'consultations');
 
       toast({
         title: 'Consultation créée',

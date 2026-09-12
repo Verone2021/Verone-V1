@@ -1,6 +1,9 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
+
 import { useToast } from '@verone/common/hooks';
+import { invalidateMenuCounts } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 import { smartUploadImage } from '@verone/utils/upload';
 
@@ -12,6 +15,7 @@ export function useSourcingCreateUpdate({
   refetch,
 }: UseSourcingCreateUpdateParams) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const supabase = createClient();
 
   // Créer un produit en sourcing rapide
@@ -139,6 +143,7 @@ export function useSourcingCreateUpdate({
       });
 
       await refetch();
+      await invalidateMenuCounts(queryClient, 'sourcing');
       return newProduct;
     } catch (_err) {
       toast({
@@ -244,6 +249,7 @@ export function useSourcingCreateUpdate({
       });
 
       await refetch();
+      await invalidateMenuCounts(queryClient, 'sourcing');
       return true;
     } catch (_err) {
       toast({

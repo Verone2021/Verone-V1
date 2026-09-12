@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils';
+import { invalidateMenuCounts } from '@verone/utils/query';
 
 // ============================================================
 // Types
@@ -88,6 +90,7 @@ export function useSourcingNotebook(productId: string | null) {
   const [candidates, setCandidates] = useState<SourcingCandidateSupplier[]>([]);
   const [photos, setPhotos] = useState<SourcingPhoto[]>([]);
   const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const fetchAll = useCallback(async () => {
     if (!productId) return;
@@ -282,8 +285,9 @@ export function useSourcingNotebook(productId: string | null) {
         .update(data)
         .eq('id', productId);
       if (error) throw error;
+      await invalidateMenuCounts(queryClient, 'sourcing');
     },
-    [productId]
+    [productId, queryClient]
   );
 
   return {
