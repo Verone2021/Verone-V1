@@ -54,7 +54,7 @@ for (const suite of suites) {
 
 console.log(`\n${'═'.repeat(50)}`);
 if (failures.length === 0) {
-  console.log(`TOTAL — toutes les suites passent (29 assertions au total) ✅`);
+  console.log(`TOTAL — toutes les suites passent (31 assertions au total) ✅`);
 } else {
   console.log(
     `TOTAL — ${failures.length} suite(s) en échec : ${failures.join(', ')}`
