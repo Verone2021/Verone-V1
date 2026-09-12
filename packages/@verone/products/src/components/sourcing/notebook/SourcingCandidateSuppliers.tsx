@@ -28,10 +28,17 @@ const STATUS_CONFIG = {
     className: 'bg-blue-100 text-blue-700',
     icon: Building2,
   },
-  quoted: {
+  // Valeurs alignées sur sourcing_candidate_suppliers_status_check
+  // (identified, contacted, responded, shortlisted, selected, rejected).
+  responded: {
     label: 'Devis recu',
     className: 'bg-yellow-100 text-yellow-700',
     icon: Clock,
+  },
+  shortlisted: {
+    label: 'Présélectionné',
+    className: 'bg-amber-100 text-amber-700',
+    icon: Star,
   },
   selected: {
     label: 'Selectionne',
@@ -114,11 +121,13 @@ export function SourcingCandidateSuppliers({
   };
 
   const selectedCount = candidates.filter(c => c.status === 'selected').length;
-  const quotedCount = candidates.filter(c => c.status === 'quoted').length;
+  const respondedCount = candidates.filter(
+    c => c.status === 'responded'
+  ).length;
 
-  // Find best price among quoted/selected candidates
+  // Find best price among responded/selected candidates
   const quotedCandidates = candidates.filter(
-    c => c.quoted_price && (c.status === 'quoted' || c.status === 'selected')
+    c => c.quoted_price && (c.status === 'responded' || c.status === 'selected')
   );
   const bestPrice = quotedCandidates.length
     ? Math.min(...quotedCandidates.map(c => c.quoted_price!))
@@ -151,9 +160,9 @@ export function SourcingCandidateSuppliers({
                 {selectedCount} selectionne(s)
               </span>
             )}
-            {quotedCount > 0 && (
+            {respondedCount > 0 && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
-                {quotedCount} devis recu(s)
+                {respondedCount} devis recu(s)
               </span>
             )}
             {bestPrice && (
@@ -386,7 +395,7 @@ export function SourcingCandidateSuppliers({
                           candidate.status === 'contacted') && (
                           <button
                             onClick={() => {
-                              void onUpdateStatus(candidate.id, 'quoted');
+                              void onUpdateStatus(candidate.id, 'responded');
                             }}
                             className="text-[10px] px-2 py-0.5 rounded border border-yellow-200 text-yellow-600 hover:bg-yellow-50"
                           >
