@@ -51,6 +51,7 @@ export function useLinkmeApprovalsCount(_options?: {
   const {
     data = 0,
     isPending,
+    error,
     dataUpdatedAt,
   } = useQuery({
     queryKey: LINKME_APPROVALS_QUERY_KEY,
@@ -68,7 +69,7 @@ export function useLinkmeApprovalsCount(_options?: {
 
       if (countError) {
         console.error('[useLinkmeApprovalsCount] Count error:', countError);
-        return 0;
+        throw new Error(countError.message);
       }
       return totalCount ?? 0;
     },
@@ -115,7 +116,7 @@ export function useLinkmeApprovalsCount(_options?: {
   return {
     count: data,
     loading: isPending,
-    error: null,
+    error: error ?? null,
     refetch,
     lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
   };

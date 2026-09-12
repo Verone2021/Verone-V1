@@ -44,6 +44,7 @@ export function useTransactionsUnreconciledCount(_options?: {
   const {
     data = 0,
     isPending,
+    error,
     dataUpdatedAt,
   } = useQuery({
     queryKey: TRANSACTIONS_UNRECONCILED_QUERY_KEY,
@@ -64,7 +65,7 @@ export function useTransactionsUnreconciledCount(_options?: {
           '[useTransactionsUnreconciledCount] Count error:',
           countError
         );
-        return 0;
+        throw new Error(countError.message);
       }
       return totalCount ?? 0;
     },
@@ -82,7 +83,7 @@ export function useTransactionsUnreconciledCount(_options?: {
   return {
     count: data,
     loading: isPending,
-    error: null,
+    error: error ?? null,
     refetch,
     lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
   };

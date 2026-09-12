@@ -48,6 +48,7 @@ export function useLinkmeMissingInfoCount(_options?: {
   const {
     data = 0,
     isPending,
+    error,
     dataUpdatedAt,
   } = useQuery({
     queryKey: LINKME_MISSING_INFO_QUERY_KEY,
@@ -68,7 +69,7 @@ export function useLinkmeMissingInfoCount(_options?: {
 
       if (countError) {
         console.error('[useLinkmeMissingInfoCount] Count error:', countError);
-        return 0;
+        throw new Error(countError.message);
       }
       return totalCount ?? 0;
     },
@@ -86,7 +87,7 @@ export function useLinkmeMissingInfoCount(_options?: {
   return {
     count: data,
     loading: isPending,
-    error: null,
+    error: error ?? null,
     refetch,
     lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
   };

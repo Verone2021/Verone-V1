@@ -45,7 +45,7 @@ export function useConsultationsCount(options?: {
   const { includeBreakdown = false } = options ?? {};
   const queryClient = useQueryClient();
 
-  const { data, isPending, dataUpdatedAt } = useQuery({
+  const { data, isPending, error, dataUpdatedAt } = useQuery({
     queryKey: [...CONSULTATIONS_COUNT_QUERY_KEY, { includeBreakdown }],
     queryFn: async () => {
       const supabase = createClient();
@@ -63,7 +63,7 @@ export function useConsultationsCount(options?: {
 
       if (countError) {
         console.error('[useConsultationsCount] Count error:', countError);
-        return { count: 0, breakdown: null };
+        throw new Error(countError.message);
       }
 
       if (!includeBreakdown) return { count: totalCount ?? 0, breakdown: null };
@@ -106,7 +106,7 @@ export function useConsultationsCount(options?: {
   return {
     count: data?.count ?? 0,
     loading: isPending,
-    error: null,
+    error: error ?? null,
     refetch,
     lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
     breakdown: includeBreakdown ? (data?.breakdown ?? undefined) : undefined,

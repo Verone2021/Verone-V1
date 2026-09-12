@@ -49,6 +49,7 @@ export function useExpeditionsPendingCount(_options?: {
   const {
     data = 0,
     isPending,
+    error,
     dataUpdatedAt,
   } = useQuery({
     queryKey: EXPEDITIONS_PENDING_QUERY_KEY,
@@ -65,7 +66,7 @@ export function useExpeditionsPendingCount(_options?: {
 
       if (countError) {
         console.error('[useExpeditionsPendingCount] Count error:', countError);
-        return 0;
+        throw new Error(countError.message);
       }
       return totalCount ?? 0;
     },
@@ -109,7 +110,7 @@ export function useExpeditionsPendingCount(_options?: {
   return {
     count: data,
     loading: isPending,
-    error: null,
+    error: error ?? null,
     refetch,
     lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
   };

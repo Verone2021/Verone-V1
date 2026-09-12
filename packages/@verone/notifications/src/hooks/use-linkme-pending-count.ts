@@ -53,6 +53,7 @@ export function useLinkmePendingCount(_options?: {
   const {
     data = 0,
     isPending,
+    error,
     dataUpdatedAt,
   } = useQuery({
     queryKey: LINKME_PENDING_QUERY_KEY,
@@ -70,7 +71,7 @@ export function useLinkmePendingCount(_options?: {
 
       if (countError) {
         console.error('[useLinkmePendingCount] Count error:', countError);
-        return 0;
+        throw new Error(countError.message);
       }
       return totalCount ?? 0;
     },
@@ -118,7 +119,7 @@ export function useLinkmePendingCount(_options?: {
   return {
     count: data,
     loading: isPending,
-    error: null,
+    error: error ?? null,
     refetch,
     lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
   };

@@ -41,6 +41,7 @@ export function useFormSubmissionsCount(_options?: {
   const {
     data = 0,
     isPending,
+    error,
     dataUpdatedAt,
   } = useQuery({
     queryKey: FORM_SUBMISSIONS_QUERY_KEY,
@@ -59,7 +60,7 @@ export function useFormSubmissionsCount(_options?: {
 
       if (countError) {
         console.error('[useFormSubmissionsCount] Count error:', countError);
-        return 0;
+        throw new Error(countError.message);
       }
       return totalCount ?? 0;
     },
@@ -77,7 +78,7 @@ export function useFormSubmissionsCount(_options?: {
   return {
     count: data,
     loading: isPending,
-    error: null,
+    error: error ?? null,
     refetch,
     lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
   };

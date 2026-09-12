@@ -46,6 +46,7 @@ export function useOrdersPendingCount(_options?: {
   const {
     data = 0,
     isPending,
+    error,
     dataUpdatedAt,
   } = useQuery({
     queryKey: ORDERS_PENDING_QUERY_KEY,
@@ -62,7 +63,7 @@ export function useOrdersPendingCount(_options?: {
 
       if (countError) {
         console.error('[useOrdersPendingCount] Count error:', countError);
-        return 0;
+        throw new Error(countError.message);
       }
       return totalCount ?? 0;
     },
@@ -102,7 +103,7 @@ export function useOrdersPendingCount(_options?: {
   return {
     count: data,
     loading: isPending,
-    error: null,
+    error: error ?? null,
     refetch,
     lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
   };

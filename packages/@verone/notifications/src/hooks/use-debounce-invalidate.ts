@@ -32,7 +32,9 @@ export function useDebouncedInvalidate(
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       timerRef.current = null;
-      void queryClient.invalidateQueries({ queryKey }).catch(() => {});
+      void queryClient.invalidateQueries({ queryKey }).catch((err: unknown) => {
+        console.warn('[useDebouncedInvalidate] invalidation failed:', err);
+      });
     }, 2_000);
   }, [queryClient, queryKey]);
 }

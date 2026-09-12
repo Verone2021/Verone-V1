@@ -42,6 +42,7 @@ export function useStockAlertsCount(_options?: {
   const {
     data = 0,
     isPending,
+    error,
     dataUpdatedAt,
   } = useQuery({
     queryKey: STOCK_ALERTS_QUERY_KEY,
@@ -58,7 +59,7 @@ export function useStockAlertsCount(_options?: {
 
       if (rpcError) {
         console.error('[useStockAlertsCount] RPC error:', rpcError);
-        return 0;
+        throw new Error(rpcError.message);
       }
       return (rpcData as number | null) ?? 0;
     },
@@ -74,7 +75,7 @@ export function useStockAlertsCount(_options?: {
   return {
     count: data,
     loading: isPending,
-    error: null,
+    error: error ?? null,
     refetch,
     lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
   };
