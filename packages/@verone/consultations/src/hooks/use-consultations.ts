@@ -5,134 +5,26 @@ import { useState, useCallback } from 'react';
 import { useToast } from '@verone/common/hooks';
 import { createClient } from '@verone/utils/supabase/client';
 
+import { createConsultationMutations } from './use-consultation-mutations';
+
+// Types publics — définis dans consultations-types.ts, re-exportés ici
+// pour rétrocompatibilité (les consommateurs qui importent de 'use-consultations'
+// ou de '@verone/consultations' continuent à obtenir ces types).
+export type {
+  ClientConsultation,
+  ConsultationItem,
+  ConsultationFilters,
+  CreateConsultationData,
+  CreateConsultationItemData,
+  UpdateConsultationItemData,
+} from './consultations-types';
+
+import type {
+  ClientConsultation,
+  ConsultationFilters,
+} from './consultations-types';
+
 const supabase = createClient();
-
-// Types pour les consultations
-export interface ClientConsultation {
-  id: string;
-  enseigne_id?: string;
-  organisation_id?: string;
-  client_email: string;
-  client_phone?: string;
-  descriptif: string;
-  image_url?: string;
-  tarif_maximum?: number;
-  status: 'en_attente' | 'en_cours' | 'terminee' | 'annulee';
-  assigned_to?: string;
-  notes_internes?: string;
-  priority_level: number;
-  source_channel: 'website' | 'email' | 'phone' | 'other';
-  estimated_response_date?: string;
-  created_at: string;
-  updated_at: string;
-  created_by?: string;
-  responded_at?: string;
-  responded_by?: string;
-  // Lifecycle columns (ajoutées 2025-10-20)
-  validated_at?: string;
-  validated_by?: string;
-  archived_at?: string;
-  archived_by?: string;
-  deleted_at?: string;
-  deleted_by?: string;
-  tva_rate?: number;
-  // Relations (optionnelles, pour joins)
-  enseigne?: { id: string; name: string };
-  organisation?: { id: string; legal_name: string; trade_name?: string };
-}
-
-// Nouvelle interface simplifiée pour le workflow type commande
-export interface ConsultationItem {
-  id: string;
-  consultation_id: string;
-  product_id: string;
-  quantity: number;
-  /** Prix de vente proposé. null = prix à fixer (jamais fallback cost_price). */
-  unit_price: number | null;
-  is_free: boolean;
-  is_sample: boolean;
-  notes?: string;
-  created_at: string;
-  created_by?: string;
-  shipping_cost: number;
-  shipping_cost_currency: string;
-  /** Transport vente facturé au client (total ligne, EUR HT). 0 = aucun. */
-  selling_shipping_cost: number;
-  cost_price_override?: number;
-  status: string;
-  // Relations
-  product?: {
-    id: string;
-    name: string;
-    sku: string;
-    requires_sample: boolean;
-    supplier_id?: string;
-    supplier_name?: string;
-    cost_price?: number;
-    /** Éco-taxe par défaut du produit (Décision 6 BO-CONSULT-P2-001) */
-    eco_tax_default?: number | null;
-    stock_real?: number;
-    stock_forecasted_in?: number;
-    stock_forecasted_out?: number;
-    image_url?: string | null;
-  };
-}
-
-export interface CreateConsultationData {
-  enseigne_id?: string;
-  organisation_id?: string;
-  client_email: string;
-  client_phone?: string;
-  descriptif: string;
-  image_url?: string;
-  tarif_maximum?: number;
-  priority_level?: number;
-  source_channel?: 'website' | 'email' | 'phone' | 'other';
-  estimated_response_date?: string;
-  notes_internes?: string;
-  /** Images uploadées (max 5) — insertion dans consultation_images */
-  images?: Array<{
-    publicUrl: string;
-    storagePath: string;
-    fileName: string;
-    fileSize: number;
-  }>;
-}
-
-// Nouvelles interfaces simplifiées pour le workflow type commande
-export interface CreateConsultationItemData {
-  consultation_id: string;
-  product_id: string;
-  quantity: number;
-  unit_price?: number;
-  is_free?: boolean;
-  notes?: string;
-}
-
-export interface UpdateConsultationItemData {
-  quantity?: number;
-  unit_price?: number;
-  is_free?: boolean;
-  is_sample?: boolean;
-  notes?: string;
-  shipping_cost?: number;
-  shipping_cost_currency?: string;
-  selling_shipping_cost?: number;
-  cost_price_override?: number;
-  status?: string;
-}
-
-export interface ConsultationFilters {
-  status?: string;
-  assigned_to?: string;
-  priority_level?: number | 'all';
-  search_client?: string;
-  source_channel?: string;
-  date_range?: {
-    start: string;
-    end: string;
-  };
-}
 
 export function useConsultations() {
   const [consultations, setConsultations] = useState<ClientConsultation[]>([]);
@@ -194,63 +86,6 @@ export function useConsultations() {
     },
     []
   );
-
-  // Créer une nouvelle consultation
-  const createConsultation = async (
-    data: CreateConsultationData
-  ): Promise<ClientConsultation | null> => {
-    try {
-      setError(null);
-
-      const { data: newConsultation, error } = await supabase
-        .from('client_consultations')
-        .insert([
-          {
-            enseigne_id: data.enseigne_id ?? null,
-            organisation_id: data.organisation_id ?? null,
-            client_email: data.client_email,
-            client_phone: data.client_phone,
-            descriptif: data.descriptif,
-            image_url: data.image_url,
-            tarif_maximum: data.tarif_maximum,
-            priority_level: data.priority_level ?? 2,
-            source_channel: data.source_channel ?? 'website',
-            estimated_response_date: data.estimated_response_date,
-          },
-        ])
-        .select(
-          'id, enseigne_id, organisation_id, client_email, client_phone, descriptif, image_url, tarif_maximum, status, assigned_to, notes_internes, priority_level, source_channel, estimated_response_date, created_at, updated_at, created_by, responded_at, responded_by, validated_at, validated_by, archived_at, archived_by, deleted_at, deleted_by'
-        )
-        .single();
-
-      if (error) throw error;
-
-      // Ajouter à la liste locale
-      setConsultations(prev => [
-        newConsultation as ClientConsultation,
-        ...prev,
-      ]);
-
-      toast({
-        title: 'Consultation créée',
-        description: 'La consultation a été créée avec succès',
-      });
-
-      return newConsultation as ClientConsultation;
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Erreur lors de la création de la consultation';
-      setError(message);
-      toast({
-        title: 'Erreur',
-        description: message,
-        variant: 'destructive',
-      });
-      return null;
-    }
-  };
 
   // Mettre à jour une consultation
   const updateConsultation = async (
@@ -319,107 +154,6 @@ export function useConsultations() {
     }
 
     return updateConsultation(consultationId, updates);
-  };
-
-  // Valider une consultation (utilisée Phase 2 pour pricing)
-  const validateConsultation = async (
-    consultationId: string
-  ): Promise<boolean> => {
-    try {
-      setError(null);
-
-      const { error } = await supabase
-        .from('client_consultations')
-        .update({
-          validated_at: new Date().toISOString(),
-          status: 'terminee',
-        })
-        .eq('id', consultationId);
-
-      if (error) throw error;
-
-      // Mettre à jour la liste locale
-      setConsultations(prev =>
-        prev.map(consultation =>
-          consultation.id === consultationId
-            ? {
-                ...consultation,
-                validated_at: new Date().toISOString(),
-                status: 'terminee' as const,
-              }
-            : consultation
-        )
-      );
-
-      toast({
-        title: 'Consultation validée',
-        description: 'La consultation a été marquée comme validée',
-      });
-
-      return true;
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Erreur lors de la validation';
-      setError(message);
-      toast({
-        title: 'Erreur',
-        description: message,
-        variant: 'destructive',
-      });
-      return false;
-    }
-  };
-
-  // Dévalider une consultation : remet validated_at=null + status='en_cours'.
-  // Permet de reprendre l'édition des items (prix, quantités, échantillons)
-  // après une validation prématurée. Symétrique de validateConsultation.
-  const unvalidateConsultation = async (
-    consultationId: string
-  ): Promise<boolean> => {
-    try {
-      setError(null);
-
-      const { error } = await supabase
-        .from('client_consultations')
-        .update({
-          validated_at: null,
-          validated_by: null,
-          status: 'en_cours',
-        } as unknown as Partial<ClientConsultation>)
-        .eq('id', consultationId);
-
-      if (error) throw error;
-
-      setConsultations(prev =>
-        prev.map(consultation =>
-          consultation.id === consultationId
-            ? {
-                ...consultation,
-                validated_at: undefined,
-                validated_by: undefined,
-                status: 'en_cours' as const,
-              }
-            : consultation
-        )
-      );
-
-      toast({
-        title: 'Consultation dévalidée',
-        description: 'Tu peux à nouveau modifier les prix et quantités',
-      });
-
-      return true;
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Erreur lors de la dévalidation';
-      setError(message);
-      toast({
-        title: 'Erreur',
-        description: message,
-        variant: 'destructive',
-      });
-      return false;
-    }
   };
 
   // Archiver une consultation
@@ -508,94 +242,13 @@ export function useConsultations() {
     }
   };
 
-  // Supprimer une consultation + cascade: hard delete devis liés (Qonto + DB locale)
-  // La confirmation doit être gérée par le composant appelant
-  const deleteConsultation = async (
-    consultationId: string
-  ): Promise<boolean> => {
-    try {
-      setError(null);
-
-      // 1. Fetch linked devis from local DB
-      const { data: linkedDevis } = await supabase
-        .from('financial_documents')
-        .select('id, qonto_invoice_id, document_number')
-        .eq('consultation_id', consultationId)
-        .eq('document_type', 'customer_quote');
-
-      // 2. Hard delete each devis from Qonto + local DB
-      if (linkedDevis && linkedDevis.length > 0) {
-        for (const devis of linkedDevis) {
-          // Delete from Qonto API first
-          if (devis.qonto_invoice_id) {
-            try {
-              await fetch(`/api/qonto/quotes/${devis.qonto_invoice_id}`, {
-                method: 'DELETE',
-              });
-            } catch (qontoErr) {
-              console.warn(
-                `[deleteConsultation] Qonto delete failed for ${devis.document_number}:`,
-                qontoErr
-              );
-              // Continue even if Qonto delete fails
-            }
-          }
-
-          // Hard delete items from local DB
-          await supabase
-            .from('financial_document_items')
-            .delete()
-            .eq('document_id', devis.id);
-
-          // Hard delete devis from local DB
-          await supabase
-            .from('financial_documents')
-            .delete()
-            .eq('id', devis.id);
-        }
-
-        console.warn(
-          `[deleteConsultation] Deleted ${linkedDevis.length} devis for consultation ${consultationId}`
-        );
-      }
-
-      // 3. Soft delete the consultation itself
-      const { error } = await supabase
-        .from('client_consultations')
-        .update({
-          deleted_at: new Date().toISOString(),
-        } as Partial<ClientConsultation>)
-        .eq('id', consultationId);
-
-      if (error) throw error;
-
-      // Retirer de la liste locale
-      setConsultations(prev =>
-        prev.filter(consultation => consultation.id !== consultationId)
-      );
-
-      const devisCount = linkedDevis?.length ?? 0;
-      toast({
-        title: 'Consultation supprimée',
-        description:
-          devisCount > 0
-            ? `La consultation et ${devisCount} devis lié(s) ont été supprimés`
-            : 'La consultation a été supprimée',
-      });
-
-      return true;
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Erreur lors de la suppression';
-      setError(message);
-      toast({
-        title: 'Erreur',
-        description: message,
-        variant: 'destructive',
-      });
-      return false;
-    }
-  };
+  // Mutations longues extraites dans use-consultation-mutations.ts
+  const {
+    createConsultation,
+    validateConsultation,
+    unvalidateConsultation,
+    deleteConsultation,
+  } = createConsultationMutations({ setConsultations, setError, toast });
 
   return {
     // État

@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { toast } from 'sonner';
-
 import type { ClientConsultation } from '@verone/consultations';
 import { useConsultations } from '@verone/consultations';
 import { useConsultationHistory } from '@verone/consultations';
@@ -15,24 +13,23 @@ import { useConsultationQuotes } from '@verone/consultations';
 import { useConsultationSalesOrders } from '@verone/consultations';
 import { filterBillableItems, countUnpricedLines } from '@verone/consultations';
 import { useQuotes } from '@verone/finance/hooks';
-import type { IOrderForDocument } from '@verone/finance/components';
 import { useSalesOrders } from '@verone/orders';
+
+import { toast } from 'sonner';
 
 import {
   resolvePartnerForOrder,
-  resolvePartnerForQuote,
-  resolveClientInfo,
-  buildOrderForDocument,
-  type ConsultationClientInfo,
+  buildOrderForDocument as _buildOrderForDocument,
+  resolveClientInfo as _resolveClientInfo,
 } from './consultation-async-handlers';
-import { preloadProductImages } from './helpers';
+import { preloadProductImages as _preloadProductImages } from './helpers';
+import {
+  useConsultationDocumentHandlers,
+  type PdfImages,
+  type ConsultationClientInfo,
+} from './use-consultation-document-handlers';
 
-export type PdfImages = {
-  consultationImages: Array<{ id: string; base64: string }>;
-  productImages: Record<string, string>;
-};
-
-export type { ConsultationClientInfo };
+export type { PdfImages, ConsultationClientInfo };
 
 export function useConsultationDetail(consultationId: string) {
   const router = useRouter();
@@ -53,21 +50,8 @@ export function useConsultationDetail(consultationId: string) {
     null
   );
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [showPdfPreview, setShowPdfPreview] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
-  const [emailPdfLoading, setEmailPdfLoading] = useState(false);
-  const [pdfImages, setPdfImages] = useState<PdfImages>({
-    consultationImages: [],
-    productImages: {},
-  });
-  const [emailPdfImages, setEmailPdfImages] = useState<PdfImages>({
-    consultationImages: [],
-    productImages: {},
-  });
-  const [clientInfo, setClientInfo] = useState<ConsultationClientInfo | null>(
-    null
-  );
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const {
     consultationItems,
@@ -91,12 +75,6 @@ export function useConsultationDetail(consultationId: string) {
   } = useConsultationQuotes(consultationId);
 
   const { deleteQuote } = useQuotes();
-  const [showQuoteModal, setShowQuoteModal] = useState(false);
-  const [orderForQuoteModal, setOrderForQuoteModal] =
-    useState<IOrderForDocument | null>(null);
-  const [supersededQuoteIds, setSupersededQuoteIds] = useState<string[]>([]);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   const { createOrder } = useSalesOrders();
   const [creatingOrder, setCreatingOrder] = useState(false);
@@ -112,6 +90,16 @@ export function useConsultationDetail(consultationId: string) {
     loading: historyLoading,
     fetchHistory,
   } = useConsultationHistory(consultationId);
+
+  const docHandlers = useConsultationDocumentHandlers({
+    consultation,
+    consultationId,
+    consultationItems,
+    linkedQuotes,
+    refetchLinkedQuotes,
+    fetchHistory,
+    deleteQuote,
+  });
 
   useEffect(() => {
     void fetchConsultations().catch((error: unknown) => {
@@ -204,55 +192,6 @@ export function useConsultationDetail(consultationId: string) {
     }
   };
 
-  const handleOpenPdf = () => {
-    if (!consultation) return;
-    setPdfLoading(true);
-    void Promise.all([
-      preloadProductImages(consultationItems),
-      resolveClientInfo(consultation),
-    ])
-      .then(([productImages, info]) => {
-        setPdfImages({ consultationImages: [], productImages });
-        setClientInfo(info);
-        setShowPdfPreview(true);
-      })
-      .catch((err: unknown) => {
-        console.error('[PDF] Preload failed:', err);
-        setShowPdfPreview(true);
-      })
-      .finally(() => setPdfLoading(false));
-  };
-
-  const handleOpenEmail = () => {
-    if (!consultation) return;
-    setEmailPdfLoading(true);
-    void Promise.all([
-      preloadProductImages(consultationItems),
-      resolveClientInfo(consultation),
-    ])
-      .then(([productImages, info]) => {
-        setEmailPdfImages({ consultationImages: [], productImages });
-        setClientInfo(info);
-      })
-      .catch((err: unknown) => {
-        console.error('[Email] Preload failed:', err);
-      })
-      .finally(() => {
-        setEmailPdfLoading(false);
-        setShowEmailModal(true);
-      });
-  };
-
-  const handleOpenMarginReport = async () => {
-    if (!consultation) return;
-    try {
-      const info = await resolveClientInfo(consultation);
-      setClientInfo(info);
-    } catch (err) {
-      console.error('[MarginReport] Client info preload failed:', err);
-    }
-  };
-
   const handleCreateOrder = async () => {
     if (!consultation || consultationItems.length === 0) return;
     setCreatingOrder(true);
@@ -305,91 +244,6 @@ export function useConsultationDetail(consultationId: string) {
     }
   };
 
-  const handleOpenQuoteModal = () => {
-    void (async () => {
-      if (!consultation) return;
-      const n = countUnpricedLines(consultationItems);
-      if (n > 0) {
-        toast.error(`Prix de vente à fixer pour ${n} ligne(s)`);
-        return;
-      }
-      const activeQuotes = linkedQuotes.filter(
-        q => q.quote_status === 'draft' || q.quote_status === 'sent'
-      );
-      if (activeQuotes.length > 0) {
-        const activeNumbers = activeQuotes
-          .map(q => q.document_number)
-          .join(', ');
-        const confirmed = window.confirm(
-          `Un devis actif existe deja (${activeNumbers}).\n\nCreer une nouvelle version ?\nL'ancien sera marque comme "Remplace".`
-        );
-        if (!confirmed) return;
-      }
-
-      setSupersededQuoteIds(activeQuotes.map(q => q.id));
-
-      const partner = await resolvePartnerForQuote(consultation);
-      if (!partner) return;
-
-      const orderData = buildOrderForDocument(
-        consultationId,
-        consultation,
-        consultationItems,
-        partner.partnerId,
-        partner.partnerOrg
-      );
-
-      setOrderForQuoteModal(orderData);
-      setShowQuoteModal(true);
-    })().catch((err: unknown) => {
-      console.error('[ConsultationDetail] Open quote modal failed:', err);
-    });
-  };
-
-  const handleQuoteSuccess = (quoteId: string) => {
-    setShowQuoteModal(false);
-    setSupersededQuoteIds([]);
-    void (async () => {
-      await refetchLinkedQuotes();
-      await fetchHistory();
-    })().catch((err: unknown) => {
-      console.error('[ConsultationDetail] Refresh failed:', err);
-    });
-    window.open(`/factures/devis/${quoteId}`, '_blank');
-  };
-
-  const handleDeleteQuote = (quote: {
-    id: string;
-    qonto_invoice_id: string | null;
-    document_number: string;
-  }) => {
-    if (
-      window.confirm(
-        `Supprimer le devis ${quote.document_number} ?\nCela le supprimera aussi de Qonto.`
-      )
-    ) {
-      void (async () => {
-        if (quote.qonto_invoice_id) {
-          try {
-            await fetch(`/api/qonto/quotes/${quote.qonto_invoice_id}`, {
-              method: 'DELETE',
-            });
-          } catch (err: unknown) {
-            console.error('[ConsultationDetail] Qonto delete failed:', err);
-            // Continue with local delete even if Qonto fails
-          }
-        }
-        const ok = await deleteQuote(quote.id);
-        if (ok) {
-          await refetchLinkedQuotes();
-          await fetchHistory();
-        }
-      })().catch((err: unknown) => {
-        console.error('[ConsultationDetail] Delete quote failed:', err);
-      });
-    }
-  };
-
   return {
     consultation,
     loading,
@@ -413,27 +267,11 @@ export function useConsultationDetail(consultationId: string) {
     // Modal states
     showEditModal,
     setShowEditModal,
-    showEmailModal,
-    setShowEmailModal,
-    showPdfPreview,
-    setShowPdfPreview,
-    showQuoteModal,
-    setShowQuoteModal,
     showDeleteModal,
     setShowDeleteModal,
-    orderForQuoteModal,
-    supersededQuoteIds,
-    setSupersededQuoteIds,
     // Loading states
-    pdfLoading,
-    emailPdfLoading,
     creatingOrder,
     deleting,
-    // PDF images
-    pdfImages,
-    emailPdfImages,
-    // PDF client info (legal name, address, contact)
-    clientInfo,
     // Handlers
     handleStatusChange,
     handleUpdateConsultation,
@@ -444,12 +282,8 @@ export function useConsultationDetail(consultationId: string) {
     handleItemsChanged,
     handleCreateOrder,
     handleDeleteConsultation,
-    handleOpenPdf,
-    handleOpenEmail,
-    handleOpenMarginReport,
-    handleOpenQuoteModal,
-    handleQuoteSuccess,
-    handleDeleteQuote,
     fetchHistory,
+    // Document handlers (PDF, email, quotes)
+    ...docHandlers,
   };
 }
