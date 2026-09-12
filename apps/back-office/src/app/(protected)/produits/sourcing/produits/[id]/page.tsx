@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
+import { associateProductToConsultation } from '@verone/utils';
 import { useProductConsultations } from '@verone/consultations/hooks';
 import {
   ProductPhotosModal,
@@ -138,22 +139,13 @@ export default function SourcingProductDetailPage() {
 
   const handleLinkToConsultation = async (consultationId: string) => {
     try {
-      const response = await fetch('/api/consultations/associations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          consultation_id: consultationId,
-          product_id: productId,
-          quantity: 1,
-          proposed_price: null,
-          is_free: false,
-        }),
+      await associateProductToConsultation({
+        consultationId,
+        productId,
+        quantity: 1,
+        proposedPrice: null,
+        isFree: false,
       });
-
-      if (!response.ok) {
-        const result = (await response.json()) as { error?: string };
-        throw new Error(result.error ?? "Erreur lors de l'association");
-      }
 
       toast({
         title: 'Produit associé',

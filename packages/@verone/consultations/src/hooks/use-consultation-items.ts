@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 
 import { useToast } from '@verone/common/hooks';
+import { associateProductToConsultation } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 
 import type {
@@ -173,32 +174,15 @@ export function useConsultationItems(consultationId?: string) {
     try {
       setError(null);
 
-      const response = await fetch('/api/consultations/associations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          consultation_id: data.consultation_id,
-          product_id: data.product_id,
-          proposed_price: data.unit_price,
-          quantity: data.quantity,
-          is_free: data.is_free,
-          notes: data.notes,
-          is_primary_proposal: false,
-        }),
+      await associateProductToConsultation({
+        consultationId: data.consultation_id,
+        productId: data.product_id,
+        proposedPrice: data.unit_price,
+        quantity: data.quantity,
+        isFree: data.is_free,
+        notes: data.notes,
+        isPrimaryProposal: false,
       });
-
-      const result: unknown = await response.json();
-
-      if (!response.ok) {
-        const errorMessage =
-          result != null &&
-          typeof result === 'object' &&
-          'error' in result &&
-          typeof (result as { error: unknown }).error === 'string'
-            ? (result as { error: string }).error
-            : "Erreur lors de l'ajout de l'item";
-        throw new Error(errorMessage);
-      }
 
       if (consultationId) {
         await fetchConsultationItems(consultationId);

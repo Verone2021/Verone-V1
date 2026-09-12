@@ -5,6 +5,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { useToast } from '@verone/common/hooks';
+import { associateProductToConsultation } from '@verone/utils';
 import { useOrganisations } from '@verone/organisations/hooks';
 
 import { useSourcingProducts } from '@verone/products/hooks';
@@ -196,37 +197,19 @@ export function useSourcingQuickForm(onSuccess?: (draftId: string) => void) {
       if (newProduct) {
         if (linkedConsultationId) {
           try {
-            const response = await fetch('/api/consultations/associations', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                consultation_id: linkedConsultationId,
-                product_id: newProduct.id,
-                quantity: 1,
-                proposed_price: null,
-                is_free: false,
-                notes: 'Produit sourcé via formulaire rapide',
-              }),
+            await associateProductToConsultation({
+              consultationId: linkedConsultationId,
+              productId: newProduct.id,
+              quantity: 1,
+              proposedPrice: null,
+              isFree: false,
+              notes: 'Produit sourcé via formulaire rapide',
             });
 
-            if (response.ok) {
-              toast({
-                title: 'Produit créé et associé',
-                description:
-                  'Le produit a été créé et associé à la consultation',
-              });
-            } else {
-              const result = (await response.json()) as { error?: string };
-              console.error(
-                '[SourcingQuickForm] Association error:',
-                result.error
-              );
-              toast({
-                title: 'Produit créé',
-                description: `Le produit a été créé mais l'association à la consultation a échoué : ${result.error ?? 'Erreur inconnue'}`,
-                variant: 'destructive',
-              });
-            }
+            toast({
+              title: 'Produit créé et associé',
+              description: 'Le produit a été créé et associé à la consultation',
+            });
           } catch (assocError) {
             console.error(
               '[SourcingQuickForm] Association failed:',

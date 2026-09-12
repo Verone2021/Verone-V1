@@ -8,6 +8,8 @@ import { SourcingProductModal } from '@verone/products/components/sourcing/Sourc
 import { Alert, AlertDescription } from '@verone/ui';
 import { Plus, Sparkles, ShoppingCart, Calculator } from 'lucide-react';
 
+import { computeConsultationEconomics } from '../../lib/consultation-economics';
+
 import type {
   ConsultationItem,
   CreateConsultationItemData,
@@ -204,27 +206,31 @@ export function ConsultationOrderInterface({
   );
   const hasAcceptedItems = acceptedItems.length > 0;
 
-  // KPIs = items en attente + acceptés + commandés (projection courante du devis).
-  // Seuls les "rejected" sont exclus. Sinon le total reste à 0 € tant qu'aucun
-  // item n'a été basculé en "OK", ce qui ne reflète pas l'état du devis envoyé.
-  const kpiItems = consultationItems.filter(i => i.status !== 'rejected');
-  // CA Total = ventes encaissées + transport refacturé au client.
-  const total = kpiItems.reduce((sum, item) => sum + getItemRevenue(item), 0);
-  const totalCost = kpiItems.reduce(
-    (sum, item) => sum + getItemCostTotal(item),
-    0
+  // KPIs via computeConsultationEconomics — source unique des formules B2
+  // (lignes refusées exclues, transport = total ligne, ecoTax inclus)
+  const { totals: economics } = computeConsultationEconomics(
+    consultationItems
+      .filter(item => item.quantity > 0)
+      .map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
+        ecoTax: item.product?.eco_tax_default ?? 0,
+        shippingCost: item.shipping_cost ?? 0,
+        sellingShippingCost: item.selling_shipping_cost ?? 0,
+        proposedPrice: item.unit_price,
+        isFree: item.is_free,
+        isSample: item.is_sample ?? false,
+        status: item.status ?? 'pending',
+        supplierId: item.product?.supplier_id ?? null,
+      }))
   );
-  // shipping_cost est un total ligne — on additionne directement, sans × quantity.
-  const totalShipping = kpiItems.reduce(
-    (sum, item) => (item.is_sample ? sum : sum + item.shipping_cost),
-    0
-  );
-  const totalMargin = kpiItems.reduce(
-    (sum, item) => sum + getItemMargin(item),
-    0
-  );
-  const totalMarginPercent =
-    totalCost > 0 ? (totalMargin / totalCost) * 100 : 0;
+
+  const total = economics.revenue;
+  const totalCost = economics.cost;
+  const totalShipping = economics.fees;
+  const totalMargin = economics.margin;
+  const totalMarginPercent = economics.marginPercent ?? 0;
 
   if (loading) {
     return (
