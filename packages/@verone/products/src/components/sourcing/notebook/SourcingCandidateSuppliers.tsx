@@ -19,19 +19,19 @@ import {
 
 const STATUS_CONFIG = {
   identified: {
-    label: 'Identifie',
+    label: 'Identifié',
     className: 'bg-gray-100 text-gray-700',
     icon: Clock,
   },
   contacted: {
-    label: 'Contacte',
+    label: 'Contacté',
     className: 'bg-blue-100 text-blue-700',
     icon: Building2,
   },
   // Valeurs alignées sur sourcing_candidate_suppliers_status_check
   // (identified, contacted, responded, shortlisted, selected, rejected).
   responded: {
-    label: 'Devis recu',
+    label: 'Devis reçu',
     className: 'bg-yellow-100 text-yellow-700',
     icon: Clock,
   },
@@ -41,12 +41,12 @@ const STATUS_CONFIG = {
     icon: Star,
   },
   selected: {
-    label: 'Selectionne',
+    label: 'Sélectionné',
     className: 'bg-green-100 text-green-700',
     icon: Check,
   },
   rejected: {
-    label: 'Rejete',
+    label: 'Rejeté',
     className: 'bg-red-100 text-red-700',
     icon: XCircle,
   },
@@ -157,12 +157,12 @@ export function SourcingCandidateSuppliers({
           <div className="flex gap-2 flex-wrap">
             {selectedCount > 0 && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700">
-                {selectedCount} selectionne(s)
+                {selectedCount} sélectionné(s)
               </span>
             )}
             {respondedCount > 0 && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
-                {respondedCount} devis recu(s)
+                {respondedCount} devis reçu(s)
               </span>
             )}
             {bestPrice && (
@@ -202,7 +202,7 @@ export function SourcingCandidateSuppliers({
                       </div>
                     ) : supplierSearch.results.length === 0 ? (
                       <div className="p-2 text-xs text-gray-400">
-                        Aucun fournisseur trouve
+                        Aucun fournisseur trouvé
                       </div>
                     ) : (
                       supplierSearch.results.map(s => (
@@ -254,7 +254,7 @@ export function SourcingCandidateSuppliers({
               />
               <input
                 type="number"
-                placeholder="Delai (jours)"
+                placeholder="Délai (jours)"
                 value={form.quoted_lead_days}
                 onChange={e =>
                   setForm(f => ({
@@ -361,7 +361,7 @@ export function SourcingCandidateSuppliers({
                       </span>
                     </div>
                     <div>
-                      <span className="text-gray-400 block">Delai</span>
+                      <span className="text-gray-400 block">Délai</span>
                       <span className="font-medium text-gray-900">
                         {candidate.quoted_lead_days
                           ? `${candidate.quoted_lead_days} j`
@@ -388,7 +388,7 @@ export function SourcingCandidateSuppliers({
                             }}
                             className="text-[10px] px-2 py-0.5 rounded border border-blue-200 text-blue-600 hover:bg-blue-50"
                           >
-                            Marquer contacte
+                            Marquer contacté
                           </button>
                         )}
                         {(candidate.status === 'identified' ||
@@ -399,7 +399,7 @@ export function SourcingCandidateSuppliers({
                             }}
                             className="text-[10px] px-2 py-0.5 rounded border border-yellow-200 text-yellow-600 hover:bg-yellow-50"
                           >
-                            Devis recu
+                            Devis reçu
                           </button>
                         )}
                         <button
@@ -408,7 +408,7 @@ export function SourcingCandidateSuppliers({
                           }}
                           className="text-[10px] px-2 py-0.5 rounded border border-green-200 text-green-600 hover:bg-green-50"
                         >
-                          Selectionner
+                          Sélectionner
                         </button>
                         <button
                           onClick={() => {
@@ -430,7 +430,7 @@ export function SourcingCandidateSuppliers({
                         }}
                         className="text-[10px] px-2 py-0.5 rounded border border-gray-200 text-gray-500 hover:bg-gray-50"
                       >
-                        Reactiver
+                        Réactiver
                       </button>
                     </div>
                   )}
