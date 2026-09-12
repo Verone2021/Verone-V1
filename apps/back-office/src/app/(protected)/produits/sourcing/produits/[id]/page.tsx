@@ -168,22 +168,11 @@ export default function SourcingProductDetailPage() {
   };
 
   const handleValidateSourcing = async () => {
-    try {
-      // Le hook affiche lui-même le succès ou la raison du refus
-      // (prix d'achat ou fournisseur manquant) et renvoie false sans lever.
-      const ok = await validateSourcing(productId);
-      if (!ok) return;
-      router.push('/produits/catalogue');
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'Impossible de valider le sourcing',
-        variant: 'destructive',
-      });
-    }
+    // Le hook affiche lui-même le succès ou la raison du refus
+    // (prix d'achat ou fournisseur manquant) et renvoie false sans lever.
+    const ok = await validateSourcing(productId);
+    if (!ok) return;
+    router.push('/produits/catalogue');
   };
 
   if (loading) {
