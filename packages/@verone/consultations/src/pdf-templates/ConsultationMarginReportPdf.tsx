@@ -21,6 +21,7 @@ import type { ClientConsultation } from '../hooks/use-consultations';
 import type { ConsultationItem } from '../hooks/use-consultations';
 import type { ConsultationPdfClientInfo } from './ConsultationSummaryPdf';
 import { filterActiveItems } from '../lib/consultation-order-guards';
+import { computeConsultationEconomics } from '../lib/consultation-economics';
 
 const s = StyleSheet.create({
   headerRow: {
@@ -223,41 +224,32 @@ export function ConsultationMarginReportPdf({
 }: ConsultationMarginReportPdfProps) {
   // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du rapport marges
   const activeItems = filterActiveItems(items);
-  // Sémantique : item.shipping_cost = TOTAL LIGNE (pas par unité)
-  const getCostPrice = (item: ConsultationItem): number =>
-    item.cost_price_override ?? item.product?.cost_price ?? 0;
 
-  const getRevenue = (item: ConsultationItem): number => {
-    if (item.is_free || item.is_sample) return 0;
-    return (
-      (item.unit_price ?? 0) * item.quantity + (item.selling_shipping_cost ?? 0)
-    );
-  };
-
-  const getCostTotal = (item: ConsultationItem): number => {
-    const goodsCost = getCostPrice(item) * item.quantity;
-    if (item.is_sample) return goodsCost;
-    return goodsCost + item.shipping_cost;
-  };
-
-  const getMargin = (item: ConsultationItem): number =>
-    getRevenue(item) - getCostTotal(item);
-
-  const getMarginPercent = (item: ConsultationItem): number => {
-    const cost = getCostTotal(item);
-    if (cost === 0) return 0;
-    return ((getRevenue(item) - cost) / cost) * 100;
-  };
-
-  const totalRevenue = activeItems.reduce((sum, i) => sum + getRevenue(i), 0);
-  const totalCost = activeItems.reduce((sum, i) => sum + getCostTotal(i), 0);
-  const totalShipping = activeItems.reduce(
-    (sum, i) => (i.is_sample ? sum : sum + i.shipping_cost),
-    0
+  // Économie via fonction canonique B2 (formules § B2 du plan)
+  const { lines: econLines, totals: economics } = computeConsultationEconomics(
+    activeItems
+      .filter(item => item.quantity > 0)
+      .map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
+        ecoTax: item.product?.eco_tax_default ?? 0,
+        shippingCost: item.shipping_cost ?? 0,
+        sellingShippingCost: item.selling_shipping_cost ?? 0,
+        proposedPrice: item.unit_price ?? null,
+        isFree: item.is_free,
+        isSample: item.is_sample,
+        status: item.status ?? 'pending',
+        supplierId: item.product?.supplier_id ?? null,
+      }))
   );
-  const totalMargin = totalRevenue - totalCost;
-  const totalMarginPercent =
-    totalCost > 0 ? (totalMargin / totalCost) * 100 : 0;
+  const econByItemId = new Map(econLines.map(l => [l.lineId, l]));
+
+  const totalRevenue = economics.revenue;
+  const totalCost = economics.cost;
+  const totalShipping = economics.fees;
+  const totalMargin = economics.margin;
+  const totalMarginPercent = economics.marginPercent ?? 0;
 
   const reportRef = `MARGES-${consultation.id.slice(0, 8).toUpperCase()}`;
   const now = new Date().toLocaleDateString('fr-FR', {
@@ -420,13 +412,10 @@ export function ConsultationMarginReportPdf({
           </View>
 
           {activeItems.map(item => {
-            const costPrice = getCostPrice(item);
-            const shippingPerUnit = item.is_sample
-              ? 0
-              : item.shipping_cost / Math.max(1, item.quantity);
-            const costPerUnit = costPrice + shippingPerUnit;
-            const margin = getMargin(item);
-            const marginPct = getMarginPercent(item);
+            const econ = econByItemId.get(item.id);
+            const costPerUnit = econ?.unitCostPrice ?? 0;
+            const margin = econ?.margin ?? 0;
+            const marginPct = econ?.marginPercent ?? 0;
             const isNegative = margin < 0;
 
             return (
@@ -446,7 +435,7 @@ export function ConsultationMarginReportPdf({
                   {item.quantity}
                 </Text>
                 <Text style={[s.td, { width: '10%', textAlign: 'right' }]}>
-                  {formatVeronePrice(costPrice, 2)}
+                  {formatVeronePrice(econ?.unitCost ?? 0, 2)}
                 </Text>
                 <Text style={[s.td, { width: '10%', textAlign: 'right' }]}>
                   {item.is_sample
@@ -467,7 +456,7 @@ export function ConsultationMarginReportPdf({
                     { width: '10%', textAlign: 'right' },
                   ]}
                 >
-                  {formatVeronePrice(margin / Math.max(1, item.quantity), 2)} (
+                  {formatVeronePrice(margin / item.quantity, 2)} (
                   {marginPct.toFixed(0)} %)
                 </Text>
                 <Text
@@ -488,15 +477,25 @@ export function ConsultationMarginReportPdf({
         <View style={s.analysisBlock}>
           <Text style={s.analysisTitle}>Produits les plus rentables</Text>
           {activeItems
-            .filter(i => !i.is_free && !i.is_sample && getMarginPercent(i) > 0)
-            .sort((a, b) => getMarginPercent(b) - getMarginPercent(a))
+            .filter(i => {
+              const e = econByItemId.get(i.id);
+              return !i.is_free && !i.is_sample && (e?.marginPercent ?? 0) > 0;
+            })
+            .sort((a, b) => {
+              const ea = econByItemId.get(a.id);
+              const eb = econByItemId.get(b.id);
+              return (eb?.marginPercent ?? 0) - (ea?.marginPercent ?? 0);
+            })
             .slice(0, 5)
-            .map(item => (
-              <Text key={item.id} style={s.analysisLine}>
-                · {item.product?.name} — {getMarginPercent(item).toFixed(1)} % (
-                {formatVeronePrice(getMargin(item), 2)})
-              </Text>
-            ))}
+            .map(item => {
+              const e = econByItemId.get(item.id);
+              return (
+                <Text key={item.id} style={s.analysisLine}>
+                  · {item.product?.name} — {(e?.marginPercent ?? 0).toFixed(1)}{' '}
+                  % ({formatVeronePrice(e?.margin ?? 0, 2)})
+                </Text>
+              );
+            })}
           {totalShipping > 0 && totalCost - totalShipping > 0 && (
             <Text style={[s.analysisLine, { marginTop: 6 }]}>
               Impact transport :{' '}

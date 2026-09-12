@@ -73,6 +73,12 @@ export interface LineEconomics {
   margin: number;
   /** Marge % = margin / cost × 100, null si gratuit/échantillon/priceToFix/cost=0 */
   marginPercent: number | null;
+  /**
+   * Montant facturé au client (décision 5 BO-CONSULT-P2-001) :
+   * incluse, non gratuite, unitPrice != null ⇒ unitPrice × quantity ; sinon 0.
+   * Échantillon non gratuit = facturé à son prix.
+   */
+  billedAmount: number;
 }
 
 export interface ConsultationEconomicsTotals {
@@ -83,6 +89,8 @@ export interface ConsultationEconomicsTotals {
   marginPercent: number | null;
   includedLines: number;
   linesToPrice: number;
+  /** Somme des billedAmount des lignes incluses */
+  billed: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -157,6 +165,14 @@ export function computeLineEconomics(
       ? null
       : (margin / cost) * 100;
 
+  // --- Montant facturé au client (décision 5 BO-CONSULT-P2-001) ---
+  // PDF client, devis et commande : ligne incluse, non gratuite, prix renseigné
+  // ⇒ unitPrice × quantity. Échantillon non gratuit = facturé à son prix.
+  const billedAmount: number =
+    included && !line.isFree && unitPrice !== null
+      ? unitPrice * line.quantity
+      : 0;
+
   return {
     lineId: line.id,
     included,
@@ -172,6 +188,7 @@ export function computeLineEconomics(
     cost,
     margin,
     marginPercent,
+    billedAmount,
   };
 }
 
@@ -209,6 +226,7 @@ export function computeConsultationEconomics(
     totalCost === 0 ? null : (totalMargin / totalCost) * 100;
 
   const linesToPrice = includedLines.filter(l => l.priceToFix).length;
+  const totalBilled = includedLines.reduce((sum, l) => sum + l.billedAmount, 0);
 
   const totals: ConsultationEconomicsTotals = {
     revenue: totalRevenue,
@@ -218,6 +236,7 @@ export function computeConsultationEconomics(
     marginPercent: totalMarginPercent,
     includedLines: includedLines.length,
     linesToPrice,
+    billed: totalBilled,
   };
 
   return { lines: computedLines, totals };

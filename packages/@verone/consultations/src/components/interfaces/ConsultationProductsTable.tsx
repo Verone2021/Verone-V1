@@ -21,6 +21,28 @@ import {
 } from 'lucide-react';
 
 import type { ConsultationItem } from '@verone/consultations/hooks';
+import {
+  computeLineEconomics,
+  type ConsultationEconomicsLineInput,
+} from '../../lib/consultation-economics';
+
+function itemToEconInput(
+  item: ConsultationItem
+): ConsultationEconomicsLineInput {
+  return {
+    id: item.id,
+    quantity: item.quantity,
+    unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
+    ecoTax: item.product?.eco_tax_default ?? 0,
+    shippingCost: item.shipping_cost ?? 0,
+    sellingShippingCost: item.selling_shipping_cost ?? 0,
+    proposedPrice: item.unit_price ?? null,
+    isFree: item.is_free,
+    isSample: item.is_sample,
+    status: item.status ?? 'pending',
+    supplierId: item.product?.supplier_id ?? null,
+  };
+}
 
 interface ConsultationProductsTableProps {
   items: ConsultationItem[];
@@ -45,9 +67,6 @@ interface ConsultationProductsTableProps {
   onChangeStatus: (itemId: string, status: string) => void;
   onSampleChange: (itemId: string, priceStr: string) => void;
   onRemove: (itemId: string, productName: string) => void;
-  getItemCostPrice: (item: ConsultationItem) => number;
-  getItemMargin: (item: ConsultationItem) => number;
-  getItemMarginPercent: (item: ConsultationItem) => number;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -82,9 +101,6 @@ export function ConsultationProductsTable({
   onChangeStatus,
   onSampleChange,
   onRemove,
-  getItemCostPrice,
-  getItemMargin,
-  getItemMarginPercent,
 }: ConsultationProductsTableProps) {
   if (items.length === 0) {
     return (
@@ -142,9 +158,9 @@ export function ConsultationProductsTable({
         <tbody className="divide-y divide-zinc-50">
           {items.map(item => {
             const isEditing = editingItem === item.id;
-            const costPrice = getItemCostPrice(item);
-            const margin = getItemMargin(item);
-            const marginPct = getItemMarginPercent(item);
+            const econ = computeLineEconomics(itemToEconInput(item));
+            const margin = econ.margin;
+            const marginPct = econ.marginPercent ?? 0;
             const stockReal = item.product?.stock_real ?? 0;
 
             const rowClass = [
@@ -271,13 +287,13 @@ export function ConsultationProductsTable({
                   ) : (
                     <div className="flex flex-col leading-none">
                       <span className="text-[12px] font-medium text-zinc-700">
-                        {costPrice.toFixed(2)}€
+                        {econ.unitCost.toFixed(2)}€
                       </span>
                       {/* Sous-total si plusieurs unités */}
                       {item.quantity > 1 && (
                         <span className="text-[9px] text-zinc-400 mt-0.5">
                           × {item.quantity} ={' '}
-                          {(costPrice * item.quantity).toFixed(2)}€
+                          {(econ.unitCost * item.quantity).toFixed(2)}€
                         </span>
                       )}
                       {/* Badge "Modifié" uniquement si une vraie valeur d'origine existait */}
@@ -386,10 +402,10 @@ export function ConsultationProductsTable({
                       {/* Sous-total vente si plusieurs unités et payant */}
                       {!item.is_free &&
                         item.quantity > 1 &&
-                        item.unit_price != null && (
+                        econ.unitPrice != null && (
                           <span className="text-[9px] text-zinc-400 mt-0.5">
                             × {item.quantity} ={' '}
-                            {(item.unit_price * item.quantity).toFixed(2)}€
+                            {(econ.unitPrice * item.quantity).toFixed(2)}€
                           </span>
                         )}
                     </div>
@@ -469,7 +485,7 @@ export function ConsultationProductsTable({
                 <td className="px-3 py-0 h-10">
                   {item.is_free || item.is_sample ? (
                     <span className="text-[11px] text-red-500 font-medium">
-                      -{(costPrice * item.quantity).toFixed(0)}€
+                      -{econ.cost.toFixed(0)}€
                     </span>
                   ) : (
                     <div className="flex items-center gap-1">

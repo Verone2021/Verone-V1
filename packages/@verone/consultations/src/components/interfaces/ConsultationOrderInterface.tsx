@@ -163,40 +163,6 @@ export function ConsultationOrderInterface({
     });
   };
 
-  // Calculs marges
-  // Sémantique :
-  // - item.shipping_cost = COÛT d'expédition Verone (total ligne, pas par unité).
-  // - item.selling_shipping_cost = TRANSPORT VENTE refacturé au client (total ligne).
-  //   Augmente le revenu de la ligne. 0 = pas de refacturation.
-  // - Marge réelle = (vente × qty + selling_shipping) − (achat × qty + shipping_cost)
-  const getItemCostPrice = (item: ConsultationItem): number =>
-    item.cost_price_override ?? item.product?.cost_price ?? 0;
-
-  const getItemCostTotal = (item: ConsultationItem): number => {
-    const goodsCost = getItemCostPrice(item) * item.quantity;
-    if (item.is_free || item.is_sample) return goodsCost;
-    return goodsCost + item.shipping_cost;
-  };
-
-  const getItemRevenue = (item: ConsultationItem): number => {
-    if (item.is_free || item.is_sample) return 0;
-    return (
-      (item.unit_price ?? 0) * item.quantity + (item.selling_shipping_cost ?? 0)
-    );
-  };
-
-  const getItemMargin = (item: ConsultationItem): number => {
-    if (item.is_free || item.is_sample)
-      return -(getItemCostPrice(item) * item.quantity);
-    return getItemRevenue(item) - getItemCostTotal(item);
-  };
-
-  const getItemMarginPercent = (item: ConsultationItem): number => {
-    const cost = getItemCostTotal(item);
-    if (cost === 0 || item.is_free || item.is_sample) return 0;
-    return ((getItemRevenue(item) - cost) / cost) * 100;
-  };
-
   // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du compteur
   const totalItems = consultationItems
     .filter(i => i.status !== 'rejected')
@@ -313,9 +279,6 @@ export function ConsultationOrderInterface({
           onChangeStatus={changeLineStatus}
           onSampleChange={handleSampleChange}
           onRemove={handleRemoveItem}
-          getItemCostPrice={getItemCostPrice}
-          getItemMargin={getItemMargin}
-          getItemMarginPercent={getItemMarginPercent}
         />
 
         {/* Footer stats + CTA Commander */}

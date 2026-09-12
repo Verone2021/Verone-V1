@@ -20,10 +20,8 @@ import {
 import type { ClientConsultation } from '../hooks/use-consultations';
 import type { ConsultationItem } from '../hooks/use-consultations';
 import type { ConsultationImage } from '../hooks/use-consultation-images';
-import {
-  filterActiveItems,
-  filterBillableItems,
-} from '../lib/consultation-order-guards';
+import { filterActiveItems } from '../lib/consultation-order-guards';
+import { computeConsultationEconomics } from '../lib/consultation-economics';
 
 // ── Client info shape (mirror of resolveClientInfo) ──────────────────
 export interface ConsultationPdfClientInfo {
@@ -267,11 +265,26 @@ export function ConsultationSummaryPdf({
   const productBase64 = preloadedImages?.productImages ?? {};
   // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du PDF client
   const activeItems = filterActiveItems(items);
-  // Total calculé sur les lignes facturables uniquement (non-gratuites, avec prix)
-  const computedTotalHT = filterBillableItems(activeItems).reduce(
-    (sum, item) => sum + item.unit_price * item.quantity,
-    0
+  // Total HT via totals.billed (décision 5 BO-CONSULT-P2-001 — source unique)
+  const { lines: econLines, totals: economics } = computeConsultationEconomics(
+    activeItems
+      .filter(item => item.quantity > 0)
+      .map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
+        ecoTax: item.product?.eco_tax_default ?? 0,
+        shippingCost: item.shipping_cost ?? 0,
+        sellingShippingCost: item.selling_shipping_cost ?? 0,
+        proposedPrice: item.unit_price ?? null,
+        isFree: item.is_free,
+        isSample: item.is_sample,
+        status: item.status ?? 'pending',
+        supplierId: item.product?.supplier_id ?? null,
+      }))
   );
+  const econByItemId = new Map(econLines.map(l => [l.lineId, l]));
+  const computedTotalHT = economics.billed;
   const tvaRate =
     consultation.tva_rate != null ? Number(consultation.tva_rate) : 0;
   const tvaAmount = (computedTotalHT * tvaRate) / 100;
@@ -394,11 +407,13 @@ export function ConsultationSummaryPdf({
         ) : (
           <View>
             {activeItems.map(item => {
-              const unitPrice = item.unit_price; // null → « À fixer »
+              const unitPrice = item.unit_price; // null → « À fixer » (affichage)
+              const econ = econByItemId.get(item.id);
+              // billedAmount : 0 si gratuit ou prix non fixé (décision 5)
               const lineTotal =
-                item.is_free || unitPrice === null
-                  ? null
-                  : unitPrice * item.quantity;
+                econ?.billedAmount && econ.billedAmount > 0
+                  ? econ.billedAmount
+                  : null;
 
               return (
                 <View key={item.id} style={s.productCard} wrap={false}>
