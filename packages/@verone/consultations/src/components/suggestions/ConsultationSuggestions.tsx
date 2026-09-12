@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { AlertCircle, Clock, Users, ArrowRight, Link } from 'lucide-react';
 
@@ -33,56 +33,50 @@ export function ConsultationSuggestions({
 }: ConsultationSuggestionsProps) {
   const { toast } = useToast();
   const { consultations, fetchConsultations } = useConsultations();
-  const [relevantConsultations, setRelevantConsultations] = useState<
-    ClientConsultation[]
-  >([]);
   const [loading, setLoading] = useState(false);
 
+  // Un seul chargement par client : `consultations` ne doit pas figurer dans
+  // les dépendances (chaque chargement crée un nouveau tableau → boucle).
   useEffect(() => {
     if (!clientId) return;
 
-    const loadRelevantConsultations = async () => {
-      setLoading(true);
-      try {
-        await fetchConsultations();
-
-        // Filtrer les consultations du client spécifique
-        const clientConsultations = consultations.filter(consultation => {
-          if (!clientId) return false;
-          // Statut actif requis
-          const isActive =
-            consultation.status === 'en_attente' ||
-            consultation.status === 'en_cours';
-          if (!isActive) return false;
-          // Filtrer par enseigne_id ou organisation_id correspondant au client assigné
-          return (
-            consultation.enseigne_id === clientId ||
-            consultation.organisation_id === clientId
-          );
-        });
-
-        // Trier par priorité et date
-        const sorted = clientConsultations.sort((a, b) => {
-          // D'abord par niveau de priorité (plus élevé = plus urgent)
-          if (a.priority_level !== b.priority_level) {
-            return b.priority_level - a.priority_level;
-          }
-          // Puis par date de création (plus récent en premier)
-          return (
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          );
-        });
-
-        setRelevantConsultations(sorted.slice(0, 3)); // Max 3 suggestions
-      } catch (loadError) {
+    setLoading(true);
+    void fetchConsultations()
+      .catch(loadError => {
         console.error('Erreur chargement consultations:', loadError);
-      } finally {
-        setLoading(false);
-      }
-    };
+      })
+      .finally(() => setLoading(false));
+  }, [clientId, fetchConsultations]);
 
-    void loadRelevantConsultations();
-  }, [clientId, consultations, fetchConsultations]);
+  // Filtrage dérivé des consultations chargées (jamais une liste périmée).
+  const relevantConsultations = useMemo<ClientConsultation[]>(() => {
+    if (!clientId) return [];
+
+    const clientConsultations = consultations.filter(consultation => {
+      // Statut actif requis
+      const isActive =
+        consultation.status === 'en_attente' ||
+        consultation.status === 'en_cours';
+      if (!isActive) return false;
+      // Filtrer par enseigne_id ou organisation_id correspondant au client assigné
+      return (
+        consultation.enseigne_id === clientId ||
+        consultation.organisation_id === clientId
+      );
+    });
+
+    // Trier par priorité puis date de création (plus récent en premier)
+    return [...clientConsultations]
+      .sort((a, b) => {
+        if (a.priority_level !== b.priority_level) {
+          return b.priority_level - a.priority_level;
+        }
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      })
+      .slice(0, 3); // Max 3 suggestions
+  }, [clientId, consultations]);
 
   const handleLinkToConsultation = (consultationId: string) => {
     if (onLinkToConsultation) {
