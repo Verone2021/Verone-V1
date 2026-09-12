@@ -39,7 +39,7 @@ export function useProductsWithHistory(productIds: readonly string[]) {
   const { data } = useQuery({
     queryKey: ['products', 'with_history', idsKey],
     queryFn: () => fetchProductIdsWithHistory(idsKey.split(',')),
-    enabled: idsKey.length > 0,
+    enabled: productIds.length > 0,
     staleTime: STALE_TIME_MS,
   });
 
