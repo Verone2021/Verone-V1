@@ -381,7 +381,9 @@ export function ConsultationProductsTable({
                       >
                         {item.is_free
                           ? 'Gratuit'
-                          : `${item.unit_price?.toFixed(2) ?? '0.00'}€`}
+                          : item.unit_price === null
+                            ? 'À fixer'
+                            : `${item.unit_price.toFixed(2)}€`}
                       </span>
                       {/* Sous-total vente si plusieurs unités et payant */}
                       {!item.is_free &&
@@ -429,7 +431,9 @@ export function ConsultationProductsTable({
                   ) : item.is_sample ? (
                     <div className="flex items-center gap-1">
                       <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[9px] font-bold uppercase tracking-wider rounded shadow-sm">
-                        {item.unit_price?.toFixed(2)}€
+                        {item.unit_price !== null
+                          ? `${item.unit_price.toFixed(2)}€`
+                          : 'À fixer'}
                       </span>
                       <button
                         type="button"

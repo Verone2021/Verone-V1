@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
@@ -8,34 +8,44 @@ import { SourcingProductModal } from '@verone/products/components/sourcing/Sourc
 import { Alert, AlertDescription } from '@verone/ui';
 import { Plus, Sparkles, ShoppingCart, Calculator } from 'lucide-react';
 
-import type { ConsultationItem } from '@verone/consultations/hooks';
-import { useConsultationItems } from '@verone/consultations/hooks';
+import type {
+  ConsultationItem,
+  CreateConsultationItemData,
+  UpdateConsultationItemData,
+} from '@verone/consultations/hooks';
 
 import { ConsultationMarginKpis } from './ConsultationMarginKpis';
 import { ConsultationProductsTable } from './ConsultationProductsTable';
 
+// Décision 1 BO-CONSULT-P2-001 : items + mutations via props (source unique dans page.tsx)
 interface ConsultationOrderInterfaceProps {
   consultationId: string;
+  consultationItems: ConsultationItem[];
+  loading: boolean;
+  error: string | null;
+  addItem: (data: CreateConsultationItemData) => Promise<boolean>;
+  updateItem: (
+    itemId: string,
+    updates: UpdateConsultationItemData
+  ) => Promise<boolean>;
+  removeItem: (itemId: string) => Promise<boolean>;
+  fetchConsultationItems: (id: string) => Promise<void>;
   onItemsChanged?: () => void;
   onCreatePurchaseOrder?: (acceptedItems: ConsultationItem[]) => void;
 }
 
 export function ConsultationOrderInterface({
   consultationId,
+  consultationItems,
+  loading,
+  error,
+  addItem,
+  updateItem,
+  removeItem,
+  fetchConsultationItems,
   onItemsChanged,
   onCreatePurchaseOrder,
 }: ConsultationOrderInterfaceProps) {
-  const {
-    consultationItems,
-    loading,
-    error,
-    addItem,
-    updateItem,
-    removeItem,
-    getTotalItemsCount,
-    fetchConsultationItems,
-  } = useConsultationItems(consultationId);
-
   const [showAddModal, setShowAddModal] = useState(false);
   const [showSourcingModal, setShowSourcingModal] = useState(false);
 
@@ -49,16 +59,12 @@ export function ConsultationOrderInterface({
   const [editCostPriceOverride, setEditCostPriceOverride] = useState('');
   const [editIsSample, setEditIsSample] = useState(false);
 
-  // Notif changement items — onItemsChanged volontairement exclu pour éviter boucle infinie
-  const itemsCount = consultationItems.length;
-  useEffect(() => {
-    onItemsChanged?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [itemsCount]);
-
+  // Décision 1 BO-CONSULT-P2-001 : plus d'effet de re-sync local
+  // (les items arrivent du parent via props — la re-sync est dans le hook parent)
   const handleProductAdded = () => {
-    void fetchConsultationItems(consultationId);
-    onItemsChanged?.();
+    void fetchConsultationItems(consultationId).then(() => {
+      onItemsChanged?.();
+    });
   };
 
   const startEditItem = (item: ConsultationItem) => {
@@ -189,7 +195,10 @@ export function ConsultationOrderInterface({
     return ((getItemRevenue(item) - cost) / cost) * 100;
   };
 
-  const totalItems = getTotalItemsCount();
+  // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du compteur
+  const totalItems = consultationItems
+    .filter(i => i.status !== 'rejected')
+    .reduce((sum, i) => sum + i.quantity, 0);
   const acceptedItems = consultationItems.filter(
     i => i.status === 'approved' || i.status === 'ordered'
   );

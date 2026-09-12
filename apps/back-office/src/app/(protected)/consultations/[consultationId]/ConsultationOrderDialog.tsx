@@ -79,12 +79,13 @@ export function ConsultationOrderDialog({
     0
   );
 
+  // shipping_cost est un total ligne (pas par unité) — pas de × quantity
   const totalCostPrice = acceptedItems.reduce(
     (sum, item) =>
       sum +
-      ((item.cost_price_override ?? item.product?.cost_price ?? 0) +
-        item.shipping_cost) *
-        item.quantity,
+      (item.cost_price_override ?? item.product?.cost_price ?? 0) *
+        item.quantity +
+      item.shipping_cost,
     0
   );
 

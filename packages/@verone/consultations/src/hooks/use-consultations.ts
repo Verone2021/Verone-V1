@@ -69,7 +69,8 @@ export interface ConsultationItem {
   consultation_id: string;
   product_id: string;
   quantity: number;
-  unit_price?: number;
+  /** Prix de vente proposé. null = prix à fixer (jamais fallback cost_price). */
+  unit_price: number | null;
   is_free: boolean;
   is_sample: boolean;
   notes?: string;
@@ -90,6 +91,8 @@ export interface ConsultationItem {
     supplier_id?: string;
     supplier_name?: string;
     cost_price?: number;
+    /** Éco-taxe par défaut du produit (Décision 6 BO-CONSULT-P2-001) */
+    eco_tax_default?: number | null;
     stock_real?: number;
     stock_forecasted_in?: number;
     stock_forecasted_out?: number;
@@ -753,6 +756,7 @@ export function useConsultationItems(consultationId?: string) {
             sku,
             requires_sample,
             cost_price,
+            eco_tax_default,
             stock_real,
             stock_forecasted_in,
             stock_forecasted_out,
@@ -774,6 +778,7 @@ export function useConsultationItems(consultationId?: string) {
           sku: string;
           requires_sample: boolean;
           cost_price?: number;
+          eco_tax_default?: number | null;
           stock_real?: number;
           stock_forecasted_in?: number;
           stock_forecasted_out?: number;
@@ -793,7 +798,8 @@ export function useConsultationItems(consultationId?: string) {
           consultation_id: item.consultation_id,
           product_id: item.product_id,
           quantity: item.quantity ?? 1,
-          unit_price: item.proposed_price ?? productData?.cost_price,
+          // Décision 3 BO-CONSULT-P2-001 : pas de fallback sur cost_price
+          unit_price: item.proposed_price ?? null,
           is_free: item.is_free ?? false,
           is_sample: item.is_sample ?? false,
           notes: item.notes ?? undefined,
@@ -816,6 +822,7 @@ export function useConsultationItems(consultationId?: string) {
                   productData.supplier?.legal_name ??
                   undefined,
                 cost_price: productData.cost_price,
+                eco_tax_default: productData.eco_tax_default ?? null,
                 stock_real: productData.stock_real ?? 0,
                 stock_forecasted_in: productData.stock_forecasted_in ?? 0,
                 stock_forecasted_out: productData.stock_forecasted_out ?? 0,
@@ -1050,17 +1057,21 @@ export function useConsultationItems(consultationId?: string) {
   };
 
   // Calculer le total de la consultation
+  // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues
   const calculateTotal = () => {
     return consultationItems.reduce((total, item) => {
-      if (item.is_free) return total;
+      if (item.is_free || item.status === 'rejected') return total;
       const price = item.unit_price ?? 0;
       return total + price * item.quantity;
     }, 0);
   };
 
   // Calculer le nombre total d'items
+  // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues
   const getTotalItemsCount = () => {
-    return consultationItems.reduce((total, item) => total + item.quantity, 0);
+    return consultationItems
+      .filter(i => i.status !== 'rejected')
+      .reduce((total, item) => total + item.quantity, 0);
   };
 
   // Charger les items au changement de consultation

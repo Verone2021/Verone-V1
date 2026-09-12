@@ -292,8 +292,16 @@ export default function ConsultationDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Colonne gauche — Produits & Marges */}
           <div className="lg:col-span-8 space-y-4">
+            {/* Décision 1 BO-CONSULT-P2-001 : items + mutations depuis source unique */}
             <ConsultationOrderInterface
               consultationId={consultationId}
+              consultationItems={detail.consultationItems}
+              loading={detail.itemsLoading}
+              error={detail.itemsError}
+              addItem={detail.addItem}
+              updateItem={detail.updateItem}
+              removeItem={detail.removeItem}
+              fetchConsultationItems={detail.fetchConsultationItems}
               onItemsChanged={detail.handleItemsChanged}
               onCreatePurchaseOrder={items => {
                 setPendingOrderItems(items);

@@ -58,7 +58,8 @@ export interface ConsultationItem {
   consultation_id: string;
   product_id: string;
   quantity: number;
-  unit_price?: number;
+  /** Prix de vente proposé. null = prix à fixer (jamais fallback cost_price). */
+  unit_price: number | null;
   is_free: boolean;
   is_sample: boolean;
   notes?: string;
@@ -78,6 +79,8 @@ export interface ConsultationItem {
     supplier_id?: string;
     supplier_name?: string;
     cost_price?: number;
+    /** Éco-taxe par défaut du produit (Décision 6 BO-CONSULT-P2-001) */
+    eco_tax_default?: number | null;
     stock_real?: number;
     stock_forecasted_in?: number;
     stock_forecasted_out?: number;

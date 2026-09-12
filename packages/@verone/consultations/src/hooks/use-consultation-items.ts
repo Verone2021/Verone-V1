@@ -52,6 +52,7 @@ export function useConsultationItems(consultationId?: string) {
             sku,
             requires_sample,
             cost_price,
+            eco_tax_default,
             stock_real,
             stock_forecasted_in,
             stock_forecasted_out,
@@ -72,6 +73,7 @@ export function useConsultationItems(consultationId?: string) {
           sku: string;
           requires_sample: boolean;
           cost_price?: number;
+          eco_tax_default?: number | null;
           stock_real?: number;
           stock_forecasted_in?: number;
           stock_forecasted_out?: number;
@@ -88,7 +90,9 @@ export function useConsultationItems(consultationId?: string) {
           consultation_id: item.consultation_id,
           product_id: item.product_id,
           quantity: item.quantity ?? 1,
-          unit_price: item.proposed_price ?? productData?.cost_price,
+          // Décision 3 BO-CONSULT-P2-001 : pas de fallback sur cost_price
+          // (évite d'afficher le prix d'achat comme prix de vente)
+          unit_price: item.proposed_price ?? null,
           is_free: item.is_free ?? false,
           is_sample: item.is_sample ?? false,
           notes: item.notes ?? undefined,
@@ -111,6 +115,7 @@ export function useConsultationItems(consultationId?: string) {
                   productData.supplier?.legal_name ??
                   undefined,
                 cost_price: productData.cost_price,
+                eco_tax_default: productData.eco_tax_default ?? null,
                 stock_real: productData.stock_real ?? 0,
                 stock_forecasted_in: productData.stock_forecasted_in ?? 0,
                 stock_forecasted_out: productData.stock_forecasted_out ?? 0,
@@ -320,15 +325,19 @@ export function useConsultationItems(consultationId?: string) {
   };
 
   const calculateTotal = () => {
+    // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du total
     return consultationItems.reduce((total, item) => {
-      if (item.is_free) return total;
+      if (item.is_free || item.status === 'rejected') return total;
       const price = item.unit_price ?? 0;
       return total + price * item.quantity;
     }, 0);
   };
 
   const getTotalItemsCount = () => {
-    return consultationItems.reduce((total, item) => total + item.quantity, 0);
+    // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du compteur
+    return consultationItems
+      .filter(i => i.status !== 'rejected')
+      .reduce((total, item) => total + item.quantity, 0);
   };
 
   useEffect(() => {

@@ -66,8 +66,19 @@ export function useConsultationDetail(consultationId: string) {
     null
   );
 
-  const { consultationItems, calculateTotal, fetchConsultationItems } =
-    useConsultationItems(consultationId);
+  // Décision 1 BO-CONSULT-P2-001 : source unique — on destructure tout ici
+  const {
+    consultationItems,
+    loading: itemsLoading,
+    error: itemsError,
+    calculateTotal,
+    fetchConsultationItems,
+    addItem,
+    updateItem,
+    removeItem,
+    toggleFreeItem,
+    getTotalItemsCount,
+  } = useConsultationItems(consultationId);
 
   const { images } = useConsultationImages({ consultationId, autoFetch: true });
 
@@ -256,8 +267,14 @@ export function useConsultationDetail(consultationId: string) {
         return;
       }
 
+      // Décision 2 BO-CONSULT-P2-001 : lignes refusées et sans prix exclues
       const items = consultationItems
-        .filter(item => !item.is_free)
+        .filter(
+          item =>
+            !item.is_free &&
+            item.status !== 'rejected' &&
+            item.unit_price !== null
+        )
         .map(item => ({
           product_id: item.product_id,
           quantity: item.quantity,
@@ -382,7 +399,16 @@ export function useConsultationDetail(consultationId: string) {
     // Data
     consultation,
     loading,
+    // Items (source unique — Décision 1 BO-CONSULT-P2-001)
     consultationItems,
+    itemsLoading,
+    itemsError,
+    addItem,
+    updateItem,
+    removeItem,
+    toggleFreeItem,
+    getTotalItemsCount,
+    fetchConsultationItems,
     images,
     linkedQuotes,
     quotesLoading,
