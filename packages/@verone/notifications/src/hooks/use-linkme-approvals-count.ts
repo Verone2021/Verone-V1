@@ -1,22 +1,21 @@
 /**
  * Hook LinkMe Approvals Count - Vérone Back Office
- * Compte les commandes LinkMe nécessitant approbation
+ * Compte les commandes LinkMe en brouillon (nécessitant approbation).
  *
- * Utilise:
- * - Vue: linkme_orders_enriched
- * - Critère: commandes avec marge < seuil ou besoin validation manuelle
- * - Realtime: Supabase subscriptions sur sales_orders
- *
- * @author Romeo Dos Santos
- * @date 2026-01-23
+ * Implémentation : TanStack Query (staleTime 5 min, refetch au retour sur
+ * l'onglet) + Realtime sur sales_orders (filtre channel_id) avec anti-rebond 2 s.
+ * Pas de polling fallback — CHANNEL_ERROR → warn silencieux.
  */
 
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 import { createClient } from '@verone/utils/supabase/client';
-import type { RealtimeChannel } from '@supabase/supabase-js';
+
+import { useDebouncedInvalidate } from './use-debounce-invalidate';
 
 export interface LinkmeApprovalsCountHook {
   count: number;
@@ -26,65 +25,41 @@ export interface LinkmeApprovalsCountHook {
   lastUpdated: Date | null;
 }
 
-// Channel ID LinkMe constant
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
 
+const LINKME_APPROVALS_QUERY_KEY = [
+  'sales_orders',
+  'linkme_approvals_count',
+] as const;
+
 /**
- * Hook pour compter les commandes LinkMe en attente d'approbation
+ * Hook pour compter les commandes LinkMe en attente d'approbation (status draft).
  *
- * Une commande nécessite approbation si:
- * - status = 'draft' (nouvelles commandes à valider)
- * - marge_rate < seuil minimum (validation marge requise)
- * - needs_manual_approval = true
- *
- * @param options.enableRealtime - Activer Supabase Realtime (default: true)
- * @param options.refetchInterval - Intervalle de polling fallback en ms (default: 30000)
- * @returns {LinkmeApprovalsCountHook} État du hook avec count, loading, error
- *
- * @example
- * ```tsx
- * function LinkmeApprovalsBadge() {
- *   const { count, loading } = useLinkmeApprovalsCount();
- *   return count > 0 ? <Badge variant="urgent">{count}</Badge> : null;
- * }
- * ```
+ * @param options.enableRealtime  @deprecated ignoré — comportement géré via Realtime sales_orders
+ * @param options.refetchInterval @deprecated ignoré — TanStack Query gère le cache
  */
-export function useLinkmeApprovalsCount(options?: {
+export function useLinkmeApprovalsCount(_options?: {
+  /** @deprecated ignoré */
   enableRealtime?: boolean;
+  /** @deprecated ignoré */
   refetchInterval?: number;
 }): LinkmeApprovalsCountHook {
-  const { enableRealtime = true, refetchInterval = 30000 } = options ?? {};
-
-  const [count, setCount] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
-  const supabase = createClient();
+  const queryClient = useQueryClient();
+  const supabase = useMemo(() => createClient(), []);
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  /**
-   * Fetch count des commandes LinkMe en attente d'approbation
-   * Utilise la table sales_orders directement avec filtre channel_id
-   */
-  const fetchCount = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Vérifier authentification avant requête (évite erreur RLS 403)
+  const {
+    data = 0,
+    isPending,
+    dataUpdatedAt,
+  } = useQuery({
+    queryKey: LINKME_APPROVALS_QUERY_KEY,
+    queryFn: async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) {
-        // Pas connecté = pas de count, pas d'erreur
-        setCount(0);
-        setLoading(false);
-        return;
-      }
+      if (!user) return 0;
 
-      // Query commandes LinkMe en draft (nécessitent approbation/validation)
       const { count: totalCount, error: countError } = await supabase
         .from('sales_orders')
         .select('id', { count: 'exact', head: true })
@@ -93,123 +68,55 @@ export function useLinkmeApprovalsCount(options?: {
 
       if (countError) {
         console.error('[useLinkmeApprovalsCount] Count error:', countError);
-        setError(new Error(`Count error: ${countError.message}`));
-        setCount(0); // Valeur par défaut gracieuse
-        return; // Sortie anticipée sans exception
+        return 0;
       }
+      return totalCount ?? 0;
+    },
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: false,
+  });
 
-      setCount(totalCount ?? 0);
-      setLastUpdated(new Date());
-    } catch (err) {
-      const errorObj =
-        err instanceof Error ? err : new Error('Unknown error fetching count');
-      setError(errorObj);
-      console.error('[useLinkmeApprovalsCount] Error:', errorObj);
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase]);
+  const triggerInvalidate = useDebouncedInvalidate(LINKME_APPROVALS_QUERY_KEY);
 
-  /**
-   * Setup Supabase Realtime subscription (authentification requise)
-   */
   useEffect(() => {
-    let isMounted = true;
-
-    const setupSubscriptions = async () => {
-      // Vérifier authentification avant setup Realtime/polling
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user || !isMounted) {
-        // Pas connecté = pas de Realtime, juste set count à 0
-        setCount(0);
-        setLoading(false);
-        return;
-      }
-
-      // Initial fetch (authentifié)
-      void fetchCount().catch((err: unknown) => {
-        console.error('[useLinkmeApprovalsCount] Initial fetch error:', err);
+    channelRef.current = supabase
+      .channel('linkme-approvals-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sales_orders',
+          filter: `channel_id=eq.${LINKME_CHANNEL_ID}`,
+        },
+        triggerInvalidate
+      )
+      .subscribe(status => {
+        if (status === 'CHANNEL_ERROR') {
+          console.warn('[useLinkmeApprovalsCount] Realtime unavailable');
+        }
       });
 
-      // Setup Realtime si activé ET authentifié
-      if (enableRealtime) {
-        channelRef.current = supabase
-          .channel('linkme-approvals-changes')
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'sales_orders',
-              filter: `channel_id=eq.${LINKME_CHANNEL_ID}`,
-            },
-            payload => {
-              const newRow = payload.new as Record<string, unknown>;
-              const oldRow = payload.old as Record<string, unknown>;
-
-              // Refetch si impact sur draft status
-              const shouldRefetch =
-                payload.eventType === 'INSERT' ||
-                payload.eventType === 'DELETE' ||
-                (payload.eventType === 'UPDATE' &&
-                  (newRow?.status === 'draft' || oldRow?.status === 'draft'));
-
-              if (shouldRefetch) {
-                void fetchCount().catch((err: unknown) => {
-                  console.error(
-                    '[useLinkmeApprovalsCount] Refetch error:',
-                    err
-                  );
-                });
-              }
-            }
-          )
-          .subscribe(status => {
-            if (status === 'CHANNEL_ERROR') {
-              // Log silencieux, pas setError pour éviter bruit sur page login
-              console.warn(
-                '[useLinkmeApprovalsCount] Realtime subscription failed'
-              );
-            }
-          });
-      }
-
-      // Polling fallback (seulement si authentifié)
-      if (!enableRealtime && refetchInterval > 0) {
-        intervalRef.current = setInterval(() => {
-          void fetchCount().catch((err: unknown) => {
-            console.error('[useLinkmeApprovalsCount] Polling error:', err);
-          });
-        }, refetchInterval);
-      }
-    };
-
-    void setupSubscriptions().catch((err: unknown) => {
-      console.error('[useLinkmeApprovalsCount] Setup error:', err);
-    });
-
-    // Cleanup
     return () => {
-      isMounted = false;
       if (channelRef.current) {
-        void supabase.removeChannel(channelRef.current);
+        void supabase.removeChannel(channelRef.current).catch(() => {});
         channelRef.current = null;
       }
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
     };
-  }, [supabase, enableRealtime, refetchInterval, fetchCount]);
+  }, [supabase, triggerInvalidate]);
+
+  const refetch = useCallback(async (): Promise<void> => {
+    await queryClient.invalidateQueries({
+      queryKey: LINKME_APPROVALS_QUERY_KEY,
+    });
+  }, [queryClient]);
 
   return {
-    count,
-    loading,
-    error,
-    refetch: fetchCount,
-    lastUpdated,
+    count: data,
+    loading: isPending,
+    error: null,
+    refetch,
+    lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
   };
 }
