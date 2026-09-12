@@ -847,6 +847,9 @@ importers:
 
   packages/@verone/notifications:
     dependencies:
+      '@tanstack/react-query':
+        specifier: ^5.0.0
+        version: 5.90.7(react@18.3.1)
       '@verone/common':
         specifier: workspace:*
         version: link:../common
