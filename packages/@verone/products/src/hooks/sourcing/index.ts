@@ -29,6 +29,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     approveSample,
     rejectSample,
     archiveSourcingProduct,
+    unarchiveSourcingProduct,
     deleteSourcingProduct,
   } = useSourcingMutations({ products, refetch: fetchSourcingProducts });
 
@@ -51,6 +52,7 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     createSourcingProduct,
     updateSourcingProduct,
     archiveSourcingProduct,
+    unarchiveSourcingProduct,
     deleteSourcingProduct,
   };
 }

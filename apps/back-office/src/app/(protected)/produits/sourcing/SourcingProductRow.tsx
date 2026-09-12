@@ -18,6 +18,7 @@ import {
   Eye,
   MoreHorizontal,
   Package,
+  RotateCcw,
   Trash2,
 } from 'lucide-react';
 
@@ -36,6 +37,7 @@ interface SourcingProductRowProps {
   onEdit: () => void;
   onValidate: () => void;
   onArchive: () => void;
+  onRestore: () => void;
   onDelete: () => void;
 }
 
@@ -46,6 +48,7 @@ export function SourcingProductRow({
   onEdit,
   onValidate,
   onArchive,
+  onRestore,
   onDelete,
 }: SourcingProductRowProps) {
   const primaryImage = getPrimaryImage(product);
@@ -173,10 +176,16 @@ export function SourcingProductRow({
                   Archiver
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onClick={onDelete} className="text-red-600">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Supprimer
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuItem onClick={onRestore}>
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Restaurer
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={onDelete} className="text-red-600">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Supprimer
+                  </DropdownMenuItem>
+                </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>

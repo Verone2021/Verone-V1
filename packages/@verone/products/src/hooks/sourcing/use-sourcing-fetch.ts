@@ -81,8 +81,11 @@ export function useSourcingFetch(filters?: SourcingFilters) {
         .eq('creation_mode', 'sourcing')
         .order('created_at', { ascending: false });
 
-      // Filtre archivés : par défaut on cache les archivés (vue principale)
-      if (filters?.archived_view === 'archived') {
+      // Fiche d'un produit précis : chargé par identifiant, archivé ou non.
+      // Sinon, filtre archivés : par défaut on cache les archivés (vue principale)
+      if (filters?.product_id) {
+        query = query.eq('id', filters.product_id);
+      } else if (filters?.archived_view === 'archived') {
         query = query.not('archived_at', 'is', null);
       } else {
         query = query.is('archived_at', null);
@@ -204,6 +207,7 @@ export function useSourcingFetch(filters?: SourcingFilters) {
     filters?.has_supplier,
     filters?.requires_sample,
     filters?.archived_view,
+    filters?.product_id,
   ]);
 
   return { products, setProducts, loading, error, fetchSourcingProducts };

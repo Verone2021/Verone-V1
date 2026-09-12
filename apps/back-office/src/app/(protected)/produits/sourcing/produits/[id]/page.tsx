@@ -78,8 +78,9 @@ export default function SourcingProductDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
+  // Chargement par identifiant : la fiche d'un produit archivé reste lisible.
   const { products, loading, validateSourcing, orderSample, refetch } =
-    useSourcingProducts();
+    useSourcingProducts({ product_id: params.id as string });
   const [isPhotosModalOpen, setIsPhotosModalOpen] = useState(false);
 
   const productId = params.id as string;
