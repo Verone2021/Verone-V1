@@ -233,10 +233,13 @@ export function computeConsultationEconomics(
   const totalCost = includedLines.reduce((sum, l) => sum + l.cost, 0);
   const totalFees = includedLines.reduce((sum, l) => sum + l.fees, 0);
   const totalMargin = totalRevenue - totalCost;
-  const totalMarginPercent: number | null =
-    totalCost === 0 ? null : (totalMargin / totalCost) * 100;
-
   const linesToPrice = includedLines.filter(l => l.priceToFix).length;
+  // Pas de pourcentage total tant qu'un prix reste à fixer : sinon le total
+  // afficherait -100 % alors que chaque ligne affiche « non calculé ».
+  const totalMarginPercent: number | null =
+    totalCost === 0 || linesToPrice > 0
+      ? null
+      : (totalMargin / totalCost) * 100;
   const totalBilled = includedLines.reduce((sum, l) => sum + l.billedAmount, 0);
 
   const totals: ConsultationEconomicsTotals = {

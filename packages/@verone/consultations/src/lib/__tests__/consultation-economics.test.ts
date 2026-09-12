@@ -14,7 +14,7 @@
  *   npx tsx .../consultation-economics.test.ts
  *
  * Sprint BO-CONSULT-P2-001 — 2026-09-12
- * Total assertions : 29 (répartition dans les 5 fichiers thématiques)
+ * Total assertions : 31 (répartition dans les 5 fichiers thématiques)
  */
 
 import { spawnSync } from 'node:child_process';

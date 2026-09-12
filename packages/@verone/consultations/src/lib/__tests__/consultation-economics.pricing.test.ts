@@ -143,4 +143,63 @@ test('linesToPrice compte les lignes sans prix', () => {
   );
 });
 
+test("totals.marginPercent null tant qu'un prix reste à fixer (pas de -100 %)", () => {
+  // Cas c05a3a64 : une ligne à fixer + une ligne gratuite échantillon
+  const lines = [
+    makeLine({
+      id: 'globe-gm',
+      quantity: 1,
+      unitCost: 5,
+      ecoTax: 0.1,
+      proposedPrice: null,
+      marginPercentage: null,
+    }),
+    makeLine({
+      id: 'globe-pm',
+      quantity: 2,
+      unitCost: 3.7,
+      ecoTax: 0.1,
+      proposedPrice: 8,
+      shippingCost: 1.5,
+      isFree: true,
+      isSample: true,
+    }),
+  ];
+
+  const { totals } = computeConsultationEconomics(lines);
+  assert.equal(totals.linesToPrice, 1);
+  assert.equal(
+    totals.marginPercent,
+    null,
+    `marginPercent total doit être null, obtenu ${totals.marginPercent}`
+  );
+  assert.ok(
+    approxEqual(totals.cost, 12.7),
+    `cost attendu 12.7, obtenu ${totals.cost}`
+  );
+});
+
+test('totals.marginPercent calculé quand tous les prix sont fixés', () => {
+  // Cas c9b18dc9 : coût 315, CA 495 ⇒ 57,14 %
+  const lines = [
+    makeLine({
+      id: 'plateaux',
+      quantity: 30,
+      unitCost: 5,
+      ecoTax: 0,
+      proposedPrice: 16.5,
+      shippingCost: 165,
+      sellingShippingCost: 0,
+    }),
+  ];
+
+  const { totals } = computeConsultationEconomics(lines);
+  assert.equal(totals.linesToPrice, 0);
+  assert.ok(
+    totals.marginPercent !== null &&
+      approxEqual(totals.marginPercent, 57.142857, 0.001),
+    `marginPercent total attendu ≈57.14, obtenu ${totals.marginPercent}`
+  );
+});
+
 report('PRICING');
