@@ -112,7 +112,7 @@ export function ConsultationProductRow({
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 bg-zinc-100 rounded overflow-hidden flex-shrink-0">
             {item.product?.image_url ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
+              /* eslint-disable-next-line @next/next/no-img-element -- vignette 24 px d'une URL produit externe : next/image exigerait de déclarer chaque domaine distant */
               <img
                 src={item.product.image_url}
                 alt={item.product.name ?? ''}

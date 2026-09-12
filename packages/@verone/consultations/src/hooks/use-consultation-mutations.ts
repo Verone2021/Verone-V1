@@ -156,7 +156,7 @@ export function createConsultationMutations(deps: ConsultationMutationsDeps) {
           validated_at: null,
           validated_by: null,
           status: 'en_cours',
-        } as unknown as Partial<ClientConsultation>)
+        })
         .eq('id', consultationId);
 
       if (error) throw error;
@@ -249,7 +249,7 @@ export function createConsultationMutations(deps: ConsultationMutationsDeps) {
         .from('client_consultations')
         .update({
           deleted_at: new Date().toISOString(),
-        } as Partial<ClientConsultation>)
+        })
         .eq('id', consultationId);
 
       if (error) throw error;

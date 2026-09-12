@@ -167,7 +167,7 @@ export function useConsultations() {
         .from('client_consultations')
         .update({
           archived_at: new Date().toISOString(),
-        } as Partial<ClientConsultation>)
+        })
         .eq('id', consultationId);
 
       if (error) throw error;
@@ -209,7 +209,7 @@ export function useConsultations() {
 
       const { error } = await supabase
         .from('client_consultations')
-        .update({ archived_at: null } as unknown as Partial<ClientConsultation>)
+        .update({ archived_at: null })
         .eq('id', consultationId);
 
       if (error) throw error;

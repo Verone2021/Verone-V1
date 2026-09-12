@@ -130,7 +130,7 @@ export function ConsultationSummaryPdf({
         {/* Header : logo + numéro proposition */}
         <View style={s.headerRow}>
           <View style={s.logoBlock}>
-            {/* eslint-disable-next-line jsx-a11y/alt-text */}
+            {/* eslint-disable-next-line jsx-a11y/alt-text -- Image de @react-pdf/renderer : pas d'attribut alt dans un PDF */}
             <Image src={VERONE_LOGO_BASE64} style={s.logoImage} />
             <Text style={s.docNumber}>Proposition commerciale</Text>
           </View>
@@ -230,7 +230,7 @@ export function ConsultationSummaryPdf({
               return (
                 <View key={item.id} style={s.productCard} wrap={false}>
                   {productBase64[item.product_id] ? (
-                    /* eslint-disable-next-line jsx-a11y/alt-text */
+                    /* eslint-disable-next-line jsx-a11y/alt-text -- Image de @react-pdf/renderer : pas d'attribut alt dans un PDF */
                     <Image
                       src={productBase64[item.product_id]}
                       style={s.productImage}

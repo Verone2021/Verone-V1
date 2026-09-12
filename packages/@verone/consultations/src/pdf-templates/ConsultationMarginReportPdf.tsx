@@ -87,7 +87,7 @@ export function ConsultationMarginReportPdf({
 
         {/* Header */}
         <View style={s.headerRow}>
-          {/* eslint-disable-next-line jsx-a11y/alt-text */}
+          {/* eslint-disable-next-line jsx-a11y/alt-text -- Image de @react-pdf/renderer : pas d'attribut alt dans un PDF */}
           <Image src={VERONE_LOGO_BASE64} style={s.logoImage} />
           <View style={s.metaBlock}>
             <Text style={s.metaLabel}>Rapport interne — Confidentiel</Text>
