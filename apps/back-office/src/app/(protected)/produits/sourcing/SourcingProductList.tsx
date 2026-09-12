@@ -11,6 +11,8 @@ import {
   Package,
 } from 'lucide-react';
 
+import { useProductsWithHistory } from '@/hooks/use-products-with-history';
+
 import { SourcingProductRow } from './SourcingProductRow';
 
 interface SourcingProductListProps {
@@ -85,6 +87,10 @@ export function SourcingProductList({
   sortDir,
   onSort,
 }: SourcingProductListProps) {
+  // « Supprimer » n'existe que pour les produits archivés : on ne vérifie qu'eux.
+  const archivedIds = products.filter(p => p.archived_at).map(p => p.id);
+  const { canDelete } = useProductsWithHistory(archivedIds);
+
   if (loading) {
     return (
       <Card>
@@ -174,6 +180,7 @@ export function SourcingProductList({
                 <SourcingProductRow
                   key={product.id}
                   product={product}
+                  canDelete={canDelete(product.id)}
                   onView={() => onView(product.id)}
                   onViewSupplier={
                     product.supplier_id
