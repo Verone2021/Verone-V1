@@ -2,6 +2,9 @@
  * @verone/consultations - Module consultations pour Vérone CRM/ERP
  */
 
+// Lib (fonctions pures — pas de React, pas de Supabase)
+export * from './lib';
+
 // Components
 export * from './components/associations';
 export * from './components/ConsultationTimeline';
