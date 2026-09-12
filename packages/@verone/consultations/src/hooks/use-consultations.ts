@@ -5,8 +5,6 @@ import { useState, useCallback } from 'react';
 import { useToast } from '@verone/common/hooks';
 import { createClient } from '@verone/utils/supabase/client';
 
-import { useConsultationItems } from './use-consultation-items';
-
 const supabase = createClient();
 
 // Types pour les consultations
@@ -41,28 +39,6 @@ export interface ClientConsultation {
   // Relations (optionnelles, pour joins)
   enseigne?: { id: string; name: string };
   organisation?: { id: string; legal_name: string; trade_name?: string };
-}
-
-// Interface existante maintenue pour rétrocompatibilité
-export interface ConsultationProduct {
-  id: string;
-  consultation_id: string;
-  product_id: string;
-  proposed_price?: number;
-  notes?: string;
-  is_primary_proposal: boolean;
-  quantity: number;
-  is_free: boolean;
-  created_at: string;
-  created_by?: string;
-  // Relations
-  product?: {
-    id: string;
-    name: string;
-    sku: string;
-    requires_sample: boolean;
-    supplier_name?: string;
-  };
 }
 
 // Nouvelle interface simplifiée pour le workflow type commande
@@ -121,17 +97,6 @@ export interface CreateConsultationData {
     fileName: string;
     fileSize: number;
   }>;
-}
-
-// Interface existante maintenue pour rétrocompatibilité
-export interface AssignProductData {
-  consultation_id: string;
-  product_id: string;
-  proposed_price?: number;
-  notes?: string;
-  is_primary_proposal?: boolean;
-  quantity?: number;
-  is_free?: boolean;
 }
 
 // Nouvelles interfaces simplifiées pour le workflow type commande
@@ -651,70 +616,3 @@ export function useConsultations() {
     deleteConsultation,
   };
 }
-
-// Hook DÉPRÉCIÉ - utilisez useConsultationItems à la place
-// Conservé temporairement pour rétrocompatibilité
-export function useConsultationProducts(consultationId?: string) {
-  console.warn(
-    'useConsultationProducts est déprécié. Utilisez useConsultationItems à la place.'
-  );
-
-  // Redirection vers le nouveau hook
-  const {
-    consultationItems,
-    eligibleProducts,
-    loading,
-    error,
-    addItem,
-    removeItem,
-    updateItem,
-  } = useConsultationItems(consultationId);
-
-  // Adapter l'interface pour rétrocompatibilité
-  const consultationProducts = consultationItems.map(item => ({
-    id: item.id,
-    consultation_id: item.consultation_id,
-    product_id: item.product_id,
-    proposed_price: item.unit_price,
-    notes: item.notes,
-    is_primary_proposal: false, // Plus utilisé
-    quantity: item.quantity,
-    is_free: item.is_free,
-    created_at: item.created_at,
-    created_by: item.created_by,
-    product: item.product,
-  }));
-
-  return {
-    consultationProducts,
-    eligibleProducts,
-    loading,
-    error,
-    fetchConsultationProducts: (_id: string) => {}, // Noop - le nouveau hook gère automatiquement
-    fetchEligibleProducts: () => {}, // Noop - le nouveau hook gère automatiquement
-    assignProduct: async (data: AssignProductData) => {
-      return addItem({
-        consultation_id: data.consultation_id,
-        product_id: data.product_id,
-        quantity: data.quantity ?? 1,
-        unit_price: data.proposed_price,
-        is_free: data.is_free ?? false,
-        notes: data.notes,
-      });
-    },
-    removeProduct: removeItem,
-    updateConsultationProduct: async (
-      id: string,
-      updates: Partial<ConsultationProduct>
-    ) => {
-      return updateItem(id, {
-        quantity: updates.quantity,
-        unit_price: updates.proposed_price,
-        is_free: updates.is_free,
-        notes: updates.notes,
-      });
-    },
-  };
-}
-
-// useConsultationItems est exporté depuis use-consultation-items.ts (source unique)

@@ -6,7 +6,6 @@
 export * from './lib';
 
 // Components
-export * from './components/associations';
 export * from './components/ConsultationTimeline';
 export * from './components/images';
 export * from './components/modals';
