@@ -31,6 +31,7 @@ export function SourcingProductCard({
         <SourcingProductThumbnail product={product} size={48} />
         <div className="min-w-0 flex-1">
           <button
+            type="button"
             onClick={handlers.onView}
             title={product.name}
             className="block w-full truncate text-left text-sm font-medium text-gray-900"

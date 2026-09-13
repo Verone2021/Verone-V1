@@ -78,6 +78,7 @@ export function SourcingProductRow({
           <SourcingProductThumbnail product={product} size={40} />
           <div className="min-w-0">
             <button
+              type="button"
               onClick={handlers.onView}
               title={product.name}
               className="block max-w-[250px] truncate text-left text-sm font-medium text-gray-900 hover:text-blue-600 hover:underline"
@@ -93,6 +94,7 @@ export function SourcingProductRow({
       <td className="hidden p-3 lg:table-cell">
         {supplierName ? (
           <button
+            type="button"
             onClick={handlers.onViewSupplier}
             title={supplierName}
             className="block max-w-[150px] truncate text-sm text-gray-600 hover:text-blue-600 hover:underline"
