@@ -22,6 +22,7 @@ interface SourcingProductListProps {
   onEdit: (id: string) => void;
   onValidate: (id: string) => void;
   onArchive: (id: string) => void;
+  onRestore: (id: string) => void;
   onDelete: (id: string) => void;
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
@@ -78,6 +79,7 @@ export function SourcingProductList({
   onEdit,
   onValidate,
   onArchive,
+  onRestore,
   onDelete,
   sortBy,
   sortDir,
@@ -181,6 +183,7 @@ export function SourcingProductList({
                   onEdit={() => onEdit(product.id)}
                   onValidate={() => onValidate(product.id)}
                   onArchive={() => onArchive(product.id)}
+                  onRestore={() => onRestore(product.id)}
                   onDelete={() => onDelete(product.id)}
                 />
               ))}

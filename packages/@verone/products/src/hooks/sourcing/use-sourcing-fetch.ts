@@ -81,8 +81,11 @@ export function useSourcingFetch(filters?: SourcingFilters) {
         .eq('creation_mode', 'sourcing')
         .order('created_at', { ascending: false });
 
-      // Filtre archivés : par défaut on cache les archivés (vue principale)
-      if (filters?.archived_view === 'archived') {
+      // Fiche d'un produit précis : chargé par identifiant, archivé ou non.
+      // Sinon, filtre archivés : par défaut on cache les archivés (vue principale)
+      if (filters?.product_id) {
+        query = query.eq('id', filters.product_id);
+      } else if (filters?.archived_view === 'archived') {
         query = query.not('archived_at', 'is', null);
       } else {
         query = query.is('archived_at', null);
@@ -146,9 +149,14 @@ export function useSourcingFetch(filters?: SourcingFilters) {
 
       // Enrichir les produits avec les calculs (BR-TECH-002: images via product_images)
       const enrichedProducts = (data || []).map(product => {
-        const supplierCost = product.cost_price ?? 0; // Prix d'achat LPP comme base calcul
-        const margin = product.margin_percentage ?? 50; // Marge par défaut 50%
-        const estimatedSellingPrice = supplierCost * (1 + margin / 100);
+        // Prix de vente estimé seulement si une marge est renseignée
+        // (plus de marge de 50 % supposée par défaut).
+        const supplierCost = product.cost_price ?? 0; // Prix d'achat LPP
+        const margin = product.margin_percentage;
+        const estimatedSellingPrice =
+          margin != null && supplierCost > 0
+            ? supplierCost * (1 + margin / 100)
+            : undefined;
 
         // ✅ FIX: Calculer les noms d'affichage pour supplier et assigned_client
         const supplierWithName = product.supplier
@@ -204,6 +212,7 @@ export function useSourcingFetch(filters?: SourcingFilters) {
     filters?.has_supplier,
     filters?.requires_sample,
     filters?.archived_view,
+    filters?.product_id,
   ]);
 
   return { products, setProducts, loading, error, fetchSourcingProducts };

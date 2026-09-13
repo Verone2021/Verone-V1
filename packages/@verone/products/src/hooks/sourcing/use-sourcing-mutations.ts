@@ -256,6 +256,40 @@ export function useSourcingMutations({
     }
   };
 
+  // Restaurer un produit sourcing archivé (inverse de l'archivage)
+  const unarchiveSourcingProduct = async (productId: string) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ archived_at: null })
+        .eq('id', productId);
+
+      if (error) {
+        toast({
+          title: 'Erreur',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      toast({
+        title: 'Produit restauré',
+        description: 'Le produit sourcing est de nouveau dans la liste active',
+      });
+
+      await refetch();
+      return true;
+    } catch (_err) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de restaurer le produit',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
   // Supprimer définitivement un produit (seulement si archivé)
   const deleteSourcingProduct = async (productId: string) => {
     try {
@@ -320,6 +354,7 @@ export function useSourcingMutations({
     approveSample,
     rejectSample,
     archiveSourcingProduct,
+    unarchiveSourcingProduct,
     deleteSourcingProduct,
   };
 }
