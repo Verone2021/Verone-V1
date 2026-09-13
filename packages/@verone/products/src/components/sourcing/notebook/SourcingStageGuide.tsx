@@ -27,12 +27,12 @@ interface StageConfig {
 
 const STAGE_CONFIGS: Record<string, StageConfig> = {
   need_identified: {
-    label: 'Besoin identifie',
+    label: 'Besoin identifié',
     description:
-      'Definir le cahier des charges du produit recherche : type, budget cible, quantites estimees.',
+      'Définir le cahier des charges du produit recherché : type, budget cible, quantités estimées.',
     actions: [
-      'Completer la fiche produit (nom, description, dimensions)',
-      'Definir le prix cible',
+      'Compléter la fiche produit (nom, description, dimensions)',
+      'Définir le prix cible',
       'Ajouter des liens de reference (photos inspiration, produits similaires)',
     ],
     icon: Lightbulb,
@@ -47,7 +47,7 @@ const STAGE_CONFIGS: Record<string, StageConfig> = {
     actions: [
       'Ajouter des liens fournisseur (URLs Alibaba, sites web)',
       'Ajouter des fournisseurs candidats au comparatif',
-      'Consulter les pages entreprise pour evaluer la fiabilite',
+      'Consulter les pages entreprise pour évaluer la fiabilité',
     ],
     icon: Search,
     color: 'text-blue-700',
@@ -57,10 +57,10 @@ const STAGE_CONFIGS: Record<string, StageConfig> = {
   initial_contact: {
     label: 'Contact initial',
     description:
-      'Prendre contact avec les fournisseurs identifies et obtenir les premieres informations.',
+      'Prendre contact avec les fournisseurs identifiés et obtenir les premières informations.',
     actions: [
-      'Enregistrer chaque echange dans les communications',
-      'Noter le canal utilise (Alibaba, WhatsApp, email)',
+      'Enregistrer chaque échange dans les communications',
+      'Noter le canal utilisé (Alibaba, WhatsApp, email)',
       'Identifier le contact principal chez chaque fournisseur',
     ],
     icon: Phone,
@@ -69,12 +69,12 @@ const STAGE_CONFIGS: Record<string, StageConfig> = {
     borderColor: 'border-indigo-200',
   },
   evaluation: {
-    label: 'Evaluation',
+    label: 'Évaluation',
     description:
-      'Comparer les fournisseurs candidats sur leurs offres, fiabilite et certifications.',
+      'Comparer les fournisseurs candidats sur leurs offres, fiabilité et certifications.',
     actions: [
-      'Mettre a jour les devis recus (prix, MOQ, delai) pour chaque candidat',
-      'Verifier les certifications et Trade Assurance',
+      'Mettre à jour les devis reçus (prix, MOQ, délai) pour chaque candidat',
+      'Vérifier les certifications et Trade Assurance',
       'Comparer les offres dans le tableau des candidats',
     ],
     icon: BarChart3,
@@ -83,13 +83,13 @@ const STAGE_CONFIGS: Record<string, StageConfig> = {
     borderColor: 'border-amber-200',
   },
   negotiation: {
-    label: 'Negociation',
+    label: 'Négociation',
     description:
-      'Negocier les conditions (prix, MOQ, Incoterms, delai) avec le(s) fournisseur(s) retenu(s).',
+      'Négocier les conditions (prix, MOQ, Incoterms, délai) avec le(s) fournisseur(s) retenu(s).',
     actions: [
       "Enregistrer chaque proposition de prix dans l'historique",
-      'Negocier les conditions de livraison et paiement',
-      'Selectionner le fournisseur final dans les candidats',
+      'Négocier les conditions de livraison et paiement',
+      'Sélectionner le fournisseur final dans les candidats',
     ],
     icon: HeartHandshake,
     color: 'text-orange-700',
@@ -97,13 +97,13 @@ const STAGE_CONFIGS: Record<string, StageConfig> = {
     borderColor: 'border-orange-200',
   },
   sample_requested: {
-    label: 'Echantillon demande',
+    label: 'Échantillon demandé',
     description:
-      'Un echantillon a ete commande aupres du fournisseur selectionne. En attente de reception.',
+      'Un échantillon a été commandé auprès du fournisseur sélectionné. En attente de réception.',
     actions: [
       'Suivre la commande avec le fournisseur',
       'Enregistrer les communications de suivi',
-      "Verifier les delais de livraison de l'echantillon",
+      "Vérifier les délais de livraison de l'échantillon",
     ],
     icon: Package,
     color: 'text-cyan-700',
@@ -111,13 +111,13 @@ const STAGE_CONFIGS: Record<string, StageConfig> = {
     borderColor: 'border-cyan-200',
   },
   sample_received: {
-    label: 'Echantillon recu',
+    label: 'Échantillon reçu',
     description:
-      "L'echantillon est arrive. Evaluer la qualite avant validation.",
+      "L'échantillon est arrivé. Évaluer la qualité avant validation.",
     actions: [
-      'Verifier la conformite avec le cahier des charges',
-      "Prendre des photos de l'echantillon",
-      'Noter les defauts eventuels dans les notes',
+      'Vérifier la conformité avec le cahier des charges',
+      "Prendre des photos de l'échantillon",
+      'Noter les défauts éventuels dans les notes',
     ],
     icon: PackageCheck,
     color: 'text-teal-700',
@@ -125,13 +125,13 @@ const STAGE_CONFIGS: Record<string, StageConfig> = {
     borderColor: 'border-teal-200',
   },
   sample_approved: {
-    label: 'Echantillon valide',
+    label: 'Échantillon validé',
     description:
-      "L'echantillon est conforme. Le produit peut etre commande ou valide vers le catalogue.",
+      "L'échantillon est conforme. Le produit peut être commandé ou validé vers le catalogue.",
     actions: [
       'Valider le sourcing pour ajouter au catalogue',
       'Ou passer une commande fournisseur (PO)',
-      'Mettre a jour le prix final dans la fiche',
+      'Mettre à jour le prix final dans la fiche',
     ],
     icon: CheckCircle,
     color: 'text-green-700',
@@ -139,13 +139,13 @@ const STAGE_CONFIGS: Record<string, StageConfig> = {
     borderColor: 'border-green-200',
   },
   order_placed: {
-    label: 'Commande passee',
+    label: 'Commande passée',
     description:
       'La commande fournisseur est en cours. Suivre la production et la livraison.',
     actions: [
       'Suivre le statut de production avec le fournisseur',
-      'Verifier les documents (facture pro-forma, packing list)',
-      'Planifier la reception en entrepot',
+      'Vérifier les documents (facture pro-forma, packing list)',
+      'Planifier la réception en entrepôt',
     ],
     icon: Truck,
     color: 'text-blue-700',
@@ -153,11 +153,11 @@ const STAGE_CONFIGS: Record<string, StageConfig> = {
     borderColor: 'border-blue-200',
   },
   received: {
-    label: 'Recu',
+    label: 'Reçu',
     description:
-      'Les produits sont recus. Le sourcing est termine pour ce produit.',
+      'Les produits sont reçus. Le sourcing est terminé pour ce produit.',
     actions: [
-      'Verifier la conformite de la livraison',
+      'Vérifier la conformité de la livraison',
       'Valider vers le catalogue si pas encore fait',
       'Archiver le sourcing',
     ],
@@ -172,8 +172,8 @@ const STAGE_CONFIGS: Record<string, StageConfig> = {
       "Le sourcing est temporairement suspendu. Le produit reste visible mais aucune action n'est attendue.",
     actions: [
       'Cliquer "Reprendre" pour relancer le sourcing',
-      'Verifier si le besoin est toujours actuel',
-      'Mettre a jour les notes avec la raison de la pause',
+      'Vérifier si le besoin est toujours actuel',
+      'Mettre à jour les notes avec la raison de la pause',
     ],
     icon: Pause,
     color: 'text-yellow-700',
@@ -181,13 +181,13 @@ const STAGE_CONFIGS: Record<string, StageConfig> = {
     borderColor: 'border-yellow-200',
   },
   cancelled: {
-    label: 'Annule',
+    label: 'Annulé',
     description:
-      "Le sourcing a ete annule. Le produit ne sera pas poursuivi. Aucune donnee n'est supprimee.",
+      "Le sourcing a été annulé. Le produit ne sera pas poursuivi. Aucune donnée n'est supprimée.",
     actions: [
-      'Cliquer "Reprendre" pour rouvrir si necessaire',
-      'Les donnees (communications, prix, candidats) sont conservees',
-      "Le produit n'apparaitra plus dans les listes actives",
+      'Cliquer "Reprendre" pour rouvrir si nécessaire',
+      'Les données (communications, prix, candidats) sont conservées',
+      "Le produit n'apparaîtra plus dans les listes actives",
     ],
     icon: XCircle,
     color: 'text-red-700',

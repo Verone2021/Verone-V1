@@ -317,6 +317,15 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
     try {
       const { error } = await supabase.from('products').delete().eq('id', id);
 
+      // La base refuse (ON DELETE RESTRICT, BO-SOURCING-P3B-001) : le produit a servi.
+      if (error?.code === '23503') {
+        toast({
+          title: 'Suppression impossible',
+          description: 'Ce produit a servi : retirez-le, ne le supprimez pas',
+          variant: 'destructive',
+        });
+        return false;
+      }
       if (error) throw error;
 
       // 🔄 Invalider cache SWR

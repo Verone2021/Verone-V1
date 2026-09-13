@@ -151,8 +151,8 @@ export function SourcingConsultationsSection({
         <AlertDescription className="text-blue-800">
           <strong>Workflow sourcing :</strong> Les produits en sourcing doivent
           être validés avant d'apparaître dans le catalogue. Si un échantillon
-          est requis, utilisez d'abord l'action "Demander un échantillon" avant
-          la validation finale.
+          est requis, utilisez d'abord l'action "Commander échantillon" avant la
+          validation finale.
         </AlertDescription>
       </Alert>
     </>

@@ -1,9 +1,13 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import type { Product } from '@verone/categories';
 import { ProductCardV2 as ProductCard } from '@verone/products';
 import type { QuickEditField } from '@verone/products';
 import type { Database } from '@verone/types';
+
+import { useProductsWithHistory } from '@/hooks/use-products-with-history';
 
 type ProductImage = Database['public']['Tables']['product_images']['Row'];
 
@@ -26,6 +30,14 @@ export function CatalogueGridView({
   onArchive,
   onDelete,
 }: CatalogueGridViewProps) {
+  // La carte n'affiche « Supprimer » que pour un produit archivé et seulement
+  // si on lui passe onDelete : un produit qui a servi se retire, il ne se supprime pas.
+  const archivedIds = useMemo(
+    () => products.filter(p => p.archived_at).map(p => p.id),
+    [products]
+  );
+  const { canDelete } = useProductsWithHistory(archivedIds);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {products.map((product, index) => {
@@ -63,9 +75,13 @@ export function CatalogueGridView({
             onArchive={product => {
               void onArchive(product);
             }}
-            onDelete={product => {
-              void onDelete(product);
-            }}
+            onDelete={
+              canDelete(product.id)
+                ? product => {
+                    void onDelete(product);
+                  }
+                : undefined
+            }
             archived={!!product.archived_at}
           />
         );

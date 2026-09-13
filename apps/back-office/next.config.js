@@ -78,6 +78,15 @@ const nextConfig = {
         destination: '/finance/tresorerie',
         permanent: true,
       },
+      // Fiche organisation : lien renvoyé par /api/sourcing/import-supplier et
+      // ouvert par le plugin Chrome (contrat inchangé). La page cible redirige
+      // selon le type (fournisseur, partenaire, client). Non permanent : pas
+      // de cache navigateur si la route évolue.
+      {
+        source: '/organisations/:id',
+        destination: '/contacts-organisations/:id',
+        permanent: false,
+      },
     ];
   },
 
