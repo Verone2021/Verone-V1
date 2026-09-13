@@ -9,7 +9,10 @@ import {
   computeLineEconomics,
   computeConsultationEconomics,
 } from '../consultation-economics';
-import type { SupplierCostInput } from '../consultation-supplier-costs';
+import {
+  allocateSupplierCosts,
+  type SupplierCostInput,
+} from '../consultation-supplier-costs';
 import {
   approxEqual,
   makeLine,
@@ -247,10 +250,72 @@ test('ligne sans fournisseur : aucune part', () => {
 });
 
 // ---------------------------------------------------------------------------
-// (s) Cas limites
+// (s) Frais non répartis
 // ---------------------------------------------------------------------------
 
-console.log('\n--- (s) CAS LIMITES ---');
+console.log('\n--- (s) FRAIS NON RÉPARTIS ---');
+
+test('lignes toutes refusées : frais non répartis, séparés du coût total', () => {
+  const lines = [
+    makeLine({
+      id: 'a1',
+      supplierId: 'sup-a',
+      quantity: 2,
+      unitCost: 10,
+      status: 'rejected',
+    }),
+    makeLine({ id: 'b1', supplierId: 'sup-b', quantity: 1, unitCost: 30 }),
+  ];
+
+  const withCosts = computeConsultationEconomics(lines, {
+    supplierCosts: [costs('sup-a', 70)],
+  });
+  const without = computeConsultationEconomics(lines);
+
+  assert.equal(withCosts.totals.unallocatedSupplierFees, 70);
+  assert.equal(withCosts.totals.supplierFees, 0);
+  assert.equal(withCosts.totals.cost, without.totals.cost);
+  const a = withCosts.suppliers.find(s => s.supplierId === 'sup-a');
+  assert.ok(a, 'sup-a doit apparaître dans la synthèse');
+  assert.equal(a.supplierCosts, 70);
+  assert.equal(a.optionCount, 0);
+  assert.equal(a.marginPercent, null);
+});
+
+test('aucune base de répartition (quantités à 0, coûts absents) : non réparti, jamais NaN', () => {
+  const allocation = allocateSupplierCosts(
+    [
+      makeLine({ id: 'a1', supplierId: 'sup-a', quantity: 0, unitCost: null }),
+      makeLine({ id: 'a2', supplierId: 'sup-a', quantity: 0, unitCost: null }),
+    ],
+    [costs('sup-a', 40)]
+  );
+
+  assert.equal(allocation.unallocated, 40);
+  assert.equal(allocation.shares.size, 0);
+});
+
+test('fournisseur saisi deux fois : frais additionnés, parts cohérentes avec la synthèse', () => {
+  const lines = [
+    makeLine({ id: 'a1', supplierId: 'sup-a', quantity: 1, unitCost: 10 }),
+    makeLine({ id: 'a2', supplierId: 'sup-a', quantity: 1, unitCost: 30 }),
+  ];
+
+  const r = computeConsultationEconomics(lines, {
+    supplierCosts: [costs('sup-a', 40), costs('sup-a', 20)],
+  });
+
+  assertApprox(r.lines[0].supplierFees, 15, 'a1 (60 × 10/40)');
+  assertApprox(r.lines[1].supplierFees, 45, 'a2 (60 × 30/40)');
+  assertApprox(r.totals.supplierFees, 60, 'total parts');
+  assertApprox(r.suppliers[0].supplierCosts, 60, 'synthèse');
+});
+
+// ---------------------------------------------------------------------------
+// (t) Cas limites
+// ---------------------------------------------------------------------------
+
+console.log('\n--- (t) CAS LIMITES ---');
 
 test('coûts absents : répartition au prorata des quantités', () => {
   const lines = [

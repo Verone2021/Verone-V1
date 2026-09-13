@@ -103,6 +103,8 @@ export function allocateSupplierCosts(
   const shares = new Map<string, number>();
   let unallocated = 0;
 
+  // Plusieurs entrées pour un même fournisseur s'additionnent (la base les
+  // interdit par UNIQUE ; summarizeSuppliers les additionne de la même façon).
   for (const cost of supplierCosts) {
     const total = supplierCostTotal(cost);
     if (total === 0) continue;
@@ -120,6 +122,12 @@ export function allocateSupplierCosts(
     const valueSum = values.reduce((sum, value) => sum + value, 0);
     const weights = valueSum > 0 ? values : eligible.map(line => line.quantity);
     const weightSum = weights.reduce((sum, weight) => sum + weight, 0);
+    // Aucune base de répartition (quantités invalides) : rien de réparti,
+    // computeLineEconomics refusera ces lignes.
+    if (weightSum <= 0) {
+      unallocated += total;
+      continue;
+    }
 
     eligible.forEach((line, index) => {
       const share = (total * weights[index]) / weightSum;

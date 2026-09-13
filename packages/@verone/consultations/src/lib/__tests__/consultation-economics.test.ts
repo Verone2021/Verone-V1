@@ -15,7 +15,7 @@
  *   npx tsx .../consultation-economics.test.ts
  *
  * Sprints BO-CONSULT-P2-001 — 2026-09-12 · BO-CONSULT-P9-001 — 2026-09-13
- * Total assertions : 41 (répartition dans les 6 fichiers thématiques)
+ * Total assertions : 44 (répartition dans les 6 fichiers thématiques)
  */
 
 import { spawnSync } from 'node:child_process';
@@ -56,7 +56,7 @@ for (const suite of suites) {
 
 console.log(`\n${'═'.repeat(50)}`);
 if (failures.length === 0) {
-  console.log(`TOTAL — toutes les suites passent (41 assertions au total) ✅`);
+  console.log(`TOTAL — toutes les suites passent (44 assertions au total) ✅`);
 } else {
   console.log(
     `TOTAL — ${failures.length} suite(s) en échec : ${failures.join(', ')}`
