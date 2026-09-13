@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import type { SelectedProduct } from '@verone/products/components/selectors/UniversalProductSelectorV2';
 import { UniversalProductSelectorV2 } from '@verone/products/components/selectors/UniversalProductSelectorV2';
@@ -8,34 +8,46 @@ import { SourcingProductModal } from '@verone/products/components/sourcing/Sourc
 import { Alert, AlertDescription } from '@verone/ui';
 import { Plus, Sparkles, ShoppingCart, Calculator } from 'lucide-react';
 
-import type { ConsultationItem } from '@verone/consultations/hooks';
-import { useConsultationItems } from '@verone/consultations/hooks';
+import { computeConsultationEconomics } from '../../lib/consultation-economics';
+
+import type {
+  ConsultationItem,
+  CreateConsultationItemData,
+  UpdateConsultationItemData,
+} from '@verone/consultations/hooks';
 
 import { ConsultationMarginKpis } from './ConsultationMarginKpis';
 import { ConsultationProductsTable } from './ConsultationProductsTable';
 
+// Décision 1 BO-CONSULT-P2-001 : items + mutations via props (source unique dans page.tsx)
 interface ConsultationOrderInterfaceProps {
   consultationId: string;
+  consultationItems: ConsultationItem[];
+  loading: boolean;
+  error: string | null;
+  addItem: (data: CreateConsultationItemData) => Promise<boolean>;
+  updateItem: (
+    itemId: string,
+    updates: UpdateConsultationItemData
+  ) => Promise<boolean>;
+  removeItem: (itemId: string) => Promise<boolean>;
+  fetchConsultationItems: (id: string) => Promise<void>;
   onItemsChanged?: () => void;
   onCreatePurchaseOrder?: (acceptedItems: ConsultationItem[]) => void;
 }
 
 export function ConsultationOrderInterface({
   consultationId,
+  consultationItems,
+  loading,
+  error,
+  addItem,
+  updateItem,
+  removeItem,
+  fetchConsultationItems,
   onItemsChanged,
   onCreatePurchaseOrder,
 }: ConsultationOrderInterfaceProps) {
-  const {
-    consultationItems,
-    loading,
-    error,
-    addItem,
-    updateItem,
-    removeItem,
-    getTotalItemsCount,
-    fetchConsultationItems,
-  } = useConsultationItems(consultationId);
-
   const [showAddModal, setShowAddModal] = useState(false);
   const [showSourcingModal, setShowSourcingModal] = useState(false);
 
@@ -49,16 +61,12 @@ export function ConsultationOrderInterface({
   const [editCostPriceOverride, setEditCostPriceOverride] = useState('');
   const [editIsSample, setEditIsSample] = useState(false);
 
-  // Notif changement items — onItemsChanged volontairement exclu pour éviter boucle infinie
-  const itemsCount = consultationItems.length;
-  useEffect(() => {
-    onItemsChanged?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [itemsCount]);
-
+  // Décision 1 BO-CONSULT-P2-001 : plus d'effet de re-sync local
+  // (les items arrivent du parent via props — la re-sync est dans le hook parent)
   const handleProductAdded = () => {
-    void fetchConsultationItems(consultationId);
-    onItemsChanged?.();
+    void fetchConsultationItems(consultationId).then(() => {
+      onItemsChanged?.();
+    });
   };
 
   const startEditItem = (item: ConsultationItem) => {
@@ -155,67 +163,40 @@ export function ConsultationOrderInterface({
     });
   };
 
-  // Calculs marges
-  // Sémantique :
-  // - item.shipping_cost = COÛT d'expédition Verone (total ligne, pas par unité).
-  // - item.selling_shipping_cost = TRANSPORT VENTE refacturé au client (total ligne).
-  //   Augmente le revenu de la ligne. 0 = pas de refacturation.
-  // - Marge réelle = (vente × qty + selling_shipping) − (achat × qty + shipping_cost)
-  const getItemCostPrice = (item: ConsultationItem): number =>
-    item.cost_price_override ?? item.product?.cost_price ?? 0;
-
-  const getItemCostTotal = (item: ConsultationItem): number => {
-    const goodsCost = getItemCostPrice(item) * item.quantity;
-    if (item.is_free || item.is_sample) return goodsCost;
-    return goodsCost + item.shipping_cost;
-  };
-
-  const getItemRevenue = (item: ConsultationItem): number => {
-    if (item.is_free || item.is_sample) return 0;
-    return (
-      (item.unit_price ?? 0) * item.quantity + (item.selling_shipping_cost ?? 0)
-    );
-  };
-
-  const getItemMargin = (item: ConsultationItem): number => {
-    if (item.is_free || item.is_sample)
-      return -(getItemCostPrice(item) * item.quantity);
-    return getItemRevenue(item) - getItemCostTotal(item);
-  };
-
-  const getItemMarginPercent = (item: ConsultationItem): number => {
-    const cost = getItemCostTotal(item);
-    if (cost === 0 || item.is_free || item.is_sample) return 0;
-    return ((getItemRevenue(item) - cost) / cost) * 100;
-  };
-
-  const totalItems = getTotalItemsCount();
+  // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du compteur
+  const totalItems = consultationItems
+    .filter(i => i.status !== 'rejected')
+    .reduce((sum, i) => sum + i.quantity, 0);
   const acceptedItems = consultationItems.filter(
     i => i.status === 'approved' || i.status === 'ordered'
   );
   const hasAcceptedItems = acceptedItems.length > 0;
 
-  // KPIs = items en attente + acceptés + commandés (projection courante du devis).
-  // Seuls les "rejected" sont exclus. Sinon le total reste à 0 € tant qu'aucun
-  // item n'a été basculé en "OK", ce qui ne reflète pas l'état du devis envoyé.
-  const kpiItems = consultationItems.filter(i => i.status !== 'rejected');
-  // CA Total = ventes encaissées + transport refacturé au client.
-  const total = kpiItems.reduce((sum, item) => sum + getItemRevenue(item), 0);
-  const totalCost = kpiItems.reduce(
-    (sum, item) => sum + getItemCostTotal(item),
-    0
+  // KPIs via computeConsultationEconomics — source unique des formules B2
+  // (lignes refusées exclues, transport = total ligne, ecoTax inclus)
+  const { totals: economics } = computeConsultationEconomics(
+    consultationItems
+      .filter(item => item.quantity > 0)
+      .map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
+        ecoTax: item.product?.eco_tax_default ?? 0,
+        shippingCost: item.shipping_cost ?? 0,
+        sellingShippingCost: item.selling_shipping_cost ?? 0,
+        proposedPrice: item.unit_price,
+        isFree: item.is_free,
+        isSample: item.is_sample ?? false,
+        status: item.status ?? 'pending',
+        supplierId: item.product?.supplier_id ?? null,
+      }))
   );
-  // shipping_cost est un total ligne — on additionne directement, sans × quantity.
-  const totalShipping = kpiItems.reduce(
-    (sum, item) => (item.is_sample ? sum : sum + item.shipping_cost),
-    0
-  );
-  const totalMargin = kpiItems.reduce(
-    (sum, item) => sum + getItemMargin(item),
-    0
-  );
-  const totalMarginPercent =
-    totalCost > 0 ? (totalMargin / totalCost) * 100 : 0;
+
+  const total = economics.revenue;
+  const totalCost = economics.cost;
+  const totalShipping = economics.fees;
+  const totalMargin = economics.margin;
+  const totalMarginPercent = economics.marginPercent ?? 0;
 
   if (loading) {
     return (
@@ -298,9 +279,6 @@ export function ConsultationOrderInterface({
           onChangeStatus={changeLineStatus}
           onSampleChange={handleSampleChange}
           onRemove={handleRemoveItem}
-          getItemCostPrice={getItemCostPrice}
-          getItemMargin={getItemMargin}
-          getItemMarginPercent={getItemMarginPercent}
         />
 
         {/* Footer stats + CTA Commander */}

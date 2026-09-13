@@ -7,6 +7,7 @@ import { X, Sparkles } from 'lucide-react';
 import { ButtonV2 } from '@verone/ui';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@verone/ui';
 import { useToast } from '@verone/common/hooks';
+import { associateProductToConsultation } from '@verone/utils';
 
 import { SourcingQuickForm } from './SourcingQuickForm';
 
@@ -31,29 +32,14 @@ export function SourcingProductModal({
     setIsAddingToConsultation(true);
 
     try {
-      // Ajouter automatiquement le produit à la consultation
-      const itemResponse = await fetch('/api/consultations/associations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          consultation_id: consultationId,
-          product_id: productId,
-          quantity: 1,
-          proposed_price: null, // Prix défini manuellement dans la consultation
-          is_free: false,
-          notes: 'Produit sourcé spécifiquement pour cette consultation',
-        }),
+      await associateProductToConsultation({
+        consultationId,
+        productId,
+        quantity: 1,
+        proposedPrice: null,
+        isFree: false,
+        notes: 'Produit sourcé spécifiquement pour cette consultation',
       });
-
-      const itemResult = (await itemResponse.json()) as { error?: string };
-
-      if (!itemResponse.ok) {
-        throw new Error(
-          itemResult.error ?? "Erreur lors de l'ajout à la consultation"
-        );
-      }
 
       toast({
         title: '✅ Produit créé et ajouté',

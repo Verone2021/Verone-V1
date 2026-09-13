@@ -3,7 +3,13 @@
 import { useState, useCallback, useEffect } from 'react';
 
 import { useToast } from '@verone/common/hooks';
+import { associateProductToConsultation } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
+
+import {
+  computeConsultationEconomics,
+  type ConsultationEconomicsLineInput,
+} from '../lib/consultation-economics';
 
 import type {
   ConsultationItem,
@@ -52,6 +58,7 @@ export function useConsultationItems(consultationId?: string) {
             sku,
             requires_sample,
             cost_price,
+            eco_tax_default,
             stock_real,
             stock_forecasted_in,
             stock_forecasted_out,
@@ -72,6 +79,7 @@ export function useConsultationItems(consultationId?: string) {
           sku: string;
           requires_sample: boolean;
           cost_price?: number;
+          eco_tax_default?: number | null;
           stock_real?: number;
           stock_forecasted_in?: number;
           stock_forecasted_out?: number;
@@ -88,7 +96,9 @@ export function useConsultationItems(consultationId?: string) {
           consultation_id: item.consultation_id,
           product_id: item.product_id,
           quantity: item.quantity ?? 1,
-          unit_price: item.proposed_price ?? productData?.cost_price,
+          // Décision 3 BO-CONSULT-P2-001 : pas de fallback sur cost_price
+          // (évite d'afficher le prix d'achat comme prix de vente)
+          unit_price: item.proposed_price ?? null,
           is_free: item.is_free ?? false,
           is_sample: item.is_sample ?? false,
           notes: item.notes ?? undefined,
@@ -111,6 +121,7 @@ export function useConsultationItems(consultationId?: string) {
                   productData.supplier?.legal_name ??
                   undefined,
                 cost_price: productData.cost_price,
+                eco_tax_default: productData.eco_tax_default ?? null,
                 stock_real: productData.stock_real ?? 0,
                 stock_forecasted_in: productData.stock_forecasted_in ?? 0,
                 stock_forecasted_out: productData.stock_forecasted_out ?? 0,
@@ -168,32 +179,15 @@ export function useConsultationItems(consultationId?: string) {
     try {
       setError(null);
 
-      const response = await fetch('/api/consultations/associations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          consultation_id: data.consultation_id,
-          product_id: data.product_id,
-          proposed_price: data.unit_price,
-          quantity: data.quantity,
-          is_free: data.is_free,
-          notes: data.notes,
-          is_primary_proposal: false,
-        }),
+      await associateProductToConsultation({
+        consultationId: data.consultation_id,
+        productId: data.product_id,
+        proposedPrice: data.unit_price,
+        quantity: data.quantity,
+        isFree: data.is_free,
+        notes: data.notes,
+        isPrimaryProposal: false,
       });
-
-      const result: unknown = await response.json();
-
-      if (!response.ok) {
-        const errorMessage =
-          result != null &&
-          typeof result === 'object' &&
-          'error' in result &&
-          typeof (result as { error: unknown }).error === 'string'
-            ? (result as { error: string }).error
-            : "Erreur lors de l'ajout de l'item";
-        throw new Error(errorMessage);
-      }
 
       if (consultationId) {
         await fetchConsultationItems(consultationId);
@@ -320,15 +314,31 @@ export function useConsultationItems(consultationId?: string) {
   };
 
   const calculateTotal = () => {
-    return consultationItems.reduce((total, item) => {
-      if (item.is_free) return total;
-      const price = item.unit_price ?? 0;
-      return total + price * item.quantity;
-    }, 0);
+    // Décision BO-CONSULT-P2-001 : toujours via la fonction d'économie (source unique).
+    // totals.billed = Σ(unitPrice × quantity) pour les lignes incluses, non gratuites, avec prix.
+    const econInputs: ConsultationEconomicsLineInput[] = consultationItems.map(
+      item => ({
+        id: item.id,
+        quantity: item.quantity,
+        unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
+        ecoTax: item.product?.eco_tax_default ?? 0,
+        shippingCost: item.shipping_cost ?? 0,
+        sellingShippingCost: item.selling_shipping_cost ?? 0,
+        proposedPrice: item.unit_price ?? null,
+        isFree: item.is_free,
+        isSample: item.is_sample,
+        status: item.status ?? 'pending',
+        supplierId: item.product?.supplier_id ?? null,
+      })
+    );
+    return computeConsultationEconomics(econInputs).totals.billed;
   };
 
   const getTotalItemsCount = () => {
-    return consultationItems.reduce((total, item) => total + item.quantity, 0);
+    // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du compteur
+    return consultationItems
+      .filter(i => i.status !== 'rejected')
+      .reduce((total, item) => total + item.quantity, 0);
   };
 
   useEffect(() => {

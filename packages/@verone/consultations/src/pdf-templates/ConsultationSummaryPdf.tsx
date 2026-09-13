@@ -1,13 +1,6 @@
 import React from 'react';
 
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  Image,
-  StyleSheet,
-} from '@react-pdf/renderer';
+import { Document, Page, Text, View, Image } from '@react-pdf/renderer';
 
 import {
   veroneColors,
@@ -17,9 +10,13 @@ import {
   VERONE_LOGO_BASE64,
 } from '@verone/finance/pdf-templates';
 
+import { s } from './consultation-summary-pdf-styles';
+
 import type { ClientConsultation } from '../hooks/use-consultations';
 import type { ConsultationItem } from '../hooks/use-consultations';
 import type { ConsultationImage } from '../hooks/use-consultation-images';
+import { filterActiveItems } from '../lib/consultation-order-guards';
+import { computeConsultationEconomics } from '../lib/consultation-economics';
 
 // ── Client info shape (mirror of resolveClientInfo) ──────────────────
 export interface ConsultationPdfClientInfo {
@@ -35,189 +32,6 @@ export interface ConsultationPdfClientInfo {
   siret: string | null;
   vatNumber: string | null;
 }
-
-// ── Local styles ───────────────────────────────────────────────────
-const s = StyleSheet.create({
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 18,
-  },
-  logoBlock: {
-    flexDirection: 'column',
-  },
-  logoImage: {
-    height: 32,
-    objectFit: 'contain' as const,
-    marginBottom: 4,
-  },
-  metaBlock: {
-    alignItems: 'flex-end',
-  },
-  docNumber: {
-    fontSize: 8,
-    color: veroneColors.pearl,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 1.5,
-  },
-  docDate: {
-    fontSize: 8,
-    color: veroneColors.charcoal,
-    marginTop: 2,
-  },
-  // Two-column header (Vérone | Client)
-  partyRow: {
-    flexDirection: 'row',
-    gap: 24,
-    marginBottom: 18,
-  },
-  partyCol: {
-    flex: 1,
-  },
-  partyTitle: {
-    fontSize: 6.5,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    color: veroneColors.pearl,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 1.5,
-    marginBottom: 6,
-  },
-  partyLine: {
-    fontSize: 9,
-    color: veroneColors.charcoal,
-    lineHeight: 1.5,
-  },
-  partyLineBold: {
-    fontSize: 9.5,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    color: veroneColors.charcoal,
-    marginBottom: 2,
-  },
-  // Description / notes
-  descriptionBox: {
-    padding: 10,
-    backgroundColor: '#FBFAF7',
-    borderLeftWidth: 2,
-    borderLeftColor: veroneColors.gold,
-    paddingLeft: 12,
-    marginTop: 4,
-  },
-  descriptionText: {
-    fontSize: 8.5,
-    color: veroneColors.charcoal,
-    lineHeight: 1.55,
-  },
-  // Product cards
-  productCard: {
-    flexDirection: 'row',
-    borderBottomWidth: 0.5,
-    borderBottomColor: veroneColors.pearlSoft,
-    paddingVertical: 8,
-  },
-  productImage: {
-    width: 72,
-    height: 72,
-    objectFit: 'cover',
-    marginRight: 12,
-  },
-  productImagePlaceholder: {
-    width: 72,
-    height: 72,
-    backgroundColor: veroneColors.pearlSoft,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  productImagePlaceholderText: {
-    fontSize: 6.5,
-    color: veroneColors.pearl,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 0.8,
-  },
-  productDetails: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  productName: {
-    fontSize: 10,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    color: veroneColors.charcoal,
-    marginBottom: 2,
-  },
-  productSku: {
-    fontSize: 7.5,
-    color: veroneColors.pearl,
-    marginBottom: 6,
-  },
-  productMetaRow: {
-    flexDirection: 'row',
-    gap: 18,
-  },
-  productMetaItem: {
-    flexDirection: 'column',
-  },
-  productMetaLabel: {
-    fontSize: 6,
-    color: veroneColors.pearl,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 0.6,
-    marginBottom: 1,
-  },
-  productMetaValue: {
-    fontSize: 9,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    color: veroneColors.charcoal,
-  },
-  productMetaValueGold: {
-    fontSize: 9.5,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    color: veroneColors.gold,
-  },
-  productNotes: {
-    fontSize: 7.5,
-    color: veroneColors.pearl,
-    marginTop: 6,
-    fontStyle: 'italic',
-  },
-  freeBadge: {
-    fontSize: 6,
-    color: veroneColors.charcoal,
-    backgroundColor: veroneColors.gold,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    alignSelf: 'flex-start',
-    marginTop: 4,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 0.8,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-  },
-  emptyText: {
-    fontSize: 8,
-    color: veroneColors.pearl,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    paddingVertical: 16,
-  },
-  // Conditions
-  conditionsBlock: {
-    marginTop: 14,
-    padding: 10,
-    backgroundColor: '#FBFAF7',
-  },
-  conditionsLine: {
-    fontSize: 7.5,
-    color: veroneColors.charcoal,
-    lineHeight: 1.5,
-    marginBottom: 2,
-  },
-});
 
 // ── Helpers ────────────────────────────────────────────────────────
 function formatAddress(info: ConsultationPdfClientInfo): string[] {
@@ -261,10 +75,34 @@ export function ConsultationSummaryPdf({
 
   const proposalRef = `PROP-${consultation.id.slice(0, 8).toUpperCase()}`;
   const productBase64 = preloadedImages?.productImages ?? {};
+  // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du PDF client
+  const activeItems = filterActiveItems(items);
+  // Total HT via totals.billed (décision 5 BO-CONSULT-P2-001 — source unique)
+  const { lines: econLines, totals: economics } = computeConsultationEconomics(
+    activeItems
+      .filter(item => item.quantity > 0)
+      .map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
+        ecoTax: item.product?.eco_tax_default ?? 0,
+        shippingCost: item.shipping_cost ?? 0,
+        sellingShippingCost: item.selling_shipping_cost ?? 0,
+        proposedPrice: item.unit_price ?? null,
+        isFree: item.is_free,
+        isSample: item.is_sample,
+        status: item.status ?? 'pending',
+        supplierId: item.product?.supplier_id ?? null,
+      }))
+  );
+  const econByItemId = new Map(econLines.map(l => [l.lineId, l]));
+  const computedTotalHT = economics.billed;
   const tvaRate =
     consultation.tva_rate != null ? Number(consultation.tva_rate) : 0;
-  const tvaAmount = (totalHT * tvaRate) / 100;
-  const totalTTC = totalHT + tvaAmount;
+  const tvaAmount = (computedTotalHT * tvaRate) / 100;
+  const totalTTC = computedTotalHT + tvaAmount;
+  // Param totalHT conservé pour compatibilité appellants (unused en interne)
+  void totalHT;
 
   // Fallback minimal si pas de clientInfo pré-chargé
   const info: ConsultationPdfClientInfo = clientInfo ?? {
@@ -292,7 +130,7 @@ export function ConsultationSummaryPdf({
         {/* Header : logo + numéro proposition */}
         <View style={s.headerRow}>
           <View style={s.logoBlock}>
-            {/* eslint-disable-next-line jsx-a11y/alt-text */}
+            {/* eslint-disable-next-line jsx-a11y/alt-text -- Image de @react-pdf/renderer : pas d'attribut alt dans un PDF */}
             <Image src={VERONE_LOGO_BASE64} style={s.logoImage} />
             <Text style={s.docNumber}>Proposition commerciale</Text>
           </View>
@@ -371,23 +209,28 @@ export function ConsultationSummaryPdf({
 
         {/* Produits — version client : prix de vente uniquement */}
         <Text style={veroneStyles.sectionTitleEyebrow}>
-          Sélection ({items.length})
+          Sélection ({activeItems.length})
         </Text>
 
-        {items.length === 0 ? (
+        {activeItems.length === 0 ? (
           <Text style={s.emptyText}>
             Aucun produit dans cette proposition pour le moment.
           </Text>
         ) : (
           <View>
-            {items.map(item => {
-              const unitPrice = item.unit_price ?? 0;
-              const lineTotal = item.is_free ? 0 : unitPrice * item.quantity;
+            {activeItems.map(item => {
+              const unitPrice = item.unit_price; // null → « À fixer » (affichage)
+              const econ = econByItemId.get(item.id);
+              // billedAmount : 0 si gratuit ou prix non fixé (décision 5)
+              const lineTotal =
+                econ?.billedAmount && econ.billedAmount > 0
+                  ? econ.billedAmount
+                  : null;
 
               return (
                 <View key={item.id} style={s.productCard} wrap={false}>
                   {productBase64[item.product_id] ? (
-                    /* eslint-disable-next-line jsx-a11y/alt-text */
+                    /* eslint-disable-next-line jsx-a11y/alt-text -- Image de @react-pdf/renderer : pas d'attribut alt dans un PDF */
                     <Image
                       src={productBase64[item.product_id]}
                       style={s.productImage}
@@ -420,13 +263,17 @@ export function ConsultationSummaryPdf({
                         <Text style={s.productMetaValue}>
                           {item.is_free
                             ? 'Offert'
-                            : formatVeronePrice(unitPrice, 2)}
+                            : unitPrice !== null
+                              ? formatVeronePrice(unitPrice, 2)
+                              : 'À fixer'}
                         </Text>
                       </View>
                       <View style={s.productMetaItem}>
                         <Text style={s.productMetaLabel}>Total HT</Text>
                         <Text style={s.productMetaValueGold}>
-                          {item.is_free ? '—' : formatVeronePrice(lineTotal, 2)}
+                          {lineTotal !== null
+                            ? formatVeronePrice(lineTotal, 2)
+                            : '—'}
                         </Text>
                       </View>
                     </View>
@@ -447,7 +294,7 @@ export function ConsultationSummaryPdf({
             <View style={[veroneStyles.totalBarPearl, { marginTop: 14 }]}>
               <Text style={veroneStyles.totalLabelPearl}>Total HT</Text>
               <Text style={veroneStyles.totalValuePearl}>
-                {formatVeronePrice(totalHT, 2)}
+                {formatVeronePrice(computedTotalHT, 2)}
               </Text>
             </View>
             {tvaRate > 0 && (

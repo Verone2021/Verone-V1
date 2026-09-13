@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { useToast } from '@verone/common';
 import type { CreateConsultationData } from '@verone/consultations';
+import { associateProductToConsultation } from '@verone/utils';
 import type { ContactBO } from '@verone/orders';
 import {
   useEnseigneContactsBO,
@@ -294,16 +295,12 @@ export function useCreateConsultation(
       // Lien automatique au produit pré-sélectionné (depuis fiche sourcing — B3)
       if (newId && presetProductId) {
         try {
-          await fetch('/api/consultations/associations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              consultation_id: newId,
-              product_id: presetProductId,
-              quantity: 1,
-              proposed_price: null,
-              is_free: false,
-            }),
+          await associateProductToConsultation({
+            consultationId: newId,
+            productId: presetProductId,
+            quantity: 1,
+            proposedPrice: null,
+            isFree: false,
           });
         } catch (linkErr) {
           console.error(
