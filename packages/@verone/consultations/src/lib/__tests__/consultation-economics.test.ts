@@ -9,12 +9,13 @@
  *   npx tsx .../consultation-economics.guards.test.ts
  *   npx tsx .../consultation-economics.pricing.test.ts
  *   npx tsx .../consultation-economics.amounts.test.ts
+ *   npx tsx .../consultation-economics.supplier-costs.test.ts
  *
  * Exécution globale :
  *   npx tsx .../consultation-economics.test.ts
  *
- * Sprint BO-CONSULT-P2-001 — 2026-09-12
- * Total assertions : 31 (répartition dans les 5 fichiers thématiques)
+ * Sprints BO-CONSULT-P2-001 — 2026-09-12 · BO-CONSULT-P9-001 — 2026-09-13
+ * Total assertions : 41 (répartition dans les 6 fichiers thématiques)
  */
 
 import { spawnSync } from 'node:child_process';
@@ -29,6 +30,7 @@ const suites = [
   'consultation-economics.guards.test.ts',
   'consultation-economics.pricing.test.ts',
   'consultation-economics.amounts.test.ts',
+  'consultation-economics.supplier-costs.test.ts',
 ] as const;
 
 const failures: string[] = [];
@@ -54,7 +56,7 @@ for (const suite of suites) {
 
 console.log(`\n${'═'.repeat(50)}`);
 if (failures.length === 0) {
-  console.log(`TOTAL — toutes les suites passent (31 assertions au total) ✅`);
+  console.log(`TOTAL — toutes les suites passent (41 assertions au total) ✅`);
 } else {
   console.log(
     `TOTAL — ${failures.length} suite(s) en échec : ${failures.join(', ')}`

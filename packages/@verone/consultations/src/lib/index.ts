@@ -5,3 +5,4 @@
 
 export * from './consultation-economics';
 export * from './consultation-order-guards';
+export * from './consultation-supplier-costs';
