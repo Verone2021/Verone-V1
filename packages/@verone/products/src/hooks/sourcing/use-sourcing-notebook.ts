@@ -137,7 +137,8 @@ export function useSourcingNotebook(productId: string | null) {
             'id, product_id, supplier_id, entry_type, channel, direction, from_status, to_status, summary, contact_name, attachments, next_action, follow_up_date, is_resolved, communicated_at, logged_by, created_at'
           )
           .eq('product_id', productId)
-          .order('communicated_at', { ascending: false }),
+          .order('communicated_at', { ascending: false })
+          .limit(200),
         supabase
           .from('sourcing_price_history')
           .select(

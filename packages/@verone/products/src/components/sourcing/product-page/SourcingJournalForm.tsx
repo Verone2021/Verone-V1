@@ -170,7 +170,9 @@ export function SourcingJournalForm({
           disabled={!summary || saving}
           loading={saving}
           onClick={() => {
-            void handleSubmit();
+            void handleSubmit().catch(error => {
+              console.error('[SourcingJournalForm] submit failed:', error);
+            });
           }}
         >
           Enregistrer

@@ -13,7 +13,6 @@ import {
   SourcingJournal,
   SourcingOffersSection,
   SourcingProductEditCard,
-  SourcingReasonDialog,
   SourcingStageHeader,
   SourcingUrls,
   useProductImages,
@@ -27,32 +26,16 @@ import {
   type SourcingLifecycleInput,
 } from '@verone/products';
 import { availableLifecycleActions } from '@verone/products/utils';
-import { Badge, ButtonV2, Card, CardContent, ConfirmDialog } from '@verone/ui';
+import { Badge, ButtonV2, Card, CardContent } from '@verone/ui';
 import { associateProductToConsultation } from '@verone/utils';
 import { AlertCircle, ArrowLeft, Building2, Package } from 'lucide-react';
 
 import { SourcingConsultationsSection } from './SourcingConsultationsSection';
+import {
+  SourcingLifecycleDialogs,
+  type SourcingReasonAction,
+} from './SourcingLifecycleDialogs';
 import { SourcingProductHeaderActions } from './SourcingProductHeaderActions';
-
-type ReasonAction = 'refuse' | 'withdraw';
-
-const REASON_DIALOGS: Record<
-  ReasonAction,
-  { title: string; description: string; confirmLabel: string }
-> = {
-  refuse: {
-    title: 'Refuser ce produit',
-    description:
-      'Le produit sort du parcours sourcing. Le motif est gardé dans le journal ; le produit pourra être rouvert.',
-    confirmLabel: 'Refuser',
-  },
-  withdraw: {
-    title: 'Retirer ce produit',
-    description:
-      'Le produit quitte la liste active. Le motif est gardé dans le journal ; le produit pourra être restauré.',
-    confirmLabel: 'Retirer',
-  },
-};
 
 export default function SourcingProductDetailPage() {
   const router = useRouter();
@@ -85,7 +68,9 @@ export default function SourcingProductDetailPage() {
   const [isPhotosModalOpen, setIsPhotosModalOpen] = useState(false);
   const [journalMode, setJournalMode] =
     useState<SourcingJournalFormMode | null>(null);
-  const [reasonAction, setReasonAction] = useState<ReasonAction | null>(null);
+  const [reasonAction, setReasonAction] = useState<SourcingReasonAction | null>(
+    null
+  );
   const [confirmValidateOpen, setConfirmValidateOpen] = useState(false);
   const [orderingSample, setOrderingSample] = useState(false);
   const journalRef = useRef<HTMLDivElement>(null);
@@ -365,24 +350,13 @@ export default function SourcingProductDetailPage() {
         />
       </div>
 
-      <SourcingReasonDialog
-        open={reasonAction !== null}
-        {...REASON_DIALOGS[reasonAction ?? 'refuse']}
-        onClose={() => setReasonAction(null)}
-        onConfirm={reason =>
-          reasonAction
-            ? runAction({ action: reasonAction, reason })
-            : Promise.resolve(false)
-        }
-      />
-
-      <ConfirmDialog
-        open={confirmValidateOpen}
-        onOpenChange={setConfirmValidateOpen}
-        title="Valider au catalogue"
-        description="Le produit quitte le sourcing et rejoint le catalogue en brouillon, non publié. Le stock n'est pas modifié."
-        confirmText="Valider au catalogue"
-        onConfirm={async () => {
+      <SourcingLifecycleDialogs
+        reasonAction={reasonAction}
+        onReasonClose={() => setReasonAction(null)}
+        onReasonConfirm={(action, reason) => runAction({ action, reason })}
+        validateOpen={confirmValidateOpen}
+        onValidateOpenChange={setConfirmValidateOpen}
+        onValidateConfirm={async () => {
           await runAction({ action: 'validate' });
         }}
       />
