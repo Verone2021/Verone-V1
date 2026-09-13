@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@verone/utils';
-import { invalidateMenuCounts } from '@verone/utils/query';
 
 // ============================================================
 // Types
@@ -18,12 +16,22 @@ export interface SourcingUrl {
   created_at: string;
 }
 
+/**
+ * Entrée du journal sourcing (BO-SOURCING-P3-001) :
+ * exchange = échange fournisseur (canal et sens obligatoires) · note = note
+ * interne · status_change = écrit uniquement par apply_product_lifecycle_action.
+ */
+export type SourcingJournalEntryType = 'exchange' | 'note' | 'status_change';
+
 export interface SourcingCommunication {
   id: string;
   product_id: string;
   supplier_id: string | null;
-  channel: string;
-  direction: 'inbound' | 'outbound';
+  entry_type: SourcingJournalEntryType;
+  channel: string | null;
+  direction: 'inbound' | 'outbound' | null;
+  from_status: string | null;
+  to_status: string | null;
   summary: string;
   contact_name: string | null;
   attachments: unknown[];
@@ -34,6 +42,26 @@ export interface SourcingCommunication {
   logged_by: string | null;
   created_at: string;
 }
+
+/** Ajout depuis l'écran : échange fournisseur ou note interne. */
+export type NewSourcingJournalEntry =
+  | {
+      entry_type?: 'exchange';
+      channel: string;
+      direction: 'inbound' | 'outbound';
+      summary: string;
+      contact_name?: string;
+      next_action?: string;
+      follow_up_date?: string;
+      supplier_id?: string;
+      communicated_at?: string;
+    }
+  | {
+      entry_type: 'note';
+      summary: string;
+      next_action?: string;
+      follow_up_date?: string;
+    };
 
 export interface SourcingPriceEntry {
   id: string;
@@ -90,7 +118,6 @@ export function useSourcingNotebook(productId: string | null) {
   const [candidates, setCandidates] = useState<SourcingCandidateSupplier[]>([]);
   const [photos, setPhotos] = useState<SourcingPhoto[]>([]);
   const [loading, setLoading] = useState(false);
-  const queryClient = useQueryClient();
 
   const fetchAll = useCallback(async () => {
     if (!productId) return;
@@ -107,7 +134,7 @@ export function useSourcingNotebook(productId: string | null) {
         supabase
           .from('sourcing_communications')
           .select(
-            'id, product_id, supplier_id, channel, direction, summary, contact_name, attachments, next_action, follow_up_date, is_resolved, communicated_at, logged_by, created_at'
+            'id, product_id, supplier_id, entry_type, channel, direction, from_status, to_status, summary, contact_name, attachments, next_action, follow_up_date, is_resolved, communicated_at, logged_by, created_at'
           )
           .eq('product_id', productId)
           .order('communicated_at', { ascending: false }),
@@ -179,16 +206,7 @@ export function useSourcingNotebook(productId: string | null) {
   );
 
   const addCommunication = useCallback(
-    async (data: {
-      channel: string;
-      direction: 'inbound' | 'outbound';
-      summary: string;
-      contact_name?: string;
-      next_action?: string;
-      follow_up_date?: string;
-      supplier_id?: string;
-      communicated_at?: string;
-    }) => {
+    async (data: NewSourcingJournalEntry) => {
       if (!productId) return;
       const supabase = createClient();
       const { error } = await supabase.from('sourcing_communications').insert({
@@ -270,24 +288,19 @@ export function useSourcingNotebook(productId: string | null) {
     [fetchAll]
   );
 
-  const updateSourcingPipeline = useCallback(
-    async (data: {
-      sourcing_status?: string;
-      sourcing_priority?: string;
-      sourcing_tags?: string[];
-      target_price?: number;
-      sourcing_notes?: string;
-    }) => {
+  // Priorité seule : le statut sourcing passe exclusivement par
+  // apply_product_lifecycle_action (useSourcingLifecycle).
+  const updatePriority = useCallback(
+    async (priority: string) => {
       if (!productId) return;
       const supabase = createClient();
       const { error } = await supabase
         .from('products')
-        .update(data)
+        .update({ sourcing_priority: priority })
         .eq('id', productId);
       if (error) throw error;
-      await invalidateMenuCounts(queryClient, 'sourcing');
     },
-    [productId, queryClient]
+    [productId]
   );
 
   return {
@@ -306,6 +319,6 @@ export function useSourcingNotebook(productId: string | null) {
     addPriceEntry,
     addCandidateSupplier,
     updateCandidateStatus,
-    updateSourcingPipeline,
+    updatePriority,
   };
 }

@@ -9,10 +9,16 @@ export { useSourcingNotebook } from './use-sourcing-notebook';
 export type {
   SourcingUrl,
   SourcingCommunication,
+  SourcingJournalEntryType,
+  NewSourcingJournalEntry,
   SourcingPriceEntry,
   SourcingCandidateSupplier,
+  SourcingPhoto,
 } from './use-sourcing-notebook';
 export { useSupplierSearch } from './use-supplier-search';
+export { useSourcingLifecycle } from './use-sourcing-lifecycle';
+export type { SourcingLifecycleInput } from './use-sourcing-lifecycle';
+export { useSampleState, SAMPLE_STATE_QUERY_KEY } from './use-sample-state';
 
 import type { SourcingFilters } from './types';
 import { useSourcingFetch } from './use-sourcing-fetch';

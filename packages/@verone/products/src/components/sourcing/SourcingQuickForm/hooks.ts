@@ -8,14 +8,20 @@ import { useToast } from '@verone/common/hooks';
 import { associateProductToConsultation } from '@verone/utils';
 import { useOrganisations } from '@verone/organisations/hooks';
 
-import { useSourcingProducts } from '@verone/products/hooks';
+import { useSourcingCreateUpdate } from '@verone/products/hooks';
 
 import type { NewSupplierState, ProductFormData, SupplierMode } from './types';
+
+// Le formulaire n'affiche pas la liste sourcing : rien à recharger après la
+// création (l'appelant recharge sa propre liste via onSuccess).
+const noListToRefresh = () => Promise.resolve();
 
 export function useSourcingQuickForm(onSuccess?: (draftId: string) => void) {
   const router = useRouter();
   const { toast } = useToast();
-  const { createSourcingProduct } = useSourcingProducts({});
+  const { createSourcingProduct } = useSourcingCreateUpdate({
+    refetch: noListToRefresh,
+  });
   const { createOrganisation } = useOrganisations();
 
   const [supplierMode, setSupplierMode] = useState<SupplierMode>('existing');
@@ -237,7 +243,7 @@ export function useSourcingQuickForm(onSuccess?: (draftId: string) => void) {
         if (onSuccess) {
           onSuccess(newProduct.id);
         } else {
-          router.push('/produits/sourcing/produits');
+          router.push(`/produits/sourcing/produits/${newProduct.id}`);
         }
       }
     } catch (error) {

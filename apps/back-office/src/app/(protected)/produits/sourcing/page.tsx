@@ -4,7 +4,11 @@ import { useState, useMemo, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { QuickSourcingModal, useSourcingProducts } from '@verone/products';
+import {
+  QuickSourcingModal,
+  SourcingReasonDialog,
+  useSourcingProducts,
+} from '@verone/products';
 import { ButtonV2, Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
 import { colors, spacing } from '@verone/ui/design-system';
 import { debounce } from '@verone/utils';
@@ -39,6 +43,8 @@ export default function SourcingPage() {
   const [activeTab, setActiveTab] = useState<'produits' | 'archived'>(
     'produits'
   );
+  // Retrait avec motif obligatoire (écrit dans le journal par la base)
+  const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null);
 
   const debouncedSearch = useMemo(
     () =>
@@ -171,9 +177,7 @@ export default function SourcingPage() {
   };
 
   const handleArchive = (id: string) => {
-    void archiveSourcingProduct(id).catch(error => {
-      console.error('[Sourcing] handleArchiveProduct failed:', error);
-    });
+    setWithdrawTargetId(id);
   };
 
   const handleRestore = (id: string) => {
@@ -343,7 +347,7 @@ export default function SourcingPage() {
             error={error}
             onView={id => router.push(`/produits/sourcing/produits/${id}`)}
             onViewSupplier={supplierId =>
-              router.push(`/organisations/${supplierId}`)
+              router.push(`/contacts-organisations/suppliers/${supplierId}`)
             }
             onEdit={id => router.push(`/produits/sourcing/produits/${id}`)}
             onValidate={handleValidate}
@@ -353,6 +357,19 @@ export default function SourcingPage() {
           />
         </TabsContent>
       </Tabs>
+
+      <SourcingReasonDialog
+        open={withdrawTargetId !== null}
+        title="Retirer ce produit"
+        description="Le produit quitte la liste active. Le motif est gardé dans le journal ; le produit pourra être restauré."
+        confirmLabel="Retirer"
+        onClose={() => setWithdrawTargetId(null)}
+        onConfirm={reason =>
+          withdrawTargetId
+            ? archiveSourcingProduct(withdrawTargetId, reason)
+            : Promise.resolve(false)
+        }
+      />
 
       <QuickSourcingModal
         open={isQuickSourcingModalOpen}

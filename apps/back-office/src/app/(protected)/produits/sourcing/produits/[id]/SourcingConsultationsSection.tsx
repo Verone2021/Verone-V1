@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 
 import { ConsultationSuggestions } from '@verone/consultations/components/suggestions';
-import { Alert, AlertDescription, Badge } from '@verone/ui';
+import { Badge } from '@verone/ui';
 import { ButtonV2 } from '@verone/ui';
 import {
   Card,
@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@verone/ui';
-import { FileText, Clock, Link, ExternalLink, AlertCircle } from 'lucide-react';
+import { FileText, Clock, Link, ExternalLink } from 'lucide-react';
 
 interface LinkedConsultationDisplay {
   id: string;
@@ -145,16 +145,6 @@ export function SourcingConsultationsSection({
           )}
         </CardContent>
       </Card>
-
-      <Alert className="border-blue-200 bg-blue-50">
-        <AlertCircle className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800">
-          <strong>Workflow sourcing :</strong> Les produits en sourcing doivent
-          être validés avant d'apparaître dans le catalogue. Si un échantillon
-          est requis, utilisez d'abord l'action "Commander échantillon" avant la
-          validation finale.
-        </AlertDescription>
-      </Alert>
     </>
   );
 }
