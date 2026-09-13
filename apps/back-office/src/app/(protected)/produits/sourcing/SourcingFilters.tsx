@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 
 import { useOrganisations } from '@verone/organisations';
+import { SOURCING_STAGES, SOURCING_STAGE_LABELS } from '@verone/products/utils';
 import {
   Input,
   Select,
@@ -13,34 +14,17 @@ import {
 } from '@verone/ui';
 import { Search, X } from 'lucide-react';
 
-const PIPELINE_STATUSES = [
-  { value: 'all', label: 'Pipeline' },
-  { value: 'need_identified', label: 'Besoin identifié' },
-  { value: 'supplier_search', label: 'Recherche fournisseur' },
-  { value: 'initial_contact', label: 'Premier contact' },
-  { value: 'evaluation', label: 'Évaluation' },
-  { value: 'negotiation', label: 'Négociation' },
-  { value: 'sample_requested', label: 'Échantillon demandé' },
-  { value: 'sample_received', label: 'Échantillon reçu' },
-  { value: 'sample_approved', label: 'Échantillon validé' },
-  { value: 'sample_rejected', label: 'Échantillon refusé' },
-  { value: 'order_placed', label: 'Commande passée' },
-  { value: 'received', label: 'Reçu' },
-  { value: 'on_hold', label: 'En pause' },
-  { value: 'cancelled', label: 'Annulé' },
-] as const;
-
 interface SourcingFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  statusFilter: string;
-  onStatusChange: (value: string) => void;
   sourcingTypeFilter: string;
   onSourcingTypeChange: (value: string) => void;
   supplierFilter: string | null;
   onSupplierChange: (id: string | null) => void;
-  pipelineFilter: string;
-  onPipelineChange: (value: string) => void;
+  /** Étape : proposée seulement dans « En cours » */
+  showStageFilter: boolean;
+  stageFilter: string;
+  onStageChange: (value: string) => void;
   priorityFilter: string;
   onPriorityChange: (value: string) => void;
 }
@@ -50,24 +34,23 @@ interface SupplierOption {
   name: string;
 }
 
+const TRIGGER = 'h-11 w-full text-sm sm:w-[150px] md:h-8 md:text-xs';
+
 export function SourcingFilters({
   searchTerm,
   onSearchChange,
-  statusFilter,
-  onStatusChange,
   sourcingTypeFilter,
   onSourcingTypeChange,
   supplierFilter,
   onSupplierChange,
-  pipelineFilter,
-  onPipelineChange,
+  showStageFilter,
+  stageFilter,
+  onStageChange,
   priorityFilter,
   onPriorityChange,
 }: SourcingFiltersProps) {
   // BO-SOURCING-001 : utilise le hook centralisé `useOrganisations` au lieu
-  // de dupliquer le fetch fournisseurs. Quand PR #848 merge, `lightweight: true`
-  // sera ajouté pour réduire le payload (~70 colonnes → 7) et skip le N+1
-  // query `_count.products`.
+  // de dupliquer le fetch fournisseurs.
   const { organisations: suppliersData } = useOrganisations({
     type: 'supplier',
     is_active: true,
@@ -83,53 +66,35 @@ export function SourcingFilters({
   );
 
   const hasActiveFilters =
-    statusFilter !== 'all' ||
     sourcingTypeFilter !== 'all' ||
-    pipelineFilter !== 'all' ||
+    (showStageFilter && stageFilter !== 'all') ||
     priorityFilter !== 'all' ||
-    supplierFilter !== null;
+    supplierFilter !== null ||
+    searchTerm !== '';
 
   const resetFilters = () => {
-    onStatusChange('all');
     onSourcingTypeChange('all');
-    onPipelineChange('all');
+    onStageChange('all');
     onPriorityChange('all');
     onSupplierChange(null);
     onSearchChange('');
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl px-3 py-2.5">
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* Search — taille réduite */}
-        <div className="relative w-[200px]">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+    <div className="rounded-xl border border-gray-200 bg-white px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative w-full sm:w-[220px]">
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="Rechercher..."
             value={searchTerm}
             onChange={e => onSearchChange(e.target.value)}
-            className="pl-8 h-8 text-xs"
+            className="h-11 pl-8 text-sm md:h-8 md:text-xs"
           />
         </div>
 
-        <div className="h-5 w-px bg-gray-200" />
-
-        {/* Statut */}
-        <Select value={statusFilter} onValueChange={onStatusChange}>
-          <SelectTrigger className="w-auto min-w-[110px] h-8 text-xs gap-1">
-            <SelectValue placeholder="Statut" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Statut</SelectItem>
-            <SelectItem value="draft">En sourcing</SelectItem>
-            <SelectItem value="preorder">Échantillon</SelectItem>
-            <SelectItem value="active">Au catalogue</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {/* Type */}
         <Select value={sourcingTypeFilter} onValueChange={onSourcingTypeChange}>
-          <SelectTrigger className="w-auto min-w-[90px] h-8 text-xs gap-1">
+          <SelectTrigger className={TRIGGER}>
             <SelectValue placeholder="Type" />
           </SelectTrigger>
           <SelectContent>
@@ -139,23 +104,24 @@ export function SourcingFilters({
           </SelectContent>
         </Select>
 
-        {/* Pipeline */}
-        <Select value={pipelineFilter} onValueChange={onPipelineChange}>
-          <SelectTrigger className="w-auto min-w-[120px] h-8 text-xs gap-1">
-            <SelectValue placeholder="Pipeline" />
-          </SelectTrigger>
-          <SelectContent>
-            {PIPELINE_STATUSES.map(s => (
-              <SelectItem key={s.value} value={s.value}>
-                {s.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {showStageFilter && (
+          <Select value={stageFilter} onValueChange={onStageChange}>
+            <SelectTrigger className={TRIGGER}>
+              <SelectValue placeholder="Étape" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Étape</SelectItem>
+              {SOURCING_STAGES.map(stage => (
+                <SelectItem key={stage} value={stage}>
+                  {SOURCING_STAGE_LABELS[stage]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
-        {/* Priorité */}
         <Select value={priorityFilter} onValueChange={onPriorityChange}>
-          <SelectTrigger className="w-auto min-w-[100px] h-8 text-xs gap-1">
+          <SelectTrigger className={TRIGGER}>
             <SelectValue placeholder="Priorité" />
           </SelectTrigger>
           <SelectContent>
@@ -167,12 +133,11 @@ export function SourcingFilters({
           </SelectContent>
         </Select>
 
-        {/* Fournisseur — même style Select */}
         <Select
           value={supplierFilter ?? 'all'}
           onValueChange={v => onSupplierChange(v === 'all' ? null : v)}
         >
-          <SelectTrigger className="w-auto min-w-[130px] h-8 text-xs gap-1">
+          <SelectTrigger className={TRIGGER}>
             <SelectValue placeholder="Fournisseur" />
           </SelectTrigger>
           <SelectContent>
@@ -185,18 +150,15 @@ export function SourcingFilters({
           </SelectContent>
         </Select>
 
-        {/* Reset */}
         {hasActiveFilters && (
-          <>
-            <div className="h-5 w-px bg-gray-200" />
-            <button
-              onClick={resetFilters}
-              className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-black px-2 py-1 rounded hover:bg-gray-100 transition-colors"
-            >
-              <X className="h-3 w-3" />
-              Réinitialiser
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="inline-flex h-11 items-center gap-1 rounded px-2 text-sm text-gray-500 transition-colors hover:bg-gray-100 hover:text-black md:h-8 md:text-xs"
+          >
+            <X className="h-3 w-3" />
+            Réinitialiser
+          </button>
         )}
       </div>
     </div>

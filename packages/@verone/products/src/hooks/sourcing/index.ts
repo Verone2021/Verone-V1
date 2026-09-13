@@ -19,6 +19,10 @@ export { useSupplierSearch } from './use-supplier-search';
 export { useSourcingLifecycle } from './use-sourcing-lifecycle';
 export type { SourcingLifecycleInput } from './use-sourcing-lifecycle';
 export { useSampleState, SAMPLE_STATE_QUERY_KEY } from './use-sample-state';
+export {
+  useSourcingSegmentCounts,
+  SOURCING_SEGMENT_COUNTS_QUERY_KEY,
+} from './use-sourcing-segment-counts';
 
 import type { SourcingFilters } from './types';
 import { useSourcingFetch } from './use-sourcing-fetch';

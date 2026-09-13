@@ -1,4 +1,9 @@
 import type { SourcingProduct } from '@verone/products';
+import {
+  SOURCING_STAGE_LABELS,
+  SOURCING_STATE_LABELS,
+  stageOfStatus,
+} from '@verone/products/utils';
 import { Badge } from '@verone/ui';
 import { colors } from '@verone/ui/design-system';
 
@@ -19,39 +24,28 @@ export interface PrimaryImageRefs {
   publicUrl: string | null;
 }
 
-export function getStatusBadge(productStatus: string | undefined) {
-  switch (productStatus) {
-    case 'draft':
-      return (
-        <Badge variant="outline" className="border-blue-300 text-blue-600">
-          En sourcing
+const STATE_BADGE_VARIANT = {
+  on_hold: 'warning',
+  refused: 'danger',
+  validated: 'success',
+} as const;
+
+/** Étape du sourcing (4 étapes) ou état hors parcours, plus « Retiré ». */
+export function SourcingStateBadges({ product }: { product: SourcingProduct }) {
+  const { stage, group } = stageOfStatus(product.sourcing_status);
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {group === 'in_progress' && stage ? (
+        <Badge variant="outline">{SOURCING_STAGE_LABELS[stage]}</Badge>
+      ) : null}
+      {group !== 'in_progress' ? (
+        <Badge variant={STATE_BADGE_VARIANT[group]}>
+          {SOURCING_STATE_LABELS[group]}
         </Badge>
-      );
-    case 'preorder':
-      return (
-        <Badge variant="outline" className="border-orange-300 text-orange-600">
-          Échantillon commandé
-        </Badge>
-      );
-    case 'active':
-      return (
-        <Badge variant="outline" className="border-green-300 text-green-600">
-          Au catalogue
-        </Badge>
-      );
-    case 'discontinued':
-      return (
-        <Badge variant="outline" className="border-red-300 text-red-600">
-          Discontinué
-        </Badge>
-      );
-    default:
-      return (
-        <Badge variant="outline" className="border-gray-300 text-gray-600">
-          {productStatus ?? 'Inconnu'}
-        </Badge>
-      );
-  }
+      ) : null}
+      {product.archived_at ? <Badge variant="default">Retiré</Badge> : null}
+    </div>
+  );
 }
 
 export function getSourcingTypeBadge(

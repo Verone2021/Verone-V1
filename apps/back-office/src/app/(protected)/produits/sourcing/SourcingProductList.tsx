@@ -3,8 +3,8 @@
 import { useMemo } from 'react';
 
 import type { SourcingProduct } from '@verone/products';
-import { Card, CardContent } from '@verone/ui';
-import { cn } from '@verone/ui';
+import type { SourcingListSegment } from '@verone/products/utils';
+import { Card, CardContent, ResponsiveDataView, cn } from '@verone/ui';
 import {
   AlertCircle,
   ArrowDown,
@@ -15,10 +15,13 @@ import {
 
 import { useProductsWithHistory } from '@/hooks/use-products-with-history';
 
+import type { SourcingProductActionHandlers } from './SourcingProductActions';
+import { SourcingProductCard } from './SourcingProductCard';
 import { SourcingProductRow } from './SourcingProductRow';
 
 interface SourcingProductListProps {
   products: SourcingProduct[];
+  segment: SourcingListSegment;
   loading: boolean;
   error: string | null;
   onView: (id: string) => void;
@@ -32,6 +35,8 @@ interface SourcingProductListProps {
   sortDir?: 'asc' | 'desc';
   onSort?: (column: string) => void;
 }
+
+const HEADER = 'p-3 font-medium text-xs uppercase tracking-wider text-gray-500';
 
 function SortableHeader({
   label,
@@ -52,7 +57,8 @@ function SortableHeader({
   return (
     <th
       className={cn(
-        'p-3 font-medium text-xs uppercase tracking-wider text-gray-500 cursor-pointer hover:text-black select-none',
+        HEADER,
+        'cursor-pointer select-none hover:text-black',
         isActive && 'text-black',
         className
       )}
@@ -76,6 +82,7 @@ function SortableHeader({
 
 export function SourcingProductList({
   products,
+  segment,
   loading,
   error,
   onView,
@@ -89,123 +96,126 @@ export function SourcingProductList({
   sortDir,
   onSort,
 }: SourcingProductListProps) {
-  // « Supprimer » n'existe que pour les produits archivés : on ne vérifie qu'eux.
+  // « Supprimer » n'existe que pour les produits retirés : on ne vérifie qu'eux.
   const archivedIds = useMemo(
     () => products.filter(p => p.archived_at).map(p => p.id),
     [products]
   );
   const { canDelete } = useProductsWithHistory(archivedIds);
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">Chargement des produits...</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   if (error) {
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <AlertCircle className="h-8 w-8 mx-auto mb-3 text-red-500" />
-          <p className="text-red-600 text-sm">Erreur: {error}</p>
+          <AlertCircle className="mx-auto mb-3 h-8 w-8 text-red-500" />
+          <p className="text-sm text-red-600">Erreur : {error}</p>
         </CardContent>
       </Card>
     );
   }
 
-  if (products.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <Package className="h-10 w-10 mx-auto mb-3 text-gray-300" />
-          <p className="text-gray-500">Aucun produit trouvé</p>
-          <p className="text-xs text-gray-400 mt-1">
-            Modifiez vos filtres ou créez un nouveau sourcing
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const handlersFor = (
+    product: SourcingProduct
+  ): SourcingProductActionHandlers => {
+    const supplierId = product.supplier_id;
+    return {
+      onView: () => onView(product.id),
+      onViewSupplier: supplierId ? () => onViewSupplier(supplierId) : undefined,
+      onEdit: () => onEdit(product.id),
+      onValidate: () => onValidate(product.id),
+      onArchive: () => onArchive(product.id),
+      onRestore: () => onRestore(product.id),
+      onDelete: () => onDelete(product.id),
+    };
+  };
 
   return (
-    <Card>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b bg-gray-50/80">
-              <tr className="text-left">
-                <SortableHeader
-                  label="Produit"
-                  column="name"
-                  currentSort={sortBy}
-                  currentDir={sortDir}
-                  onSort={onSort}
-                />
-                <SortableHeader
-                  label="Fournisseur"
-                  column="supplier"
-                  currentSort={sortBy}
-                  currentDir={sortDir}
-                  onSort={onSort}
-                />
-                <SortableHeader
-                  label="Prix"
-                  column="cost_price"
-                  currentSort={sortBy}
-                  currentDir={sortDir}
-                  onSort={onSort}
-                  className="text-right"
-                />
-                <th className="p-3 font-medium text-xs uppercase tracking-wider text-gray-500 text-center">
-                  Statut
-                </th>
-                <th className="p-3 font-medium text-xs uppercase tracking-wider text-gray-500 text-center">
-                  Type
-                </th>
-                <SortableHeader
-                  label="Date"
-                  column="created_at"
-                  currentSort={sortBy}
-                  currentDir={sortDir}
-                  onSort={onSort}
-                  className="text-right"
-                />
-                <th className="p-3 font-medium text-xs uppercase tracking-wider text-gray-500 text-right">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map(product => (
-                <SourcingProductRow
-                  key={product.id}
-                  product={product}
-                  canDelete={canDelete(product.id)}
-                  onView={() => onView(product.id)}
-                  onViewSupplier={
-                    product.supplier_id
-                      ? () => onViewSupplier(product.supplier_id!)
-                      : undefined
-                  }
-                  onEdit={() => onEdit(product.id)}
-                  onValidate={() => onValidate(product.id)}
-                  onArchive={() => onArchive(product.id)}
-                  onRestore={() => onRestore(product.id)}
-                  onDelete={() => onDelete(product.id)}
-                />
-              ))}
-            </tbody>
-          </table>
+    <ResponsiveDataView
+      data={products}
+      loading={loading}
+      emptyMessage={
+        <div className="text-center">
+          <Package className="mx-auto mb-3 h-10 w-10 text-gray-300" />
+          <p className="text-gray-500">Aucun produit</p>
+          <p className="mt-1 text-sm text-gray-400">
+            Modifiez vos filtres ou créez un nouveau sourcing
+          </p>
         </div>
-        <div className="border-t bg-gray-50/50 px-4 py-2 text-xs text-gray-500">
-          {products.length} produit{products.length > 1 ? 's' : ''}
-        </div>
-      </CardContent>
-    </Card>
+      }
+      renderTable={items => (
+        <Card>
+          <CardContent className="p-0">
+            <div className="w-full overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b bg-gray-50/80">
+                  <tr className="text-left">
+                    <SortableHeader
+                      label="Produit"
+                      column="name"
+                      currentSort={sortBy}
+                      currentDir={sortDir}
+                      onSort={onSort}
+                    />
+                    <SortableHeader
+                      label="Fournisseur"
+                      column="supplier"
+                      currentSort={sortBy}
+                      currentDir={sortDir}
+                      onSort={onSort}
+                      className="hidden lg:table-cell"
+                    />
+                    <SortableHeader
+                      label="Prix"
+                      column="cost_price"
+                      currentSort={sortBy}
+                      currentDir={sortDir}
+                      onSort={onSort}
+                      className="text-right"
+                    />
+                    <th className={HEADER}>Étape</th>
+                    <th
+                      className={cn(HEADER, 'hidden text-center xl:table-cell')}
+                    >
+                      Type
+                    </th>
+                    <SortableHeader
+                      label="Date"
+                      column="created_at"
+                      currentSort={sortBy}
+                      currentDir={sortDir}
+                      onSort={onSort}
+                      className="hidden text-right xl:table-cell"
+                    />
+                    <th className={cn(HEADER, 'text-right')}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map(product => (
+                    <SourcingProductRow
+                      key={product.id}
+                      product={product}
+                      segment={segment}
+                      canDelete={canDelete(product.id)}
+                      {...handlersFor(product)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="border-t bg-gray-50/50 px-4 py-2 text-xs text-gray-500">
+              {items.length} produit{items.length > 1 ? 's' : ''}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      renderCard={product => (
+        <SourcingProductCard
+          product={product}
+          segment={segment}
+          canDelete={canDelete(product.id)}
+          {...handlersFor(product)}
+        />
+      )}
+    />
   );
 }
