@@ -2976,7 +2976,7 @@ export type Database = {
       };
       feed_configs: {
         Row: {
-          access_token: string;
+          access_token: string | null;
           created_at: string | null;
           created_by: string;
           filters: Json | null;
@@ -2996,7 +2996,7 @@ export type Database = {
           webhook_url: string | null;
         };
         Insert: {
-          access_token: string;
+          access_token?: string | null;
           created_at?: string | null;
           created_by: string;
           filters?: Json | null;
@@ -3016,7 +3016,7 @@ export type Database = {
           webhook_url?: string | null;
         };
         Update: {
-          access_token?: string;
+          access_token?: string | null;
           created_at?: string | null;
           created_by?: string;
           filters?: Json | null;
@@ -7198,6 +7198,7 @@ export type Database = {
           internal_notes: string | null;
           is_featured_home: boolean;
           is_published_online: boolean | null;
+          is_published_want_it_now: boolean;
           is_visible_in_linkme_catalog: boolean;
           item_group_id: string | null;
           manufacturer: string | null;
@@ -7303,6 +7304,7 @@ export type Database = {
           internal_notes?: string | null;
           is_featured_home?: boolean;
           is_published_online?: boolean | null;
+          is_published_want_it_now?: boolean;
           is_visible_in_linkme_catalog?: boolean;
           item_group_id?: string | null;
           manufacturer?: string | null;
@@ -7408,6 +7410,7 @@ export type Database = {
           internal_notes?: string | null;
           is_featured_home?: boolean;
           is_published_online?: boolean | null;
+          is_published_want_it_now?: boolean;
           is_visible_in_linkme_catalog?: boolean;
           item_group_id?: string | null;
           manufacturer?: string | null;

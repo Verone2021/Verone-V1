@@ -2,6 +2,10 @@
 
 import type { Dispatch, SetStateAction } from 'react';
 
+import {
+  invalidateMenuCounts,
+  type MenuCountInvalidator,
+} from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 import type {
@@ -23,16 +27,16 @@ export interface ConsultationMutationsDeps {
   setConsultations: Dispatch<SetStateAction<ClientConsultation[]>>;
   setError: Dispatch<SetStateAction<string | null>>;
   toast: ToastFn;
+  queryClient: MenuCountInvalidator;
 }
 
 // ---------------------------------------------------------------------------
 // Factory — mutations longues extraites de useConsultations
-// Fonctions conservées intactes pour faciliter la fusion de [BO-PERF-S3-001]
-// (ajout de invalidateMenuCounts après chaque écriture réussie).
+// Chaque écriture réussie rafraîchit les compteurs du menu ([BO-PERF-S3-001]).
 // ---------------------------------------------------------------------------
 
 export function createConsultationMutations(deps: ConsultationMutationsDeps) {
-  const { setConsultations, setError, toast } = deps;
+  const { setConsultations, setError, toast, queryClient } = deps;
   const supabase = createClient();
 
   // Créer une nouvelle consultation
@@ -70,6 +74,8 @@ export function createConsultationMutations(deps: ConsultationMutationsDeps) {
         newConsultation as ClientConsultation,
         ...prev,
       ]);
+
+      await invalidateMenuCounts(queryClient, 'consultations');
 
       toast({
         title: 'Consultation créée',
@@ -122,6 +128,8 @@ export function createConsultationMutations(deps: ConsultationMutationsDeps) {
         )
       );
 
+      await invalidateMenuCounts(queryClient, 'consultations');
+
       toast({
         title: 'Consultation validée',
         description: 'La consultation a été marquée comme validée',
@@ -173,6 +181,8 @@ export function createConsultationMutations(deps: ConsultationMutationsDeps) {
             : consultation
         )
       );
+
+      await invalidateMenuCounts(queryClient, 'consultations');
 
       toast({
         title: 'Consultation dévalidée',
@@ -258,6 +268,8 @@ export function createConsultationMutations(deps: ConsultationMutationsDeps) {
       setConsultations(prev =>
         prev.filter(consultation => consultation.id !== consultationId)
       );
+
+      await invalidateMenuCounts(queryClient, 'consultations');
 
       const devisCount = linkedDevis?.length ?? 0;
       toast({

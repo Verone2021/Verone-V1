@@ -1,6 +1,9 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
+
 import { useToast } from '@verone/common/hooks';
+import { invalidateMenuCounts } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 import type { SourcingProduct } from './types';
@@ -15,6 +18,7 @@ export function useSourcingMutations({
   refetch,
 }: UseSourcingMutationsParams) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const supabase = createClient();
 
   // Valider un produit sourcing (passage au catalogue)
@@ -80,6 +84,7 @@ export function useSourcingMutations({
       });
 
       await refetch();
+      await invalidateMenuCounts(queryClient, 'sourcing');
       return true;
     } catch (_err) {
       toast({
@@ -158,6 +163,7 @@ export function useSourcingMutations({
 
       // 4. Recharger liste sourcing
       await refetch();
+      await invalidateMenuCounts(queryClient, 'sourcing');
       return true;
     } catch (err: unknown) {
       console.error('Erreur approbation échantillon:', err);
@@ -206,6 +212,7 @@ export function useSourcingMutations({
 
       // 3. Recharger liste sourcing
       await refetch();
+      await invalidateMenuCounts(queryClient, 'sourcing');
       return true;
     } catch (err: unknown) {
       console.error('Erreur rejet échantillon:', err);
@@ -245,11 +252,46 @@ export function useSourcingMutations({
       });
 
       await refetch();
+      await invalidateMenuCounts(queryClient, 'sourcing');
       return true;
     } catch (_err) {
       toast({
         title: 'Erreur',
         description: "Impossible d'archiver le produit",
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
+  // Restaurer un produit sourcing archivé (inverse de l'archivage)
+  const unarchiveSourcingProduct = async (productId: string) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ archived_at: null })
+        .eq('id', productId);
+
+      if (error) {
+        toast({
+          title: 'Erreur',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      toast({
+        title: 'Produit restauré',
+        description: 'Le produit sourcing est de nouveau dans la liste active',
+      });
+
+      await refetch();
+      return true;
+    } catch (_err) {
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de restaurer le produit',
         variant: 'destructive',
       });
       return false;
@@ -304,6 +346,7 @@ export function useSourcingMutations({
       });
 
       await refetch();
+      await invalidateMenuCounts(queryClient, 'sourcing');
       return true;
     } catch (_err) {
       toast({
@@ -320,6 +363,7 @@ export function useSourcingMutations({
     approveSample,
     rejectSample,
     archiveSourcingProduct,
+    unarchiveSourcingProduct,
     deleteSourcingProduct,
   };
 }

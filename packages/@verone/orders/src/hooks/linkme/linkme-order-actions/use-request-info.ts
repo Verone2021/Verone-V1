@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { invalidateMenuCounts } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 import type { RequestInfoInput, OrderActionResult } from './types';
 import { fetchLinkMeOrderDetails } from './fetch-linkme-details';
@@ -146,6 +147,7 @@ export function useRequestInfo() {
         queryClient.invalidateQueries({
           queryKey: ['linkme-orders-to-process'],
         }),
+        invalidateMenuCounts(queryClient, 'linkmeInfoRequests'),
       ]);
     },
   });

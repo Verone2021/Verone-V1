@@ -54,6 +54,7 @@ export default function SourcingPage() {
     error,
     validateSourcing,
     archiveSourcingProduct,
+    unarchiveSourcingProduct,
     deleteSourcingProduct,
     refetch,
   } = useSourcingProducts({
@@ -175,6 +176,12 @@ export default function SourcingPage() {
     });
   };
 
+  const handleRestore = (id: string) => {
+    void unarchiveSourcingProduct(id).catch(error => {
+      console.error('[Sourcing] handleRestoreProduct failed:', error);
+    });
+  };
+
   const handleDelete = (id: string) => {
     void deleteSourcingProduct(id).catch(error => {
       console.error('[Sourcing] handleDeleteProduct failed:', error);
@@ -276,11 +283,12 @@ export default function SourcingPage() {
               error={error}
               onView={id => router.push(`/produits/sourcing/produits/${id}`)}
               onViewSupplier={supplierId =>
-                router.push(`/organisations/${supplierId}`)
+                router.push(`/contacts-organisations/suppliers/${supplierId}`)
               }
               onEdit={id => router.push(`/produits/sourcing/produits/${id}`)}
               onValidate={handleValidate}
               onArchive={handleArchive}
+              onRestore={handleRestore}
               onDelete={handleDelete}
             />
           )}
@@ -340,6 +348,7 @@ export default function SourcingPage() {
             onEdit={id => router.push(`/produits/sourcing/produits/${id}`)}
             onValidate={handleValidate}
             onArchive={handleArchive}
+            onRestore={handleRestore}
             onDelete={handleDelete}
           />
         </TabsContent>

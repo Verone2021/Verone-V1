@@ -62,4 +62,6 @@ export interface SourcingFilters {
   // 'active' (défaut) : archived_at IS NULL
   // 'archived' : archived_at IS NOT NULL (onglet Archivés)
   archived_view?: 'active' | 'archived';
+  // Fiche d'un produit précis, archivé ou non (ignore archived_view)
+  product_id?: string;
 }

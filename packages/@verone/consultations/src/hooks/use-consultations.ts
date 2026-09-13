@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { useToast } from '@verone/common/hooks';
+import { invalidateMenuCounts } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { createConsultationMutations } from './use-consultation-mutations';
@@ -31,6 +33,7 @@ export function useConsultations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Charger toutes les consultations
   const fetchConsultations = useCallback(
@@ -111,6 +114,8 @@ export function useConsultations() {
         )
       );
 
+      await invalidateMenuCounts(queryClient, 'consultations');
+
       toast({
         title: 'Consultation mise à jour',
         description: 'Les modifications ont été enregistrées',
@@ -181,6 +186,8 @@ export function useConsultations() {
         )
       );
 
+      await invalidateMenuCounts(queryClient, 'consultations');
+
       toast({
         title: 'Consultation archivée',
         description: 'La consultation a été archivée',
@@ -223,6 +230,8 @@ export function useConsultations() {
         )
       );
 
+      await invalidateMenuCounts(queryClient, 'consultations');
+
       toast({
         title: 'Consultation désarchivée',
         description: 'La consultation a été désarchivée',
@@ -248,7 +257,12 @@ export function useConsultations() {
     validateConsultation,
     unvalidateConsultation,
     deleteConsultation,
-  } = createConsultationMutations({ setConsultations, setError, toast });
+  } = createConsultationMutations({
+    setConsultations,
+    setError,
+    toast,
+    queryClient,
+  });
 
   return {
     // État

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
+import { invalidateMenuCounts } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 import type { PendingOrder } from '../../hooks/use-linkme-order-actions';
@@ -12,6 +14,7 @@ interface UseDeleteOrderOptions {
 
 export function useDeleteOrder({ onSuccess }: UseDeleteOrderOptions) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const queryClient = useQueryClient();
 
   const deleteOrder = async (order: PendingOrder) => {
     setIsDeleting(true);
@@ -75,6 +78,7 @@ export function useDeleteOrder({ onSuccess }: UseDeleteOrderOptions) {
         await supabase.from('organisations').delete().eq('id', orgIdToDelete);
       }
 
+      await invalidateMenuCounts(queryClient, 'linkmeInfoRequests');
       onSuccess();
     } catch (err) {
       console.error('[Approbations] Delete failed:', err);

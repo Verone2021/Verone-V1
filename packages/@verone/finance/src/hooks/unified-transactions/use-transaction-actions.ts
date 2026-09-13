@@ -6,13 +6,16 @@
 // =====================================================================
 
 import { useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
+import { invalidateMenuCounts } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 import type { TransactionActions } from './types';
 
 export function useTransactionActions(): TransactionActions {
   const supabase = useMemo(() => createClient(), []);
+  const queryClient = useQueryClient();
 
   const classify = useCallback(
     async (transactionId: string, categoryPcg: string) => {
@@ -73,6 +76,7 @@ export function useTransactionActions(): TransactionActions {
           .eq('id', transactionId);
 
         if (error) throw error;
+        await invalidateMenuCounts(queryClient, 'bankTransactions');
         return { success: true };
       } catch (err) {
         return {
@@ -81,7 +85,7 @@ export function useTransactionActions(): TransactionActions {
         };
       }
     },
-    [supabase]
+    [supabase, queryClient]
   );
 
   const unignore = useCallback(
@@ -97,6 +101,7 @@ export function useTransactionActions(): TransactionActions {
           .eq('id', transactionId);
 
         if (error) throw error;
+        await invalidateMenuCounts(queryClient, 'bankTransactions');
         return { success: true };
       } catch (err) {
         return {
@@ -105,7 +110,7 @@ export function useTransactionActions(): TransactionActions {
         };
       }
     },
-    [supabase]
+    [supabase, queryClient]
   );
 
   // Toggle ignore using RPC (with fiscal year lock check)
@@ -137,6 +142,7 @@ export function useTransactionActions(): TransactionActions {
         }
 
         const result = data as { success?: boolean } | null;
+        await invalidateMenuCounts(queryClient, 'bankTransactions');
         return { success: result?.success ?? true };
       } catch (err) {
         const errorMessage =
@@ -155,7 +161,7 @@ export function useTransactionActions(): TransactionActions {
         };
       }
     },
-    [supabase]
+    [supabase, queryClient]
   );
 
   const markCCA = useCallback(
