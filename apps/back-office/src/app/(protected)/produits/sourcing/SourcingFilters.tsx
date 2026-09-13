@@ -83,13 +83,13 @@ export function SourcingFilters({
   return (
     <div className="rounded-xl border border-gray-200 bg-white px-3 py-2.5">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative w-full sm:w-[220px]">
-          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+        <div className="w-full sm:w-[220px]">
           <Input
             placeholder="Rechercher..."
             value={searchTerm}
             onChange={e => onSearchChange(e.target.value)}
-            className="h-11 pl-8 text-sm md:h-8 md:text-xs"
+            iconLeft={<Search className="h-3.5 w-3.5" />}
+            className="h-11 text-sm md:h-8 md:text-xs"
           />
         </div>
 

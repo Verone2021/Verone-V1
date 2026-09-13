@@ -9,7 +9,7 @@ import {
 import { Badge, CloudflareImage, StatPill } from '@verone/ui';
 import { Package } from 'lucide-react';
 
-import { getPrimaryImage } from './sourcing-page.helpers';
+import { formatPrice, getPrimaryImage } from './sourcing-page.helpers';
 
 const PRIORITY_LABELS: Record<string, { label: string; className: string }> = {
   urgent: { label: 'Urgente', className: 'bg-red-100 text-red-800' },
@@ -80,7 +80,7 @@ function KanbanCard({
       <div className="flex items-center justify-between">
         {product.cost_price != null ? (
           <span className="text-sm font-semibold text-gray-900">
-            {product.cost_price.toFixed(2)} €
+            {formatPrice(product.cost_price)}
           </span>
         ) : (
           <span className="text-xs text-gray-400">Pas de prix</span>

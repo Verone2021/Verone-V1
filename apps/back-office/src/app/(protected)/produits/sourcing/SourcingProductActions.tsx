@@ -6,12 +6,12 @@ import {
   type SourcingListSegment,
 } from '@verone/products/utils';
 import {
-  ButtonV2,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  cn,
 } from '@verone/ui';
 import {
   Archive,
@@ -44,7 +44,10 @@ interface SourcingProductActionsProps extends SourcingProductActionHandlers {
   canDelete: boolean;
 }
 
-const ICON_BUTTON = 'h-11 w-11 md:h-9 md:w-9';
+// Bouton natif : ButtonV2 impose hauteur, largeur et marges en style en ligne,
+// ce qui masque l'icône dans un carré et empêche la cible tactile de 44 px.
+const ICON_BUTTON =
+  'inline-flex h-11 w-11 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-700 transition-colors hover:bg-gray-50 md:h-9 md:w-9';
 
 /**
  * Actions d'une ligne de la liste sourcing : seules celles que la base
@@ -78,40 +81,41 @@ export function SourcingProductActions({
 
   return (
     <div className="flex items-center justify-end gap-1">
-      <ButtonV2
-        variant="outline"
-        size="sm"
+      <button
+        type="button"
         className={ICON_BUTTON}
         onClick={onView}
         aria-label={viewLabel}
         title={viewLabel}
       >
         <Eye className="h-4 w-4" />
-      </ButtonV2>
+      </button>
 
       {canValidate && (
-        <ButtonV2
-          variant="outline"
-          size="sm"
+        <button
+          type="button"
           onClick={onValidate}
           aria-label="Valider au catalogue"
           title="Valider au catalogue"
-          className={`${ICON_BUTTON} border-green-200 text-green-600 hover:bg-green-50`}
+          className={cn(
+            ICON_BUTTON,
+            'border-green-200 text-green-600 hover:bg-green-50'
+          )}
         >
           <CheckCircle className="h-4 w-4" />
-        </ButtonV2>
+        </button>
       )}
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <ButtonV2
-            variant="outline"
-            size="sm"
+          <button
+            type="button"
             className={ICON_BUTTON}
             aria-label="Plus d'actions"
+            title="Plus d'actions"
           >
             <MoreHorizontal className="h-4 w-4" />
-          </ButtonV2>
+          </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           {!isValidated && (
