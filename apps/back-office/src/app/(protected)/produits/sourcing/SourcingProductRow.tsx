@@ -16,11 +16,14 @@ import {
   CheckCircle,
   Edit,
   Eye,
+  Info,
   MoreHorizontal,
   Package,
   RotateCcw,
   Trash2,
 } from 'lucide-react';
+
+import { PRODUCT_USED_MESSAGE } from '@/hooks/product-history';
 
 import {
   formatDate,
@@ -32,6 +35,8 @@ import {
 
 interface SourcingProductRowProps {
   product: SourcingProduct;
+  /** false si le produit a servi (consultation, commande, stock) ou tant que ce n'est pas vérifié */
+  canDelete: boolean;
   onView: () => void;
   onViewSupplier: (() => void) | undefined;
   onEdit: () => void;
@@ -43,6 +48,7 @@ interface SourcingProductRowProps {
 
 export function SourcingProductRow({
   product,
+  canDelete,
   onView,
   onViewSupplier,
   onEdit,
@@ -181,10 +187,23 @@ export function SourcingProductRow({
                     <RotateCcw className="h-4 w-4 mr-2" />
                     Restaurer
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={onDelete} className="text-red-600">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Supprimer
-                  </DropdownMenuItem>
+                  {canDelete ? (
+                    <DropdownMenuItem
+                      onClick={onDelete}
+                      className="text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Supprimer
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      disabled
+                      className="max-w-[240px] whitespace-normal text-gray-600"
+                    >
+                      <Info className="h-4 w-4 mr-2 flex-shrink-0" />
+                      {PRODUCT_USED_MESSAGE}
+                    </DropdownMenuItem>
+                  )}
                 </>
               )}
             </DropdownMenuContent>

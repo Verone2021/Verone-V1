@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import type { SourcingProduct } from '@verone/products';
 import { Card, CardContent } from '@verone/ui';
 import { cn } from '@verone/ui';
@@ -10,6 +12,8 @@ import {
   ArrowUpDown,
   Package,
 } from 'lucide-react';
+
+import { useProductsWithHistory } from '@/hooks/use-products-with-history';
 
 import { SourcingProductRow } from './SourcingProductRow';
 
@@ -85,6 +89,13 @@ export function SourcingProductList({
   sortDir,
   onSort,
 }: SourcingProductListProps) {
+  // « Supprimer » n'existe que pour les produits archivés : on ne vérifie qu'eux.
+  const archivedIds = useMemo(
+    () => products.filter(p => p.archived_at).map(p => p.id),
+    [products]
+  );
+  const { canDelete } = useProductsWithHistory(archivedIds);
+
   if (loading) {
     return (
       <Card>
@@ -174,6 +185,7 @@ export function SourcingProductList({
                 <SourcingProductRow
                   key={product.id}
                   product={product}
+                  canDelete={canDelete(product.id)}
                   onView={() => onView(product.id)}
                   onViewSupplier={
                     product.supplier_id
