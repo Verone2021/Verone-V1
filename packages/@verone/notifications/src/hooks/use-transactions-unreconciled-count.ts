@@ -1,22 +1,19 @@
 /**
  * Hook Transactions Unreconciled Count - Vérone Back Office
- * Compte les transactions bancaires non rapprochées
+ * Compte les transactions bancaires non rapprochées (matching_status = 'unmatched').
  *
- * Utilise:
- * - Table: bank_transactions
- * - Critère: reconciliation_status = 'pending' ou NULL
- * - Realtime: Supabase subscriptions
- *
- * @author Romeo Dos Santos
- * @date 2026-01-23
+ * Implémentation : TanStack Query (staleTime 5 min, refetch au retour sur
+ * l'onglet). bank_transactions n'est pas publiée dans Supabase Realtime
+ * → pas d'abonnement, pas de polling.
  */
 
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { MENU_COUNT_QUERY_KEYS } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
-import type { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface TransactionsUnreconciledCountHook {
   count: number;
@@ -26,62 +23,37 @@ export interface TransactionsUnreconciledCountHook {
   lastUpdated: Date | null;
 }
 
+const TRANSACTIONS_UNRECONCILED_QUERY_KEY =
+  MENU_COUNT_QUERY_KEYS.bankTransactions;
+
 /**
- * Hook pour compter les transactions bancaires non rapprochées
+ * Hook pour compter les transactions bancaires non rapprochées.
  *
- * Compte les transactions où:
- * - reconciliation_status = 'pending'
- * - reconciliation_status IS NULL
- * - is_reconciled = false
- *
- * @param options.enableRealtime - Activer Supabase Realtime (default: true)
- * @param options.refetchInterval - Intervalle de polling fallback en ms (default: 60000)
- * @returns {TransactionsUnreconciledCountHook} État du hook avec count, loading, error
- *
- * @example
- * ```tsx
- * function TransactionsBadge() {
- *   const { count, loading } = useTransactionsUnreconciledCount();
- *   return count > 0 ? <Badge variant="warning">{count}</Badge> : null;
- * }
- * ```
+ * @param options.enableRealtime  @deprecated ignoré — bank_transactions non publiée
+ * @param options.refetchInterval @deprecated ignoré — TanStack Query gère le cache
  */
-export function useTransactionsUnreconciledCount(options?: {
+export function useTransactionsUnreconciledCount(_options?: {
+  /** @deprecated ignoré */
   enableRealtime?: boolean;
+  /** @deprecated ignoré */
   refetchInterval?: number;
 }): TransactionsUnreconciledCountHook {
-  const { enableRealtime = true, refetchInterval = 60000 } = options ?? {};
+  const queryClient = useQueryClient();
 
-  const [count, setCount] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
-  const supabase = createClient();
-  const channelRef = useRef<RealtimeChannel | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  /**
-   * Fetch count des transactions non rapprochées
-   */
-  const fetchCount = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Vérifier authentification avant requête (évite erreur RLS 403)
+  const {
+    data = 0,
+    isPending,
+    error,
+    dataUpdatedAt,
+  } = useQuery({
+    queryKey: TRANSACTIONS_UNRECONCILED_QUERY_KEY,
+    queryFn: async () => {
+      const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) {
-        // Pas connecté = pas de count, pas d'erreur
-        setCount(0);
-        setLoading(false);
-        return;
-      }
+      if (!user) return 0;
 
-      // Query transactions non rapprochées
-      // matching_status = 'unmatched' (ENUM remplace is_reconciled boolean)
       const { count: totalCount, error: countError } = await supabase
         .from('bank_transactions')
         .select('id', { count: 'exact', head: true })
@@ -92,116 +64,26 @@ export function useTransactionsUnreconciledCount(options?: {
           '[useTransactionsUnreconciledCount] Count error:',
           countError
         );
-        setError(new Error(`Count error: ${countError.message}`));
-        setCount(0); // Valeur par défaut gracieuse
-        return; // Sortie anticipée sans exception
+        throw new Error(countError.message);
       }
+      return totalCount ?? 0;
+    },
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: false,
+  });
 
-      setCount(totalCount ?? 0);
-      setLastUpdated(new Date());
-    } catch (err) {
-      const errorObj =
-        err instanceof Error ? err : new Error('Unknown error fetching count');
-      setError(errorObj);
-      console.error('[useTransactionsUnreconciledCount] Error:', errorObj);
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase]);
-
-  /**
-   * Setup Supabase Realtime subscription (authentification requise)
-   */
-  useEffect(() => {
-    let isMounted = true;
-
-    const setupSubscriptions = async () => {
-      // Vérifier authentification avant setup Realtime/polling
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user || !isMounted) {
-        // Pas connecté = pas de Realtime, juste set count à 0
-        setCount(0);
-        setLoading(false);
-        return;
-      }
-
-      // Initial fetch (authentifié)
-      void fetchCount().catch((err: unknown) => {
-        console.error(
-          '[useTransactionsUnreconciledCount] Initial fetch error:',
-          err
-        );
-      });
-
-      // Setup Realtime si activé ET authentifié
-      if (enableRealtime) {
-        channelRef.current = supabase
-          .channel('transactions-unreconciled-changes')
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'bank_transactions',
-            },
-            () => {
-              void fetchCount().catch((err: unknown) => {
-                console.error(
-                  '[useTransactionsUnreconciledCount] Refetch error:',
-                  err
-                );
-              });
-            }
-          )
-          .subscribe(status => {
-            if (status === 'CHANNEL_ERROR') {
-              // Log silencieux, pas setError pour éviter bruit sur page login
-              console.warn(
-                '[useTransactionsUnreconciledCount] Realtime subscription failed'
-              );
-            }
-          });
-      }
-
-      // Polling fallback (seulement si authentifié, interval plus long pour finance)
-      if (!enableRealtime && refetchInterval > 0) {
-        intervalRef.current = setInterval(() => {
-          void fetchCount().catch((err: unknown) => {
-            console.error(
-              '[useTransactionsUnreconciledCount] Polling error:',
-              err
-            );
-          });
-        }, refetchInterval);
-      }
-    };
-
-    void setupSubscriptions().catch((err: unknown) => {
-      console.error('[useTransactionsUnreconciledCount] Setup error:', err);
+  const refetch = useCallback(async (): Promise<void> => {
+    await queryClient.invalidateQueries({
+      queryKey: TRANSACTIONS_UNRECONCILED_QUERY_KEY,
     });
-
-    // Cleanup
-    return () => {
-      isMounted = false;
-      if (channelRef.current) {
-        void supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [supabase, enableRealtime, refetchInterval, fetchCount]);
+  }, [queryClient]);
 
   return {
-    count,
-    loading,
-    error,
-    refetch: fetchCount,
-    lastUpdated,
+    count: data,
+    loading: isPending,
+    error: error ?? null,
+    refetch,
+    lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
   };
 }

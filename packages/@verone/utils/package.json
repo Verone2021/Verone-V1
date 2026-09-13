@@ -108,6 +108,11 @@
       "import": "./src/security/index.ts",
       "require": "./src/security/index.ts"
     },
+    "./query": {
+      "types": "./src/query/index.ts",
+      "import": "./src/query/index.ts",
+      "require": "./src/query/index.ts"
+    },
     "./hooks": {
       "types": "./src/hooks/index.ts",
       "import": "./src/hooks/index.ts",

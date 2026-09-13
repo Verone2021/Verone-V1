@@ -5,7 +5,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { useNotificationActions } from './use-notification-actions';
-import { useNotificationRealtime } from './use-notification-realtime';
+import { useNotificationRefresh } from './use-notification-refresh';
 import type {
   DatabaseNotification,
   DatabaseNotificationsHook,
@@ -112,7 +112,7 @@ export function useDatabaseNotifications(): DatabaseNotificationsHook {
     [state.notifications]
   );
 
-  useNotificationRealtime(loadNotifications, setState);
+  useNotificationRefresh(loadNotifications);
 
   return {
     notifications: state.notifications,

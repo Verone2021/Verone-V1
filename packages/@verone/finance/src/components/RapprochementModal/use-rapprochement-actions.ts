@@ -1,5 +1,7 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
+import { invalidateMenuCounts } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 import toast from 'react-hot-toast';
 
@@ -47,6 +49,8 @@ export function useRapprochementActions({
   autoCalculateVAT,
   onSuccess,
 }: UseActionsParams) {
+  const queryClient = useQueryClient();
+
   // Lier à un document
   const handleLinkDocument = async () => {
     if (!transactionId || !selectedDocumentId) return;
@@ -99,6 +103,7 @@ export function useRapprochementActions({
       });
       // Auto-calcul TVA depuis rapprochement + rafraîchir la page
       void autoCalculateVAT();
+      await invalidateMenuCounts(queryClient, 'bankTransactions');
       onSuccess?.();
     } catch (err) {
       console.error('[RapprochementModal] Link error:', err);
@@ -170,6 +175,7 @@ export function useRapprochementActions({
         amount: amountToAllocate,
       });
       void autoCalculateVAT();
+      await invalidateMenuCounts(queryClient, 'bankTransactions');
       onSuccess?.();
     } catch (err) {
       console.error('[RapprochementModal] Link order error:', err);
@@ -243,6 +249,7 @@ export function useRapprochementActions({
         amount: amountToAllocate,
       });
       void autoCalculateVAT();
+      await invalidateMenuCounts(queryClient, 'bankTransactions');
       onSuccess?.();
     } catch (err) {
       console.error('[RapprochementModal] Link purchase order error:', err);
@@ -328,6 +335,7 @@ export function useRapprochementActions({
       // Recalculer TVA + rafraîchir modal + page
       void autoCalculateVAT();
       void fetchAvailableItems();
+      await invalidateMenuCounts(queryClient, 'bankTransactions');
       onSuccess?.();
     } catch (err) {
       console.error('[RapprochementModal] Unlink error:', err);

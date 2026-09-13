@@ -1,6 +1,9 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
+
 import { useToast } from '@verone/common/hooks';
+import { invalidateMenuCounts } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 interface UseSourcingSampleOrderParams {
@@ -11,6 +14,7 @@ export function useSourcingSampleOrder({
   refetch,
 }: UseSourcingSampleOrderParams) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const supabase = createClient();
 
   /**
@@ -300,6 +304,7 @@ export function useSourcingSampleOrder({
       }
 
       await refetch();
+      await invalidateMenuCounts(queryClient, 'sourcing');
       return true;
     } catch (err: unknown) {
       console.error('Erreur commande échantillon:', err);

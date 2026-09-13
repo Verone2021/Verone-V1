@@ -1,22 +1,18 @@
 /**
  * Hook Stock Alerts Count - Vérone Back Office
- * Compte les alertes stock actives en temps réel via Supabase Realtime
+ * Compte les alertes stock actives via le RPC get_stock_alerts_count().
  *
- * Utilise:
- * - RPC: get_stock_alerts_count() (migration 20260113)
- * - Vue: stock_alerts_unified_view
- * - Realtime: Supabase subscriptions sur vue
- *
- * @author Romeo Dos Santos
- * @date 2026-01-23
+ * Implémentation : TanStack Query (staleTime 5 min, refetch au retour sur
+ * l'onglet). stock_alerts_unified_view n'est pas publiée dans Supabase Realtime
+ * → pas d'abonnement, pas de polling.
  */
 
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { createClient } from '@verone/utils/supabase/client';
-import type { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface StockAlertsCountHook {
   count: number;
@@ -26,166 +22,61 @@ export interface StockAlertsCountHook {
   lastUpdated: Date | null;
 }
 
+const STOCK_ALERTS_QUERY_KEY = ['stock_alerts', 'count'] as const;
+
 /**
- * Hook pour compter les alertes stock en temps réel
+ * Hook pour compter les alertes stock actives.
+ * Utilise le RPC get_stock_alerts_count() pour performance optimale.
  *
- * Utilise le RPC get_stock_alerts_count() pour performance optimale
- * Supabase Realtime pour updates automatiques quand stock_alerts_unified_view change
- *
- * @param options.enableRealtime - Activer Supabase Realtime (default: true)
- * @param options.refetchInterval - Intervalle de polling fallback en ms (default: 30000 = 30s)
- * @returns {StockAlertsCountHook} État du hook avec count, loading, error
- *
- * @example
- * ```tsx
- * function StockBadge() {
- *   const { count, loading } = useStockAlertsCount();
- *   return <Badge variant="urgent">{count}</Badge>;
- * }
- * ```
+ * @param options.enableRealtime  @deprecated ignoré — stock_alerts_unified_view non publiée
+ * @param options.refetchInterval @deprecated ignoré — TanStack Query gère le cache
  */
-export function useStockAlertsCount(options?: {
+export function useStockAlertsCount(_options?: {
+  /** @deprecated ignoré */
   enableRealtime?: boolean;
+  /** @deprecated ignoré */
   refetchInterval?: number;
 }): StockAlertsCountHook {
-  const { enableRealtime = true, refetchInterval = 30000 } = options ?? {};
+  const queryClient = useQueryClient();
 
-  const [count, setCount] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
-  const supabase = createClient();
-  const channelRef = useRef<RealtimeChannel | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  /**
-   * Fetch count via RPC get_stock_alerts_count()
-   */
-  const fetchCount = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Vérifier authentification avant requête (évite erreur RLS 403)
+  const {
+    data = 0,
+    isPending,
+    error,
+    dataUpdatedAt,
+  } = useQuery({
+    queryKey: STOCK_ALERTS_QUERY_KEY,
+    queryFn: async () => {
+      const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) {
-        // Pas connecté = pas de count, pas d'erreur
-        setCount(0);
-        setLoading(false);
-        return;
-      }
+      if (!user) return 0;
 
-      const { data, error: rpcError } = await supabase.rpc(
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
         'get_stock_alerts_count'
       );
 
       if (rpcError) {
         console.error('[useStockAlertsCount] RPC error:', rpcError);
-        setError(new Error(`RPC error: ${rpcError.message}`));
-        setCount(0); // Valeur par défaut gracieuse
-        return; // Sortie anticipée sans exception
+        throw new Error(rpcError.message);
       }
+      return (rpcData as number | null) ?? 0;
+    },
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: false,
+  });
 
-      setCount(data || 0);
-      setLastUpdated(new Date());
-    } catch (err) {
-      const errorObj =
-        err instanceof Error ? err : new Error('Unknown error fetching count');
-      setError(errorObj);
-      console.error('[useStockAlertsCount] Error:', errorObj);
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase]);
-
-  /**
-   * Setup Supabase Realtime subscription (authentification requise)
-   */
-  useEffect(() => {
-    let isMounted = true;
-
-    const setupSubscriptions = async () => {
-      // Vérifier authentification avant setup Realtime/polling
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user || !isMounted) {
-        // Pas connecté = pas de Realtime, juste set count à 0
-        setCount(0);
-        setLoading(false);
-        return;
-      }
-
-      // Initial fetch (authentifié)
-      void fetchCount().catch((err: unknown) => {
-        console.error('[useStockAlertsCount] Initial fetch error:', err);
-      });
-
-      // Setup Realtime si activé ET authentifié
-      if (enableRealtime) {
-        channelRef.current = supabase
-          .channel('stock-alerts-changes')
-          .on(
-            'postgres_changes',
-            {
-              event: '*', // INSERT, UPDATE, DELETE
-              schema: 'public',
-              table: 'stock_alerts_unified_view',
-            },
-            () => {
-              // Refetch count après changement
-              void fetchCount().catch((err: unknown) => {
-                console.error('[useStockAlertsCount] Refetch error:', err);
-              });
-            }
-          )
-          .subscribe(status => {
-            if (status === 'CHANNEL_ERROR') {
-              // Log silencieux, pas setError pour éviter bruit sur page login
-              console.warn(
-                '[useStockAlertsCount] Realtime subscription failed'
-              );
-            }
-          });
-      }
-
-      // Polling fallback (seulement si authentifié)
-      if (!enableRealtime && refetchInterval > 0) {
-        intervalRef.current = setInterval(() => {
-          void fetchCount().catch((err: unknown) => {
-            console.error('[useStockAlertsCount] Polling error:', err);
-          });
-        }, refetchInterval);
-      }
-    };
-
-    void setupSubscriptions().catch((err: unknown) => {
-      console.error('[useStockAlertsCount] Setup error:', err);
-    });
-
-    // Cleanup
-    return () => {
-      isMounted = false;
-      if (channelRef.current) {
-        void supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [supabase, enableRealtime, refetchInterval, fetchCount]);
+  const refetch = useCallback(async (): Promise<void> => {
+    await queryClient.invalidateQueries({ queryKey: STOCK_ALERTS_QUERY_KEY });
+  }, [queryClient]);
 
   return {
-    count,
-    loading,
-    error,
-    refetch: fetchCount,
-    lastUpdated,
+    count: data,
+    loading: isPending,
+    error: error ?? null,
+    refetch,
+    lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
   };
 }
