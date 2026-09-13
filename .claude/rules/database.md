@@ -12,6 +12,7 @@ globs: supabase/migrations/**, packages/@verone/types/**
 - Ne JAMAIS recalculer `retrocession_rate` (vient de `margin_rate / 100`)
 - Ne JAMAIS referencer `user_profiles.app` (n'existe pas) ni `raw_user_meta_data` (obsolete)
 - Ne JAMAIS creer une colonne JSONB sans CHECK `jsonb_typeof = 'object'` (cf. R-JSONB ci-dessous)
+- Ne JAMAIS ouvrir une fonction a `anon` sans besoin public prouve ; ne JAMAIS revoquer seulement `anon` sans `PUBLIC` (cf. R-GRANT ci-dessous)
 - TOUJOURS activer RLS sur les nouvelles tables
 - TOUJOURS executer `python3 scripts/generate-docs.py --db` apres chaque migration
 - TOUJOURS lire `docs/current/database/schema/` AVANT de toucher une table
@@ -43,6 +44,31 @@ Sans CHECK, ce bug ne sera jamais détecté en CI ni en type-check. Avec CHECK, 
 - `purchase_orders.delivery_address`
 
 **Avant de créer toute nouvelle colonne JSONB** : ajouter la CHECK constraint dans la même migration.
+
+## R-GRANT — Droits d'exécution des fonctions
+
+**Règle absolue** (ajoutée 2026-09-12, `[BO-AUDIT-SEC-S1]`, ADR-039).
+
+**Situation depuis le 2026-09-12** : toute fonction créée par `postgres` dans `public` naît **sans** `EXECUTE` pour
+`PUBLIC` et `anon` ; `authenticated` et `service_role` l'ont (migration `20260912030000_bo_audit_sec_s1_lot6_default_privileges.sql`).
+Seules **19** fonctions `SECURITY DEFINER` restent ouvertes aux visiteurs non connectés (site, pages LinkMe publiques,
+règles RLS visibles d'anon) — liste « F2 » dans `docs/scratchpad/dev-report-2026-09-11-S1-fonctions-anon-etape1.md` § 4.
+
+1. **Fonction pour visiteur non connecté** (page publique du site ou de LinkMe, règle RLS évaluée pour `anon`) :
+   `GRANT EXECUTE ON FUNCTION public.ma_fonction(args) TO anon;` explicite dans la même migration, avec un commentaire
+   qui nomme la page ou la règle appelante. Sinon, ne rien accorder à `anon`.
+2. **Retirer un droit** : toujours `REVOKE … FROM PUBLIC, anon` (et `authenticated` si besoin). `REVOKE … FROM anon`
+   seul est sans effet quand le droit vient de `PUBLIC` — c'est l'erreur de la révocation de masse du 2026-04-30 qui a
+   laissé 332 fonctions ouvertes.
+3. **`authenticated` inclut les affiliés LinkMe** : une fonction `SECURITY DEFINER` qui écrit ou lit des données
+   sensibles back-office porte une **garde interne** (modèle : `reset_finance_auto_data`, `mark_payment_received` —
+   rôle back-office owner/admin actif, sinon `RAISE … ERRCODE '42501'`).
+4. **Fonction de déclencheur** (`RETURNS trigger`) : aucun droit nécessaire au déclenchement (PostgreSQL ne vérifie
+   `EXECUTE` qu'à `CREATE TRIGGER`, démontré le 2026-09-12) → `REVOKE EXECUTE … FROM PUBLIC, anon, authenticated`.
+5. **Contrôle automatique** : le job CI `Supabase security advisors` échoue si
+   `anon_security_definer_function_executable` ou `authenticated_security_definer_function_executable` dépasse
+   `scripts/supabase-advisors-baseline.json`. La baseline ne se **remonte jamais** pour faire passer une PR ; elle se
+   baisse après chaque correction.
 
 ## STANDARDS
 
