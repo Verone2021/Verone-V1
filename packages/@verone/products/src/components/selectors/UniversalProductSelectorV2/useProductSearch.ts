@@ -37,6 +37,7 @@ export function useProductSearch(
     filters.sourcingType,
     filters.supplierId,
     filters.excludeProductsInVariantGroup,
+    filters.sellableOnly,
   ]);
 
   const fetchProducts = async () => {
@@ -111,6 +112,14 @@ export function useProductSearch(
             | 'preorder'
             | 'discontinued'
         );
+      }
+
+      // Règle unique « vendable » (BO-CHANNELS-P7-001) : commandes client
+      if (filters.sellableOnly) {
+        query = query
+          .is('archived_at', null)
+          .in('product_status', ['active', 'preorder'])
+          .neq('creation_mode', 'sourcing');
       }
 
       // Filtre par fournisseur (CRITIQUE pour commandes fournisseurs)

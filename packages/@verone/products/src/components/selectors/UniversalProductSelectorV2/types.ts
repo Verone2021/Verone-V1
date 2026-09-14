@@ -106,6 +106,8 @@ export interface UniversalProductSelectorV2Props {
   supplierId?: string | null;
   /** Recherche initiale pré-remplie a l'ouverture du selector (ex: nom du groupe variantes) */
   initialSearch?: string;
+  /** Seulement les produits vendables (commandes client) — règle BO-CHANNELS-P7-001 */
+  sellableOnly?: boolean;
 }
 
 // Types pour filtres hiérarchiques (internes)
@@ -139,4 +141,6 @@ export interface ProductSearchFilters {
   productStatus?: string | null;
   /** Si true, exclut les produits qui ont deja un variant_group_id (regle 1 produit = 1 variante max) */
   excludeProductsInVariantGroup?: boolean;
+  /** Si true, seulement les produits vendables (non retirés, actifs ou en précommande, hors sourcing) */
+  sellableOnly?: boolean;
 }
