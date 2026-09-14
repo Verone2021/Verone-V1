@@ -3,14 +3,17 @@
 import { useState, useCallback } from 'react';
 
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { useToast } from '@verone/common';
 import type { CreateConsultationData } from '@verone/consultations';
+import { associateProductToConsultation } from '@verone/utils';
 import type { ContactBO } from '@verone/orders';
 import {
   useEnseigneContactsBO,
   useOrganisationContactsBO,
 } from '@verone/orders';
+import { invalidateMenuCounts } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { createConsultation as createConsultationAction } from '@/app/actions/consultations';
@@ -46,6 +49,7 @@ export function useCreateConsultation(
   options: UseCreateConsultationOptions = {}
 ) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const supabase = createClient();
   const { toast } = useToast();
   const { presetProductId = null } = options;
@@ -279,6 +283,8 @@ export function useCreateConsultation(
         throw new Error(result.error ?? 'Erreur lors de la création');
       }
 
+      await invalidateMenuCounts(queryClient, 'consultations');
+
       toast({
         title: 'Consultation créée',
         description: 'La consultation a été créée avec succès',
@@ -289,16 +295,12 @@ export function useCreateConsultation(
       // Lien automatique au produit pré-sélectionné (depuis fiche sourcing — B3)
       if (newId && presetProductId) {
         try {
-          await fetch('/api/consultations/associations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              consultation_id: newId,
-              product_id: presetProductId,
-              quantity: 1,
-              proposed_price: null,
-              is_free: false,
-            }),
+          await associateProductToConsultation({
+            consultationId: newId,
+            productId: presetProductId,
+            quantity: 1,
+            proposedPrice: null,
+            isFree: false,
           });
         } catch (linkErr) {
           console.error(

@@ -107,3 +107,11 @@ export type {
 
 // Export tous les utilitaires LinkMe (calculs de marge, constantes)
 export * from './linkme';
+
+// ========================================
+// CONSULTATIONS
+// ========================================
+
+// Helper d'association produit → consultation (source unique pour POST /api/consultations/associations)
+export { associateProductToConsultation } from './consultations/associate-product';
+export type { AssociateProductInput } from './consultations/associate-product';

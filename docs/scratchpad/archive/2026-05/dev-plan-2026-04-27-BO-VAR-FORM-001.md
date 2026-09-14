@@ -141,7 +141,7 @@ pnpm --filter @verone/back-office lint
 
 Tests manuels MCP Playwright (lane-1) :
 
-1. Login `veronebyromeo@gmail.com` / `Abc123456`
+1. Login `veronebyromeo@gmail.com` / `<credential retire 2026-07-30>`
 2. Naviguer `/produits/catalogue/variantes`
 3. Cliquer « Nouveau groupe »
 4. **Cas 1 — sans produit témoin** : remplir manuellement les 3 champs, naviguer 2 et 3, créer → groupe créé, redirection OK.

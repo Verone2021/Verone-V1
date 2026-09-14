@@ -30,7 +30,7 @@ export function SourcingPriceHistory({
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     price: '',
-    currency: 'USD',
+    currency: 'EUR',
     quantity: '',
     proposed_by: 'supplier' as 'supplier' | 'verone',
     notes: '',
@@ -50,7 +50,7 @@ export function SourcingPriceHistory({
       });
       setForm({
         price: '',
-        currency: 'USD',
+        currency: 'EUR',
         quantity: '',
         proposed_by: 'supplier',
         notes: '',
@@ -150,8 +150,8 @@ export function SourcingPriceHistory({
                 }
                 className="text-xs border border-gray-300 rounded px-2 py-1.5"
               >
-                <option value="USD">USD</option>
                 <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
                 <option value="CNY">CNY</option>
                 <option value="GBP">GBP</option>
               </select>

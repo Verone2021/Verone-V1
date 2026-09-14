@@ -3,20 +3,17 @@
 import { useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
-import { useParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 
-import { ConsultationOrderInterface } from '@verone/consultations';
-import { ConsultationTimeline } from '@verone/consultations';
+import {
+  ConsultationOrderInterface,
+  ConsultationTimeline,
+} from '@verone/consultations';
 import { ConsultationMarginReportPdf } from '@verone/consultations/pdf-templates';
-import { ButtonUnified } from '@verone/ui';
-import { Card, CardContent } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
-import { AlertCircle, ArrowLeft, Trash2 } from 'lucide-react';
 
 const PdfPreviewModal = dynamic(
-  () =>
-    import('@verone/finance').then(mod => ({ default: mod.PdfPreviewModal })),
+  () => import('@verone/finance').then(m => ({ default: m.PdfPreviewModal })),
   { ssr: false }
 );
 
@@ -24,6 +21,7 @@ import type { ConsultationItem } from '@verone/consultations';
 import { QuickPurchaseOrderModal } from '@verone/orders';
 
 import { ConsultationHeader } from './ConsultationHeader';
+import { ConsultationNotFoundState } from './ConsultationNotFoundState';
 import { ConsultationInfoCard } from './ConsultationInfoCard';
 import { ConsultationLinkedOrders } from './ConsultationLinkedOrders';
 import { ConsultationLinkedQuotes } from './ConsultationLinkedQuotes';
@@ -110,88 +108,11 @@ export default function ConsultationDetailPage() {
   }
 
   if (!detail.consultation) {
-    // Pendant la vérification DB de "supprimée", on garde un spinner discret
-    if (!deletedChecked) {
-      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-black mx-auto mb-1" />
-            <p className="text-gray-600">Vérification...</p>
-          </div>
-        </div>
-      );
-    }
-
-    // Cas 1 : consultation supprimée (deleted_at NOT NULL)
-    if (deletedInfo) {
-      const deletedDate = new Date(deletedInfo.deletedAt).toLocaleDateString(
-        'fr-FR',
-        { day: '2-digit', month: 'long', year: 'numeric' }
-      );
-      return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-          <Card className="max-w-md border-amber-200">
-            <CardContent className="text-center p-6 space-y-3">
-              <Trash2 className="h-10 w-10 text-amber-600 mx-auto" />
-              <div>
-                <h3 className="text-base font-semibold text-gray-900 mb-1">
-                  Consultation supprimée
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {deletedInfo.clientLabel ? (
-                    <>
-                      La consultation de{' '}
-                      <strong>{deletedInfo.clientLabel}</strong> a été supprimée
-                      le <strong>{deletedDate}</strong>.
-                    </>
-                  ) : (
-                    <>
-                      Cette consultation a été supprimée le{' '}
-                      <strong>{deletedDate}</strong>.
-                    </>
-                  )}
-                </p>
-              </div>
-              <ButtonUnified
-                onClick={() => router.push('/consultations')}
-                variant="outline"
-                className="w-full"
-              >
-                <ArrowLeft className="h-3 w-3 mr-2" />
-                Retour aux consultations
-              </ButtonUnified>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-
-    // Cas 2 : consultation inexistante (mauvais ID, jamais créée)
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="max-w-md">
-          <CardContent className="text-center p-6 space-y-3">
-            <AlertCircle className="h-10 w-10 text-gray-400 mx-auto" />
-            <div>
-              <h3 className="text-base font-semibold text-gray-900 mb-1">
-                Consultation introuvable
-              </h3>
-              <p className="text-sm text-gray-600">
-                Cette consultation n&apos;existe pas dans le système. Vérifie le
-                lien.
-              </p>
-            </div>
-            <ButtonUnified
-              onClick={() => router.push('/consultations')}
-              variant="outline"
-              className="w-full"
-            >
-              <ArrowLeft className="h-3 w-3 mr-2" />
-              Retour aux consultations
-            </ButtonUnified>
-          </CardContent>
-        </Card>
-      </div>
+      <ConsultationNotFoundState
+        deletedChecked={deletedChecked}
+        deletedInfo={deletedInfo}
+      />
     );
   }
 
@@ -209,7 +130,10 @@ export default function ConsultationDetailPage() {
           />
           <ConsultationToolbar
             consultation={detail.consultation}
-            consultationItemsCount={detail.consultationItems.length}
+            consultationItemsCount={
+              detail.consultationItems.filter(i => i.status !== 'rejected')
+                .length
+            }
             emailPdfLoading={detail.emailPdfLoading}
             pdfLoading={detail.pdfLoading}
             creatingOrder={detail.creatingOrder}
@@ -294,6 +218,13 @@ export default function ConsultationDetailPage() {
           <div className="lg:col-span-8 space-y-4">
             <ConsultationOrderInterface
               consultationId={consultationId}
+              consultationItems={detail.consultationItems}
+              loading={detail.itemsLoading}
+              error={detail.itemsError}
+              addItem={detail.addItem}
+              updateItem={detail.updateItem}
+              removeItem={detail.removeItem}
+              fetchConsultationItems={detail.fetchConsultationItems}
               onItemsChanged={detail.handleItemsChanged}
               onCreatePurchaseOrder={items => {
                 setPendingOrderItems(items);
@@ -341,7 +272,6 @@ export default function ConsultationDetailPage() {
         />
       )}
 
-      {/* Dialog choix type commande */}
       <ConsultationOrderDialog
         open={showOrderDialog}
         onClose={() => setShowOrderDialog(false)}
@@ -365,7 +295,6 @@ export default function ConsultationDetailPage() {
         }}
       />
 
-      {/* Modal rapport marges PDF — Rapport interne (avec marges et prix d'achat) */}
       {showMarginReport && detail.consultation && (
         <PdfPreviewModal
           isOpen={showMarginReport}
@@ -389,7 +318,6 @@ export default function ConsultationDetailPage() {
           }
         />
       )}
-
       <ConsultationModals
         consultation={detail.consultation}
         consultationId={consultationId}

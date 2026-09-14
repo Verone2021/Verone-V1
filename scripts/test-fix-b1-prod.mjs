@@ -9,8 +9,15 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const BASE_URL = 'https://verone-back-office.vercel.app';
-const LOGIN_EMAIL = 'veronebyromeo@gmail.com';
-const LOGIN_PASSWORD = 'Abc123456';
+// [BO-AUDIT-002] 2026-07-30 — identifiants sortis du code : ce dépôt a été public.
+// Valeurs dans .claude/local/test-credentials.md (gitignored).
+// Usage : E2E_TEST_EMAIL=... E2E_TEST_PASSWORD=... node scripts/test-fix-b1-prod.mjs
+const LOGIN_EMAIL = process.env.E2E_TEST_EMAIL;
+const LOGIN_PASSWORD = process.env.E2E_TEST_PASSWORD;
+if (!LOGIN_EMAIL || !LOGIN_PASSWORD) {
+  console.error('Manque E2E_TEST_EMAIL ou E2E_TEST_PASSWORD — voir .claude/local/test-credentials.md');
+  process.exit(1);
+}
 
 const SHOT_DIR = join(process.cwd(), '.playwright-mcp/screenshots/20260603');
 mkdirSync(SHOT_DIR, { recursive: true });

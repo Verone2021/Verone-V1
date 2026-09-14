@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 
 import { useToast } from '@verone/common';
+import { associateProductToConsultation } from '@verone/utils';
 import { useProductConsultations } from '@verone/consultations/hooks';
 import {
   ProductPhotosModal,
@@ -78,14 +79,9 @@ export default function SourcingProductDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
-  const {
-    products,
-    loading,
-    validateSourcing,
-    orderSample,
-    updateSourcingProduct,
-    refetch,
-  } = useSourcingProducts();
+  // Chargement par identifiant : la fiche d'un produit archivé reste lisible.
+  const { products, loading, validateSourcing, orderSample, refetch } =
+    useSourcingProducts({ product_id: params.id as string });
   const [isPhotosModalOpen, setIsPhotosModalOpen] = useState(false);
 
   const productId = params.id as string;
@@ -138,22 +134,13 @@ export default function SourcingProductDetailPage() {
 
   const handleLinkToConsultation = async (consultationId: string) => {
     try {
-      const response = await fetch('/api/consultations/associations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          consultation_id: consultationId,
-          product_id: productId,
-          quantity: 1,
-          proposed_price: null,
-          is_free: false,
-        }),
+      await associateProductToConsultation({
+        consultationId,
+        productId,
+        quantity: 1,
+        proposedPrice: null,
+        isFree: false,
       });
-
-      if (!response.ok) {
-        const result = (await response.json()) as { error?: string };
-        throw new Error(result.error ?? "Erreur lors de l'association");
-      }
 
       toast({
         title: 'Produit associé',
@@ -173,23 +160,11 @@ export default function SourcingProductDetailPage() {
   };
 
   const handleValidateSourcing = async () => {
-    try {
-      await validateSourcing(productId);
-      toast({
-        title: 'Sourcing validé',
-        description: 'Le produit a été validé et ajouté au catalogue',
-      });
-      router.push('/catalogue');
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'Impossible de valider le sourcing',
-        variant: 'destructive',
-      });
-    }
+    // Le hook affiche lui-même le succès ou la raison du refus
+    // (prix d'achat ou fournisseur manquant) et renvoie false sans lever.
+    const ok = await validateSourcing(productId);
+    if (!ok) return;
+    router.push('/produits/catalogue');
   };
 
   if (loading) {
@@ -352,21 +327,14 @@ export default function SourcingProductDetailPage() {
               primaryImage={primaryImage}
               images={images}
               imagesLoading={imagesLoading}
-              onProductUpdate={async updates => {
-                try {
-                  await updateSourcingProduct(productId, updates);
-                  toast({
-                    title: 'Produit mis à jour',
-                    description: 'Les modifications ont été sauvegardées',
-                  });
-                  await refetch();
-                } catch (_error) {
-                  toast({
-                    title: 'Erreur',
-                    description: 'Impossible de mettre à jour le produit',
-                    variant: 'destructive',
-                  });
-                }
+              onProductUpdate={async () => {
+                // La carte a déjà écrit en base (useInlineEdit) : ici on se
+                // contente de recharger, sans seconde écriture.
+                await refetch();
+                toast({
+                  title: 'Produit mis à jour',
+                  description: 'Les modifications ont été sauvegardées',
+                });
               }}
               onOpenPhotosModal={() => setIsPhotosModalOpen(true)}
             />

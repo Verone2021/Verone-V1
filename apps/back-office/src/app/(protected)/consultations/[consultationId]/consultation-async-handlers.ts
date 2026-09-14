@@ -8,6 +8,10 @@ import type {
   ClientConsultation,
   ConsultationItem,
 } from '@verone/consultations';
+import {
+  computeConsultationEconomics,
+  filterBillableItems,
+} from '@verone/consultations';
 import type { IOrderForDocument } from '@verone/finance/components';
 import { createClient } from '@verone/utils/supabase/client';
 
@@ -265,17 +269,32 @@ export function buildOrderForDocument(
   partnerId: string,
   org: Record<string, string | null | boolean | number>
 ): IOrderForDocument {
+  // Décision 2 BO-CONSULT-P2-001 : seules les lignes facturables dans le devis
+  const billableItems = filterBillableItems(consultationItems);
+  // totals.billed = Σ (unitPrice × quantity) pour les lignes incluses non gratuites
+  // avec prix renseigné — même périmètre que filterBillableItems.
+  const { totals: billableTotals } = computeConsultationEconomics(
+    billableItems.map(item => ({
+      id: item.id,
+      quantity: item.quantity,
+      unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
+      ecoTax: item.product?.eco_tax_default ?? 0,
+      shippingCost: item.shipping_cost ?? 0,
+      sellingShippingCost: item.selling_shipping_cost ?? 0,
+      proposedPrice: item.unit_price,
+      isFree: item.is_free,
+      isSample: item.is_sample,
+      status: item.status ?? 'pending',
+      supplierId: item.product?.supplier_id ?? null,
+    }))
+  );
+  const totalHT = billableTotals.billed;
   return {
     id: consultationId,
     order_number: `CONSULT-${consultationId.slice(0, 8).toUpperCase()}`,
-    total_ht: consultationItems.reduce(
-      (sum, item) => sum + (item.unit_price ?? 0) * item.quantity,
-      0
-    ),
-    total_ttc: consultationItems.reduce(
-      (sum, item) => sum + (item.unit_price ?? 0) * item.quantity * 1.2,
-      0
-    ),
+    total_ht: totalHT,
+    // TVA figée à 20 % (règle R8, hors périmètre BO-CONSULT-P2-001)
+    total_ttc: totalHT * 1.2,
     tax_rate: 0.2,
     currency: 'EUR',
     customer_id: partnerId,
@@ -301,14 +320,12 @@ export function buildOrderForDocument(
       siret: org.siret as string | null,
       vat_number: org.vat_number as string | null,
     },
-    sales_order_items: consultationItems
-      .filter(item => !item.is_free)
-      .map(item => ({
-        id: item.id,
-        quantity: item.quantity,
-        unit_price_ht: item.unit_price ?? 0,
-        tax_rate: 0.2,
-        products: item.product ? { name: item.product.name } : null,
-      })),
+    sales_order_items: billableItems.map(item => ({
+      id: item.id,
+      quantity: item.quantity,
+      unit_price_ht: item.unit_price,
+      tax_rate: 0.2,
+      products: item.product ? { name: item.product.name } : null,
+    })),
   };
 }

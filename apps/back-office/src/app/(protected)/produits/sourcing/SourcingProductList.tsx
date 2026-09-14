@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import type { SourcingProduct } from '@verone/products';
 import { Card, CardContent } from '@verone/ui';
 import { cn } from '@verone/ui';
@@ -10,6 +12,8 @@ import {
   ArrowUpDown,
   Package,
 } from 'lucide-react';
+
+import { useProductsWithHistory } from '@/hooks/use-products-with-history';
 
 import { SourcingProductRow } from './SourcingProductRow';
 
@@ -22,6 +26,7 @@ interface SourcingProductListProps {
   onEdit: (id: string) => void;
   onValidate: (id: string) => void;
   onArchive: (id: string) => void;
+  onRestore: (id: string) => void;
   onDelete: (id: string) => void;
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
@@ -78,11 +83,19 @@ export function SourcingProductList({
   onEdit,
   onValidate,
   onArchive,
+  onRestore,
   onDelete,
   sortBy,
   sortDir,
   onSort,
 }: SourcingProductListProps) {
+  // « Supprimer » n'existe que pour les produits archivés : on ne vérifie qu'eux.
+  const archivedIds = useMemo(
+    () => products.filter(p => p.archived_at).map(p => p.id),
+    [products]
+  );
+  const { canDelete } = useProductsWithHistory(archivedIds);
+
   if (loading) {
     return (
       <Card>
@@ -172,6 +185,7 @@ export function SourcingProductList({
                 <SourcingProductRow
                   key={product.id}
                   product={product}
+                  canDelete={canDelete(product.id)}
                   onView={() => onView(product.id)}
                   onViewSupplier={
                     product.supplier_id
@@ -181,6 +195,7 @@ export function SourcingProductList({
                   onEdit={() => onEdit(product.id)}
                   onValidate={() => onValidate(product.id)}
                   onArchive={() => onArchive(product.id)}
+                  onRestore={() => onRestore(product.id)}
                   onDelete={() => onDelete(product.id)}
                 />
               ))}

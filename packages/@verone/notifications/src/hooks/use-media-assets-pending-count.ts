@@ -33,8 +33,9 @@ export function useMediaAssetsPendingCount(): number {
         .is('archived_at', null);
       return count ?? 0;
     },
-    staleTime: 30_000,
-    refetchInterval: 30_000,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: false,
   });
   return data;
 }

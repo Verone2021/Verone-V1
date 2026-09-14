@@ -49,6 +49,8 @@
     "audit:spelling": "cspell 'apps/**/*.{ts,tsx,md}' 'packages/**/*.{ts,tsx,md}' 'docs/**/*.md' 'CLAUDE.md'",
     "audit:all": "pnpm audit:duplicates && pnpm audit:cycles && pnpm audit:deadcode && pnpm audit:spelling",
     "validate:types": "tsx scripts/check-db-type-alignment.ts",
+    "validate:db-usage": "tsx scripts/validation/check-db-schema-usage.ts",
+    "validate:db-usage:ci": "tsx scripts/validation/check-db-schema-usage.ts --ci",
     "check:console": "tsx scripts/check-console-errors.ts",
     "check:console:ci": "tsx scripts/check-console-errors.ts --ci",
     "validate:pr": "pnpm format:check && pnpm lint && pnpm type-check && pnpm build",

@@ -14,9 +14,9 @@
 | Document                                                        | Description                           |
 | --------------------------------------------------------------- | ------------------------------------- |
 | [architecture.md](current/architecture.md)                      | Architecture monorepo, apps, packages |
-| [stack.md](current/stack.md)                                    | Stack technique avec versions         |
+| `stack.md` (retiré 2026-07-30)                                  | Stack technique avec versions         |
 | [COMPOSANTS-CATALOGUE.md](architecture/COMPOSANTS-CATALOGUE.md) | Catalogue composants UI               |
-| [security-auth.md](current/security-auth.md)                    | Roles, auth, middleware               |
+| `security-auth.md` (retiré 2026-07-30)                          | Roles, auth, middleware               |
 
 ## Base de donnees
 
@@ -128,11 +128,11 @@
 
 | Document                                                               | Description                        |
 | ---------------------------------------------------------------------- | ---------------------------------- |
-| [deploy-runbooks.md](current/deploy-runbooks.md)                       | Runbooks deploiement Vercel        |
+| [runbooks/rollback.md](runbooks/rollback.md)                           | Runbooks deploiement Vercel        |
 | [GITHUB-RULESETS.md](governance/GITHUB-RULESETS.md)                    | Branch protection rules            |
 | [dev-environment.md](current/troubleshooting/dev-environment.md)       | Troubleshooting dev                |
 | [incident.md](runbooks/incident.md)                                    | Protocole stabilisation (restaure) |
-| [dev-workflow.md](current/dev-workflow.md)                             | Workflow dev quotidien (restaure)  |
+| `dev-workflow.md` (retiré 2026-07-30)                                  | Workflow dev quotidien (restaure)  |
 | [component-audit-guidelines.md](current/component-audit-guidelines.md) | Dead code detection (restaure)     |
 | [qonto-env-setup.md](integrations/qonto-env-setup.md)                  | Config env Qonto (restaure)        |
 | [database-triggers.md](metrics/database-triggers.md)                   | 13+ triggers metriques (restaure)  |

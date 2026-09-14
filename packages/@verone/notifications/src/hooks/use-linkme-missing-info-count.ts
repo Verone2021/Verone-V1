@@ -1,9 +1,19 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+/**
+ * Hook LinkmeMissingInfoCount - Vérone Back Office
+ * Compte les demandes d'info LinkMe en attente de retour.
+ *
+ * Implémentation : TanStack Query (staleTime 5 min, refetch au retour sur
+ * l'onglet). linkme_info_requests n'est pas publiée dans Supabase Realtime
+ * → pas d'abonnement, pas de polling.
+ */
 
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { MENU_COUNT_QUERY_KEYS } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
-import type { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface LinkmeMissingInfoCountHook {
   count: number;
@@ -13,45 +23,40 @@ export interface LinkmeMissingInfoCountHook {
   lastUpdated: Date | null;
 }
 
+const LINKME_MISSING_INFO_QUERY_KEY = MENU_COUNT_QUERY_KEYS.linkmeInfoRequests;
+
 /**
- * Hook pour compter les demandes d'info LinkMe en attente de retour.
+ * Compte les enregistrements `linkme_info_requests` qui sont :
+ * - envoyés (sent_at IS NOT NULL)
+ * - non complétés (completed_at IS NULL)
+ * - non annulés (cancelled_at IS NULL)
+ * - non expirés (token_expires_at > now())
  *
- * Compte les enregistrements `linkme_info_requests` qui sont:
- * - sent (sent_at IS NOT NULL)
- * - non completees (completed_at IS NULL)
- * - non annulees (cancelled_at IS NULL)
- * - non expirees (token_expires_at > now())
+ * @param options.enableRealtime  @deprecated ignoré — linkme_info_requests non publiée
+ * @param options.refetchInterval @deprecated ignoré — TanStack Query gère le cache
  */
-export function useLinkmeMissingInfoCount(options?: {
+export function useLinkmeMissingInfoCount(_options?: {
+  /** @deprecated ignoré */
   enableRealtime?: boolean;
+  /** @deprecated ignoré */
   refetchInterval?: number;
 }): LinkmeMissingInfoCountHook {
-  const { enableRealtime = true, refetchInterval = 30000 } = options ?? {};
+  const queryClient = useQueryClient();
 
-  const [count, setCount] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
-  const supabase = createClient();
-  const channelRef = useRef<RealtimeChannel | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  const fetchCount = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
+  const {
+    data = 0,
+    isPending,
+    error,
+    dataUpdatedAt,
+  } = useQuery({
+    queryKey: LINKME_MISSING_INFO_QUERY_KEY,
+    queryFn: async () => {
+      const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) {
-        setCount(0);
-        setLoading(false);
-        return;
-      }
+      if (!user) return 0;
 
-      // Count pending info requests (sent but not completed/cancelled/expired)
       const { count: totalCount, error: countError } = await supabase
         .from('linkme_info_requests')
         .select('id', { count: 'exact', head: true })
@@ -62,100 +67,26 @@ export function useLinkmeMissingInfoCount(options?: {
 
       if (countError) {
         console.error('[useLinkmeMissingInfoCount] Count error:', countError);
-        setError(new Error(`Count error: ${countError.message}`));
-        setCount(0);
-        return;
+        throw new Error(countError.message);
       }
+      return totalCount ?? 0;
+    },
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: false,
+  });
 
-      setCount(totalCount ?? 0);
-      setLastUpdated(new Date());
-    } catch (err) {
-      const errorObj =
-        err instanceof Error ? err : new Error('Unknown error fetching count');
-      setError(errorObj);
-      console.error('[useLinkmeMissingInfoCount] Error:', errorObj);
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const setupSubscriptions = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user || !isMounted) {
-        setCount(0);
-        setLoading(false);
-        return;
-      }
-
-      void fetchCount().catch((err: unknown) => {
-        console.error('[useLinkmeMissingInfoCount] Initial fetch error:', err);
-      });
-
-      if (enableRealtime) {
-        channelRef.current = supabase
-          .channel('linkme-info-requests-changes')
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'linkme_info_requests',
-            },
-            () => {
-              void fetchCount().catch((err: unknown) => {
-                console.error(
-                  '[useLinkmeMissingInfoCount] Refetch error:',
-                  err
-                );
-              });
-            }
-          )
-          .subscribe(status => {
-            if (status === 'CHANNEL_ERROR') {
-              console.warn(
-                '[useLinkmeMissingInfoCount] Realtime subscription failed'
-              );
-            }
-          });
-      }
-
-      if (!enableRealtime && refetchInterval > 0) {
-        intervalRef.current = setInterval(() => {
-          void fetchCount().catch((err: unknown) => {
-            console.error('[useLinkmeMissingInfoCount] Polling error:', err);
-          });
-        }, refetchInterval);
-      }
-    };
-
-    void setupSubscriptions().catch(err => {
-      console.error('[useLinkmeMissingInfoCount] Setup error:', err);
+  const refetch = useCallback(async (): Promise<void> => {
+    await queryClient.invalidateQueries({
+      queryKey: LINKME_MISSING_INFO_QUERY_KEY,
     });
-
-    return () => {
-      isMounted = false;
-      if (channelRef.current) {
-        void supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [supabase, enableRealtime, refetchInterval, fetchCount]);
+  }, [queryClient]);
 
   return {
-    count,
-    loading,
-    error,
-    refetch: fetchCount,
-    lastUpdated,
+    count: data,
+    loading: isPending,
+    error: error ?? null,
+    refetch,
+    lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
   };
 }

@@ -1,13 +1,6 @@
 import React from 'react';
 
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  Image,
-  StyleSheet,
-} from '@react-pdf/renderer';
+import { Document, Page, Text, View, Image } from '@react-pdf/renderer';
 
 import {
   veroneColors,
@@ -20,192 +13,9 @@ import {
 import type { ClientConsultation } from '../hooks/use-consultations';
 import type { ConsultationItem } from '../hooks/use-consultations';
 import type { ConsultationPdfClientInfo } from './ConsultationSummaryPdf';
-
-const s = StyleSheet.create({
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 14,
-  },
-  logoImage: {
-    height: 26,
-    objectFit: 'contain' as const,
-  },
-  metaBlock: {
-    alignItems: 'flex-end',
-  },
-  metaLabel: {
-    fontSize: 6.5,
-    color: veroneColors.pearl,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 1.2,
-  },
-  metaValue: {
-    fontSize: 8.5,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    color: veroneColors.charcoal,
-    marginTop: 2,
-  },
-  // Client strip
-  clientStrip: {
-    flexDirection: 'row',
-    gap: 24,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#FBFAF7',
-    borderLeftWidth: 2,
-    borderLeftColor: veroneColors.gold,
-    marginBottom: 14,
-  },
-  clientStripCol: {
-    flex: 1,
-  },
-  clientStripLabel: {
-    fontSize: 6,
-    color: veroneColors.pearl,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 1.2,
-    marginBottom: 2,
-  },
-  clientStripValue: {
-    fontSize: 8.5,
-    color: veroneColors.charcoal,
-    lineHeight: 1.4,
-  },
-  clientStripValueBold: {
-    fontSize: 9,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    color: veroneColors.charcoal,
-  },
-  // KPI cards Vérone (or accent)
-  kpiRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: 14,
-  },
-  kpiCard: {
-    flex: 1,
-    padding: 8,
-    borderTopWidth: 2,
-    borderTopColor: veroneColors.gold,
-    backgroundColor: '#FBFAF7',
-  },
-  kpiCardCharcoal: {
-    flex: 1,
-    padding: 8,
-    backgroundColor: veroneColors.charcoal,
-  },
-  kpiCardWarn: {
-    flex: 1,
-    padding: 8,
-    borderTopWidth: 2,
-    borderTopColor: '#C03030',
-    backgroundColor: '#FFF6F4',
-  },
-  kpiLabel: {
-    fontSize: 6,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 1,
-    marginBottom: 3,
-    color: veroneColors.pearl,
-  },
-  kpiLabelOnDark: {
-    fontSize: 6,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 1,
-    marginBottom: 3,
-    color: veroneColors.gold,
-  },
-  kpiValue: {
-    fontSize: 13,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    color: veroneColors.charcoal,
-  },
-  kpiValueOnDark: {
-    fontSize: 13,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    color: veroneColors.white,
-  },
-  kpiValueWarn: {
-    fontSize: 13,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    color: '#C03030',
-  },
-  // Table
-  table: { marginBottom: 10 },
-  tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: veroneColors.charcoal,
-    paddingVertical: 5,
-    paddingHorizontal: 6,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 0.5,
-    borderBottomColor: veroneColors.pearlSoft,
-    paddingVertical: 5,
-    paddingHorizontal: 6,
-  },
-  th: {
-    fontSize: 6.5,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    color: veroneColors.white,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 0.6,
-  },
-  td: { fontSize: 7.5, color: veroneColors.charcoal },
-  tdBold: {
-    fontSize: 7.5,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    color: veroneColors.charcoal,
-  },
-  tdGold: {
-    fontSize: 7.5,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    color: veroneColors.gold,
-  },
-  tdRed: {
-    fontSize: 7.5,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    color: '#C03030',
-  },
-  // Analysis block
-  analysisBlock: {
-    padding: 10,
-    backgroundColor: '#FBFAF7',
-    borderLeftWidth: 2,
-    borderLeftColor: veroneColors.gold,
-  },
-  analysisTitle: {
-    fontSize: 8,
-    fontFamily: 'Montserrat',
-    fontWeight: 600,
-    color: veroneColors.charcoal,
-    marginBottom: 4,
-    textTransform: 'uppercase' as const,
-    letterSpacing: 0.8,
-  },
-  analysisLine: {
-    fontSize: 7.5,
-    color: veroneColors.charcoal,
-    marginBottom: 1.5,
-    lineHeight: 1.4,
-  },
-});
+import { filterActiveItems } from '../lib/consultation-order-guards';
+import { computeConsultationEconomics } from '../lib/consultation-economics';
+import { s } from './consultation-margin-report-pdf-styles';
 
 interface ConsultationMarginReportPdfProps {
   consultation: ClientConsultation;
@@ -220,41 +30,34 @@ export function ConsultationMarginReportPdf({
   clientName,
   clientInfo,
 }: ConsultationMarginReportPdfProps) {
-  // Sémantique : item.shipping_cost = TOTAL LIGNE (pas par unité)
-  const getCostPrice = (item: ConsultationItem): number =>
-    item.cost_price_override ?? item.product?.cost_price ?? 0;
+  // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du rapport marges
+  const activeItems = filterActiveItems(items);
 
-  const getRevenue = (item: ConsultationItem): number => {
-    if (item.is_free || item.is_sample) return 0;
-    return (
-      (item.unit_price ?? 0) * item.quantity + (item.selling_shipping_cost ?? 0)
-    );
-  };
-
-  const getCostTotal = (item: ConsultationItem): number => {
-    const goodsCost = getCostPrice(item) * item.quantity;
-    if (item.is_sample) return goodsCost;
-    return goodsCost + item.shipping_cost;
-  };
-
-  const getMargin = (item: ConsultationItem): number =>
-    getRevenue(item) - getCostTotal(item);
-
-  const getMarginPercent = (item: ConsultationItem): number => {
-    const cost = getCostTotal(item);
-    if (cost === 0) return 0;
-    return ((getRevenue(item) - cost) / cost) * 100;
-  };
-
-  const totalRevenue = items.reduce((sum, i) => sum + getRevenue(i), 0);
-  const totalCost = items.reduce((sum, i) => sum + getCostTotal(i), 0);
-  const totalShipping = items.reduce(
-    (sum, i) => (i.is_sample ? sum : sum + i.shipping_cost),
-    0
+  // Économie via fonction canonique B2 (formules § B2 du plan)
+  const { lines: econLines, totals: economics } = computeConsultationEconomics(
+    activeItems
+      .filter(item => item.quantity > 0)
+      .map(item => ({
+        id: item.id,
+        quantity: item.quantity,
+        unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
+        ecoTax: item.product?.eco_tax_default ?? 0,
+        shippingCost: item.shipping_cost ?? 0,
+        sellingShippingCost: item.selling_shipping_cost ?? 0,
+        proposedPrice: item.unit_price ?? null,
+        isFree: item.is_free,
+        isSample: item.is_sample,
+        status: item.status ?? 'pending',
+        supplierId: item.product?.supplier_id ?? null,
+      }))
   );
-  const totalMargin = totalRevenue - totalCost;
-  const totalMarginPercent =
-    totalCost > 0 ? (totalMargin / totalCost) * 100 : 0;
+  const econByItemId = new Map(econLines.map(l => [l.lineId, l]));
+
+  const totalRevenue = economics.revenue;
+  const totalCost = economics.cost;
+  const totalShipping = economics.fees;
+  const totalMargin = economics.margin;
+  const totalMarginPercent = economics.marginPercent ?? 0;
 
   const reportRef = `MARGES-${consultation.id.slice(0, 8).toUpperCase()}`;
   const now = new Date().toLocaleDateString('fr-FR', {
@@ -284,7 +87,7 @@ export function ConsultationMarginReportPdf({
 
         {/* Header */}
         <View style={s.headerRow}>
-          {/* eslint-disable-next-line jsx-a11y/alt-text */}
+          {/* eslint-disable-next-line jsx-a11y/alt-text -- Image de @react-pdf/renderer : pas d'attribut alt dans un PDF */}
           <Image src={VERONE_LOGO_BASE64} style={s.logoImage} />
           <View style={s.metaBlock}>
             <Text style={s.metaLabel}>Rapport interne — Confidentiel</Text>
@@ -416,14 +219,11 @@ export function ConsultationMarginReportPdf({
             </Text>
           </View>
 
-          {items.map(item => {
-            const costPrice = getCostPrice(item);
-            const shippingPerUnit = item.is_sample
-              ? 0
-              : item.shipping_cost / Math.max(1, item.quantity);
-            const costPerUnit = costPrice + shippingPerUnit;
-            const margin = getMargin(item);
-            const marginPct = getMarginPercent(item);
+          {activeItems.map(item => {
+            const econ = econByItemId.get(item.id);
+            const costPerUnit = econ?.unitCostPrice ?? 0;
+            const margin = econ?.margin ?? 0;
+            const marginPct = econ?.marginPercent ?? 0;
             const isNegative = margin < 0;
 
             return (
@@ -443,7 +243,7 @@ export function ConsultationMarginReportPdf({
                   {item.quantity}
                 </Text>
                 <Text style={[s.td, { width: '10%', textAlign: 'right' }]}>
-                  {formatVeronePrice(costPrice, 2)}
+                  {formatVeronePrice(econ?.unitCost ?? 0, 2)}
                 </Text>
                 <Text style={[s.td, { width: '10%', textAlign: 'right' }]}>
                   {item.is_sample
@@ -464,7 +264,7 @@ export function ConsultationMarginReportPdf({
                     { width: '10%', textAlign: 'right' },
                   ]}
                 >
-                  {formatVeronePrice(margin / Math.max(1, item.quantity), 2)} (
+                  {formatVeronePrice(margin / item.quantity, 2)} (
                   {marginPct.toFixed(0)} %)
                 </Text>
                 <Text
@@ -484,16 +284,26 @@ export function ConsultationMarginReportPdf({
         <Text style={veroneStyles.sectionTitleEyebrow}>Analyse</Text>
         <View style={s.analysisBlock}>
           <Text style={s.analysisTitle}>Produits les plus rentables</Text>
-          {items
-            .filter(i => !i.is_free && !i.is_sample && getMarginPercent(i) > 0)
-            .sort((a, b) => getMarginPercent(b) - getMarginPercent(a))
+          {activeItems
+            .filter(i => {
+              const e = econByItemId.get(i.id);
+              return !i.is_free && !i.is_sample && (e?.marginPercent ?? 0) > 0;
+            })
+            .sort((a, b) => {
+              const ea = econByItemId.get(a.id);
+              const eb = econByItemId.get(b.id);
+              return (eb?.marginPercent ?? 0) - (ea?.marginPercent ?? 0);
+            })
             .slice(0, 5)
-            .map(item => (
-              <Text key={item.id} style={s.analysisLine}>
-                · {item.product?.name} — {getMarginPercent(item).toFixed(1)} % (
-                {formatVeronePrice(getMargin(item), 2)})
-              </Text>
-            ))}
+            .map(item => {
+              const e = econByItemId.get(item.id);
+              return (
+                <Text key={item.id} style={s.analysisLine}>
+                  · {item.product?.name} — {(e?.marginPercent ?? 0).toFixed(1)}{' '}
+                  % ({formatVeronePrice(e?.margin ?? 0, 2)})
+                </Text>
+              );
+            })}
           {totalShipping > 0 && totalCost - totalShipping > 0 && (
             <Text style={[s.analysisLine, { marginTop: 6 }]}>
               Impact transport :{' '}

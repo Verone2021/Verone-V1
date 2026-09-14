@@ -27,14 +27,14 @@ Voir aussi `docs/README.md` (index general) et `.claude/INDEX.md` (index agent).
 
 ## Reference technique
 
-| Doc                                            | Description                    |
-| ---------------------------------------------- | ------------------------------ |
-| [stack.md](./stack.md)                         | Technologies et outils actifs  |
-| [architecture.md](./architecture.md)           | Structure monorepo Turborepo   |
-| [database/database.md](./database/database.md) | Supabase, migrations, RLS      |
-| [security-auth.md](./security-auth.md)         | Auth, roles, permissions, RLS  |
-| [integrations.md](./integrations.md)           | Qonto, Google OAuth, Supabase  |
-| [deploy-runbooks.md](./deploy-runbooks.md)     | Vercel, GitHub CI/CD, rollback |
+| Doc                                                            | Description                    |
+| -------------------------------------------------------------- | ------------------------------ |
+| `stack.md` (retiré — voir DOCS-RETIREES-2026-07-30.md)         | Technologies et outils actifs  |
+| [architecture.md](./architecture.md)                           | Structure monorepo Turborepo   |
+| [database/database.md](./database/database.md)                 | Supabase, migrations, RLS      |
+| `security-auth.md` (retiré — voir DOCS-RETIREES-2026-07-30.md) | Auth, roles, permissions, RLS  |
+| [integrations.md](./integrations.md)                           | Qonto, Google OAuth, Supabase  |
+| [runbooks/rollback.md](../runbooks/rollback.md)                | Vercel, GitHub CI/CD, rollback |
 
 ---
 

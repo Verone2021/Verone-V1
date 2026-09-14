@@ -20,7 +20,9 @@ Comportement :
       0 = OK (count ≤ baseline pour chaque name)
       1 = nouveaux lints introduits (count > baseline)
       2 = erreur technique
-  - En mode CI (continue-on-error), l'exit 1 passe en informational.
+      3 = régression sur un lint listé dans --blocking-lints (prioritaire sur 1)
+  - En CI, le job traduit 1 en avertissement et laisse 2 et 3 faire échouer le job
+    (pas de continue-on-error : cf. ADR-037).
 
 Setup secrets GitHub Actions :
   - SUPABASE_ACCESS_TOKEN : créé dans https://supabase.com/dashboard/account/tokens
@@ -143,6 +145,11 @@ def main() -> int:
     parser.add_argument("--type", choices=["security", "performance"], default="security")
     parser.add_argument("--baseline", default="scripts/supabase-advisors-baseline.json")
     parser.add_argument(
+        "--blocking-lints",
+        default="",
+        help="Noms de lints séparés par des virgules : une régression sur l'un d'eux sort en code 3.",
+    )
+    parser.add_argument(
         "--write-baseline",
         action="store_true",
         help="Écrit le résultat actuel comme baseline (ne fait pas de check).",
@@ -185,6 +192,11 @@ def main() -> int:
         print(f"❌ {len(regressions)} régression(s) détectée(s) :")
         for name, c, b in regressions:
             print(f"  {name} : {c} (baseline = {b})")
+        blocking = {n.strip() for n in args.blocking_lints.split(",") if n.strip()}
+        blocking_regressions = [r for r in regressions if r[0] in blocking]
+        if blocking_regressions:
+            print(f"🔴 {len(blocking_regressions)} régression(s) bloquante(s) : fonction SECURITY DEFINER rouverte.")
+            return 3
         return 1
 
     print(f"✅ Aucune régression vs baseline ({sum(baseline.values())} issues connues).")

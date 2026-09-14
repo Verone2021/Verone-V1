@@ -19,6 +19,7 @@ This package contains comprehensive E2E tests using Playwright that validate:
 **Nouveau dans les tests E2E ?** Commencez par le guide rapide : [`QUICKSTART.md`](./QUICKSTART.md) 📖
 
 Ce guide vous permet de lancer les tests en ~10 minutes avec instructions pas-à-pas pour :
+
 - ✅ Installation dépendances (pnpm + Chromium)
 - ✅ Démarrage applications (Turborepo automatique)
 - ✅ Lancement tests E2E (18 tests)
@@ -67,6 +68,7 @@ packages/e2e-linkme/
 ### Prerequisites
 
 1. **Start applications** (Turborepo démarre TOUT automatiquement):
+
    ```bash
    # Un seul terminal suffit ! Turborepo démarre toutes les apps en parallèle
    pnpm dev
@@ -222,17 +224,25 @@ const customerName = generateTestCustomerName(); // "Test Customer 1737489234567
 
 ## 📊 Test Credentials
 
-**Pokawa (Enseigne)**:
-- Email: `admin@pokawa-test.fr`
-- Password: `TestLinkMe2025`
+> **[BO-AUDIT-002] 2026-07-30 — no passwords in this file.**
+> This repository was public, and these are real accounts with active roles
+> (`linkme:enseigne_admin`, `linkme:enseigne_collaborateur`). The passwords that used to be
+> listed here were exposed and have been rotated.
+> Values now live in `.claude/local/test-credentials.md` (gitignored) and are read from the
+> environment by `fixtures/auth.fixture.ts`. Never write a password in a versioned file.
 
-**Independent Organization**:
-- Email: `test-org@verone.fr`
-- Password: `TestLinkMe2025`
+Required environment variables:
 
-**Back-Office**:
-- Email: `veronebyromeo@gmail.com`
-- Password: `Abc123456`
+| Variable                               | Account                            |
+| -------------------------------------- | ---------------------------------- |
+| `LINKME_TEST_PASSWORD`                 | shared by the LinkMe test accounts |
+| `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` | back-office account                |
+| `LINKME_POKAWA_EMAIL` _(optional)_     | defaults to `admin@pokawa-test.fr` |
+| `LINKME_TESTORG_EMAIL` _(optional)_    | defaults to `test-org@verone.fr`   |
+
+```bash
+LINKME_TEST_PASSWORD=... E2E_TEST_EMAIL=... E2E_TEST_PASSWORD=... pnpm test:e2e
+```
 
 ## 🔍 Debugging
 
@@ -251,6 +261,7 @@ pnpm show-report
 ### View Screenshots/Videos
 
 After test failure:
+
 ```
 playwright-report/
 ├── index.html         # HTML report
@@ -266,6 +277,7 @@ playwright-report/
 **Error**: `Failed to connect to http://localhost:3002`
 
 **Solution**:
+
 ```bash
 # Start all applications (un seul terminal suffit !)
 pnpm dev  # From root - Turborepo démarre toutes les apps automatiquement
@@ -276,6 +288,7 @@ pnpm dev  # From root - Turborepo démarre toutes les apps automatiquement
 **Error**: `Missing Supabase environment variables`
 
 **Solution**:
+
 ```bash
 # Check .env.local has:
 NEXT_PUBLIC_SUPABASE_URL=https://...
@@ -285,6 +298,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
 ### 3. Test Data Not Cleaned Up
 
 **Solution**:
+
 ```bash
 # Run cleanup manually
 cd packages/e2e-linkme
@@ -361,7 +375,12 @@ When adding new E2E tests:
 ### Example Template
 
 ```typescript
-import { test, expect, CREDENTIALS, generateTestProductName } from '../../fixtures';
+import {
+  test,
+  expect,
+  CREDENTIALS,
+  generateTestProductName,
+} from '../../fixtures';
 
 test.describe('My Feature Tests', () => {
   test.afterAll(async ({ db }) => {

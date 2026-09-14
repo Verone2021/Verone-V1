@@ -3,6 +3,10 @@
 import { useMemo } from 'react';
 
 import type { ConsultationItem } from '@verone/consultations';
+import {
+  computeConsultationEconomics,
+  type ConsultationEconomicsLineInput,
+} from '@verone/consultations';
 import { Badge } from '@verone/ui';
 import {
   Dialog,
@@ -12,6 +16,24 @@ import {
   DialogTitle,
 } from '@verone/ui';
 import { ShoppingCart, Truck, AlertTriangle, Package } from 'lucide-react';
+
+function itemToEconInput(
+  item: ConsultationItem
+): ConsultationEconomicsLineInput {
+  return {
+    id: item.id,
+    quantity: item.quantity,
+    unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
+    ecoTax: item.product?.eco_tax_default ?? 0,
+    shippingCost: item.shipping_cost ?? 0,
+    sellingShippingCost: item.selling_shipping_cost ?? 0,
+    proposedPrice: item.unit_price ?? null,
+    isFree: item.is_free,
+    isSample: item.is_sample,
+    status: item.status ?? 'pending',
+    supplierId: item.product?.supplier_id ?? null,
+  };
+}
 
 interface ConsultationOrderDialogProps {
   open: boolean;
@@ -37,8 +59,14 @@ export function ConsultationOrderDialog({
   onCreatePurchaseOrder,
   creatingSO,
 }: ConsultationOrderDialogProps) {
-  // Grouper par fournisseur pour les PO
-  const supplierGroups = useMemo(() => {
+  // Grouper par fournisseur pour les PO + totaux via computeConsultationEconomics
+  const { supplierGroups, totalSellingPrice, totalCostPrice } = useMemo(() => {
+    const validItems = acceptedItems.filter(item => item.quantity > 0);
+    const { lines: econLines, totals } = computeConsultationEconomics(
+      validItems.map(itemToEconInput)
+    );
+    const econMap = new Map(econLines.map(l => [l.lineId, l]));
+
     const groups = new Map<string, SupplierGroup>();
     for (const item of acceptedItems) {
       const key = item.product?.supplier_id ?? 'no-supplier';
@@ -53,11 +81,16 @@ export function ConsultationOrderDialog({
       const group = groups.get(key);
       if (!group) continue;
       group.items.push(item);
-      const costPrice =
-        item.cost_price_override ?? item.product?.cost_price ?? 0;
-      group.totalHT += costPrice * item.quantity;
+      // unitCost issu de computeLineEconomics — source unique des formules B2
+      const econ = econMap.get(item.id);
+      group.totalHT += econ?.purchaseAmount ?? 0;
     }
-    return Array.from(groups.values());
+
+    return {
+      supplierGroups: Array.from(groups.values()),
+      totalSellingPrice: totals.revenue,
+      totalCostPrice: totals.cost,
+    };
   }, [acceptedItems]);
 
   // Calculer le stock disponible par produit
@@ -72,21 +105,6 @@ export function ConsultationOrderDialog({
 
   const insufficientStockItems = itemsWithStock.filter(i => !i.hasEnoughStock);
   const hasStockIssue = insufficientStockItems.length > 0;
-
-  const totalSellingPrice = acceptedItems.reduce(
-    (sum, item) =>
-      sum + (item.is_free ? 0 : (item.unit_price ?? 0) * item.quantity),
-    0
-  );
-
-  const totalCostPrice = acceptedItems.reduce(
-    (sum, item) =>
-      sum +
-      ((item.cost_price_override ?? item.product?.cost_price ?? 0) +
-        item.shipping_cost) *
-        item.quantity,
-    0
-  );
 
   return (
     <Dialog
