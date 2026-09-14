@@ -85,41 +85,48 @@ test('marginPercentage ligne prioritaire sur defaultMarginPercentage', () => {
 });
 
 // ---------------------------------------------------------------------------
-// (i) supplierCosts non vide ⇒ erreur
+// (i) supplierCosts — répartis par computeConsultationEconomics seulement
+// (détail de la répartition : consultation-economics.supplier-costs.test.ts)
 // ---------------------------------------------------------------------------
 
-console.log('\n--- (i) SUPPLIER COSTS NON VIDE ---');
+console.log('\n--- (i) SUPPLIER COSTS ---');
 
-test('supplierCosts non vide → Error "phase P10"', () => {
-  const line = makeLine();
-  let threw = false;
-  try {
-    computeLineEconomics(line, {
-      supplierCosts: [{ supplierId: 'sup-1', amount: 100 }],
-    });
-  } catch (e) {
-    threw = true;
-    assert.ok(e instanceof Error, 'Doit être Error');
-    assert.ok(
-      e.message.includes('P10'),
-      `Message doit mentionner P10, reçu: ${e.message}`
-    );
-  }
-  assert.ok(threw, 'Doit avoir lancé Error');
+test('computeLineEconomics : settings.supplierCosts sans part passée → résultat inchangé', () => {
+  const line = makeLine({ supplierId: 'sup-1' });
+
+  const withCosts = computeLineEconomics(line, {
+    supplierCosts: [
+      {
+        supplierId: 'sup-1',
+        shippingCostHt: 100,
+        customsCostHt: 0,
+        otherCostHt: 0,
+      },
+    ],
+  });
+
+  assert.deepEqual(withCosts, computeLineEconomics(line));
+  assert.equal(withCosts.supplierFees, 0);
 });
 
-test('computeConsultationEconomics avec supplierCosts non vide → Error "phase P10"', () => {
-  const line = makeLine();
-  let threw = false;
-  try {
-    computeConsultationEconomics([line], {
-      supplierCosts: [{ supplierId: 'sup-1', amount: 50 }],
-    });
-  } catch (e) {
-    threw = true;
-    assert.ok(e instanceof Error);
-  }
-  assert.ok(threw);
+test('computeConsultationEconomics : frais d’un fournisseur absent → lignes inchangées, frais non répartis', () => {
+  const line = makeLine({ supplierId: 'sup-1' });
+
+  const withCosts = computeConsultationEconomics([line], {
+    supplierCosts: [
+      {
+        supplierId: 'sup-2',
+        shippingCostHt: 50,
+        customsCostHt: 0,
+        otherCostHt: 0,
+      },
+    ],
+  });
+  const without = computeConsultationEconomics([line]);
+
+  assert.deepEqual(withCosts.lines, without.lines);
+  assert.equal(withCosts.totals.unallocatedSupplierFees, 50);
+  assert.equal(withCosts.totals.cost, without.totals.cost);
 });
 
 // ---------------------------------------------------------------------------
