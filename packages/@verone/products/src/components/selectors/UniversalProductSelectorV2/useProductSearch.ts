@@ -119,7 +119,8 @@ export function useProductSearch(
         query = query
           .is('archived_at', null)
           .in('product_status', ['active', 'preorder'])
-          .neq('creation_mode', 'sourcing');
+          // creation_mode vide = catalogue (comme coalesce(…, 'complete') en base)
+          .or('creation_mode.neq.sourcing,creation_mode.is.null');
       }
 
       // Filtre par fournisseur (CRITIQUE pour commandes fournisseurs)

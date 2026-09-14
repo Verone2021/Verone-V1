@@ -151,7 +151,10 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     // ou arrêté, ni encore en sourcing — même règle que product_is_sellable.
     .is('products.archived_at', null)
     .in('products.product_status', ['active', 'preorder'])
-    .neq('products.creation_mode', 'sourcing')
+    // creation_mode vide = catalogue (comme coalesce(…, 'complete') en base)
+    .or('creation_mode.neq.sourcing,creation_mode.is.null', {
+      referencedTable: 'products',
+    })
     .order('display_order', { ascending: true })
     .limit(500) // PERF: Safety cap — catalogue has ~200 products currently
     .returns<ChannelPricingWithProduct[]>();

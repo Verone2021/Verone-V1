@@ -192,7 +192,10 @@ export function useSelectionWithProducts(
         // Règle unique « vendable » (BO-CHANNELS-P7-001), comme les pages /s/…
         .is('product.archived_at', null)
         .in('product.product_status', ['active', 'preorder'])
-        .neq('product.creation_mode', 'sourcing')
+        // creation_mode vide = catalogue (comme coalesce(…, 'complete') en base)
+        .or('creation_mode.neq.sourcing,creation_mode.is.null', {
+          referencedTable: 'product',
+        })
         .order('display_order', { ascending: true });
 
       if (itemsError) {

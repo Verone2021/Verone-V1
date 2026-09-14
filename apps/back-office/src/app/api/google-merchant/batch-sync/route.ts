@@ -115,7 +115,7 @@ export async function POST(
       // Règle unique « vendable » (BO-CHANNELS-P7-001)
       .in('product_status', ['active', 'preorder'])
       .is('archived_at', null)
-      .neq('creation_mode', 'sourcing')
+      .or('creation_mode.neq.sourcing,creation_mode.is.null')
       .not('stock_status', 'is', null)
       .order('created_at', { ascending: false });
 

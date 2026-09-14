@@ -8,6 +8,9 @@
 --   - get_consultation_eligible_products : produits vendables + produits en
 --     sourcing encore en cours (non refusés, non validés), pour pouvoir proposer
 --     un produit en cours de sourcing à un client. Retirés exclus.
+--     COMPORTEMENT MODIFIÉ : précommandes désormais incluses ; produits en sourcing
+--     restreints aux statuts ouverts (filtre sourcing_status ; aujourd'hui, le filtre
+--     product_status = 'active' les excluait tous, puisqu'ils sont en brouillon).
 -- Signatures, colonnes renvoyées et droits inchangés (types inchangés).
 -- Dépend de 20260914020000. Application : execute_sql après accord de Roméo.
 -- =====================================================================
