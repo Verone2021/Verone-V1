@@ -211,6 +211,8 @@ export function useSourcingFetch(filters?: SourcingFilters) {
     filters?.sourcing_type,
     filters?.has_supplier,
     filters?.requires_sample,
+    filters?.supplier_id,
+    filters?.assigned_client_id,
     filters?.archived_view,
     filters?.product_id,
   ]);

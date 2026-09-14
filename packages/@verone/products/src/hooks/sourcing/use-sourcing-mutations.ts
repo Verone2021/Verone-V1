@@ -6,6 +6,8 @@ import { useToast } from '@verone/common/hooks';
 import { invalidateMenuCounts } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
+import type { SourcingLifecycleAction } from '../../utils/sourcing-stage';
+import { readableRpcError } from './sourcing-rpc-error';
 import type { SourcingProduct } from './types';
 
 interface UseSourcingMutationsParams {
@@ -21,82 +23,53 @@ export function useSourcingMutations({
   const queryClient = useQueryClient();
   const supabase = createClient();
 
-  // Valider un produit sourcing (passage au catalogue)
-  const validateSourcing = async (productId: string) => {
-    try {
-      // 🔥 FIX: Vérifications business rules complètes
-      const product = products.find(p => p.id === productId);
+  // Validation, retrait et restauration passent par la fonction unique du cycle
+  // de vie (BO-SOURCING-P3-001 / P4-001) : transition vérifiée et journal écrit
+  // dans la même transaction, aucune colonne de stock touchée.
+  const runLifecycle = async (
+    productId: string,
+    action: Extract<
+      SourcingLifecycleAction,
+      'validate' | 'withdraw' | 'restore'
+    >,
+    success: { title: string; description: string },
+    reason?: string
+  ): Promise<boolean> => {
+    const { error } = await supabase.rpc('apply_product_lifecycle_action', {
+      p_product_id: productId,
+      p_action: action,
+      p_reason: reason,
+    });
 
-      if (!product) {
-        toast({
-          title: 'Erreur',
-          description: 'Produit introuvable',
-          variant: 'destructive',
-        });
-        return false;
-      }
-
-      // Vérification prix OBLIGATOIRE
-      if (!product.cost_price || product.cost_price <= 0) {
-        toast({
-          title: 'Erreur',
-          description:
-            "Le prix d'achat doit être défini et > 0€ avant validation",
-          variant: 'destructive',
-        });
-        return false;
-      }
-
-      // Vérification fournisseur OBLIGATOIRE
-      if (!product.supplier_id) {
-        toast({
-          title: 'Erreur',
-          description: 'Un fournisseur doit être lié avant la validation',
-          variant: 'destructive',
-        });
-        return false;
-      }
-
-      // Produit validé = ACTIF (visible immédiatement au catalogue)
-      // completion_status est recalculé automatiquement par le trigger DB
-      const { error } = await supabase
-        .from('products')
-        .update({
-          product_status: 'active',
-          stock_status: 'out_of_stock',
-          creation_mode: 'complete',
-          stock_forecasted_in: 0,
-        })
-        .eq('id', productId);
-
-      if (error) {
-        toast({
-          title: 'Erreur',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return false;
-      }
-
+    if (error) {
+      console.error('[useSourcingMutations] lifecycle failed:', action, error);
       toast({
-        title: 'Produit publié',
-        description: 'Le produit est maintenant visible au catalogue',
-      });
-
-      await refetch();
-      await invalidateMenuCounts(queryClient, 'sourcing');
-      return true;
-    } catch (_err) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de valider le produit',
+        title: 'Action impossible',
+        description: readableRpcError(
+          error,
+          "L'action n'a pas pu être enregistrée. Réessayez."
+        ),
         variant: 'destructive',
       });
       return false;
     }
+
+    toast(success);
+    await refetch();
+    await invalidateMenuCounts(queryClient, 'sourcing');
+    return true;
   };
 
+  // Valider un produit sourcing : il rejoint le catalogue en brouillon (non publié)
+  const validateSourcing = (productId: string) =>
+    runLifecycle(productId, 'validate', {
+      title: 'Produit validé',
+      description: 'Il rejoint le catalogue en brouillon, non publié',
+    });
+
   // Approuver échantillon - Transférer vers catalogue
+  // Seul appelant : SampleValidationSimple (@verone/ui-business), écran retiré
+  // avec le ménage P6 (BO-SOURCING-P6-001), qui supprimera aussi cette fonction.
   const approveSample = async (productId: string) => {
     try {
       // 1. Récupérer les infos du produit
@@ -181,6 +154,7 @@ export function useSourcingMutations({
   };
 
   // Rejeter échantillon - Auto-archivage non désarchivable
+  // Seul appelant : SampleValidationSimple (@verone/ui-business), retiré en P6.
   const rejectSample = async (productId: string, reason?: string) => {
     try {
       // 1. Auto-archivage avec mention rejet
@@ -229,74 +203,24 @@ export function useSourcingMutations({
     }
   };
 
-  // Archiver un produit sourcing (Annuler)
-  const archiveSourcingProduct = async (productId: string) => {
-    try {
-      const { error } = await supabase
-        .from('products')
-        .update({ archived_at: new Date().toISOString() })
-        .eq('id', productId);
+  // Retirer un produit sourcing : motif obligatoire, statut inchangé
+  const archiveSourcingProduct = (productId: string, reason: string) =>
+    runLifecycle(
+      productId,
+      'withdraw',
+      {
+        title: 'Produit retiré',
+        description: 'Il reste consultable dans les produits retirés',
+      },
+      reason
+    );
 
-      if (error) {
-        toast({
-          title: 'Erreur',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return false;
-      }
-
-      toast({
-        title: 'Produit archivé',
-        description: 'Le produit sourcing a été annulé et archivé',
-      });
-
-      await refetch();
-      await invalidateMenuCounts(queryClient, 'sourcing');
-      return true;
-    } catch (_err) {
-      toast({
-        title: 'Erreur',
-        description: "Impossible d'archiver le produit",
-        variant: 'destructive',
-      });
-      return false;
-    }
-  };
-
-  // Restaurer un produit sourcing archivé (inverse de l'archivage)
-  const unarchiveSourcingProduct = async (productId: string) => {
-    try {
-      const { error } = await supabase
-        .from('products')
-        .update({ archived_at: null })
-        .eq('id', productId);
-
-      if (error) {
-        toast({
-          title: 'Erreur',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return false;
-      }
-
-      toast({
-        title: 'Produit restauré',
-        description: 'Le produit sourcing est de nouveau dans la liste active',
-      });
-
-      await refetch();
-      return true;
-    } catch (_err) {
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de restaurer le produit',
-        variant: 'destructive',
-      });
-      return false;
-    }
-  };
+  // Restaurer un produit sourcing retiré (inverse exact du retrait)
+  const unarchiveSourcingProduct = (productId: string) =>
+    runLifecycle(productId, 'restore', {
+      title: 'Produit restauré',
+      description: 'Le produit sourcing est de nouveau dans la liste active',
+    });
 
   // Supprimer définitivement un produit (seulement si archivé)
   const deleteSourcingProduct = async (productId: string) => {
