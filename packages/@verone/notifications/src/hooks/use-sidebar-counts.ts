@@ -136,8 +136,13 @@ async function fetchAllCounts(
       .from('products')
       .select('id', { count: 'exact', head: true })
       .eq('creation_mode', 'sourcing')
-      .in('product_status', ['draft', 'preorder'])
-      .is('archived_at', null),
+      .is('archived_at', null)
+      // « En cours » de la liste sourcing (statut vide compris) : même règle que
+      // segmentQuery('in_progress') de @verone/products/utils (sourcing-stage.ts),
+      // recopiée ici car ce package ne dépend pas de @verone/products.
+      .or(
+        'sourcing_status.is.null,sourcing_status.in.(need_identified,supplier_search,initial_contact,evaluation,negotiation,sample_requested,sample_received,sample_approved,order_placed,received)'
+      ),
     // 6. Commandes en attente (draft)
     supabase
       .from('sales_orders')

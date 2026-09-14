@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@verone/common/hooks';
 import { createClient } from '@verone/utils/supabase/client';
 
+import { segmentQuery } from '../../utils/sourcing-stage';
 import type { SourcingProduct, SourcingFilters } from './types';
 
 export function useSourcingFetch(filters?: SourcingFilters) {
@@ -78,17 +79,40 @@ export function useSourcingFetch(filters?: SourcingFilters) {
           )
         `
         )
-        .eq('creation_mode', 'sourcing')
         .order('created_at', { ascending: false });
 
       // Fiche d'un produit précis : chargé par identifiant, archivé ou non.
-      // Sinon, filtre archivés : par défaut on cache les archivés (vue principale)
       if (filters?.product_id) {
-        query = query.eq('id', filters.product_id);
-      } else if (filters?.archived_view === 'archived') {
-        query = query.not('archived_at', 'is', null);
+        query = query
+          .eq('creation_mode', 'sourcing')
+          .eq('id', filters.product_id);
+      } else if (filters?.segment) {
+        // Liste sourcing (P5) : segment et étape filtrés par la base
+        const segment = segmentQuery(filters.segment, filters.stage);
+        if (segment.creationMode) {
+          query = query.eq('creation_mode', segment.creationMode);
+        }
+        query = segment.withdrawn
+          ? query.not('archived_at', 'is', null)
+          : query.is('archived_at', null);
+        if (segment.statuses) {
+          query = segment.includeNullStatus
+            ? query.or(
+                `sourcing_status.is.null,sourcing_status.in.(${segment.statuses.join(',')})`
+              )
+            : query.in('sourcing_status', [...segment.statuses]);
+        }
       } else {
-        query = query.is('archived_at', null);
+        // Ancien filtre archivés : par défaut on cache les archivés
+        query = query.eq('creation_mode', 'sourcing');
+        query =
+          filters?.archived_view === 'archived'
+            ? query.not('archived_at', 'is', null)
+            : query.is('archived_at', null);
+      }
+
+      if (filters?.priority) {
+        query = query.eq('sourcing_priority', filters.priority);
       }
 
       // Appliquer les filtres
@@ -215,6 +239,9 @@ export function useSourcingFetch(filters?: SourcingFilters) {
     filters?.assigned_client_id,
     filters?.archived_view,
     filters?.product_id,
+    filters?.segment,
+    filters?.stage,
+    filters?.priority,
   ]);
 
   return { products, setProducts, loading, error, fetchSourcingProducts };

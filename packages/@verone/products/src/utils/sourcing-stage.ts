@@ -127,3 +127,123 @@ export function availableLifecycleActions(
       return ['withdraw'];
   }
 }
+
+// ------------------------------------------------------------------------
+// Liste sourcing (BO-SOURCING-P5-001) : segments et requête correspondante
+// ------------------------------------------------------------------------
+
+export type SourcingListSegment =
+  | 'in_progress'
+  | 'on_hold'
+  | 'refused'
+  | 'withdrawn'
+  | 'validated';
+
+export const SOURCING_LIST_SEGMENTS: readonly SourcingListSegment[] = [
+  'in_progress',
+  'on_hold',
+  'refused',
+  'withdrawn',
+  'validated',
+];
+
+export const SOURCING_SEGMENT_LABELS: Record<SourcingListSegment, string> = {
+  in_progress: 'En cours',
+  on_hold: 'En pause',
+  refused: 'Refusés',
+  withdrawn: 'Retirés',
+  validated: 'Validés',
+};
+
+export interface SourcingSegmentProduct {
+  sourcing_status?: string | null;
+  archived_at?: string | null;
+  creation_mode?: string | null;
+}
+
+/**
+ * Segment de la liste sourcing d'un produit ; null s'il n'y figure pas.
+ * Un produit validé a rejoint le catalogue (creation_mode complete) : il reste
+ * visible dans « Validés » tant qu'il n'est pas retiré (le retrait d'un produit
+ * du catalogue relève du catalogue, P8).
+ */
+export function segmentOfProduct(
+  product: SourcingSegmentProduct
+): SourcingListSegment | null {
+  const isSourcing = product.creation_mode === 'sourcing';
+  // Retiré pendant le sourcing : « Retirés », quel que soit son statut
+  if (isSourcing && product.archived_at) return 'withdrawn';
+  const { group } = stageOfStatus(product.sourcing_status);
+  if (group === 'validated') {
+    return product.archived_at ? null : 'validated';
+  }
+  if (!isSourcing) return null;
+  return group;
+}
+
+/** Statuts de la base regroupés sur une étape affichée. */
+export function statusesOfStage(stage: SourcingStage): string[] {
+  return SOURCING_IN_PROGRESS_STATUSES.filter(
+    status => stageOfStatus(status).stage === stage
+  );
+}
+
+export interface SourcingSegmentQuery {
+  /** creation_mode imposé ; null pour les validés, passés au catalogue */
+  creationMode: 'sourcing' | null;
+  /** true : archived_at non nul ; false : archived_at nul */
+  withdrawn: boolean;
+  /** Statuts acceptés ; null = tous */
+  statuses: readonly string[] | null;
+  /** Statut vide accepté (affiché au début du parcours) */
+  includeNullStatus: boolean;
+}
+
+/**
+ * Filtres à envoyer à la base pour un segment (et une étape en cours) :
+ * même partition que segmentOfProduct, vérifiée par les tests.
+ */
+export function segmentQuery(
+  segment: SourcingListSegment,
+  stage?: SourcingStage
+): SourcingSegmentQuery {
+  switch (segment) {
+    case 'in_progress':
+      return {
+        creationMode: 'sourcing',
+        withdrawn: false,
+        statuses: stage
+          ? statusesOfStage(stage)
+          : SOURCING_IN_PROGRESS_STATUSES,
+        includeNullStatus: !stage || stage === 'supplier_search',
+      };
+    case 'on_hold':
+      return {
+        creationMode: 'sourcing',
+        withdrawn: false,
+        statuses: ['on_hold'],
+        includeNullStatus: false,
+      };
+    case 'refused':
+      return {
+        creationMode: 'sourcing',
+        withdrawn: false,
+        statuses: ['refused', 'cancelled', 'archived'],
+        includeNullStatus: false,
+      };
+    case 'withdrawn':
+      return {
+        creationMode: 'sourcing',
+        withdrawn: true,
+        statuses: null,
+        includeNullStatus: true,
+      };
+    case 'validated':
+      return {
+        creationMode: null,
+        withdrawn: false,
+        statuses: ['validated'],
+        includeNullStatus: false,
+      };
+  }
+}

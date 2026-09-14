@@ -1,109 +1,103 @@
 'use client';
 
 import type { SourcingProduct } from '@verone/products';
-import {
-  CloudflareImage,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@verone/ui';
-import { ButtonV2 } from '@verone/ui';
-import {
-  Archive,
-  Building,
-  CheckCircle,
-  Edit,
-  Eye,
-  Info,
-  MoreHorizontal,
-  Package,
-  RotateCcw,
-  Trash2,
-} from 'lucide-react';
-
-import { PRODUCT_USED_MESSAGE } from '@/hooks/product-history';
+import type { SourcingListSegment } from '@verone/products/utils';
+import { CloudflareImage } from '@verone/ui';
+import { Package } from 'lucide-react';
 
 import {
   formatDate,
   formatPrice,
   getPrimaryImage,
-  getStatusBadge,
   getSourcingTypeBadge,
+  SourcingStateBadges,
 } from './sourcing-page.helpers';
+import {
+  SourcingProductActions,
+  type SourcingProductActionHandlers,
+} from './SourcingProductActions';
 
-interface SourcingProductRowProps {
+interface SourcingProductRowProps extends SourcingProductActionHandlers {
   product: SourcingProduct;
-  /** false si le produit a servi (consultation, commande, stock) ou tant que ce n'est pas vérifié */
+  segment: SourcingListSegment;
   canDelete: boolean;
-  onView: () => void;
-  onViewSupplier: (() => void) | undefined;
-  onEdit: () => void;
-  onValidate: () => void;
-  onArchive: () => void;
-  onRestore: () => void;
-  onDelete: () => void;
+}
+
+export function supplierNameOf(product: SourcingProduct): string | undefined {
+  return (
+    product.supplier?.trade_name ??
+    product.supplier?.legal_name ??
+    product.supplier?.name
+  );
+}
+
+export function SourcingProductThumbnail({
+  product,
+  size,
+}: {
+  product: SourcingProduct;
+  size: 40 | 48;
+}) {
+  const primaryImage = getPrimaryImage(product);
+  const hasImage = primaryImage.cloudflareId ?? primaryImage.publicUrl;
+  return (
+    <div
+      className={`flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50 ${size === 40 ? 'h-10 w-10' : 'h-12 w-12'}`}
+    >
+      {hasImage ? (
+        <CloudflareImage
+          cloudflareId={primaryImage.cloudflareId}
+          fallbackSrc={primaryImage.publicUrl}
+          alt={product.name}
+          width={size}
+          height={size}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center">
+          <Package className="h-4 w-4 text-gray-300" />
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function SourcingProductRow({
   product,
+  segment,
   canDelete,
-  onView,
-  onViewSupplier,
-  onEdit,
-  onValidate,
-  onArchive,
-  onRestore,
-  onDelete,
+  ...handlers
 }: SourcingProductRowProps) {
-  const primaryImage = getPrimaryImage(product);
-  const hasImage = primaryImage.cloudflareId ?? primaryImage.publicUrl;
-  const canValidate = product.supplier_id && product.product_status === 'draft';
-  const supplierName =
-    product.supplier?.trade_name ??
-    product.supplier?.legal_name ??
-    product.supplier?.name;
+  const supplierName = supplierNameOf(product);
 
   return (
-    <tr className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+    <tr className="border-b border-gray-100 transition-colors hover:bg-gray-50/50">
       {/* Photo + Nom */}
-      <td className="p-3">
+      <td className="min-w-[220px] p-3">
         <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-            {hasImage ? (
-              <CloudflareImage
-                cloudflareId={primaryImage.cloudflareId}
-                fallbackSrc={primaryImage.publicUrl}
-                alt={product.name}
-                width={40}
-                height={40}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Package className="h-4 w-4 text-gray-300" />
-              </div>
-            )}
-          </div>
+          <SourcingProductThumbnail product={product} size={40} />
           <div className="min-w-0">
             <button
-              onClick={onView}
-              className="text-sm font-medium text-gray-900 hover:text-blue-600 hover:underline truncate block max-w-[250px] text-left"
+              type="button"
+              onClick={handlers.onView}
+              title={product.name}
+              className="block max-w-[250px] truncate text-left text-sm font-medium text-gray-900 hover:text-blue-600 hover:underline"
             >
               {product.name}
             </button>
-            <p className="text-xs text-gray-400 font-mono">{product.sku}</p>
+            <p className="font-mono text-xs text-gray-400">{product.sku}</p>
           </div>
         </div>
       </td>
 
       {/* Fournisseur */}
-      <td className="p-3">
+      <td className="hidden p-3 lg:table-cell">
         {supplierName ? (
           <button
-            onClick={onViewSupplier}
-            className="text-sm text-gray-600 hover:text-blue-600 hover:underline truncate block max-w-[150px]"
+            type="button"
+            onClick={handlers.onViewSupplier}
+            title={supplierName}
+            className="block max-w-[150px] truncate text-sm text-gray-600 hover:text-blue-600 hover:underline"
           >
             {supplierName}
           </button>
@@ -113,7 +107,7 @@ export function SourcingProductRow({
       </td>
 
       {/* Prix */}
-      <td className="p-3 text-right">
+      <td className="w-[110px] p-3 text-right">
         {product.cost_price != null ? (
           <span className="text-sm font-medium">
             {formatPrice(product.cost_price)}
@@ -123,92 +117,31 @@ export function SourcingProductRow({
         )}
       </td>
 
-      {/* Statut */}
-      <td className="p-3 text-center">
-        {getStatusBadge(product.product_status)}
+      {/* Étape / état */}
+      <td className="p-3">
+        <SourcingStateBadges product={product} />
       </td>
 
       {/* Type */}
-      <td className="p-3 text-center">
+      <td className="hidden p-3 text-center xl:table-cell">
         {getSourcingTypeBadge(product.sourcing_type, product.requires_sample)}
       </td>
 
       {/* Date */}
-      <td className="p-3 text-right">
+      <td className="hidden w-[100px] p-3 text-right xl:table-cell">
         <span className="text-xs text-gray-500">
           {formatDate(product.created_at)}
         </span>
       </td>
 
       {/* Actions */}
-      <td className="p-3 text-right">
-        <div className="flex items-center justify-end gap-1">
-          <ButtonV2 variant="outline" size="sm" onClick={onView}>
-            <Eye className="h-3 w-3" />
-          </ButtonV2>
-
-          {canValidate && (
-            <ButtonV2
-              variant="outline"
-              size="sm"
-              onClick={onValidate}
-              className="text-green-600 border-green-200 hover:bg-green-50"
-            >
-              <CheckCircle className="h-3 w-3" />
-            </ButtonV2>
-          )}
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <ButtonV2 variant="outline" size="sm">
-                <MoreHorizontal className="h-3 w-3" />
-              </ButtonV2>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onEdit}>
-                <Edit className="h-4 w-4 mr-2" />
-                Modifier
-              </DropdownMenuItem>
-              {onViewSupplier && (
-                <DropdownMenuItem onClick={onViewSupplier}>
-                  <Building className="h-4 w-4 mr-2" />
-                  Voir fournisseur
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              {!product.archived_at ? (
-                <DropdownMenuItem onClick={onArchive}>
-                  <Archive className="h-4 w-4 mr-2" />
-                  Archiver
-                </DropdownMenuItem>
-              ) : (
-                <>
-                  <DropdownMenuItem onClick={onRestore}>
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Restaurer
-                  </DropdownMenuItem>
-                  {canDelete ? (
-                    <DropdownMenuItem
-                      onClick={onDelete}
-                      className="text-red-600"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Supprimer
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem
-                      disabled
-                      className="max-w-[240px] whitespace-normal text-gray-600"
-                    >
-                      <Info className="h-4 w-4 mr-2 flex-shrink-0" />
-                      {PRODUCT_USED_MESSAGE}
-                    </DropdownMenuItem>
-                  )}
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+      <td className="w-[150px] p-3 text-right">
+        <SourcingProductActions
+          product={product}
+          segment={segment}
+          canDelete={canDelete}
+          {...handlers}
+        />
       </td>
     </tr>
   );
