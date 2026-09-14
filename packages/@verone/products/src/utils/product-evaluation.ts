@@ -90,6 +90,20 @@ export function formatEvaluationAverage(average: number): string {
 }
 
 /**
+ * Indique si le bouton « Évaluer l'échantillon » doit être affiché.
+ * Visible uniquement quand l'échantillon est reçu ET qu'aucune évaluation
+ * n'a encore été enregistrée.
+ *
+ * Pure : testée par __tests__/product-evaluation-display.test.ts.
+ */
+export function shouldShowEvaluateButton(
+  sampleState: string,
+  hasEvaluation: boolean
+): boolean {
+  return sampleState === 'received' && !hasEvaluation;
+}
+
+/**
  * Résumé écrit dans le journal sourcing à l'enregistrement de l'évaluation
  * (entrée « note »), dans les mots de l'écran.
  */

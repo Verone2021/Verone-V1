@@ -8,6 +8,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@verone/common';
 import { useProductConsultations } from '@verone/consultations/hooks';
 import {
+  ProductEvaluationDialog,
+  ProductEvaluationSummary,
   ProductPhotosModal,
   SourcingActionBar,
   SourcingJournal,
@@ -15,6 +17,7 @@ import {
   SourcingProductEditCard,
   SourcingStageHeader,
   SourcingUrls,
+  useProductEvaluation,
   useProductImages,
   useSampleState,
   useSourcingLifecycle,
@@ -28,7 +31,7 @@ import {
 import { availableLifecycleActions } from '@verone/products/utils';
 import { Badge, ButtonV2, Card, CardContent } from '@verone/ui';
 import { associateProductToConsultation } from '@verone/utils';
-import { AlertCircle, ArrowLeft, Building2, Package } from 'lucide-react';
+import { ArrowLeft, Building2, Package } from 'lucide-react';
 
 import { SourcingConsultationsSection } from './SourcingConsultationsSection';
 import {
@@ -36,6 +39,10 @@ import {
   type SourcingReasonAction,
 } from './SourcingLifecycleDialogs';
 import { SourcingProductHeaderActions } from './SourcingProductHeaderActions';
+import {
+  SourcingProductLoading,
+  SourcingProductNotFound,
+} from './SourcingProductStates';
 
 export default function SourcingProductDetailPage() {
   const router = useRouter();
@@ -53,6 +60,7 @@ export default function SourcingProductDetailPage() {
   const supplierSearch = useSupplierSearch();
   const sample = useSampleState(productId);
   const lifecycle = useSourcingLifecycle(productId);
+  const evaluation = useProductEvaluation(productId, notebook.addCommunication);
   const {
     linkedConsultations,
     loading: consultationsLoading,
@@ -66,6 +74,7 @@ export default function SourcingProductDetailPage() {
   } = useProductImages({ productId, autoFetch: true });
 
   const [isPhotosModalOpen, setIsPhotosModalOpen] = useState(false);
+  const [isEvaluationDialogOpen, setIsEvaluationDialogOpen] = useState(false);
   const [journalMode, setJournalMode] =
     useState<SourcingJournalFormMode | null>(null);
   const [reasonAction, setReasonAction] = useState<SourcingReasonAction | null>(
@@ -156,39 +165,14 @@ export default function SourcingProductDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <Package className="mx-auto mb-4 h-12 w-12 animate-spin text-gray-400" />
-          <p className="text-gray-600">Chargement du produit sourcing...</p>
-        </div>
-      </div>
-    );
+    return <SourcingProductLoading />;
   }
 
   if (!product) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-        <Card className="max-w-md border-black">
-          <CardContent className="p-6 text-center">
-            <AlertCircle className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-            <h3 className="mb-2 text-lg font-medium text-black">
-              Produit sourcing non trouvé
-            </h3>
-            <p className="mb-4 text-gray-600">
-              Ce produit n&apos;existe pas ou a quitté le sourcing (validé au
-              catalogue).
-            </p>
-            <ButtonV2
-              onClick={() => router.push('/produits/sourcing')}
-              className="bg-black text-white hover:bg-gray-800"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Retour au sourcing
-            </ButtonV2>
-          </CardContent>
-        </Card>
-      </div>
+      <SourcingProductNotFound
+        onBack={() => router.push('/produits/sourcing')}
+      />
     );
   }
 
@@ -267,6 +251,7 @@ export default function SourcingProductDetailPage() {
               hasCostPrice={(product.cost_price ?? 0) > 0}
               sample={sample}
               busy={busy}
+              hasEvaluation={Boolean(evaluation.evaluation)}
               onAddNote={handleAddNote}
               onOrderSample={() => {
                 void handleOrderSample().catch(error => {
@@ -277,9 +262,16 @@ export default function SourcingProductDetailPage() {
                 router.push(`/commandes/fournisseurs?id=${orderId}`)
               }
               onLifecycle={handleLifecycle}
+              onEvaluateSample={() => setIsEvaluationDialogOpen(true)}
             />
           </CardContent>
         </Card>
+
+        <ProductEvaluationSummary
+          evaluation={evaluation.evaluation}
+          sampleState={sample.state}
+          onEvaluate={() => setIsEvaluationDialogOpen(true)}
+        />
 
         <section aria-label="Fiche produit" className="space-y-4">
           <SourcingProductEditCard
@@ -372,6 +364,16 @@ export default function SourcingProductDetailPage() {
             console.error('[SourcingDetail] fetchImages failed:', error);
           });
         }}
+      />
+
+      <ProductEvaluationDialog
+        open={isEvaluationDialogOpen}
+        onOpenChange={setIsEvaluationDialogOpen}
+        evaluation={evaluation.evaluation}
+        saving={evaluation.saving}
+        onSave={evaluation.saveEvaluation}
+        supplierId={product.supplier_id}
+        purchaseOrderItemId={sample.itemId}
       />
     </div>
   );

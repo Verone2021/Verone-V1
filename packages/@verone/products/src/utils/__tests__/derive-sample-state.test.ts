@@ -31,9 +31,13 @@ function line(
 }
 
 // Aucune commande : aucun échantillon
-assert.deepEqual(deriveSampleState([]), { state: 'none', order: null });
+assert.deepEqual(deriveSampleState([]), {
+  state: 'none',
+  order: null,
+  itemId: null,
+});
 
-// Chaque statut de commande donne l'état attendu
+// Chaque statut de commande donne l'état attendu, et la ligne évaluable (BO-SOURCING-P4B-001)
 const expected: Array<[SamplePurchaseOrderStatus, string]> = [
   ['draft', 'to_send'],
   ['validated', 'ordered'],
@@ -45,6 +49,7 @@ for (const [status, state] of expected) {
   const result = deriveSampleState([line('a', status, '2026-09-01')]);
   assert.equal(result.state, state, status);
   assert.deepEqual(result.order, { id: 'a', poNumber: 'PO-a', status });
+  assert.equal(result.itemId, 'item-a', status);
 }
 
 // Une commande annulée n'empêche pas une nouvelle commande active
@@ -56,6 +61,7 @@ assert.deepEqual(
   {
     state: 'ordered',
     order: { id: 'new', poNumber: 'PO-new', status: 'validated' },
+    itemId: 'item-new',
   }
 );
 
@@ -81,7 +87,7 @@ assert.deepEqual(
   deriveSampleState([
     line('std', 'received', '2026-09-01', { poType: 'standard' }),
   ]),
-  { state: 'none', order: null }
+  { state: 'none', order: null, itemId: null }
 );
 
 // Plusieurs annulées : la plus récente est proposée
