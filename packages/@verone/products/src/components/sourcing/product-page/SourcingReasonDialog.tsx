@@ -81,6 +81,7 @@ export function SourcingReasonDialog({
         <DialogFooter className="flex-col gap-2 md:flex-row">
           <ButtonV2
             variant="outline"
+            size="xl"
             className="w-full md:w-auto"
             onClick={onClose}
             disabled={saving}
@@ -89,6 +90,7 @@ export function SourcingReasonDialog({
           </ButtonV2>
           <ButtonV2
             variant="danger"
+            size="xl"
             className="w-full md:w-auto"
             disabled={!trimmed || saving}
             loading={saving}
