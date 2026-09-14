@@ -368,6 +368,7 @@ export const ProductCardV2 = memo(function ProductCardV2({
               <IconButton
                 variant={archived ? 'success' : 'outline'}
                 size="sm"
+                className="h-11 w-11 md:h-8 md:w-8"
                 onClick={handleArchiveClick}
                 icon={archived ? ArchiveRestore : Archive}
                 label={archived ? 'Restaurer le produit' : 'Retirer le produit'}
@@ -379,6 +380,7 @@ export const ProductCardV2 = memo(function ProductCardV2({
               <IconButton
                 variant="danger"
                 size="sm"
+                className="h-11 w-11 md:h-8 md:w-8"
                 onClick={handleDeleteClick}
                 icon={Trash2}
                 label="Supprimer le produit"
