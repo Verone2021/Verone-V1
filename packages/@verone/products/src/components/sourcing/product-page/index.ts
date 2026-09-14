@@ -9,3 +9,5 @@ export { SourcingOffersSection } from './SourcingOffersSection';
 export { SourcingReasonDialog } from './SourcingReasonDialog';
 export type { SourcingReasonDialogProps } from './SourcingReasonDialog';
 export { SourcingStageHeader } from './SourcingStageHeader';
+export { ProductEvaluationDialog } from './ProductEvaluationDialog';
+export { ProductEvaluationSummary } from './ProductEvaluationSummary';

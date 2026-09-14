@@ -12,6 +12,7 @@ import {
   Archive,
   Ban,
   CheckCircle,
+  ClipboardCheck,
   ExternalLink,
   FlaskConical,
   MoreHorizontal,
@@ -53,10 +54,14 @@ export interface SourcingActionBarProps {
   hasCostPrice: boolean;
   sample: SampleStateResult;
   busy: boolean;
+  /** Vrai si une évaluation a déjà été enregistrée pour ce produit. */
+  hasEvaluation?: boolean;
   onAddNote: () => void;
   onOrderSample: () => void;
   onViewOrder: (orderId: string) => void;
   onLifecycle: (action: SourcingBarLifecycleAction) => void;
+  /** Ouvre la fenêtre d'évaluation de l'échantillon. */
+  onEvaluateSample?: () => void;
 }
 
 /**
@@ -71,10 +76,12 @@ export function SourcingActionBar({
   hasCostPrice,
   sample,
   busy,
+  hasEvaluation = false,
   onAddNote,
   onOrderSample,
   onViewOrder,
   onLifecycle,
+  onEvaluateSample,
 }: SourcingActionBarProps) {
   const allowed = new Set(availableLifecycleActions(status, isWithdrawn));
   const missing = !hasSupplier
@@ -108,6 +115,24 @@ export function SourcingActionBar({
       primary: true,
     });
   }
+  // Bouton « Évaluer l'échantillon » : visible quand l'échantillon est reçu
+  // et qu'aucune évaluation n'a encore été enregistrée.
+  if (
+    sample.state === 'received' &&
+    !hasEvaluation &&
+    onEvaluateSample !== undefined
+  ) {
+    actions.push({
+      key: 'evaluate-sample',
+      label: "Évaluer l'échantillon",
+      icon: ClipboardCheck,
+      onClick: onEvaluateSample,
+      disabled: busy,
+      tone: 'primary',
+      primary: true,
+    });
+  }
+
   if (allowed.has('validate')) {
     actions.push({
       key: 'validate',

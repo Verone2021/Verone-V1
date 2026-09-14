@@ -23,6 +23,14 @@ export {
   useSourcingSegmentCounts,
   SOURCING_SEGMENT_COUNTS_QUERY_KEY,
 } from './use-sourcing-segment-counts';
+export {
+  useProductEvaluation,
+  PRODUCT_EVALUATION_QUERY_KEY,
+} from './use-product-evaluation';
+export type {
+  ProductEvaluationRow,
+  SaveEvaluationInput,
+} from './use-product-evaluation';
 
 import type { SourcingFilters } from './types';
 import { useSourcingFetch } from './use-sourcing-fetch';

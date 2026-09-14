@@ -50,6 +50,8 @@ export interface SampleStateResult {
     poNumber: string;
     status: SamplePurchaseOrderStatus;
   } | null;
+  /** ID de la ligne purchase_order_items de l'échantillon actif (ou dernier connu). */
+  itemId: string | null;
 }
 
 function newestFirst(a: SampleOrderLine, b: SampleOrderLine): number {
@@ -73,12 +75,16 @@ export function deriveSampleState(lines: SampleOrderLine[]): SampleStateResult {
         : active.poStatus === 'validated'
           ? 'ordered'
           : 'received';
-    return { state, order: toOrder(active) };
+    return { state, order: toOrder(active), itemId: active.itemId };
   }
 
   if (samples.length > 0) {
-    return { state: 'cancelled', order: toOrder(samples[0]) };
+    return {
+      state: 'cancelled',
+      order: toOrder(samples[0]),
+      itemId: samples[0].itemId,
+    };
   }
 
-  return { state: 'none', order: null };
+  return { state: 'none', order: null, itemId: null };
 }
