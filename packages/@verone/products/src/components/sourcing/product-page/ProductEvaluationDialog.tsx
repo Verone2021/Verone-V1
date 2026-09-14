@@ -12,6 +12,7 @@ import { ButtonV2 } from '@verone/ui/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -19,7 +20,6 @@ import {
 import { Label } from '@verone/ui/components/ui/label';
 import { ScoreInput } from '@verone/ui/components/ui/score-input';
 import { Textarea } from '@verone/ui/components/ui/textarea';
-import { cn } from '@verone/utils';
 
 import type {
   ProductEvaluationRow,
@@ -27,13 +27,14 @@ import type {
 } from '../../../hooks/sourcing/use-product-evaluation';
 import {
   EVALUATION_CRITERIA,
-  EVALUATION_SUGGESTION_LABELS,
-  SAFETY_CHECK_LABELS,
   evaluationAverage,
   evaluationSuggestion,
-  formatEvaluationAverage,
   type SafetyCheck,
 } from '../../../utils/product-evaluation';
+import {
+  EvaluationPreview,
+  SafetyCheckSelector,
+} from './ProductEvaluationFields';
 
 interface ProductEvaluationDialogProps {
   open: boolean;
@@ -44,12 +45,6 @@ interface ProductEvaluationDialogProps {
   supplierId?: string | null;
   purchaseOrderItemId?: string | null;
 }
-
-const SAFETY_OPTIONS: Array<{ value: SafetyCheck; label: string }> = [
-  { value: 'ok', label: SAFETY_CHECK_LABELS.ok },
-  { value: 'ko', label: SAFETY_CHECK_LABELS.ko },
-  { value: 'to_check', label: SAFETY_CHECK_LABELS.to_check },
-];
 
 export function ProductEvaluationDialog({
   open,
@@ -87,20 +82,21 @@ export function ProductEvaluationDialog({
     evaluation?.notes,
   ]);
 
-  const currentScores = {
+  const scoreValues = {
     score_conformity: scoreConformity,
     score_build_finish: scoreBuildFinish,
     score_packaging: scorePackaging,
-    safety_check: safetyCheck,
   };
-  const average = evaluationAverage(currentScores);
-  const suggestion = evaluationSuggestion(currentScores);
+  const scoreSetters = {
+    score_conformity: setScoreConformity,
+    score_build_finish: setScoreBuildFinish,
+    score_packaging: setScorePackaging,
+  };
+  const currentScores = { ...scoreValues, safety_check: safetyCheck };
 
   const handleSave = () => {
     void onSave({
-      score_conformity: scoreConformity,
-      score_build_finish: scoreBuildFinish,
-      score_packaging: scorePackaging,
+      ...scoreValues,
       safety_check: safetyCheck,
       notes: notes.trim() || null,
       supplierId,
@@ -114,22 +110,15 @@ export function ProductEvaluationDialog({
       });
   };
 
-  const scoreSetters = {
-    score_conformity: setScoreConformity,
-    score_build_finish: setScoreBuildFinish,
-    score_packaging: setScorePackaging,
-  };
-  const scoreValues = {
-    score_conformity: scoreConformity,
-    score_build_finish: scoreBuildFinish,
-    score_packaging: scorePackaging,
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="h-screen md:h-auto md:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Évaluation de l&apos;échantillon</DialogTitle>
+          <DialogDescription className="sr-only">
+            Notez l&apos;échantillon reçu sur trois critères de 1 à 5 et
+            indiquez le contrôle de sécurité. La suggestion est indicative.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 space-y-6 overflow-y-auto py-2 md:max-h-[70vh]">
@@ -145,35 +134,11 @@ export function ProductEvaluationDialog({
             ))}
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-900">
-              Contrôle de sécurité
-            </Label>
-            <div className="flex flex-wrap gap-2">
-              {SAFETY_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  disabled={saving}
-                  onClick={() => setSafetyCheck(opt.value)}
-                  className={cn(
-                    'h-11 rounded-md border px-3 text-sm transition-colors md:h-9',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black',
-                    safetyCheck === opt.value
-                      ? opt.value === 'ko'
-                        ? 'border-red-500 bg-red-50 text-red-700'
-                        : opt.value === 'ok'
-                          ? 'border-green-600 bg-green-50 text-green-700'
-                          : 'border-gray-800 bg-gray-100 text-gray-900'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-400',
-                    saving && 'cursor-not-allowed opacity-50'
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <SafetyCheckSelector
+            value={safetyCheck}
+            onChange={setSafetyCheck}
+            disabled={saving}
+          />
 
           <div className="space-y-2">
             <Label
@@ -193,25 +158,10 @@ export function ProductEvaluationDialog({
             />
           </div>
 
-          <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm">
-            <span className="font-medium text-gray-900">
-              {average === null
-                ? 'Non notée'
-                : `Moyenne ${formatEvaluationAverage(average)}`}
-            </span>
-            {suggestion !== null && (
-              <span
-                className={cn(
-                  'ml-2',
-                  suggestion === 'validate' && 'text-green-700',
-                  suggestion === 'review' && 'text-amber-700',
-                  suggestion === 'refuse' && 'text-red-700'
-                )}
-              >
-                — suggestion&nbsp;: {EVALUATION_SUGGESTION_LABELS[suggestion]}
-              </span>
-            )}
-          </div>
+          <EvaluationPreview
+            average={evaluationAverage(currentScores)}
+            suggestion={evaluationSuggestion(currentScores)}
+          />
         </div>
 
         <DialogFooter className="flex-col gap-2 md:flex-row">
