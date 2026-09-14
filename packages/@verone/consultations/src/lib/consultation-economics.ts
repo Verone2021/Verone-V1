@@ -5,8 +5,16 @@
  * Exécutable côté serveur, dans les tests et dans les Server Components.
  *
  * Formules : docs/scratchpad/dev-plan-2026-09-12-BO-CONSULT-P2-001.md § B2
- * Sprint BO-CONSULT-P2-001 — 2026-09-12
+ * Frais par fournisseur : consultation-supplier-costs.ts (BO-CONSULT-P9-001)
+ * Sprints BO-CONSULT-P2-001 — 2026-09-12 · BO-CONSULT-P9-001 — 2026-09-13
  */
+
+import {
+  allocateSupplierCosts,
+  summarizeSuppliers,
+  type SupplierCostInput,
+  type SupplierEconomics,
+} from './consultation-supplier-costs';
 
 // ---------------------------------------------------------------------------
 // Interfaces d'entrée
@@ -31,14 +39,13 @@ export interface ConsultationEconomicsLineInput {
   marginPercentage?: number | null;
 }
 
-export interface SupplierCostInput {
-  supplierId: string;
-  amount: number;
-  label?: string;
-}
-
 export interface ConsultationEconomicsSettings {
   defaultMarginPercentage?: number | null;
+  /**
+   * Frais saisis par fournisseur. Répartis par computeConsultationEconomics
+   * sur les lignes de chaque fournisseur ; computeLineEconomics reçoit la part
+   * déjà calculée en paramètre.
+   */
   supplierCosts?: readonly SupplierCostInput[];
 }
 
@@ -57,7 +64,9 @@ export interface LineEconomics {
   ecoTax: number;
   /** Transport d'achat total de ligne, ou 0 si gratuit/échantillon */
   fees: number;
-  /** Prix de revient unitaire = unitCost + ecoTax + fees/quantity */
+  /** Part des frais du fournisseur imputée à la ligne (total de ligne), 0 si gratuit/échantillon */
+  supplierFees: number;
+  /** Prix de revient unitaire = unitCost + ecoTax + (fees + supplierFees)/quantity */
   unitCostPrice: number;
   /** Prix par défaut calculé depuis la marge, ou null si pas de marge */
   defaultUnitPrice: number | null;
@@ -67,7 +76,7 @@ export interface LineEconomics {
   priceToFix: boolean;
   /** CA HT = unitPrice × qty + sellingShippingCost (0 si gratuit/échantillon) */
   revenue: number;
-  /** Coût total = (unitCost + ecoTax) × qty + fees */
+  /** Coût total = (unitCost + ecoTax) × qty + fees + supplierFees */
   cost: number;
   /** Marge brute = revenue − cost */
   margin: number;
@@ -89,6 +98,10 @@ export interface ConsultationEconomicsTotals {
   revenue: number;
   cost: number;
   fees: number;
+  /** Somme des parts fournisseur des lignes incluses */
+  supplierFees: number;
+  /** Frais de fournisseurs sans ligne éligible — hors coût total */
+  unallocatedSupplierFees: number;
   margin: number;
   marginPercent: number | null;
   includedLines: number;
@@ -104,23 +117,20 @@ export interface ConsultationEconomicsTotals {
 /**
  * Calcule la rentabilité d'une ligne de consultation.
  *
+ * @param supplierFees part des frais du fournisseur imputée à la ligne, calculée
+ *   par computeConsultationEconomics (settings.supplierCosts n'est pas réparti ici)
  * @throws {RangeError} si quantity ≤ 0
- * @throws {Error} si supplierCosts est fourni et non vide (phase P10)
  */
 export function computeLineEconomics(
   line: ConsultationEconomicsLineInput,
-  settings: ConsultationEconomicsSettings = {}
+  settings: ConsultationEconomicsSettings = {},
+  supplierFees = 0
 ): LineEconomics {
   // --- Guard quantité ---
   if (line.quantity <= 0) {
     throw new RangeError(
       `[consultation-economics] quantity doit être > 0, reçu: ${line.quantity} (ligne ${line.id})`
     );
-  }
-
-  // --- Guard supplierCosts (phase future) ---
-  if (settings.supplierCosts && settings.supplierCosts.length > 0) {
-    throw new Error('Répartition des frais par fournisseur : phase P10');
   }
 
   // --- Coût unitaire ---
@@ -133,11 +143,14 @@ export function computeLineEconomics(
   // --- Inclusion ---
   const included = line.status !== 'rejected';
 
-  // --- Frais de transport (exclu pour gratuit ou échantillon) ---
+  // --- Frais de transport et part fournisseur (exclus pour gratuit ou échantillon) ---
   const fees: number = line.isFree || line.isSample ? 0 : shippingCost;
+  const lineSupplierFees: number =
+    line.isFree || line.isSample ? 0 : supplierFees;
 
   // --- Prix de revient unitaire ---
-  const unitCostPrice: number = unitCost + ecoTax + fees / line.quantity;
+  const unitCostPrice: number =
+    unitCost + ecoTax + (fees + lineSupplierFees) / line.quantity;
 
   // --- Marge applicable (ligne prioritaire sur réglage global) ---
   // marginPercentage ligne ?? réglage global ?? null (jamais undefined en sortie)
@@ -160,7 +173,8 @@ export function computeLineEconomics(
       : (unitPrice ?? 0) * line.quantity + sellingShippingCost;
 
   // --- Coût total ---
-  const cost: number = (unitCost + ecoTax) * line.quantity + fees;
+  const cost: number =
+    (unitCost + ecoTax) * line.quantity + fees + lineSupplierFees;
 
   // --- Marge ---
   const margin: number = revenue - cost;
@@ -189,6 +203,7 @@ export function computeLineEconomics(
     unitCost,
     ecoTax,
     fees,
+    supplierFees: lineSupplierFees,
     unitCostPrice,
     defaultUnitPrice,
     unitPrice,
@@ -209,22 +224,24 @@ export function computeLineEconomics(
 
 /**
  * Calcule la rentabilité de toutes les lignes d'une consultation.
- * Les totaux n'incluent que les lignes « included » (status !== 'rejected').
+ * Les frais saisis par fournisseur sont répartis sur ses seules lignes
+ * éligibles avant le calcul de chaque ligne. Les totaux n'incluent que les
+ * lignes « included » (status !== 'rejected').
  *
  * @throws {RangeError} si une ligne a quantity ≤ 0
- * @throws {Error} si supplierCosts est fourni et non vide (phase P10)
  */
 export function computeConsultationEconomics(
   lines: readonly ConsultationEconomicsLineInput[],
   settings: ConsultationEconomicsSettings = {}
-): { lines: LineEconomics[]; totals: ConsultationEconomicsTotals } {
-  // Guard supplierCosts ici pour attraper avant de boucler
-  if (settings.supplierCosts && settings.supplierCosts.length > 0) {
-    throw new Error('Répartition des frais par fournisseur : phase P10');
-  }
+): {
+  lines: LineEconomics[];
+  totals: ConsultationEconomicsTotals;
+  suppliers: SupplierEconomics[];
+} {
+  const allocation = allocateSupplierCosts(lines, settings.supplierCosts);
 
   const computedLines: LineEconomics[] = lines.map(line =>
-    computeLineEconomics(line, settings)
+    computeLineEconomics(line, settings, allocation.shares.get(line.id) ?? 0)
   );
 
   const includedLines = computedLines.filter(l => l.included);
@@ -232,6 +249,10 @@ export function computeConsultationEconomics(
   const totalRevenue = includedLines.reduce((sum, l) => sum + l.revenue, 0);
   const totalCost = includedLines.reduce((sum, l) => sum + l.cost, 0);
   const totalFees = includedLines.reduce((sum, l) => sum + l.fees, 0);
+  const totalSupplierFees = includedLines.reduce(
+    (sum, l) => sum + l.supplierFees,
+    0
+  );
   const totalMargin = totalRevenue - totalCost;
   const linesToPrice = includedLines.filter(l => l.priceToFix).length;
   // Pas de pourcentage total tant qu'un prix reste à fixer : sinon le total
@@ -246,6 +267,8 @@ export function computeConsultationEconomics(
     revenue: totalRevenue,
     cost: totalCost,
     fees: totalFees,
+    supplierFees: totalSupplierFees,
+    unallocatedSupplierFees: allocation.unallocated,
     margin: totalMargin,
     marginPercent: totalMarginPercent,
     includedLines: includedLines.length,
@@ -253,5 +276,11 @@ export function computeConsultationEconomics(
     billed: totalBilled,
   };
 
-  return { lines: computedLines, totals };
+  const suppliers = summarizeSuppliers(
+    lines,
+    computedLines,
+    settings.supplierCosts
+  );
+
+  return { lines: computedLines, totals, suppliers };
 }
