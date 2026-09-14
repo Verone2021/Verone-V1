@@ -179,7 +179,7 @@ export function useSelectionWithProducts(
         .select(
           `
           id, selection_id, product_id, base_price_ht, margin_rate, selling_price_ht, display_order, is_featured, created_at,
-          product:products(
+          product:products!inner(
             id,
             name,
             sku,
@@ -189,6 +189,10 @@ export function useSelectionWithProducts(
         `
         )
         .eq('selection_id', selection.id)
+        // Règle unique « vendable » (BO-CHANNELS-P7-001), comme les pages /s/…
+        .is('product.archived_at', null)
+        .in('product.product_status', ['active', 'preorder'])
+        .neq('product.creation_mode', 'sourcing')
         .order('display_order', { ascending: true });
 
       if (itemsError) {

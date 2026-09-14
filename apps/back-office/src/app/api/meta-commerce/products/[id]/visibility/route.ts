@@ -16,6 +16,7 @@ import { NextResponse } from 'next/server';
 
 import { z } from 'zod';
 
+import { unsellableReasons } from '@verone/products/utils';
 import { createServerClient } from '@verone/utils/supabase/server';
 
 const ToggleVisibilitySchema = z.object({
@@ -66,7 +67,9 @@ export async function PATCH(
     if (visible) {
       const { data: product, error: fetchError } = await supabase
         .from('products')
-        .select('is_published_online')
+        .select(
+          'is_published_online, archived_at, product_status, creation_mode'
+        )
         .eq('id', productId)
         .single();
 
@@ -87,6 +90,18 @@ export async function PATCH(
             success: false,
             error:
               'Le produit doit être publié sur le Site Internet avant de pouvoir être activé sur Meta Commerce.',
+          },
+          { status: 422 }
+        );
+      }
+
+      // Règle unique « vendable » (BO-CHANNELS-P7-001)
+      const reasons = unsellableReasons(product);
+      if (reasons.length > 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Produit non vendable : ${reasons.join(', ')}.`,
           },
           { status: 422 }
         );
