@@ -6819,6 +6819,104 @@ export type Database = {
           },
         ];
       };
+      product_evaluations: {
+        Row: {
+          created_at: string;
+          evaluated_at: string;
+          evaluated_by: string | null;
+          id: string;
+          notes: string | null;
+          product_id: string;
+          purchase_order_item_id: string | null;
+          safety_check: string;
+          score_build_finish: number | null;
+          score_conformity: number | null;
+          score_packaging: number | null;
+          supplier_id: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          evaluated_at?: string;
+          evaluated_by?: string | null;
+          id?: string;
+          notes?: string | null;
+          product_id: string;
+          purchase_order_item_id?: string | null;
+          safety_check?: string;
+          score_build_finish?: number | null;
+          score_conformity?: number | null;
+          score_packaging?: number | null;
+          supplier_id?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          evaluated_at?: string;
+          evaluated_by?: string | null;
+          id?: string;
+          notes?: string | null;
+          product_id?: string;
+          purchase_order_item_id?: string | null;
+          safety_check?: string;
+          score_build_finish?: number | null;
+          score_conformity?: number | null;
+          score_packaging?: number | null;
+          supplier_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'product_evaluations_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'product_evaluations_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'product_evaluations_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'product_evaluations_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'product_evaluations_purchase_order_item_id_fkey';
+            columns: ['purchase_order_item_id'];
+            isOneToOne: true;
+            referencedRelation: 'customer_samples_view';
+            referencedColumns: ['sample_id'];
+          },
+          {
+            foreignKeyName: 'product_evaluations_purchase_order_item_id_fkey';
+            columns: ['purchase_order_item_id'];
+            isOneToOne: true;
+            referencedRelation: 'purchase_order_items';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'product_evaluations_supplier_id_fkey';
+            columns: ['supplier_id'];
+            isOneToOne: false;
+            referencedRelation: 'organisations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       product_group_members: {
         Row: {
           added_at: string | null;
@@ -9574,6 +9672,7 @@ export type Database = {
           cloudflare_image_id: string | null;
           created_at: string | null;
           created_by: string | null;
+          evaluation_id: string | null;
           id: string;
           photo_type: string;
           product_id: string;
@@ -9586,6 +9685,7 @@ export type Database = {
           cloudflare_image_id?: string | null;
           created_at?: string | null;
           created_by?: string | null;
+          evaluation_id?: string | null;
           id?: string;
           photo_type: string;
           product_id: string;
@@ -9598,6 +9698,7 @@ export type Database = {
           cloudflare_image_id?: string | null;
           created_at?: string | null;
           created_by?: string | null;
+          evaluation_id?: string | null;
           id?: string;
           photo_type?: string;
           product_id?: string;
@@ -9606,6 +9707,13 @@ export type Database = {
           storage_path?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'sourcing_photos_evaluation_id_fkey';
+            columns: ['evaluation_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_evaluations';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'sourcing_photos_product_id_fkey';
             columns: ['product_id'];
