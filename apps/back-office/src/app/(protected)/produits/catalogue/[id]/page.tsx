@@ -13,6 +13,7 @@ import { ProductModals } from './_components/ProductModals';
 import { ProductPricingTab } from './_components/product-pricing-tab';
 import { ProductStockTab } from './_components/product-stock-tab';
 import { useProductDetail } from './_components/hooks/use-product-detail';
+import { ProductWithdrawActions } from '../_components/ProductWithdrawActions';
 
 export default function ProductDetailPage() {
   const {
@@ -34,6 +35,7 @@ export default function ProductDetailPage() {
     sourcing,
     primaryImageUrl,
     tabs,
+    fetchProduct,
     refreshHeaderImages,
     handleProductUpdate,
     handleShare,
@@ -71,6 +73,13 @@ export default function ProductDetailPage() {
         onBack={() => router.back()}
         onShare={handleShare}
         onImageClick={() => setShowPhotosModal(true)}
+        extraActions={
+          <ProductWithdrawActions
+            productId={product.id}
+            isWithdrawn={Boolean(product.archived_at)}
+            onChanged={() => fetchProduct({ silent: true })}
+          />
+        }
       />
 
       <div className="w-full px-4">

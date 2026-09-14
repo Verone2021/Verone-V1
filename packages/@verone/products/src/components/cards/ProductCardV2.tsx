@@ -191,6 +191,12 @@ export const ProductCardV2 = memo(function ProductCardV2({
             {product.product_status === 'draft' && '📝 Brouillon'}
           </Badge>
 
+          {archived && (
+            <Badge className="text-[9px] font-medium px-1 py-0.5 bg-zinc-800 text-white">
+              Retiré
+            </Badge>
+          )}
+
           {product.condition !== 'new' && (
             <Badge
               variant="outline"
@@ -364,9 +370,7 @@ export const ProductCardV2 = memo(function ProductCardV2({
                 size="sm"
                 onClick={handleArchiveClick}
                 icon={archived ? ArchiveRestore : Archive}
-                label={
-                  archived ? 'Restaurer le produit' : 'Archiver le produit'
-                }
+                label={archived ? 'Restaurer le produit' : 'Retirer le produit'}
               />
             )}
 

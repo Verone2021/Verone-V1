@@ -14,10 +14,10 @@ import {
 import { useOrganisations } from '@verone/organisations';
 import { useProductImagesBatch } from '@verone/products';
 import { checkSLOCompliance, debounce } from '@verone/utils';
-import { toast } from 'sonner';
 
 import type { FilterState } from '@/components/catalogue/CatalogueFilterPanel';
 
+import { createCatalogueArchiveHandler } from './catalogue-archive-handler';
 import type { Filters } from './types';
 import { useBulkActions } from './use-bulk-actions';
 import { useBulkSelection } from './use-bulk-selection';
@@ -421,40 +421,14 @@ export function useCataloguePage() {
     },
   });
 
-  const handleArchiveProduct = async (product: Product) => {
-    try {
-      if (product.archived_at) {
-        await unarchiveProduct(product.id);
-        console.warn('Produit restauré:', product.name);
-        if (tabs.activeTab === 'archived') {
-          const result = await loadArchivedProductsRef.current(
-            filtersRef.current
-          );
-          tabs.setArchivedProducts(result.products);
-        }
-      } else {
-        await archiveProduct(product.id);
-        console.warn('Produit archivé:', product.name);
-        if (tabs.activeTab === 'incomplete') {
-          tabs.setIncompleteProducts(prev =>
-            prev.filter(p => p.id !== product.id)
-          );
-        }
-        if (tabs.activeTab === 'archived') {
-          const result = await loadArchivedProductsRef.current(
-            filtersRef.current
-          );
-          tabs.setArchivedProducts(result.products);
-        }
-        toast.success('Produit archivé', {
-          description: `${product.name ?? 'Ce produit'} a été archivé.`,
-        });
-      }
-    } catch (error) {
-      console.error('Erreur archivage produit:', error);
-      toast.error("Impossible d'archiver le produit.");
-    }
-  };
+  // Retirer (motif) / Restaurer depuis la liste (BO-PRODUCTS-P8-001)
+  const handleArchiveProduct = createCatalogueArchiveHandler({
+    tabs,
+    archiveProduct,
+    unarchiveProduct,
+    loadArchivedProductsRef,
+    filtersRef,
+  });
 
   const handleDeleteProduct = async (product: Product) => {
     const confirmed = confirm(

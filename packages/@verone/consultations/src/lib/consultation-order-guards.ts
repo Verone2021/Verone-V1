@@ -16,6 +16,16 @@ interface OrderGuardable {
   status: string;
   is_free: boolean;
   unit_price: number | null;
+  /** Produit de la ligne : retiré si archived_at est rempli (BO-PRODUCTS-P8-001) */
+  product?: { archived_at?: string | null } | null;
+}
+
+/**
+ * Décision D5 (audit sourcing 12/09) : une ligne dont le produit est retiré garde
+ * un badge « Retiré », n'est ni commandable ni facturable, et sort du PDF client.
+ */
+export function isWithdrawnItem(item: OrderGuardable): boolean {
+  return Boolean(item.product?.archived_at);
 }
 
 // ---------------------------------------------------------------------------
@@ -32,7 +42,10 @@ export function filterBillableItems<T extends OrderGuardable>(
 ): (T & { unit_price: number })[] {
   return items.filter(
     (item): item is T & { unit_price: number } =>
-      item.status !== 'rejected' && !item.is_free && item.unit_price !== null
+      item.status !== 'rejected' &&
+      !isWithdrawnItem(item) &&
+      !item.is_free &&
+      item.unit_price !== null
   );
 }
 
@@ -44,8 +57,20 @@ export function filterBillableItems<T extends OrderGuardable>(
 export function countUnpricedLines(items: OrderGuardable[]): number {
   return items.filter(
     item =>
-      item.status !== 'rejected' && !item.is_free && item.unit_price === null
+      item.status !== 'rejected' &&
+      !isWithdrawnItem(item) &&
+      !item.is_free &&
+      item.unit_price === null
   ).length;
+}
+
+/** Lignes montrées au client (PDF client) : ni refusées ni retirées. */
+export function filterClientVisibleItems<T extends OrderGuardable>(
+  items: T[]
+): T[] {
+  return items.filter(
+    item => item.status !== 'rejected' && !isWithdrawnItem(item)
+  );
 }
 
 /**

@@ -45,19 +45,21 @@ export async function updateProduct(
   return data as Product;
 }
 
+// Retirer / Restaurer passent par la fonction unique du cycle de vie
+// (BO-PRODUCTS-P8-001) : motif obligatoire, journal écrit, product_status
+// inchangé — la restauration remet exactement le produit.
 export async function archiveProduct(
   id: string,
+  reason: string,
   onRemove: (id: string) => void
 ): Promise<boolean> {
-  const { error } = await supabase
-    .from('products')
-    .update({
-      product_status: 'discontinued',
-      archived_at: new Date().toISOString(),
-    })
-    .eq('id', id);
+  const { error } = await supabase.rpc('apply_product_lifecycle_action', {
+    p_product_id: id,
+    p_action: 'withdraw',
+    p_reason: reason,
+  });
 
-  if (error) throw error;
+  if (error) throw new Error(error.message);
 
   onRemove(id);
   return true;
@@ -67,12 +69,12 @@ export async function unarchiveProduct(
   id: string,
   onRefresh: () => Promise<void>
 ): Promise<boolean> {
-  const { error } = await supabase
-    .from('products')
-    .update({ archived_at: null })
-    .eq('id', id);
+  const { error } = await supabase.rpc('apply_product_lifecycle_action', {
+    p_product_id: id,
+    p_action: 'restore',
+  });
 
-  if (error) throw error;
+  if (error) throw new Error(error.message);
 
   await onRefresh();
   return true;

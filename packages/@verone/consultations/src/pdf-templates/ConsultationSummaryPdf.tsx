@@ -15,7 +15,7 @@ import { s } from './consultation-summary-pdf-styles';
 import type { ClientConsultation } from '../hooks/use-consultations';
 import type { ConsultationItem } from '../hooks/use-consultations';
 import type { ConsultationImage } from '../hooks/use-consultation-images';
-import { filterActiveItems } from '../lib/consultation-order-guards';
+import { filterClientVisibleItems } from '../lib/consultation-order-guards';
 import { computeConsultationEconomics } from '../lib/consultation-economics';
 
 // ── Client info shape (mirror of resolveClientInfo) ──────────────────
@@ -76,7 +76,8 @@ export function ConsultationSummaryPdf({
   const proposalRef = `PROP-${consultation.id.slice(0, 8).toUpperCase()}`;
   const productBase64 = preloadedImages?.productImages ?? {};
   // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du PDF client
-  const activeItems = filterActiveItems(items);
+  // Décision D5 (BO-PRODUCTS-P8-001) : lignes de produits retirés exclues aussi
+  const activeItems = filterClientVisibleItems(items);
   // Total HT via totals.billed (décision 5 BO-CONSULT-P2-001 — source unique)
   const { lines: econLines, totals: economics } = computeConsultationEconomics(
     activeItems
