@@ -15213,6 +15213,14 @@ export type Database = {
         };
         Returns: Json;
       };
+      product_is_sellable: {
+        Args: {
+          p_archived_at: string;
+          p_creation_mode: string;
+          p_status: Database['public']['Enums']['product_status_type'];
+        };
+        Returns: boolean;
+      };
       recalculate_forecasted_stock: {
         Args: { p_product_id: string };
         Returns: undefined;
