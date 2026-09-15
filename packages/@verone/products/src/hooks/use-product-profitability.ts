@@ -24,20 +24,6 @@ interface PurchaseItem {
   };
 }
 
-interface SaleItem {
-  quantity: number;
-  unit_price_ht: number;
-  total_ht: number | null;
-  discount_percentage: number;
-  sales_order: {
-    id: string;
-    order_number: string;
-    created_at: string;
-    status: string;
-    customer_type: string;
-  };
-}
-
 export interface PurchaseRow {
   date: string | null;
   orderId: string;
@@ -49,38 +35,14 @@ export interface PurchaseRow {
   totalHt: number;
 }
 
-export interface SaleRow {
-  date: string;
-  orderId: string;
-  orderNumber: string;
-  customerType: string;
-  quantity: number;
-  unitPriceHt: number;
-  costNetAvg: number | null;
-  marginUnit: number | null;
-  marginPercent: number | null;
-  totalHt: number;
-}
-
 export interface ProfitabilityKpis {
   totalPurchasedQty: number;
-  totalSoldQty: number;
-  grossMargin: number | null;
   stockValue: number | null;
-}
-
-export interface ProfitabilitySummary {
-  totalGrossMargin: number | null;
-  avgMarginPerUnit: number | null;
-  avgMarginPercent: number | null;
-  totalRevenueHt: number;
 }
 
 export interface UseProductProfitabilityReturn {
   purchases: PurchaseRow[];
-  sales: SaleRow[];
   kpis: ProfitabilityKpis;
-  summary: ProfitabilitySummary;
   loading: boolean;
   error: string | null;
   refetch: () => void;
@@ -93,7 +55,6 @@ const PURCHASE_STATUSES = [
   'partially_received',
   'received',
 ] as const;
-const SALE_STATUSES = ['shipped', 'delivered', 'closed'] as const;
 
 // ---------- Hook ----------
 
@@ -103,7 +64,6 @@ export function useProductProfitability(
   stockReal: number | null
 ): UseProductProfitabilityReturn {
   const [purchases, setPurchases] = useState<PurchaseRow[]>([]);
-  const [sales, setSales] = useState<SaleRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -115,7 +75,6 @@ export function useProductProfitability(
     try {
       const supabase = createClient();
 
-      // --- Fetch purchases ---
       const { data: purchaseData, error: purchaseError } = await supabase
         .from('purchase_order_items')
         .select(
@@ -135,26 +94,6 @@ export function useProductProfitability(
         );
       }
 
-      // --- Fetch sales ---
-      const { data: salesData, error: salesError } = await supabase
-        .from('sales_order_items')
-        .select(
-          `quantity, unit_price_ht, total_ht, discount_percentage,
-          sales_order:sales_orders!inner(
-            id, order_number, created_at, status, customer_type
-          )`
-        )
-        .eq('product_id', productId)
-        .in('sales_orders.status', [...SALE_STATUSES]);
-
-      if (salesError) {
-        console.error(
-          '[useProductProfitability] Sales fetch error:',
-          salesError
-        );
-      }
-
-      // --- Transform purchases ---
       const purchaseRows: PurchaseRow[] = (
         (purchaseData ?? []) as unknown as PurchaseItem[]
       )
@@ -178,36 +117,7 @@ export function useProductProfitability(
           return new Date(b.date).getTime() - new Date(a.date).getTime();
         });
 
-      // --- Transform sales ---
-      const saleRows: SaleRow[] = ((salesData ?? []) as unknown as SaleItem[])
-        .filter(s => s.sales_order)
-        .map(s => {
-          const unitPrice = Number(s.unit_price_ht);
-          const marginUnit = costNetAvg != null ? unitPrice - costNetAvg : null;
-          const marginPercent =
-            marginUnit != null && unitPrice > 0
-              ? (marginUnit / unitPrice) * 100
-              : null;
-
-          return {
-            date: s.sales_order.created_at,
-            orderId: s.sales_order.id,
-            orderNumber: s.sales_order.order_number,
-            customerType: s.sales_order.customer_type,
-            quantity: s.quantity,
-            unitPriceHt: unitPrice,
-            costNetAvg,
-            marginUnit,
-            marginPercent,
-            totalHt: Number(s.total_ht ?? s.quantity * unitPrice),
-          };
-        })
-        .sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-
       setPurchases(purchaseRows);
-      setSales(saleRows);
     } catch (err) {
       const msg =
         err instanceof Error ? err.message : 'Erreur chargement rentabilité';
@@ -216,7 +126,7 @@ export function useProductProfitability(
     } finally {
       setLoading(false);
     }
-  }, [productId, costNetAvg]);
+  }, [productId]);
 
   useEffect(() => {
     void fetchData().catch((err: unknown) => {
@@ -224,46 +134,12 @@ export function useProductProfitability(
     });
   }, [fetchData]);
 
-  // --- Computed KPIs ---
   const kpis = useMemo((): ProfitabilityKpis => {
     const totalPurchasedQty = purchases.reduce((s, p) => s + p.quantity, 0);
-    const totalSoldQty = sales.reduce((s, r) => s + r.quantity, 0);
-
-    const totalRevenueHt = sales.reduce((s, r) => s + r.totalHt, 0);
-    const totalCostSold = costNetAvg != null ? totalSoldQty * costNetAvg : null;
-    const grossMargin =
-      totalCostSold != null ? totalRevenueHt - totalCostSold : null;
-
     const stockValue =
       stockReal != null && costNetAvg != null ? stockReal * costNetAvg : null;
-
-    return { totalPurchasedQty, totalSoldQty, grossMargin, stockValue };
-  }, [purchases, sales, costNetAvg, stockReal]);
-
-  // --- Computed summary ---
-  const summary = useMemo((): ProfitabilitySummary => {
-    const totalRevenueHt = sales.reduce((s, r) => s + r.totalHt, 0);
-    const totalSoldQty = sales.reduce((s, r) => s + r.quantity, 0);
-
-    const totalCostSold = costNetAvg != null ? totalSoldQty * costNetAvg : null;
-    const totalGrossMargin =
-      totalCostSold != null ? totalRevenueHt - totalCostSold : null;
-    const avgMarginPerUnit =
-      totalGrossMargin != null && totalSoldQty > 0
-        ? totalGrossMargin / totalSoldQty
-        : null;
-    const avgMarginPercent =
-      totalGrossMargin != null && totalRevenueHt > 0
-        ? (totalGrossMargin / totalRevenueHt) * 100
-        : null;
-
-    return {
-      totalGrossMargin,
-      avgMarginPerUnit,
-      avgMarginPercent,
-      totalRevenueHt,
-    };
-  }, [sales, costNetAvg]);
+    return { totalPurchasedQty, stockValue };
+  }, [purchases, costNetAvg, stockReal]);
 
   const refetch = useCallback(() => {
     void fetchData().catch((err: unknown) => {
@@ -271,5 +147,5 @@ export function useProductProfitability(
     });
   }, [fetchData]);
 
-  return { purchases, sales, kpis, summary, loading, error, refetch };
+  return { purchases, kpis, loading, error, refetch };
 }

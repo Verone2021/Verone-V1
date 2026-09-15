@@ -9,8 +9,6 @@ import {
   CardContent,
   Button,
   Skeleton,
-  Input,
-  Label,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -25,11 +23,12 @@ import {
   AlertCircle,
   Users,
   UserPlus,
-  Save,
   AlertTriangle,
   Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+import { LinkMeNetMarginCard } from '@verone/products';
 
 import {
   ProductDetailHeader,
@@ -37,13 +36,13 @@ import {
   ProductInfoCard,
   ProductVariantsCard,
   ProductSelectionsCard,
+  AffiliateCommissionCard,
 } from '../../components';
 import {
   useLinkMeProductDetail,
   useUpdateLinkMePricing,
   useToggleLinkMeProductField,
   useLinkMeProductVariants,
-  useUpdateAffiliateCommission,
   useProductSelections,
   usePropagatePrice,
   useDeleteLinkMeCatalogProduct,
@@ -79,15 +78,10 @@ export default function LinkMeProductDetailPage(): React.JSX.Element {
   const updatePricing = useUpdateLinkMePricing();
   const propagatePrice = usePropagatePrice();
   const toggleField = useToggleLinkMeProductField();
-  const updateAffiliateCommission = useUpdateAffiliateCommission();
   const updateSelectionItem = useUpdateSelectionItem();
   const deleteCatalogProduct = useDeleteLinkMeCatalogProduct();
 
-  // État local pour la commission affilié
-  const [editedCommission, setEditedCommission] = useState<number | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const currentCommission =
-    editedCommission ?? product?.affiliate_commission_rate ?? 0;
 
   // Handlers
   const handleToggle = async (
@@ -114,20 +108,6 @@ export default function LinkMeProductDetailPage(): React.JSX.Element {
       toast.success('Pricing enregistré');
     } catch {
       toast.error('Erreur lors de la sauvegarde du pricing');
-    }
-  };
-
-  const handleSaveAffiliateCommission = async (): Promise<void> => {
-    if (!product?.product_id || editedCommission === null) return;
-    try {
-      await updateAffiliateCommission.mutateAsync({
-        productId: product.product_id,
-        commissionRate: editedCommission,
-      });
-      toast.success('Commission affilié mise à jour');
-      setEditedCommission(null); // Reset l'état local
-    } catch {
-      toast.error('Erreur lors de la mise à jour de la commission');
     }
   };
 
@@ -278,69 +258,10 @@ export default function LinkMeProductDetailPage(): React.JSX.Element {
 
         {/* Colonne droite : Pricing OU Commission affilié */}
         {product.created_by_affiliate ? (
-          // Carte Commission Affilié
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              <div className="flex items-center gap-2">
-                <UserPlus className="h-5 w-5 text-violet-600" />
-                <h3 className="font-semibold text-lg">Commission Vérone</h3>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-4">
-                  <Label className="text-sm font-medium text-gray-700">
-                    Taux (%)
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      value={currentCommission}
-                      onChange={e =>
-                        setEditedCommission(Number(e.target.value))
-                      }
-                      min={0}
-                      max={100}
-                      step={0.5}
-                      className="w-24"
-                    />
-                    {editedCommission !== null &&
-                      editedCommission !==
-                        product.affiliate_commission_rate && (
-                        <Button
-                          size="sm"
-                          onClick={(): void =>
-                            void handleSaveAffiliateCommission()
-                          }
-                          disabled={updateAffiliateCommission.isPending}
-                        >
-                          <Save className="h-4 w-4 mr-1" />
-                          Enregistrer
-                        </Button>
-                      )}
-                  </div>
-                </div>
-
-                {/* Simulateur de commission */}
-                <div className="text-sm text-gray-600 bg-gray-50 rounded p-3">
-                  <p className="font-medium mb-2">Simulation pour 1000€ HT :</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <span className="text-gray-500">Commission Vérone :</span>
-                      <span className="font-semibold text-violet-600 ml-2">
-                        {((1000 * currentCommission) / 100).toFixed(2)}€
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Payout Affilié :</span>
-                      <span className="font-semibold text-green-600 ml-2">
-                        {(1000 * (1 - currentCommission / 100)).toFixed(2)}€
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <AffiliateCommissionCard
+            productId={product.product_id}
+            affiliateCommissionRate={product.affiliate_commission_rate ?? null}
+          />
         ) : (
           <ProductPricingCard
             product={product}
@@ -370,7 +291,10 @@ export default function LinkMeProductDetailPage(): React.JSX.Element {
         }}
       />
 
-      {/* Section 4 : Variantes - Masqué pour produits affiliés */}
+      {/* Section 4 : Rentabilité LinkMe */}
+      <LinkMeNetMarginCard productId={product.product_id} />
+
+      {/* Section 5 : Variantes - Masqué pour produits affiliés */}
       {!product.created_by_affiliate && (
         <ProductVariantsCard
           variants={variants ?? []}

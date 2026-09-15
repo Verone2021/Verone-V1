@@ -9,7 +9,6 @@ export * from './components/buttons';
 export * from './components/panels';
 export * from './components/modals';
 export * from './components/badges';
-export * from './components/validation';
 export * from './components/inputs';
 export * from './components/selectors';
 export * from './components/utils';

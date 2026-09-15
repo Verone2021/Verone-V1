@@ -52,7 +52,7 @@ export function CatalogueToolbar({
   onFiltersChange,
 }: CatalogueToolbarProps) {
   return (
-    <div className="flex items-start gap-4">
+    <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-4">
       <CatalogueFilterPanel
         families={families}
         categories={allCategories}
@@ -74,7 +74,7 @@ export function CatalogueToolbar({
         className="flex-1"
       />
 
-      <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-black opacity-50" />
           <input
@@ -83,7 +83,7 @@ export function CatalogueToolbar({
             value={searchInput}
             onChange={onSearchChange}
             className={cn(
-              'w-72 border border-black bg-white py-2 pl-10 text-sm text-black placeholder:text-black placeholder:opacity-50 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2',
+              'w-full md:w-72 border border-black bg-white py-2 pl-10 text-sm text-black placeholder:text-black placeholder:opacity-50 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2',
               searchInput ? 'pr-8' : 'pr-3'
             )}
           />

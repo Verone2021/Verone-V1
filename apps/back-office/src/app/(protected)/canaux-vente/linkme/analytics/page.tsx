@@ -42,14 +42,19 @@ import {
   ALL_YEARS_VALUE,
   type AnalyticsFilters,
 } from '../components/AnalyticsDateFilter';
+import { VeroneNetMarginCard } from '../components/VeroneNetMarginCard';
 import { useLinkMeAnalytics } from '../hooks/use-linkme-analytics';
 
 // ============================================================================
 // Config
 // ============================================================================
 
-// Années disponibles (depuis première commande LinkMe: février 2024)
-const AVAILABLE_YEARS = [2024, 2025];
+// Années disponibles depuis la première commande LinkMe (février 2024) jusqu'à l'année en cours
+const CURRENT_YEAR = new Date().getFullYear();
+const AVAILABLE_YEARS = Array.from(
+  { length: CURRENT_YEAR - 2023 },
+  (_, i) => 2024 + i
+);
 
 // ============================================================================
 // Helpers
@@ -310,6 +315,12 @@ export default function LinkMeAnalyticsPage() {
             isLoading={isLoading}
           />
         </div>
+
+        {/* Marge nette Vérone */}
+        <VeroneNetMarginCard
+          from={dateRange.startDate}
+          to={dateRange.endDate}
+        />
 
         {/* Charts Row */}
         <div className="grid grid-cols-2 gap-6">

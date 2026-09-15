@@ -67,14 +67,14 @@ export function StockAlertBanner({
       <div className="shrink-0">
         {draftOrderId ? (
           <Link
-            href={`/produits/sourcing/commandes/${draftOrderId}`}
+            href={`/commandes/fournisseurs?id=${draftOrderId}`}
             className="text-xs font-medium text-red-700 hover:text-red-800 underline whitespace-nowrap"
           >
             Voir PO brouillon {draftOrderNumber} →
           </Link>
         ) : (
           <Link
-            href={`/produits/sourcing/nouveau`}
+            href="/commandes/fournisseurs"
             className="text-xs font-medium text-red-700 hover:text-red-800 underline whitespace-nowrap"
           >
             Commander au fournisseur →

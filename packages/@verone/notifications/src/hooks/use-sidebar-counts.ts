@@ -22,8 +22,6 @@ import { createClient } from '@verone/utils/supabase/client';
 
 import { useDebouncedInvalidate } from './use-debounce-invalidate';
 
-const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
-
 /**
  * Clé de cache TanStack Query pour les compteurs sidebar.
  * Alias de `MENU_COUNT_QUERY_KEYS.sidebar` : les mutations métier passent par
@@ -75,20 +73,23 @@ const ZERO_COUNTS: RawCounts = {
   linkmeMissingInfo: 0,
 };
 
-const getCount = (
-  result:
-    | { count: number | null; error: unknown }
-    | { data: unknown; error: unknown }
-): number => {
-  if (result.error) return 0;
-  if ('count' in result) return result.count ?? 0;
-  if ('data' in result && typeof result.data === 'number') return result.data;
+const COUNT_KEYS = Object.keys(ZERO_COUNTS) as Array<keyof RawCounts>;
+
+/** Lit un compteur du JSON renvoyé par la base (nombre ou chaîne numérique). */
+function readCount(source: Record<string, unknown>, key: string): number {
+  const value = source[key];
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
   return 0;
-};
+}
 
 /**
- * Récupère les 11 compteurs sidebar en un seul batch parallèle.
- * Séparé pour pouvoir être appelé dans queryFn sans dépendance de hook.
+ * Récupère les 11 compteurs sidebar en UNE requête : fonction SQL
+ * `get_sidebar_counts()` (mêmes filtres que les 11 comptages d'origine,
+ * vérifiés identiques le 2026-09-15). Avant : 11 requêtes HTTP par rafraîchissement.
  */
 async function fetchAllCounts(
   supabase: ReturnType<typeof createClient>
@@ -98,143 +99,21 @@ async function fetchAllCounts(
   } = await supabase.auth.getUser();
   if (!user) return { ...ZERO_COUNTS };
 
-  const [
-    stockAlertsResult,
-    consultationsResult,
-    linkmeP,
-    productsResult,
-    sourcingResult,
-    ordersResult,
-    expeditionsResult,
-    transactionsResult,
-    linkmeApprovalsResult,
-    formSubmissionsResult,
-    linkmeMissingInfoResult,
-  ] = await Promise.all([
-    // 1. Stock alerts via RPC
-    supabase.rpc('get_stock_alerts_count'),
-    // 2. Consultations actives
-    supabase
-      .from('client_consultations')
-      .select('id', { count: 'exact', head: true })
-      .in('status', ['en_attente', 'en_cours'])
-      .is('archived_at', null)
-      .is('deleted_at', null),
-    // 3. Commandes LinkMe actionnables
-    supabase
-      .from('linkme_orders_enriched' as 'sales_orders')
-      .select('id', { count: 'exact', head: true })
-      .in('status', ['draft', 'validated']),
-    // 4. Produits incomplets
-    supabase
-      .from('products')
-      .select('id', { count: 'exact', head: true })
-      .eq('product_status', 'active')
-      .or('description.is.null,description.eq.'),
-    // 5. Produits en sourcing
-    supabase
-      .from('products')
-      .select('id', { count: 'exact', head: true })
-      .eq('creation_mode', 'sourcing')
-      .is('archived_at', null)
-      // « En cours » de la liste sourcing (statut vide compris) : même règle que
-      // segmentQuery('in_progress') de @verone/products/utils (sourcing-stage.ts),
-      // recopiée ici car ce package ne dépend pas de @verone/products.
-      .or(
-        'sourcing_status.is.null,sourcing_status.in.(need_identified,supplier_search,initial_contact,evaluation,negotiation,sample_requested,sample_received,sample_approved,order_placed,received)'
-      ),
-    // 6. Commandes en attente (draft)
-    supabase
-      .from('sales_orders')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'draft'),
-    // 7. Expéditions en attente
-    supabase
-      .from('sales_orders')
-      .select('id', { count: 'exact', head: true })
-      .in('status', ['validated', 'partially_shipped']),
-    // 8. Transactions non rapprochées
-    supabase
-      .from('bank_transactions')
-      .select('id', { count: 'exact', head: true })
-      .eq('matching_status', 'unmatched'),
-    // 9. Approbations LinkMe
-    supabase
-      .from('sales_orders')
-      .select('id', { count: 'exact', head: true })
-      .eq('channel_id', LINKME_CHANNEL_ID)
-      .eq('status', 'draft'),
-    // 10. Formulaires non traités
-    supabase
-      .from('form_submissions')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'new'),
-    // 11. Demandes info LinkMe en attente
-    supabase
-      .from('linkme_info_requests')
-      .select('id', { count: 'exact', head: true })
-      .not('sent_at', 'is', null)
-      .is('completed_at', null)
-      .is('cancelled_at', null)
-      .gt('token_expires_at', new Date().toISOString()),
-  ]);
+  const { data, error } = await supabase.rpc('get_sidebar_counts');
+  if (error) {
+    console.error('[useSidebarCounts] get_sidebar_counts:', error);
+    throw error;
+  }
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    return { ...ZERO_COUNTS };
+  }
 
-  if (stockAlertsResult.error)
-    console.error('[useSidebarCounts] stockAlerts:', stockAlertsResult.error);
-  if (consultationsResult.error)
-    console.error(
-      '[useSidebarCounts] consultations:',
-      consultationsResult.error
-    );
-  if (linkmeP.error)
-    console.error('[useSidebarCounts] linkmePending:', linkmeP.error);
-  if (productsResult.error)
-    console.error(
-      '[useSidebarCounts] productsIncomplete:',
-      productsResult.error
-    );
-  if (sourcingResult.error)
-    console.error('[useSidebarCounts] sourcingProducts:', sourcingResult.error);
-  if (ordersResult.error)
-    console.error('[useSidebarCounts] ordersPending:', ordersResult.error);
-  if (expeditionsResult.error)
-    console.error(
-      '[useSidebarCounts] expeditionsPending:',
-      expeditionsResult.error
-    );
-  if (transactionsResult.error)
-    console.error('[useSidebarCounts] transactions:', transactionsResult.error);
-  if (linkmeApprovalsResult.error)
-    console.error(
-      '[useSidebarCounts] linkmeApprovals:',
-      linkmeApprovalsResult.error
-    );
-  if (formSubmissionsResult.error)
-    console.error(
-      '[useSidebarCounts] formSubmissions:',
-      formSubmissionsResult.error
-    );
-  if (linkmeMissingInfoResult.error)
-    console.error(
-      '[useSidebarCounts] linkmeMissingInfo:',
-      linkmeMissingInfoResult.error
-    );
-
-  return {
-    stockAlerts: stockAlertsResult.error
-      ? 0
-      : ((stockAlertsResult.data as number | null) ?? 0),
-    consultations: getCount(consultationsResult),
-    linkmePending: getCount(linkmeP),
-    productsIncomplete: getCount(productsResult),
-    sourcingProducts: getCount(sourcingResult),
-    ordersPending: getCount(ordersResult),
-    expeditionsPending: getCount(expeditionsResult),
-    transactionsUnreconciled: getCount(transactionsResult),
-    linkmeApprovals: getCount(linkmeApprovalsResult),
-    formSubmissions: getCount(formSubmissionsResult),
-    linkmeMissingInfo: getCount(linkmeMissingInfoResult),
-  };
+  const source = data as Record<string, unknown>;
+  const counts = { ...ZERO_COUNTS };
+  for (const key of COUNT_KEYS) {
+    counts[key] = readCount(source, key);
+  }
+  return counts;
 }
 
 /**
@@ -262,6 +141,10 @@ export function useSidebarCounts(_options?: {
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: true,
     refetchInterval: false,
+    // Une seule relance espacée : quand la base est lente, les relances en rafale
+    // aggravent la charge (épisode du 15/09 12:50 → 13:10 UTC).
+    retry: 1,
+    retryDelay: attempt => Math.min(30_000, 5_000 * 2 ** attempt),
   });
 
   const triggerInvalidate = useDebouncedInvalidate(SIDEBAR_COUNTS_QUERY_KEY);

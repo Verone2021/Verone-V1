@@ -24,7 +24,7 @@ interface AuthWrapperProps {
 }
 
 // Pages publiques qui n'utilisent pas le layout authentifié
-const PUBLIC_PAGES = ['/', '/login', '/unauthorized'];
+const PUBLIC_PAGES = ['/', '/login', '/unauthorized', '/module-inactive'];
 
 export function AuthWrapper({ children }: AuthWrapperProps) {
   const pathname = usePathname();
@@ -60,8 +60,20 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     return () => subscription.unsubscribe();
   }, [supabase]); // ✅ FIX: supabase singleton stable (supabase.auth = objet instable)
 
-  // Pendant le chargement, affichage minimal
-  if (isLoading) {
+  const isPublicPage = PUBLIC_PAGES.includes(pathname);
+  // Session connue et absente sur une page protégée : ne jamais rendre la page.
+  // Sinon le routeur Next suspend sur la redirection serveur et React lève #310.
+  const mustRedirect = !isLoading && !user && !isPublicPage;
+
+  useEffect(() => {
+    if (mustRedirect) {
+      // Navigation complète (pas router.push) : évite la suspension du routeur Next
+      window.location.replace('/login');
+    }
+  }, [mustRedirect]);
+
+  // Pendant le chargement ou la redirection, affichage minimal
+  if (isLoading || mustRedirect) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="font-logo text-2xl font-light tracking-wider text-black">
@@ -71,11 +83,7 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     );
   }
 
-  // Page publique OU utilisateur non authentifié
-  const isPublicPage = PUBLIC_PAGES.includes(pathname);
-  const shouldUsePublicLayout = isPublicPage || !user;
-
-  if (shouldUsePublicLayout) {
+  if (isPublicPage) {
     return <PublicLayout>{children}</PublicLayout>;
   }
 
@@ -86,11 +94,15 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
       {/* Sidebar fixe */}
       <AppSidebar />
 
-      {/* Contenu principal avec scroll localisé */}
-      <div className="flex flex-1 flex-col min-h-0">
+      {/* Contenu principal avec scroll localisé.
+          min-w-0 : sans lui, la colonne flex prend la largeur de son contenu le plus large
+          (onglets, en-têtes) et la page défile horizontalement sur téléphone. */}
+      <div className="flex min-w-0 flex-1 flex-col min-h-0">
         <AppHeader />
         <ChannelTabs />
-        <main className="relative flex-1 overflow-auto p-6">{children}</main>
+        <main className="relative flex-1 overflow-auto p-4 md:p-6">
+          {children}
+        </main>
       </div>
     </SidebarProvider>
   );

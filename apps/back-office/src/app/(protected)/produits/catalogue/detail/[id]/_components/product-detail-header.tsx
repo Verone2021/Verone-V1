@@ -94,116 +94,131 @@ export function ProductDetailHeader({
   return (
     <div className="bg-white border-b border-neutral-200 sticky top-0 z-10">
       <div className="max-w-[1800px] mx-auto px-4 py-3">
-        <div className="flex items-center gap-4">
-          {/* Thumbnail clickable */}
-          <button
-            onClick={onImageClick}
-            className="relative h-[100px] w-[100px] flex-shrink-0 rounded-lg overflow-hidden border border-neutral-200 hover:border-neutral-400 transition-colors bg-neutral-50"
-          >
-            {primaryImageUrl ? (
-              <Image
-                src={primaryImageUrl}
-                alt={product.name}
-                fill
-                className="object-cover"
-                sizes="100px"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full w-full text-neutral-400">
-                <Package className="h-8 w-8" />
-              </div>
-            )}
-          </button>
-
-          {/* Info section */}
-          <div className="flex-1 min-w-0">
-            {/* Top row: Back + Breadcrumb */}
-            <div className="flex items-center gap-2 mb-1">
-              <ButtonUnified
-                variant="outline"
-                size="sm"
-                onClick={onBack}
-                icon={ArrowLeft}
-                iconPosition="left"
-              >
-                Retour
-              </ButtonUnified>
-              <div className="h-4 w-px bg-neutral-200" />
-              <nav className="text-xs text-neutral-500 truncate">
-                {breadcrumbParts.join(' › ')}
-              </nav>
-            </div>
-
-            {/* Product name + badges */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-lg font-semibold text-neutral-900 truncate">
-                {product.name}
-              </h1>
-
-              {/* Status badge */}
-              {product.product_status && (
-                <Badge variant="outline" className="text-xs">
-                  {product.product_status}
-                </Badge>
-              )}
-
-              {/* Produit retiré (BO-PRODUCTS-P8-001) */}
-              {product.archived_at && (
-                <Badge className="bg-zinc-800 text-xs text-white">Retiré</Badge>
-              )}
-
-              {/* Sourcing badge */}
-              {sourcing.type === 'affiliate' ? (
-                <Badge
-                  variant="outline"
-                  className="flex items-center gap-1 bg-purple-50 border-purple-300 text-purple-700"
-                >
-                  <UserCircle2 className="h-3 w-3" />
-                  Produit affilié ({sourcing.affiliateName})
-                </Badge>
-              ) : sourcing.type === 'client' && sourcing.clientId ? (
-                <Link
-                  href={
-                    sourcing.clientType === 'enseigne'
-                      ? `/contacts-organisations/enseignes/${sourcing.clientId}`
-                      : `/contacts-organisations/customers/${sourcing.clientId}`
-                  }
-                >
-                  <Badge
-                    variant="customer"
-                    className="flex items-center gap-1 cursor-pointer hover:bg-purple-200 transition-colors"
-                  >
-                    <Building2 className="h-3 w-3" />
-                    Client: {sourcing.clientName}
-                  </Badge>
-                </Link>
-              ) : (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <Package className="h-3 w-3" />
-                  Sourcing interne
-                </Badge>
-              )}
-            </div>
-
-            {/* Completion bar */}
-            <div className="flex items-center gap-3 mt-2">
-              <div className="flex-1 max-w-xs h-2 bg-neutral-100 rounded-full overflow-hidden">
-                <div
-                  className={cn(
-                    'h-full rounded-full transition-all',
-                    completionColor
-                  )}
-                  style={{ width: `${completionPercentage}%` }}
+        {/* Mobile: column layout (thumbnail+info / actions).
+            Desktop (md+): single row (thumbnail | info | actions). */}
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
+          {/* — Row 1 on mobile: thumbnail + info — */}
+          <div className="flex items-center gap-3 md:contents">
+            {/* Thumbnail clickable */}
+            <button
+              onClick={onImageClick}
+              className="relative h-16 w-16 md:h-[100px] md:w-[100px] flex-shrink-0 rounded-lg overflow-hidden border border-neutral-200 hover:border-neutral-400 transition-colors bg-neutral-50"
+            >
+              {primaryImageUrl ? (
+                <Image
+                  src={primaryImageUrl}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                  sizes="100px"
                 />
+              ) : (
+                <div className="flex items-center justify-center h-full w-full text-neutral-400">
+                  <Package className="h-8 w-8" />
+                </div>
+              )}
+            </button>
+
+            {/* Info section */}
+            <div className="flex-1 min-w-0">
+              {/* Top row: Back + Breadcrumb */}
+              <div className="flex items-center gap-2 mb-1">
+                <ButtonUnified
+                  variant="outline"
+                  size="sm"
+                  onClick={onBack}
+                  icon={ArrowLeft}
+                  iconPosition="left"
+                >
+                  Retour
+                </ButtonUnified>
+                <div className="h-4 w-px bg-neutral-200" />
+                <nav className="text-xs text-neutral-500 truncate">
+                  {breadcrumbParts.join(' › ')}
+                </nav>
               </div>
-              <span className={cn('text-xs font-medium', completionTextColor)}>
-                {completionPercentage}%
-              </span>
+
+              {/* Product name + badges */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1
+                  className="text-lg font-semibold text-neutral-900 truncate"
+                  title={product.name}
+                >
+                  {product.name}
+                </h1>
+
+                {/* Status badge */}
+                {product.product_status && (
+                  <Badge variant="outline" className="text-xs">
+                    {product.product_status}
+                  </Badge>
+                )}
+
+                {/* Produit retiré (BO-PRODUCTS-P8-001) */}
+                {product.archived_at && (
+                  <Badge className="bg-zinc-800 text-xs text-white">
+                    Retiré
+                  </Badge>
+                )}
+
+                {/* Sourcing badge */}
+                {sourcing.type === 'affiliate' ? (
+                  <Badge
+                    variant="outline"
+                    className="flex items-center gap-1 bg-purple-50 border-purple-300 text-purple-700"
+                  >
+                    <UserCircle2 className="h-3 w-3" />
+                    Produit affilié ({sourcing.affiliateName})
+                  </Badge>
+                ) : sourcing.type === 'client' && sourcing.clientId ? (
+                  <Link
+                    href={
+                      sourcing.clientType === 'enseigne'
+                        ? `/contacts-organisations/enseignes/${sourcing.clientId}`
+                        : `/contacts-organisations/customers/${sourcing.clientId}`
+                    }
+                  >
+                    <Badge
+                      variant="customer"
+                      className="flex items-center gap-1 cursor-pointer hover:bg-purple-200 transition-colors"
+                    >
+                      <Building2 className="h-3 w-3" />
+                      Client: {sourcing.clientName}
+                    </Badge>
+                  </Link>
+                ) : (
+                  <Badge
+                    variant="secondary"
+                    className="flex items-center gap-1"
+                  >
+                    <Package className="h-3 w-3" />
+                    Sourcing interne
+                  </Badge>
+                )}
+              </div>
+
+              {/* Completion bar */}
+              <div className="flex items-center gap-3 mt-2">
+                <div className="flex-1 max-w-xs h-2 bg-neutral-100 rounded-full overflow-hidden">
+                  <div
+                    className={cn(
+                      'h-full rounded-full transition-all',
+                      completionColor
+                    )}
+                    style={{ width: `${completionPercentage}%` }}
+                  />
+                </div>
+                <span
+                  className={cn('text-xs font-medium', completionTextColor)}
+                >
+                  {completionPercentage}%
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          {/* — Row 2 on mobile / rightmost cell on desktop: action buttons — */}
+          <div className="flex items-center gap-2 flex-wrap md:flex-shrink-0">
             {extraActions}
             <ButtonUnified
               variant="outline"
@@ -214,6 +229,7 @@ export function ProductDetailHeader({
               icon={Copy}
               iconPosition="left"
               disabled={duplicating}
+              className="h-11 md:h-9"
             >
               {duplicating ? 'Duplication...' : 'Dupliquer'}
             </ButtonUnified>
@@ -223,6 +239,7 @@ export function ProductDetailHeader({
               onClick={onShare}
               icon={Share2}
               iconPosition="left"
+              className="h-11 md:h-9"
             >
               Partager
             </ButtonUnified>
