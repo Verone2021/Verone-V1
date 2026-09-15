@@ -1,0 +1,105 @@
+-- =====================================================================
+-- [BO-PRODUCTS-PROFIT-003] Suppression de deux fonctions de marge jamais utilisées
+-- =====================================================================
+-- Plan approuvé par Roméo le 15/09/2026 (bloc D, « fais tout le reste »).
+--
+-- get_product_margin_analysis(uuid, date, date) et get_product_cost_price_details(uuid) :
+--   - aucun appelant dans le code (apps, packages, scripts, tests) — seule trace : une copie morte de types ;
+--   - aucune fonction, vue ni tâche pg_cron qui les référence ; 0 dépendance (pg_depend) ;
+--   - 0 appel dans pg_stat_statements ;
+--   - déjà fermées à anon ET authenticated (lot 3 S1, 2026-09-12) ;
+--   - remplacées par la marge figée à la vente (sales_order_item_costs, get_linkme_verone_margin,
+--     calcul unique packages/@verone/products/src/utils/product-sales-margin.ts, BO-PRODUCTS-PROFIT-002).
+-- get_product_margin_analysis renvoyait des colonnes de marge calculées sur le dernier prix d'achat (sans frais)
+-- et des noms de clients vides : la garder entretiendrait un second calcul faux.
+--
+-- Application : essai annulé, puis execute_sql ; carnet ; types régénérés dans la même PR.
+-- =====================================================================
+
+BEGIN;
+
+SET LOCAL lock_timeout = '5s';
+
+DROP FUNCTION public.get_product_margin_analysis(uuid, date, date);
+DROP FUNCTION public.get_product_cost_price_details(uuid);
+
+COMMIT;
+
+-- ---------------------------------------------------------------------
+-- RETOUR ARRIÈRE (définitions exactes relevées en production le 15/09/2026, droits d'origine : aucun pour
+-- PUBLIC / anon / authenticated, service_role seulement) :
+-- ---------------------------------------------------------------------
+-- BEGIN;
+-- CREATE OR REPLACE FUNCTION public.get_product_cost_price_details(p_product_id uuid)
+--  RETURNS json
+--  LANGUAGE plpgsql
+--  SECURITY DEFINER
+--  SET search_path TO 'public'
+-- AS $function$
+-- DECLARE v_result JSON;
+-- BEGIN
+--   IF (SELECT auth.uid()) IS NULL THEN RAISE EXCEPTION 'Utilisateur non authentifié'; END IF;
+--   SELECT json_build_object('product_id', p.id, 'sku', p.sku, 'name', p.name, 'cost_price_avg', p.cost_price_avg, 'cost_price_min', p.cost_price_min, 'cost_price_max', p.cost_price_max, 'cost_price_last', p.cost_price_last, 'cost_price_count', p.cost_price_count, 'purchase_history', (SELECT COALESCE(json_agg(json_build_object('purchased_at', pph.purchased_at, 'unit_price_ht', pph.unit_price_ht, 'quantity', pph.quantity, 'purchase_order_number', po.po_number) ORDER BY pph.purchased_at DESC), '[]'::json) FROM product_purchase_history pph JOIN purchase_orders po ON pph.purchase_order_id = po.id WHERE pph.product_id = p.id)) INTO v_result FROM products p WHERE p.id = p_product_id;
+--   RETURN v_result;
+-- END;
+-- $function$;
+--
+-- CREATE OR REPLACE FUNCTION public.get_product_margin_analysis(p_product_id uuid, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT CURRENT_DATE)
+--  RETURNS TABLE(order_date date, order_type character varying, order_reference character varying, quantity integer, unit_price_ht numeric, total_ht numeric, customer_name text, supplier_name text, channel_code character varying, margin_ht numeric, margin_percentage numeric)
+--  LANGUAGE plpgsql
+--  STABLE SECURITY DEFINER
+--  SET search_path TO 'public'
+-- AS $function$
+-- BEGIN
+--   RETURN QUERY
+--   WITH sales_data AS (
+--     SELECT so.order_date::DATE AS order_date, 'sale'::VARCHAR(20) AS order_type, so.order_number AS order_reference,
+--       soi.quantity, soi.unit_price_ht, soi.total_ht,
+--       COALESCE(o.legal_name, ic.first_name || ' ' || ic.last_name) AS customer_name,
+--       NULL::TEXT AS supplier_name, sc.code AS channel_code, NULL::NUMERIC(10,2) AS margin_ht, NULL::NUMERIC(6,2) AS margin_percentage
+--     FROM sales_order_items soi
+--     JOIN sales_orders so ON so.id = soi.sales_order_id
+--     LEFT JOIN organisations o ON o.id = so.customer_id AND so.customer_type = 'organization'
+--     LEFT JOIN individual_customers ic ON ic.id = so.customer_id AND so.customer_type = 'individual'
+--     LEFT JOIN sales_channels sc ON sc.id = so.channel_id
+--     WHERE soi.product_id = p_product_id
+--       AND (p_start_date IS NULL OR so.order_date >= p_start_date)
+--       AND so.order_date <= p_end_date
+--   ),
+--   purchase_data AS (
+--     SELECT po.order_date::DATE AS order_date, 'purchase'::VARCHAR(20) AS order_type, po.po_number AS order_reference,
+--       poi.quantity, poi.unit_price_ht, poi.quantity * poi.unit_price_ht AS total_ht,
+--       NULL::TEXT AS customer_name, o.legal_name AS supplier_name, NULL::VARCHAR(50) AS channel_code,
+--       NULL::NUMERIC(10,2) AS margin_ht, NULL::NUMERIC(6,2) AS margin_percentage
+--     FROM purchase_order_items poi
+--     JOIN purchase_orders po ON po.id = poi.purchase_order_id
+--     LEFT JOIN organisations o ON o.id = po.supplier_id
+--     WHERE poi.product_id = p_product_id
+--       AND (p_start_date IS NULL OR po.order_date >= p_start_date)
+--       AND po.order_date <= p_end_date
+--   ),
+--   combined AS (SELECT * FROM sales_data UNION ALL SELECT * FROM purchase_data)
+--   SELECT c.order_date, c.order_type, c.order_reference, c.quantity, c.unit_price_ht, c.total_ht,
+--     c.customer_name, c.supplier_name, c.channel_code,
+--     CASE WHEN c.order_type = 'sale' THEN
+--       c.unit_price_ht - COALESCE((SELECT poi.unit_price_ht FROM purchase_order_items poi
+--         JOIN purchase_orders po ON po.id = poi.purchase_order_id
+--         WHERE poi.product_id = p_product_id AND po.order_date <= c.order_date AND po.status IN ('received', 'completed')
+--         ORDER BY po.order_date DESC LIMIT 1), 0)
+--     ELSE NULL END AS margin_ht,
+--     CASE WHEN c.order_type = 'sale' AND c.unit_price_ht > 0 THEN
+--       ROUND(((c.unit_price_ht - COALESCE((SELECT poi.unit_price_ht FROM purchase_order_items poi
+--         JOIN purchase_orders po ON po.id = poi.purchase_order_id
+--         WHERE poi.product_id = p_product_id AND po.order_date <= c.order_date AND po.status IN ('received', 'completed')
+--         ORDER BY po.order_date DESC LIMIT 1), 0)) / c.unit_price_ht * 100)::NUMERIC, 2)
+--     ELSE NULL END AS margin_percentage
+--   FROM combined c
+--   ORDER BY c.order_date DESC, c.order_type;
+-- END;
+-- $function$;
+--
+-- REVOKE EXECUTE ON FUNCTION public.get_product_cost_price_details(uuid) FROM PUBLIC, anon, authenticated;
+-- REVOKE EXECUTE ON FUNCTION public.get_product_margin_analysis(uuid, date, date) FROM PUBLIC, anon, authenticated;
+-- GRANT EXECUTE ON FUNCTION public.get_product_cost_price_details(uuid) TO service_role;
+-- GRANT EXECUTE ON FUNCTION public.get_product_margin_analysis(uuid, date, date) TO service_role;
+-- COMMIT;

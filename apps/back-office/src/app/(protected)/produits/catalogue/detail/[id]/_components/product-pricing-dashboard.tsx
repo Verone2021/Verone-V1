@@ -13,7 +13,12 @@
 import { useMemo, useCallback } from 'react';
 
 import { calculateMinSellingPrice } from '@verone/common';
-import { useProductPricingDashboard } from '@verone/products';
+import {
+  ProductProfitabilitySection,
+  SalesByChannelCard,
+  LinkMeNetMarginCard,
+  useProductPricingDashboard,
+} from '@verone/products';
 
 import { GeneralRail } from './_dashboard-blocks/GeneralRail';
 import { ChannelPricingDetailed } from './_pricing-blocks/ChannelPricingDetailed';
@@ -172,7 +177,26 @@ export function ProductPricingDashboard({
           landedCost={landedCost}
         />
 
-        {/* Zone 5 — Footer note */}
+        {/* Zone 5 — Ventes par canal + Rentabilité LinkMe + historique */}
+        <SalesByChannelCard productId={product.id} />
+        <LinkMeNetMarginCard productId={product.id} />
+        <section
+          aria-label="Rentabilité"
+          className="rounded-lg border border-neutral-200 bg-white p-4"
+        >
+          <h3 className="mb-3 text-sm font-semibold text-neutral-900">
+            Rentabilité — historique des achats et des ventes
+          </h3>
+          <ProductProfitabilitySection
+            productId={product.id}
+            costNetAvg={
+              product.cost_net_avg != null ? Number(product.cost_net_avg) : null
+            }
+            stockReal={product.stock_real ?? null}
+          />
+        </section>
+
+        {/* Zone 6 — Footer note */}
         <PricingFooterNote />
       </div>
     </div>

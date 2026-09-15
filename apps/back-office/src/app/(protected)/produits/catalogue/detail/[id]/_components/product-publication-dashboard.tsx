@@ -97,6 +97,15 @@ export function ProductPublicationDashboard({
   const checklistItems = useMemo<ChecklistItem[]>(() => {
     const subcategoryLabel = product.subcategory?.name ?? undefined;
     const slugLabel = product.slug ?? undefined;
+    const hasWeight =
+      product.weight !== null &&
+      product.weight !== undefined &&
+      Number(product.weight) > 0;
+    const hasDimensions =
+      product.dimensions !== null &&
+      typeof product.dimensions === 'object' &&
+      !Array.isArray(product.dimensions) &&
+      Object.keys(product.dimensions).length > 0;
 
     return [
       // ─ Requis (6) ─
@@ -147,12 +156,29 @@ export function ProductPublicationDashboard({
         linkLabel: !hasPricingChannel ? '→ Onglet Tarification' : undefined,
         linkTabId: !hasPricingChannel ? 'pricing' : undefined,
       },
-      // ─ Optionnels (3) ─
+      // BO-PUBLICATION-001 (#1022) — Poids + dimensions + meta description requis
+      // (reporté depuis l'ancienne copie `catalogue/[id]`, non servie, le 15/09/2026)
+      {
+        key: 'weight',
+        label: 'Poids',
+        ok: hasWeight,
+        required: true,
+        linkLabel: !hasWeight ? '→ Onglet Caractéristiques' : undefined,
+        linkTabId: !hasWeight ? 'characteristics' : undefined,
+      },
+      {
+        key: 'dimensions',
+        label: 'Dimensions',
+        ok: hasDimensions,
+        required: true,
+        linkLabel: !hasDimensions ? '→ Onglet Caractéristiques' : undefined,
+        linkTabId: !hasDimensions ? 'characteristics' : undefined,
+      },
       {
         key: 'meta_description',
         label: 'Meta description SEO',
         ok: Boolean(product.meta_description?.trim()),
-        required: false,
+        required: true,
       },
       {
         key: 'status',

@@ -17,6 +17,8 @@ export { ProductViewMode } from './ProductViewMode';
 export { ProductVariantsSection } from './ProductVariantsSection';
 export { VariantSiblings } from './VariantSiblings';
 export { ProductProfitabilitySection } from './ProductProfitabilitySection';
+export { LinkMeNetMarginCard } from './profitability/LinkMeNetMarginCard';
+export { SalesByChannelCard } from './profitability/SalesByChannelCard';
 export { SerpPreview } from './SerpPreview';
 export { MarketingEligibilitySection } from './MarketingEligibilitySection';
 export { SupplierAvailabilitySection } from './SupplierAvailabilitySection';

@@ -8349,6 +8349,76 @@ export type Database = {
           },
         ];
       };
+      sales_order_item_costs: {
+        Row: {
+          cost_source: string;
+          cost_unit_ht: number | null;
+          includes_fees: boolean;
+          locked_at: string;
+          product_id: string | null;
+          sales_order_item_id: string;
+        };
+        Insert: {
+          cost_source: string;
+          cost_unit_ht?: number | null;
+          includes_fees?: boolean;
+          locked_at?: string;
+          product_id?: string | null;
+          sales_order_item_id: string;
+        };
+        Update: {
+          cost_source?: string;
+          cost_unit_ht?: number | null;
+          includes_fees?: boolean;
+          locked_at?: string;
+          product_id?: string | null;
+          sales_order_item_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'sales_order_item_costs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sales_order_item_costs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_order_item_costs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sales_order_item_costs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sales_order_item_costs_sales_order_item_id_fkey';
+            columns: ['sales_order_item_id'];
+            isOneToOne: true;
+            referencedRelation: 'linkme_order_items_enriched';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_order_item_costs_sales_order_item_id_fkey';
+            columns: ['sales_order_item_id'];
+            isOneToOne: true;
+            referencedRelation: 'sales_order_items';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       sales_order_items: {
         Row: {
           base_price_ht_locked: number | null;
@@ -14155,6 +14225,10 @@ export type Database = {
           user_id: string;
         }[];
       };
+      get_linkme_verone_margin: {
+        Args: { p_from?: string; p_to?: string };
+        Returns: Json;
+      };
       get_low_stock_products: {
         Args: { limit_count?: number };
         Returns: {
@@ -14389,33 +14463,9 @@ export type Database = {
           old_payout_ht: number;
         }[];
       };
-      get_product_cost_price_details: {
-        Args: { p_product_id: string };
-        Returns: Json;
-      };
       get_product_detail_public: {
         Args: { p_product_id: string; p_selection_id: string };
         Returns: Json;
-      };
-      get_product_margin_analysis: {
-        Args: {
-          p_end_date?: string;
-          p_product_id: string;
-          p_start_date?: string;
-        };
-        Returns: {
-          channel_code: string;
-          customer_name: string;
-          margin_ht: number;
-          margin_percentage: number;
-          order_date: string;
-          order_reference: string;
-          order_type: string;
-          quantity: number;
-          supplier_name: string;
-          total_ht: number;
-          unit_price_ht: number;
-        }[];
       };
       get_product_stats: {
         Args: never;
@@ -14526,6 +14576,7 @@ export type Database = {
         Args: { limit_param?: number; section_name_param: string };
         Returns: Json;
       };
+      get_sidebar_counts: { Args: never; Returns: Json };
       get_site_internet_collection_detail: {
         Args: { p_slug: string };
         Returns: Json;
