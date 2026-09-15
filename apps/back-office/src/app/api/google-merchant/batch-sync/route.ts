@@ -112,7 +112,10 @@ export async function POST(
         images:product_images(public_url, is_primary, alt_text, display_order)
       `
       )
-      .eq('product_status', 'active')
+      // Règle unique « vendable » (BO-CHANNELS-P7-001)
+      .in('product_status', ['active', 'preorder'])
+      .is('archived_at', null)
+      .or('creation_mode.neq.sourcing,creation_mode.is.null')
       .not('stock_status', 'is', null)
       .order('created_at', { ascending: false });
 

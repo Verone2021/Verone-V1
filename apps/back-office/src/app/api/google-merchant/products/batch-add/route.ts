@@ -23,6 +23,7 @@ import { NextResponse } from 'next/server';
 
 import { z } from 'zod';
 
+import { isProductSellable } from '@verone/products/utils';
 import { createServerClient } from '@verone/utils/supabase/server';
 
 // Validation schema
@@ -82,7 +83,7 @@ export async function POST(
     // Voir docs/current/canaux-vente-publication-rules.md
     const { data: validProducts, error: fetchError } = await supabase
       .from('products')
-      .select('id')
+      .select('id, archived_at, product_status, creation_mode')
       .in('id', productIds)
       .eq('is_published_online', true);
 
@@ -91,6 +92,20 @@ export async function POST(
       return NextResponse.json(
         { success: false, error: `Database error: ${fetchError.message}` },
         { status: 500 }
+      );
+    }
+
+    // Règle unique « vendable » (BO-CHANNELS-P7-001)
+    const unsellableCount = (validProducts ?? []).filter(
+      p => !isProductSellable(p)
+    ).length;
+    if (unsellableCount > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `${unsellableCount} produit(s) non vendable(s) (retiré, brouillon, arrêté ou en sourcing) ne peuvent pas être ajoutés à Google Merchant.`,
+        },
+        { status: 422 }
       );
     }
 
