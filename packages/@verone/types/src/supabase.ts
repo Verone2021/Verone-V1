@@ -8349,6 +8349,76 @@ export type Database = {
           },
         ];
       };
+      sales_order_item_costs: {
+        Row: {
+          cost_source: string;
+          cost_unit_ht: number | null;
+          includes_fees: boolean;
+          locked_at: string;
+          product_id: string | null;
+          sales_order_item_id: string;
+        };
+        Insert: {
+          cost_source: string;
+          cost_unit_ht?: number | null;
+          includes_fees?: boolean;
+          locked_at?: string;
+          product_id?: string | null;
+          sales_order_item_id: string;
+        };
+        Update: {
+          cost_source?: string;
+          cost_unit_ht?: number | null;
+          includes_fees?: boolean;
+          locked_at?: string;
+          product_id?: string | null;
+          sales_order_item_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'sales_order_item_costs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'product_prices_summary';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sales_order_item_costs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_order_item_costs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_unified_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sales_order_item_costs_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'stock_alerts_view';
+            referencedColumns: ['product_id'];
+          },
+          {
+            foreignKeyName: 'sales_order_item_costs_sales_order_item_id_fkey';
+            columns: ['sales_order_item_id'];
+            isOneToOne: true;
+            referencedRelation: 'linkme_order_items_enriched';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'sales_order_item_costs_sales_order_item_id_fkey';
+            columns: ['sales_order_item_id'];
+            isOneToOne: true;
+            referencedRelation: 'sales_order_items';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       sales_order_items: {
         Row: {
           base_price_ht_locked: number | null;
@@ -14154,6 +14224,10 @@ export type Database = {
           email: string;
           user_id: string;
         }[];
+      };
+      get_linkme_verone_margin: {
+        Args: { p_from?: string; p_to?: string };
+        Returns: Json;
       };
       get_low_stock_products: {
         Args: { limit_count?: number };
