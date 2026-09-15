@@ -1,3 +1,8 @@
+import type {
+  SourcingListSegment,
+  SourcingStage,
+} from '../../utils/sourcing-stage';
+
 export interface SourcingProduct {
   id: string;
   sku: string;
@@ -64,4 +69,8 @@ export interface SourcingFilters {
   archived_view?: 'active' | 'archived';
   // Fiche d'un produit précis, archivé ou non (ignore archived_view)
   product_id?: string;
+  // Liste sourcing (P5) : segment et étape, prioritaires sur archived_view
+  segment?: SourcingListSegment;
+  stage?: SourcingStage;
+  priority?: string;
 }

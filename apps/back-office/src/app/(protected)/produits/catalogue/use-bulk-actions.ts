@@ -146,25 +146,44 @@ export function useBulkActions({
     [runAfter]
   );
 
+  // Retrait groupé avec un motif commun (BO-PRODUCTS-P8-001) : un appel de la
+  // fonction du cycle de vie par produit (journal écrit, statut inchangé).
   const archive = useCallback(
-    async (ids: string[]) => {
-      if (ids.length === 0) return;
+    async (ids: string[], reason: string) => {
+      if (ids.length === 0 || !reason.trim()) return false;
       setBusy(true);
       try {
         const supabase = createClient();
-        const { error } = await supabase
-          .from('products')
-          .update({ archived_at: new Date().toISOString() })
-          .in('id', ids)
-          .is('archived_at', null);
-        if (error) throw error;
-        toast.success(
-          `${ids.length} produit${ids.length > 1 ? 's' : ''} archivé${ids.length > 1 ? 's' : ''}.`
-        );
+        let withdrawn = 0;
+        let failed = 0;
+        for (const id of ids) {
+          const { error } = await supabase.rpc(
+            'apply_product_lifecycle_action',
+            { p_product_id: id, p_action: 'withdraw', p_reason: reason }
+          );
+          if (error) {
+            console.error('[BulkActions] withdraw failed:', id, error);
+            failed += 1;
+          } else {
+            withdrawn += 1;
+          }
+        }
+        if (withdrawn > 0) {
+          toast.success(
+            `${withdrawn} produit${withdrawn > 1 ? 's' : ''} retiré${withdrawn > 1 ? 's' : ''}.`
+          );
+        }
+        if (failed > 0) {
+          toast.error(
+            `${failed} produit${failed > 1 ? 's' : ''} non retiré${failed > 1 ? 's' : ''} (déjà retiré${failed > 1 ? 's' : ''} ou erreur).`
+          );
+        }
         await runAfter();
+        return withdrawn > 0;
       } catch (error) {
-        console.error('[BulkActions] archive failed:', error);
-        toast.error('Archivage en masse échoué.');
+        console.error('[BulkActions] withdraw failed:', error);
+        toast.error('Retrait groupé échoué.');
+        return false;
       } finally {
         setBusy(false);
       }

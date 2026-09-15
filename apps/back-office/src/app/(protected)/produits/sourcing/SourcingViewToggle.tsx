@@ -1,9 +1,9 @@
 'use client';
 
 import { ButtonV2 } from '@verone/ui';
-import { List, Columns3, LayoutGrid } from 'lucide-react';
+import { Columns3, List } from 'lucide-react';
 
-export type SourcingViewMode = 'list' | 'kanban' | 'card';
+export type SourcingViewMode = 'list' | 'kanban';
 
 interface SourcingViewToggleProps {
   view: SourcingViewMode;
@@ -12,8 +12,7 @@ interface SourcingViewToggleProps {
 
 const VIEWS = [
   { id: 'list' as const, icon: List, label: 'Liste' },
-  { id: 'kanban' as const, icon: Columns3, label: 'Kanban' },
-  { id: 'card' as const, icon: LayoutGrid, label: 'Carte' },
+  { id: 'kanban' as const, icon: Columns3, label: 'Étapes' },
 ];
 
 export function SourcingViewToggle({
@@ -31,14 +30,16 @@ export function SourcingViewToggle({
             variant={isActive ? 'primary' : 'ghost'}
             size="sm"
             onClick={() => onViewChange(v.id)}
+            aria-pressed={isActive}
+            title={v.label}
             className={
               isActive
-                ? 'bg-black text-white hover:bg-gray-800'
-                : 'text-gray-500 hover:text-black hover:bg-gray-50'
+                ? 'h-11 bg-black text-white hover:bg-gray-800 md:h-9'
+                : 'h-11 text-gray-500 hover:bg-gray-50 hover:text-black md:h-9'
             }
           >
             <Icon className="h-4 w-4" />
-            <span className="ml-1.5 text-xs hidden sm:inline">{v.label}</span>
+            <span className="ml-1.5 hidden text-xs sm:inline">{v.label}</span>
           </ButtonV2>
         );
       })}

@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 
 import Image from 'next/image';
@@ -31,6 +32,8 @@ interface ProductDetailHeaderProps {
   onBack: () => void;
   onShare: () => void;
   onImageClick: () => void;
+  /** Actions supplémentaires affichées avant Dupliquer (Retirer / Restaurer) */
+  extraActions?: ReactNode;
 }
 
 export function ProductDetailHeader({
@@ -42,6 +45,7 @@ export function ProductDetailHeader({
   onBack,
   onShare,
   onImageClick,
+  extraActions,
 }: ProductDetailHeaderProps) {
   const router = useRouter();
   const [duplicating, setDuplicating] = useState(false);
@@ -143,6 +147,11 @@ export function ProductDetailHeader({
                 </Badge>
               )}
 
+              {/* Produit retiré (BO-PRODUCTS-P8-001) */}
+              {product.archived_at && (
+                <Badge className="bg-zinc-800 text-xs text-white">Retiré</Badge>
+              )}
+
               {/* Sourcing badge */}
               {sourcing.type === 'affiliate' ? (
                 <Badge
@@ -195,6 +204,7 @@ export function ProductDetailHeader({
 
           {/* Action buttons */}
           <div className="flex items-center gap-2 flex-shrink-0">
+            {extraActions}
             <ButtonUnified
               variant="outline"
               size="sm"

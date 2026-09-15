@@ -60,6 +60,7 @@ export * from './badge';
 export * from './data-status-badge';
 export * from './role-badge';
 export * from './stat-pill';
+export * from './score-input';
 // DISABLED: Dépend de @/lib/feature-flags non disponible dans @verone/ui
 // export * from './phase-indicator';
 export * from './progress';

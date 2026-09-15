@@ -37,6 +37,7 @@ export function useProductSearch(
     filters.sourcingType,
     filters.supplierId,
     filters.excludeProductsInVariantGroup,
+    filters.sellableOnly,
   ]);
 
   const fetchProducts = async () => {
@@ -111,6 +112,15 @@ export function useProductSearch(
             | 'preorder'
             | 'discontinued'
         );
+      }
+
+      // Règle unique « vendable » (BO-CHANNELS-P7-001) : commandes client
+      if (filters.sellableOnly) {
+        query = query
+          .is('archived_at', null)
+          .in('product_status', ['active', 'preorder'])
+          // creation_mode vide = catalogue (comme coalesce(…, 'complete') en base)
+          .or('creation_mode.neq.sourcing,creation_mode.is.null');
       }
 
       // Filtre par fournisseur (CRITIQUE pour commandes fournisseurs)

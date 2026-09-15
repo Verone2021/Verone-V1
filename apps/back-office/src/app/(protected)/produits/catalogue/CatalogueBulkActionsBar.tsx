@@ -83,7 +83,7 @@ export function CatalogueBulkActionsBar({
           className="text-red-700 hover:bg-red-50"
         >
           <Archive className="mr-1.5 h-4 w-4" />
-          Archiver
+          Retirer
         </ButtonUnified>
         <ButtonUnified
           variant="ghost"

@@ -62,6 +62,7 @@ export function useConsultationItems(consultationId?: string) {
             stock_real,
             stock_forecasted_in,
             stock_forecasted_out,
+            archived_at,
             supplier:organisations!products_supplier_id_fkey(id, legal_name, trade_name),
             product_images(public_url, is_primary)
           )
@@ -83,6 +84,7 @@ export function useConsultationItems(consultationId?: string) {
           stock_real?: number;
           stock_forecasted_in?: number;
           stock_forecasted_out?: number;
+          archived_at?: string | null;
           supplier?: {
             id: string;
             legal_name: string;
@@ -125,6 +127,7 @@ export function useConsultationItems(consultationId?: string) {
                 stock_real: productData.stock_real ?? 0,
                 stock_forecasted_in: productData.stock_forecasted_in ?? 0,
                 stock_forecasted_out: productData.stock_forecasted_out ?? 0,
+                archived_at: productData.archived_at ?? null,
                 image_url:
                   productData.product_images?.find(img => img.is_primary)
                     ?.public_url ??

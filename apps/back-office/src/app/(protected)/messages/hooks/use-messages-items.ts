@@ -2,9 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
+import { segmentQuery } from '@verone/products/utils';
 import { createClient } from '@verone/utils/supabase/client';
 
 const LINKME_CHANNEL_ID = '93c68db1-5a30-4168-89ec-6383152be405';
+
+// Produits « En cours » de la liste sourcing (statut vide compris) : même règle
+// que la liste et le compteur du menu (BO-SOURCING-P5-001).
+const SOURCING_IN_PROGRESS_FILTER = `sourcing_status.is.null,sourcing_status.in.(${(
+  segmentQuery('in_progress').statuses ?? []
+).join(',')})`;
 const MAX_ITEMS = 5;
 const QUERY_TIMEOUT = 10000;
 
@@ -263,7 +270,7 @@ export function useMessagesItems(): MessagesItems {
               { count: 'exact' }
             )
             .eq('creation_mode', 'sourcing')
-            .in('product_status', ['draft', 'preorder'])
+            .or(SOURCING_IN_PROGRESS_FILTER)
             .is('archived_at', null)
             .order('created_at', { ascending: true })
             .limit(MAX_ITEMS)

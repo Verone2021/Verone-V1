@@ -65,6 +65,7 @@ export function UniversalProductSelectorV2({
   className,
   supplierId,
   initialSearch,
+  sellableOnly = false,
 }: UniversalProductSelectorV2Props) {
   // ============================================================================
   // STATE
@@ -99,6 +100,7 @@ export function UniversalProductSelectorV2({
       productStatus: context === 'consultations' ? 'active' : null,
       // Pour le contexte variants : exclure les produits deja membres d'un groupe variantes
       excludeProductsInVariantGroup: context === 'variants',
+      sellableOnly,
     },
     [...excludeProductIds, ...localSelectedProducts.map(p => p.id)],
     searchDebounce

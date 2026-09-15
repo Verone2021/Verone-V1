@@ -235,6 +235,11 @@ export function ConsultationMarginReportPdf({
                   <Text style={{ fontSize: 6, color: veroneColors.pearl }}>
                     {item.product?.sku}
                   </Text>
+                  {item.product?.archived_at ? (
+                    <Text style={{ fontSize: 6, color: veroneColors.pearl }}>
+                      Retiré — absent du PDF client
+                    </Text>
+                  ) : null}
                 </View>
                 <Text style={[s.td, { width: '11%' }]}>
                   {item.product?.supplier_name ?? '—'}

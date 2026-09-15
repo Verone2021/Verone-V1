@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 
 import { useCataloguePage } from './use-catalogue-page';
 import { useTogglePublishCatalogue } from './use-toggle-publish-catalogue';
+import { useCatalogueWithdraw } from './use-catalogue-withdraw';
+import { CatalogueWithdrawDialog } from './CatalogueWithdrawDialog';
 import { CatalogueHeader } from './CatalogueHeader';
 import { CatalogueSavedViews } from './CatalogueSavedViews';
 import { CatalogueTabs } from './CatalogueTabs';
@@ -21,8 +23,7 @@ import { CatalogueGridView } from './CatalogueGridView';
 import { CatalogueListView } from './CatalogueListView';
 import { CatalogueEmptyState } from './CatalogueEmptyState';
 import { CataloguePagination } from './CataloguePagination';
-import { BulkPriceEditDialog } from './modals/BulkPriceEditDialog';
-import { BulkStatusDialog } from './modals/BulkStatusDialog';
+import { CatalogueBulkDialogs } from './CatalogueBulkDialogs';
 import { QuickEditSupplierDialog } from './modals/QuickEditSupplierDialog';
 import { QuickEditPriceDialog } from './modals/QuickEditPriceDialog';
 import { QuickEditWeightDialog } from './modals/QuickEditWeightDialog';
@@ -32,6 +33,12 @@ export default function CataloguePage() {
   const ctx = useCataloguePage();
   const { togglePublish, pendingIds: publishPendingIds } =
     useTogglePublishCatalogue();
+  const withdraw = useCatalogueWithdraw({
+    withdrawSingle: (product, reason) =>
+      ctx.handleArchiveProduct(product, reason),
+    withdrawBulk: (ids, reason) => ctx.bulkActions.archive(ids, reason),
+    onBulkDone: () => ctx.bulkSelection.clear(),
+  });
 
   // Early returns for initial load and error
   if (ctx.loading && ctx.products.length === 0) {
@@ -147,17 +154,12 @@ export default function CataloguePage() {
                 }}
                 onChangeStatus={() => ctx.setBulkStatusOpen(true)}
                 onChangePrice={() => ctx.setBulkPriceOpen(true)}
-                onArchive={() => {
-                  if (
-                    confirm(
-                      `Archiver ${ctx.bulkSelection.selectedCount} produit(s) ?`
-                    )
-                  ) {
-                    void ctx.bulkActions.archive(
-                      Array.from(ctx.bulkSelection.selectedIds)
-                    );
-                  }
-                }}
+                onArchive={() =>
+                  withdraw.open({
+                    kind: 'bulk',
+                    ids: Array.from(ctx.bulkSelection.selectedIds),
+                  })
+                }
                 onClear={ctx.bulkSelection.clear}
               />
 
@@ -169,6 +171,10 @@ export default function CataloguePage() {
                   getIncompletePrimaryImage={ctx.getIncompletePrimaryImage}
                   onQuickEdit={ctx.handleQuickEdit}
                   onArchive={product => {
+                    if (!product.archived_at) {
+                      withdraw.open({ kind: 'single', product });
+                      return;
+                    }
                     void ctx.handleArchiveProduct(product).catch(error => {
                       console.error(
                         '[Catalogue] handleArchiveProduct failed:',
@@ -349,37 +355,12 @@ export default function CataloguePage() {
         />
       )}
 
-      {/* Bulk dialogs (SI-PROD-001) */}
-      <BulkPriceEditDialog
-        open={ctx.bulkPriceOpen}
-        count={ctx.bulkSelection.selectedCount}
-        busy={ctx.bulkActions.busy}
-        onClose={() => ctx.setBulkPriceOpen(false)}
-        onApplyFlat={price => {
-          void ctx.bulkActions
-            .setPriceFlat(Array.from(ctx.bulkSelection.selectedIds), price)
-            .finally(() => ctx.setBulkPriceOpen(false));
-        }}
-        onApplyPercent={percent => {
-          void ctx.bulkActions
-            .adjustPriceByPercent(
-              Array.from(ctx.bulkSelection.selectedIds),
-              percent
-            )
-            .finally(() => ctx.setBulkPriceOpen(false));
-        }}
-      />
+      <CatalogueBulkDialogs ctx={ctx} />
 
-      <BulkStatusDialog
-        open={ctx.bulkStatusOpen}
-        count={ctx.bulkSelection.selectedCount}
-        busy={ctx.bulkActions.busy}
-        onClose={() => ctx.setBulkStatusOpen(false)}
-        onApply={status => {
-          void ctx.bulkActions
-            .setStatus(Array.from(ctx.bulkSelection.selectedIds), status)
-            .finally(() => ctx.setBulkStatusOpen(false));
-        }}
+      <CatalogueWithdrawDialog
+        target={withdraw.target}
+        onClose={withdraw.close}
+        onConfirm={withdraw.confirm}
       />
 
       {/* CommandPalette global ⌘K */}

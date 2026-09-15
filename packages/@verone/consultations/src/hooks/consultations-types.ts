@@ -85,6 +85,8 @@ export interface ConsultationItem {
     stock_forecasted_in?: number;
     stock_forecasted_out?: number;
     image_url?: string | null;
+    /** Produit retiré (BO-PRODUCTS-P8-001) : badge, non commandable, hors PDF client */
+    archived_at?: string | null;
   };
 }
 

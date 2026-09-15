@@ -1,23 +1,30 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { QuickSourcingModal, useSourcingProducts } from '@verone/products';
-import { ButtonV2, Tabs, TabsContent, TabsList, TabsTrigger } from '@verone/ui';
-import { colors, spacing } from '@verone/ui/design-system';
+import {
+  QuickSourcingModal,
+  SourcingReasonDialog,
+  useSourcingProducts,
+  useSourcingSegmentCounts,
+} from '@verone/products';
+import {
+  isSourcingStage,
+  type SourcingListSegment,
+} from '@verone/products/utils';
+import { ButtonV2, ConfirmDialog } from '@verone/ui';
+import { colors } from '@verone/ui/design-system';
 import { debounce } from '@verone/utils';
-import { createClient } from '@verone/utils/supabase/client';
-import { Plus, Package, Chrome, Archive } from 'lucide-react';
+import { Chrome, Plus } from 'lucide-react';
 
 import { SourcingReportButton } from '@/components/business/sourcing-report/SourcingReportButton';
 
-import { SourcingCardView } from './SourcingCardView';
 import { SourcingFilters } from './SourcingFilters';
 import { SourcingKanbanView } from './SourcingKanbanView';
-import { SourcingKpiCards } from './SourcingKpiCards';
 import { SourcingProductList } from './SourcingProductList';
+import { SourcingSegmentTabs } from './SourcingSegmentTabs';
 import type { SourcingViewMode } from './SourcingViewToggle';
 import { SourcingViewToggle } from './SourcingViewToggle';
 
@@ -25,20 +32,19 @@ export default function SourcingPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [segment, setSegment] = useState<SourcingListSegment>('in_progress');
   const [sourcingTypeFilter, setSourcingTypeFilter] = useState('all');
   const [supplierFilter, setSupplierFilter] = useState<string | null>(null);
-  const [pipelineFilter, setPipelineFilter] = useState('all');
+  const [stageFilter, setStageFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<SourcingViewMode>('list');
   const [isQuickSourcingModalOpen, setIsQuickSourcingModalOpen] =
     useState(false);
-  const [completedThisMonth, setCompletedThisMonth] = useState(0);
-  const [activeTab, setActiveTab] = useState<'produits' | 'archived'>(
-    'produits'
-  );
+  // Retrait avec motif obligatoire et validation confirmée (journal écrit par la base)
+  const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null);
+  const [validateTargetId, setValidateTargetId] = useState<string | null>(null);
 
   const debouncedSearch = useMemo(
     () =>
@@ -48,8 +54,11 @@ export default function SourcingPage() {
     []
   );
 
+  const isInProgress = segment === 'in_progress';
+
+  // Tous les filtres sont appliqués par la base (plus de filtrage dans le navigateur)
   const {
-    products: sourcingProducts,
+    products,
     loading,
     error,
     validateSourcing,
@@ -58,68 +67,27 @@ export default function SourcingPage() {
     deleteSourcingProduct,
     refetch,
   } = useSourcingProducts({
-    search: debouncedSearchTerm ?? undefined,
-    product_status: statusFilter === 'all' ? undefined : statusFilter,
+    search: debouncedSearchTerm || undefined,
     sourcing_type:
-      sourcingTypeFilter === 'all'
-        ? undefined
-        : (sourcingTypeFilter as 'interne' | 'client'),
+      sourcingTypeFilter === 'client' || sourcingTypeFilter === 'interne'
+        ? sourcingTypeFilter
+        : undefined,
     supplier_id: supplierFilter ?? undefined,
-    archived_view: activeTab === 'archived' ? 'archived' : 'active',
+    segment,
+    stage:
+      isInProgress && isSourcingStage(stageFilter) ? stageFilter : undefined,
+    priority: priorityFilter === 'all' ? undefined : priorityFilter,
   });
 
-  useEffect(() => {
-    const fetchCompletedCount = async () => {
-      try {
-        const supabase = createClient();
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(
-          now.getFullYear(),
-          now.getMonth() + 1,
-          0,
-          23,
-          59,
-          59
-        );
-        const { count } = await supabase
-          .from('products')
-          .select('*', { count: 'exact', head: true })
-          .eq('creation_mode', 'complete')
-          .eq('product_status', 'active')
-          .gte('created_at', startOfMonth.toISOString())
-          .lte('created_at', endOfMonth.toISOString());
-        setCompletedThisMonth(count ?? 0);
-      } catch (error: unknown) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        console.error(
-          '[Sourcing] Erreur chargement produits complétés:',
-          message
-        );
-      }
-    };
-    void fetchCompletedCount().catch(error => {
-      console.error('[Sourcing] fetchCompletedCount failed:', error);
-    });
-  }, []);
+  const {
+    counts,
+    loading: countsLoading,
+    refetch: refetchCounts,
+  } = useSourcingSegmentCounts();
 
-  // Client-side filtering for pipeline + priority + sorting
-  const filteredAndSortedProducts = useMemo(() => {
-    let filtered = [...(sourcingProducts ?? [])];
-
-    // Pipeline filter
-    if (pipelineFilter !== 'all') {
-      filtered = filtered.filter(p => p.sourcing_status === pipelineFilter);
-    }
-
-    // Priority filter
-    if (priorityFilter !== 'all') {
-      filtered = filtered.filter(p => p.sourcing_priority === priorityFilter);
-    }
-
-    // Sorting
-    filtered.sort((a, b) => {
+  const sortedProducts = useMemo(() => {
+    const sorted = [...products];
+    sorted.sort((a, b) => {
       const dir = sortDir === 'asc' ? 1 : -1;
       switch (sortBy) {
         case 'name':
@@ -146,66 +114,54 @@ export default function SourcingPage() {
           );
       }
     });
+    return sorted;
+  }, [products, sortBy, sortDir]);
 
-    return filtered;
-  }, [sourcingProducts, pipelineFilter, priorityFilter, sortBy, sortDir]);
-
-  const stats = {
-    totalDrafts:
-      sourcingProducts?.filter(p => p.product_status === 'draft').length ?? 0,
-    pendingValidation:
-      sourcingProducts?.filter(
-        p => p.product_status === 'preorder' || p.requires_sample
-      ).length ?? 0,
-    samplesOrdered:
-      sourcingProducts?.filter(
-        p => p.requires_sample && p.product_status === 'preorder'
-      ).length ?? 0,
-    completedThisMonth,
+  // Après une action réussie, les nombres par segment changent aussi
+  const afterAction = async (ok: boolean) => {
+    if (ok) await refetchCounts();
+    return ok;
   };
 
-  const handleValidate = (id: string) => {
-    void validateSourcing(id).catch(error => {
-      console.error('[Sourcing] handleValidateSourcing failed:', error);
-    });
-  };
-
-  const handleArchive = (id: string) => {
-    void archiveSourcingProduct(id).catch(error => {
-      console.error('[Sourcing] handleArchiveProduct failed:', error);
-    });
+  const openProduct = (id: string) => {
+    router.push(
+      segment === 'validated'
+        ? `/produits/catalogue/${id}`
+        : `/produits/sourcing/produits/${id}`
+    );
   };
 
   const handleRestore = (id: string) => {
-    void unarchiveSourcingProduct(id).catch(error => {
-      console.error('[Sourcing] handleRestoreProduct failed:', error);
-    });
+    void unarchiveSourcingProduct(id)
+      .then(afterAction)
+      .catch(error => {
+        console.error('[Sourcing] handleRestoreProduct failed:', error);
+      });
   };
 
   const handleDelete = (id: string) => {
-    void deleteSourcingProduct(id).catch(error => {
-      console.error('[Sourcing] handleDeleteProduct failed:', error);
-    });
+    void deleteSourcingProduct(id)
+      .then(afterAction)
+      .catch(error => {
+        console.error('[Sourcing] handleDeleteProduct failed:', error);
+      });
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div
-        className="flex justify-between items-start"
-        style={{ marginBottom: spacing[6] }}
-      >
+    <div className="container mx-auto space-y-6 p-4 md:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1
-            className="text-3xl font-semibold"
+            className="text-2xl font-semibold md:text-3xl"
             style={{ color: colors.text.DEFAULT }}
           >
             Sourcing
           </h1>
           <p className="mt-2" style={{ color: colors.text.subtle }}>
-            Gestion des produits à sourcer et validation catalogue
+            Produits à sourcer, de la recherche à la validation au catalogue
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <SourcingReportButton />
           <ButtonV2
             variant="secondary"
@@ -214,151 +170,106 @@ export default function SourcingPage() {
           >
             Plugin navigateur
           </ButtonV2>
-          {activeTab === 'produits' && (
-            <>
-              <SourcingViewToggle view={viewMode} onViewChange={setViewMode} />
-              <ButtonV2
-                variant="primary"
-                icon={Plus}
-                onClick={() => setIsQuickSourcingModalOpen(true)}
-              >
-                Nouveau Sourcing
-              </ButtonV2>
-            </>
+          {isInProgress && (
+            <SourcingViewToggle view={viewMode} onViewChange={setViewMode} />
           )}
+          <ButtonV2
+            variant="primary"
+            icon={Plus}
+            onClick={() => setIsQuickSourcingModalOpen(true)}
+          >
+            Nouveau sourcing
+          </ButtonV2>
         </div>
       </div>
 
-      <Tabs
-        value={activeTab}
-        onValueChange={value => setActiveTab(value as 'produits' | 'archived')}
-        className="w-full"
-      >
-        <TabsList variant="underline" className="w-full justify-start border-b">
-          <TabsTrigger value="produits" variant="underline">
-            <Package className="h-4 w-4 mr-2" />
-            Produits
-          </TabsTrigger>
-          <TabsTrigger value="archived" variant="underline">
-            <Archive className="h-4 w-4 mr-2" />
-            Archivés
-          </TabsTrigger>
-        </TabsList>
+      <SourcingSegmentTabs
+        value={segment}
+        counts={counts}
+        countsLoading={countsLoading}
+        onChange={setSegment}
+      />
 
-        <TabsContent value="produits" className="space-y-6 pt-6">
-          <SourcingKpiCards stats={stats} loading={loading} />
+      <SourcingFilters
+        searchTerm={searchTerm}
+        onSearchChange={value => {
+          setSearchTerm(value);
+          debouncedSearch(value);
+        }}
+        sourcingTypeFilter={sourcingTypeFilter}
+        onSourcingTypeChange={setSourcingTypeFilter}
+        supplierFilter={supplierFilter}
+        onSupplierChange={setSupplierFilter}
+        showStageFilter={isInProgress}
+        stageFilter={stageFilter}
+        onStageChange={setStageFilter}
+        priorityFilter={priorityFilter}
+        onPriorityChange={setPriorityFilter}
+      />
 
-          <SourcingFilters
-            searchTerm={searchTerm}
-            onSearchChange={value => {
-              setSearchTerm(value);
-              debouncedSearch(value);
-            }}
-            statusFilter={statusFilter}
-            onStatusChange={setStatusFilter}
-            sourcingTypeFilter={sourcingTypeFilter}
-            onSourcingTypeChange={setSourcingTypeFilter}
-            supplierFilter={supplierFilter}
-            onSupplierChange={setSupplierFilter}
-            pipelineFilter={pipelineFilter}
-            onPipelineChange={setPipelineFilter}
-            priorityFilter={priorityFilter}
-            onPriorityChange={setPriorityFilter}
-          />
-
-          {viewMode === 'list' && (
-            <SourcingProductList
-              products={filteredAndSortedProducts}
-              sortBy={sortBy}
-              sortDir={sortDir}
-              onSort={col => {
-                if (sortBy === col) {
-                  setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
-                } else {
-                  setSortBy(col);
-                  setSortDir('desc');
-                }
-              }}
-              loading={loading}
-              error={error}
-              onView={id => router.push(`/produits/sourcing/produits/${id}`)}
-              onViewSupplier={supplierId =>
-                router.push(`/contacts-organisations/suppliers/${supplierId}`)
-              }
-              onEdit={id => router.push(`/produits/sourcing/produits/${id}`)}
-              onValidate={handleValidate}
-              onArchive={handleArchive}
-              onRestore={handleRestore}
-              onDelete={handleDelete}
-            />
-          )}
-
-          {viewMode === 'kanban' && (
-            <SourcingKanbanView
-              products={filteredAndSortedProducts}
-              onView={id => router.push(`/produits/sourcing/produits/${id}`)}
-            />
-          )}
-
-          {viewMode === 'card' && (
-            <SourcingCardView
-              products={filteredAndSortedProducts}
-              onView={id => router.push(`/produits/sourcing/produits/${id}`)}
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="archived" className="space-y-6 pt-6">
-          <SourcingFilters
-            searchTerm={searchTerm}
-            onSearchChange={value => {
-              setSearchTerm(value);
-              debouncedSearch(value);
-            }}
-            statusFilter={statusFilter}
-            onStatusChange={setStatusFilter}
-            sourcingTypeFilter={sourcingTypeFilter}
-            onSourcingTypeChange={setSourcingTypeFilter}
-            supplierFilter={supplierFilter}
-            onSupplierChange={setSupplierFilter}
-            pipelineFilter={pipelineFilter}
-            onPipelineChange={setPipelineFilter}
-            priorityFilter={priorityFilter}
-            onPriorityChange={setPriorityFilter}
-          />
-
-          <SourcingProductList
-            products={filteredAndSortedProducts}
-            sortBy={sortBy}
-            sortDir={sortDir}
-            onSort={col => {
-              if (sortBy === col) {
-                setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
-              } else {
-                setSortBy(col);
-                setSortDir('desc');
-              }
-            }}
-            loading={loading}
-            error={error}
-            onView={id => router.push(`/produits/sourcing/produits/${id}`)}
-            onViewSupplier={supplierId =>
-              router.push(`/organisations/${supplierId}`)
+      {isInProgress && viewMode === 'kanban' && !loading && !error ? (
+        <SourcingKanbanView products={sortedProducts} onView={openProduct} />
+      ) : (
+        <SourcingProductList
+          products={sortedProducts}
+          segment={segment}
+          sortBy={sortBy}
+          sortDir={sortDir}
+          onSort={col => {
+            if (sortBy === col) {
+              setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+            } else {
+              setSortBy(col);
+              setSortDir('desc');
             }
-            onEdit={id => router.push(`/produits/sourcing/produits/${id}`)}
-            onValidate={handleValidate}
-            onArchive={handleArchive}
-            onRestore={handleRestore}
-            onDelete={handleDelete}
-          />
-        </TabsContent>
-      </Tabs>
+          }}
+          loading={loading}
+          error={error}
+          onView={openProduct}
+          onViewSupplier={supplierId =>
+            router.push(`/contacts-organisations/suppliers/${supplierId}`)
+          }
+          onEdit={openProduct}
+          onValidate={setValidateTargetId}
+          onArchive={setWithdrawTargetId}
+          onRestore={handleRestore}
+          onDelete={handleDelete}
+        />
+      )}
+
+      <SourcingReasonDialog
+        open={withdrawTargetId !== null}
+        title="Retirer ce produit"
+        description="Le produit quitte la liste active. Le motif est gardé dans le journal ; le produit pourra être restauré."
+        confirmLabel="Retirer"
+        onClose={() => setWithdrawTargetId(null)}
+        onConfirm={reason =>
+          withdrawTargetId
+            ? archiveSourcingProduct(withdrawTargetId, reason).then(afterAction)
+            : Promise.resolve(false)
+        }
+      />
+
+      <ConfirmDialog
+        open={validateTargetId !== null}
+        onOpenChange={open => {
+          if (!open) setValidateTargetId(null);
+        }}
+        title="Valider au catalogue"
+        description="Le produit quitte le sourcing et rejoint le catalogue en brouillon, non publié. Le stock n'est pas modifié."
+        confirmText="Valider au catalogue"
+        onConfirm={async () => {
+          if (validateTargetId) {
+            await afterAction(await validateSourcing(validateTargetId));
+          }
+        }}
+      />
 
       <QuickSourcingModal
         open={isQuickSourcingModalOpen}
         onClose={() => setIsQuickSourcingModalOpen(false)}
         onSuccess={() => {
-          void refetch().catch(error => {
+          void Promise.all([refetch(), refetchCounts()]).catch(error => {
             console.error('[Sourcing] refetch failed:', error);
           });
           setIsQuickSourcingModalOpen(false);

@@ -167,8 +167,12 @@ export function ConsultationOrderInterface({
   const totalItems = consultationItems
     .filter(i => i.status !== 'rejected')
     .reduce((sum, i) => sum + i.quantity, 0);
+  // Décision D5 (BO-PRODUCTS-P8-001) : une ligne dont le produit est retiré
+  // n'est pas commandable
   const acceptedItems = consultationItems.filter(
-    i => i.status === 'approved' || i.status === 'ordered'
+    i =>
+      (i.status === 'approved' || i.status === 'ordered') &&
+      !i.product?.archived_at
   );
   const hasAcceptedItems = acceptedItems.length > 0;
 

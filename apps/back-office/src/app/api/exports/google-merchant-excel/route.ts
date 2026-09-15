@@ -32,6 +32,18 @@ interface ExportResponse {
   error?: string;
 }
 
+const PRODUCT_STATUSES = [
+  'active',
+  'preorder',
+  'discontinued',
+  'draft',
+] as const;
+type ProductStatus = (typeof PRODUCT_STATUSES)[number];
+
+function isProductStatus(value: string): value is ProductStatus {
+  return (PRODUCT_STATUSES as readonly string[]).includes(value);
+}
+
 interface ExportFilters {
   status?: string;
   categoryId?: string;
@@ -66,8 +78,9 @@ async function getProductsForExport(
     `);
 
   // Filtres optionnels
-  if (filters.status) {
-    query = query.eq('status', filters.status);
+  // La colonne s'appelle product_status (`status` n'existe pas : erreur 42703)
+  if (filters.status && isProductStatus(filters.status)) {
+    query = query.eq('product_status', filters.status);
   }
 
   if (filters.categoryId) {

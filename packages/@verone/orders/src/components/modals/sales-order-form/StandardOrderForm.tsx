@@ -431,6 +431,7 @@ export function StandardOrderForm({
           onSelect={onProductsSelect}
           mode="multi"
           context="orders"
+          sellableOnly
           title="Sélectionner des produits pour la commande"
           description="Choisissez les produits à ajouter. Vous pourrez ajuster quantités et prix après sélection."
           excludeProductIds={excludeProductIds}

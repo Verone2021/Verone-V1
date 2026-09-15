@@ -53,6 +53,9 @@ const STATUS_LABELS: Record<string, string> = {
   received: 'Reçu',
   on_hold: 'En pause',
   cancelled: 'Annulé',
+  archived: 'Archivé',
+  refused: 'Refusé',
+  validated: 'Validé au catalogue',
 };
 
 export function useSourcingReport() {
