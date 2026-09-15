@@ -159,7 +159,7 @@ export function StockReorderCard({
             <div className="flex flex-col items-start justify-start gap-3">
               {draftOrderId ? (
                 <Link
-                  href={`/produits/sourcing/commandes/${draftOrderId}`}
+                  href={`/commandes/fournisseurs?id=${draftOrderId}`}
                   className="flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-800 underline"
                 >
                   <ExternalLink className="h-3.5 w-3.5 shrink-0" />
