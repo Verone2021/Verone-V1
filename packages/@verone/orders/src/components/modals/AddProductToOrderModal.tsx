@@ -499,6 +499,7 @@ export function AddProductToOrderModal({
           onSelect={handleProductSelect}
           mode="single"
           context="orders"
+          sellableOnly={orderType === 'sales'}
           title={`Sélectionner un produit pour la commande ${orderType === 'purchase' ? 'fournisseur' : 'client'}`}
           description="Recherchez et sélectionnez le produit à ajouter"
           showQuantity

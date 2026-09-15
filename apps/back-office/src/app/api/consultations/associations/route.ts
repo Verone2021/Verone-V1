@@ -8,6 +8,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { isProductProposableInConsultation } from '@verone/products/utils';
 import { createAdminClient } from '@verone/utils/supabase/server';
 
 import { requireBackofficeAdmin } from '@/lib/guards';
@@ -67,7 +68,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 3. Vérifier que le produit existe
     const { data: product, error: productError } = await supabaseAdmin
       .from('products')
-      .select('id, name')
+      .select(
+        'id, name, archived_at, product_status, creation_mode, sourcing_status'
+      )
       .eq('id', productId)
       .single();
 
@@ -75,6 +78,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json(
         { error: 'Produit introuvable' },
         { status: 404 }
+      );
+    }
+
+    // Règle « vendable » (BO-CHANNELS-P7-001) : même règle que la liste des
+    // produits proposables (get_consultation_eligible_products)
+    if (!isProductProposableInConsultation(product)) {
+      return NextResponse.json(
+        {
+          error:
+            'Ce produit ne peut pas être proposé : il est retiré, arrêté ou en brouillon hors sourcing.',
+        },
+        { status: 422 }
       );
     }
 

@@ -11,6 +11,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { unsellableReasons } from '@verone/products/utils';
 import { createServerClient } from '@verone/utils/supabase/server';
 
 type SupabaseClient = Awaited<ReturnType<typeof createServerClient>>;
@@ -101,9 +102,16 @@ function validateProductForSync(product: Record<string, unknown>): {
   // Prix: On skip la validation car prix est dans price_list_items
   // La validation sera faite par le client Google Merchant
 
-  if (!product.product_status) {
-    errors.push('Statut produit manquant');
-  }
+  // Règle unique « vendable » (BO-CHANNELS-P7-001)
+  const textOrNull = (value: unknown) =>
+    typeof value === 'string' ? value : null;
+  errors.push(
+    ...unsellableReasons({
+      archived_at: textOrNull(product.archived_at),
+      product_status: textOrNull(product.product_status),
+      creation_mode: textOrNull(product.creation_mode),
+    })
+  );
 
   // Vérifications optionnelles mais recommandées
   if (!product.description) {

@@ -147,6 +147,14 @@ async function fetchCatalogProducts(): Promise<LinkMeCatalogProduct[]> {
     // Kill-switch par produit : les produits cachés au catalogue LinkMe
     // (BO-LINKME-CATVIS-001) sont exclus côté serveur.
     .eq('products.is_visible_in_linkme_catalog', true)
+    // Règle unique « vendable » (BO-CHANNELS-P7-001) : ni retiré, ni brouillon
+    // ou arrêté, ni encore en sourcing — même règle que product_is_sellable.
+    .is('products.archived_at', null)
+    .in('products.product_status', ['active', 'preorder'])
+    // creation_mode vide = catalogue (comme coalesce(…, 'complete') en base)
+    .or('creation_mode.neq.sourcing,creation_mode.is.null', {
+      referencedTable: 'products',
+    })
     .order('display_order', { ascending: true })
     .limit(500) // PERF: Safety cap — catalogue has ~200 products currently
     .returns<ChannelPricingWithProduct[]>();
