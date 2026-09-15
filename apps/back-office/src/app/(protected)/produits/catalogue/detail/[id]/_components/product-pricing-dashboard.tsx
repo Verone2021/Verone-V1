@@ -15,6 +15,8 @@ import { useMemo, useCallback } from 'react';
 import { calculateMinSellingPrice } from '@verone/common';
 import {
   ProductProfitabilitySection,
+  SalesByChannelCard,
+  LinkMeNetMarginCard,
   useProductPricingDashboard,
 } from '@verone/products';
 
@@ -175,7 +177,9 @@ export function ProductPricingDashboard({
           landedCost={landedCost}
         />
 
-        {/* Zone 5 — Rentabilité (historique achats / ventes, marge réalisée) */}
+        {/* Zone 5 — Ventes par canal + Rentabilité LinkMe + historique */}
+        <SalesByChannelCard productId={product.id} />
+        <LinkMeNetMarginCard productId={product.id} />
         <section
           aria-label="Rentabilité"
           className="rounded-lg border border-neutral-200 bg-white p-4"

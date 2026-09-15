@@ -14,3 +14,6 @@ export { ProductSelectionsCard } from './ProductSelectionsCard';
 
 // Composants commandes LinkMe
 export { LinkMeOrderDetailModal } from './LinkMeOrderDetailModal';
+
+// Commission Vérone pour produits affiliés
+export { AffiliateCommissionCard } from './AffiliateCommissionCard';
