@@ -149,7 +149,7 @@ function PurchasesTable({ rows }: { rows: PurchaseRow[] }) {
                 </td>
                 <td className="px-3 py-2">
                   <Link
-                    href={`/achats/commandes/${p.orderId}`}
+                    href={`/commandes/fournisseurs?id=${p.orderId}`}
                     className="text-blue-600 hover:underline font-medium"
                   >
                     {p.orderNumber}
@@ -242,7 +242,7 @@ function SalesTable({
                 </td>
                 <td className="px-3 py-2">
                   <Link
-                    href={`/ventes/commandes/${s.orderId}`}
+                    href={`/commandes/clients?id=${s.orderId}`}
                     className="text-blue-600 hover:underline font-medium"
                   >
                     {s.orderNumber}
