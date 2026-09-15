@@ -1663,3 +1663,30 @@ le 2026-09-12 (lints disparus retirés : une réapparition compte comme régress
 
 `get_best_mcp_strategy` (SECURITY INVOKER) : ~35 900 appels `anon` via l'API sans appelant trouvé dans le code — à
 identifier.
+
+## ADR-040 — `[INFRA-WORKFLOW-002]` Auto-merge suspendu tant que le dépôt est privé sur GitHub Free
+
+**Date** : 2026-09-15 · **Statut** : appliqué (règle) · **Fichiers** : `.claude/rules/workflow.md` (section « Quand
+MERGER une PR »), mémoire `repo-private-no-branch-protection`
+
+### Constat
+
+Le 2026-09-11, Roméo a passé `Verone2021/Verone-V1` en privé (historique avec anciennes clés et liste clients) sur
+l'offre GitHub **Free**. Sur un dépôt privé Free, GitHub n'applique plus la protection de branches ni les rulesets :
+les 4 checks requis ne bloquent plus rien. L'ADR-032 (« auto-merge par défaut ») devient dangereux :
+`gh pr merge --auto` fusionne immédiatement, check rouge compris. Le 2026-09-14, le réglage « supprimer la branche
+après fusion » a en outre supprimé `staging` (recréée à `65917563`).
+
+### Décision
+
+- ADR-032 **suspendu** tant que le dépôt est privé sur Free : jamais `--auto`.
+- Fusion à la main sur ordre de Roméo, après vérification par l'agent des 4 checks requis au vert
+  (`gh pr checks`).
+- PR vers `staging` : `--squash` sans suppression de `staging` ; release `staging → main` : merge commit, branche
+  conservée.
+- ADR-032 redevient applicable si le dépôt passe sur GitHub Pro ou redevient public.
+
+### Écarté
+
+- Repasser le dépôt en public pour retrouver la protection : exclu par Roméo (historique sensible).
+- GitHub Pro : dépense non décidée.
