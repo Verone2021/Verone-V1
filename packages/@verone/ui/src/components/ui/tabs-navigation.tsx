@@ -36,7 +36,7 @@ export function TabsNavigation({
 
   return (
     <div className={cn('border-b border-gray-200', className)}>
-      <nav className="flex space-x-8" aria-label="Onglets">
+      <nav className="flex gap-4 overflow-x-auto md:gap-8" aria-label="Onglets">
         {tabs.map(tab => (
           <button
             key={tab.id}
