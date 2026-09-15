@@ -61,24 +61,27 @@ export function SourcingReasonDialog({
         if (!next && !saving) onClose();
       }}
     >
-      <DialogContent className="md:max-w-lg">
+      <DialogContent className="flex h-screen flex-col md:h-auto md:max-w-lg">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
-        <Textarea
-          value={reason}
-          onChange={e => setReason(e.target.value)}
-          rows={4}
-          placeholder="Motif (obligatoire)"
-          className="w-full"
-          autoFocus
-        />
+        <div className="flex-1 overflow-y-auto md:max-h-[70vh]">
+          <Textarea
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+            rows={4}
+            placeholder="Motif (obligatoire)"
+            className="w-full"
+            autoFocus
+          />
+        </div>
 
         <DialogFooter className="flex-col gap-2 md:flex-row">
           <ButtonV2
             variant="outline"
+            size="xl"
             className="w-full md:w-auto"
             onClick={onClose}
             disabled={saving}
@@ -87,6 +90,7 @@ export function SourcingReasonDialog({
           </ButtonV2>
           <ButtonV2
             variant="danger"
+            size="xl"
             className="w-full md:w-auto"
             disabled={!trimmed || saving}
             loading={saving}

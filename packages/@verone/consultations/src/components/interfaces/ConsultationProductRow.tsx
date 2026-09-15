@@ -139,6 +139,14 @@ export function ConsultationProductRow({
               {item.product?.supplier_name &&
                 ` · ${item.product.supplier_name}`}
             </p>
+            {item.product?.archived_at && (
+              <span
+                className="mt-0.5 inline-block rounded bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-white"
+                title="Produit retiré : non commandable, absent du PDF client"
+              >
+                Retiré
+              </span>
+            )}
             {isEditing && (
               <Input
                 type="text"

@@ -145,9 +145,9 @@ export const useCatalogue = () => {
     }
   };
 
-  const archiveProduct = async (id: string) => {
+  const archiveProduct = async (id: string, reason: string) => {
     try {
-      return await archiveProductMutation(id, pid => {
+      return await archiveProductMutation(id, reason, pid => {
         setState(prev => ({
           ...prev,
           products: prev.products.filter(p => p.id !== pid),

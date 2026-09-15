@@ -71,8 +71,9 @@ export function useVariantGroupArchive(deps: VariantGroupArchiveDeps) {
       const { error: productsError } = await supabase
         .from('products')
         .update({
+          // `status` n'existe pas sur products (erreur silencieuse) ; le retrait
+          // ne change pas product_status (BO-PRODUCTS-P8-001)
           archived_at: new Date().toISOString(),
-          status: 'discontinued',
           updated_at: new Date().toISOString(),
         })
         .eq('variant_group_id', groupId)
@@ -133,7 +134,6 @@ export function useVariantGroupArchive(deps: VariantGroupArchiveDeps) {
         .from('products')
         .update({
           archived_at: null,
-          status: 'in_stock', // Remettre en stock par défaut
           updated_at: new Date().toISOString(),
         })
         .eq('variant_group_id', groupId)
