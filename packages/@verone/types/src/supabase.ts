@@ -14463,33 +14463,9 @@ export type Database = {
           old_payout_ht: number;
         }[];
       };
-      get_product_cost_price_details: {
-        Args: { p_product_id: string };
-        Returns: Json;
-      };
       get_product_detail_public: {
         Args: { p_product_id: string; p_selection_id: string };
         Returns: Json;
-      };
-      get_product_margin_analysis: {
-        Args: {
-          p_end_date?: string;
-          p_product_id: string;
-          p_start_date?: string;
-        };
-        Returns: {
-          channel_code: string;
-          customer_name: string;
-          margin_ht: number;
-          margin_percentage: number;
-          order_date: string;
-          order_reference: string;
-          order_type: string;
-          quantity: number;
-          supplier_name: string;
-          total_ht: number;
-          unit_price_ht: number;
-        }[];
       };
       get_product_stats: {
         Args: never;
@@ -14600,6 +14576,7 @@ export type Database = {
         Args: { limit_param?: number; section_name_param: string };
         Returns: Json;
       };
+      get_sidebar_counts: { Args: never; Returns: Json };
       get_site_internet_collection_detail: {
         Args: { p_slug: string };
         Returns: Json;
