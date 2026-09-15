@@ -6,7 +6,7 @@
  * TanStack Query, clé ['product-sales-margin', productId], staleTime 30 s.
  * L'arithmétique est entièrement déléguée à product-sales-margin.ts (pur).
  *
- * Sprint : BO-PRODUCTS-PROFIT-001
+ * Sprint : BO-PRODUCTS-PROFIT-001 / PROFIT-002
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -26,7 +26,9 @@ import {
 import type {
   ChannelSummary,
   ComputedSaleLine,
+  CostSource,
   LinkMeSummary,
+  LockedCostInput,
   ResolvedCost,
 } from '../utils/product-sales-margin';
 
@@ -39,6 +41,33 @@ export interface UseProductSalesMarginResult {
   cost: ResolvedCost;
   isAffiliateProduct: boolean;
   linkmePriceHt: number | null;
+  /** Prix cible produit (products.target_price) */
+  targetPrice: number | null;
+}
+
+// ---------- Type guards ----------
+
+const COST_SOURCES: ReadonlyArray<string> = [
+  'validation',
+  'purchase_history',
+  'current_cost_net_avg',
+  'current_cost_price',
+  'missing',
+];
+
+function isCostSource(s: unknown): s is CostSource {
+  return typeof s === 'string' && COST_SOURCES.includes(s);
+}
+
+function parseLockedCost(raw: unknown): LockedCostInput | null {
+  if (raw == null || typeof raw !== 'object') return null;
+  const obj = raw as Record<string, unknown>;
+  if (!isCostSource(obj.cost_source)) return null;
+  return {
+    costUnitHt: obj.cost_unit_ht != null ? Number(obj.cost_unit_ht) : null,
+    source: obj.cost_source,
+    includesFees: Boolean(obj.includes_fees),
+  };
 }
 
 // ---------- Hook ----------
@@ -53,15 +82,19 @@ export function useProductSalesMargin(productId: string) {
     queryFn: async (): Promise<UseProductSalesMarginResult> => {
       const [soiResult, productResult, pricingResult, offeringResult] =
         await Promise.all([
-          // 1. Lignes de commande avec embeds
+          // 1. Lignes de commande avec embeds (coût figé inclus)
           supabase
             .from('sales_order_items')
             .select(
               `id, quantity, unit_price_ht, total_ht,
                base_price_ht_locked, selling_price_ht_locked, retrocession_amount,
+               cost:sales_order_item_costs(cost_unit_ht, cost_source, includes_fees),
                sales_orders!inner(
                  id, order_number, order_date, created_at, status, channel_id,
-                 sales_channels!sales_orders_channel_id_fkey(code, name)
+                 customer_id, customer_type, individual_customer_id,
+                 sales_channels!sales_orders_channel_id_fkey(code, name),
+                 organisations!sales_orders_customer_id_fkey(trade_name, legal_name),
+                 individual_customers!sales_orders_individual_customer_id_fkey(first_name, last_name)
                ),
                linkme_selection_items!sales_order_items_linkme_selection_item_id_fkey(
                  selection_id,
@@ -75,11 +108,11 @@ export function useProductSalesMargin(productId: string) {
             .in('sales_orders.status', [...VALID_SALE_STATUSES])
             .limit(2000),
 
-          // 2. Coûts produit
+          // 2. Coûts produit + prix cible
           supabase
             .from('products')
             .select(
-              'id, cost_net_avg, cost_price, created_by_affiliate, affiliate_commission_rate'
+              'id, cost_net_avg, cost_price, created_by_affiliate, affiliate_commission_rate, target_price'
             )
             .eq('id', productId)
             .single(),
@@ -126,7 +159,6 @@ export function useProductSalesMargin(productId: string) {
       // Compter les affiliés qui proposent le produit
       const offeringAffiliateIds = new Set<string>();
       for (const item of offeringResult.data ?? []) {
-        // Supabase nested embed is any — route through unknown
         const selUnk: unknown = item.linkme_selections;
         if (Array.isArray(selUnk)) {
           for (const s of selUnk as unknown[]) {
@@ -169,8 +201,6 @@ export function useProductSalesMargin(productId: string) {
           if (!so || typeof so !== 'object') return null;
 
           // Récupérer code/name du canal
-          // so.sales_channels is typed any[] by Supabase nested embed —
-          // route through unknown to avoid unsafe-member-access on array elements
           const chArray: unknown = so.sales_channels;
           const chFirst: unknown = Array.isArray(chArray)
             ? (chArray as unknown[])[0]
@@ -191,8 +221,6 @@ export function useProductSalesMargin(productId: string) {
           // Récupérer affilié depuis la sélection
           let affiliateId: string | null = null;
           let affiliateName: string | null = null;
-          // Supabase deeply-nested embeds are typed as any — route through
-          // unknown + Record<string, unknown> casts (safe: guarded by typeof)
           const siUnknown: unknown = raw.linkme_selection_items;
           const siFirst: unknown = Array.isArray(siUnknown)
             ? (siUnknown as unknown[])[0]
@@ -218,6 +246,56 @@ export function useProductSalesMargin(productId: string) {
                   }
                 }
               }
+            }
+          }
+
+          // Coût figé à la vente (sales_order_item_costs embed)
+          const lockedCost = parseLockedCost(raw.cost);
+
+          // Nom du client
+          let customerId: string | null = null;
+          let customerName: string | null = null;
+          const custType =
+            typeof so.customer_type === 'string' ? so.customer_type : null;
+          if (custType === 'organization') {
+            customerId =
+              typeof so.customer_id === 'string' ? so.customer_id : null;
+            const orgUnk: unknown = so.organisations;
+            const orgObj =
+              orgUnk != null &&
+              typeof orgUnk === 'object' &&
+              !Array.isArray(orgUnk)
+                ? (orgUnk as Record<string, unknown>)
+                : null;
+            if (orgObj !== null) {
+              const tradeName =
+                typeof orgObj.trade_name === 'string'
+                  ? orgObj.trade_name
+                  : null;
+              const legalName =
+                typeof orgObj.legal_name === 'string'
+                  ? orgObj.legal_name
+                  : null;
+              customerName = tradeName ?? legalName;
+            }
+          } else if (custType === 'individual') {
+            customerId =
+              typeof so.individual_customer_id === 'string'
+                ? so.individual_customer_id
+                : null;
+            const indUnk: unknown = so.individual_customers;
+            const indObj =
+              indUnk != null &&
+              typeof indUnk === 'object' &&
+              !Array.isArray(indUnk)
+                ? (indUnk as Record<string, unknown>)
+                : null;
+            if (indObj !== null) {
+              const fn =
+                typeof indObj.first_name === 'string' ? indObj.first_name : '';
+              const ln =
+                typeof indObj.last_name === 'string' ? indObj.last_name : '';
+              customerName = `${fn} ${ln}`.trim() || null;
             }
           }
 
@@ -248,6 +326,9 @@ export function useProductSalesMargin(productId: string) {
                   : null,
               affiliateId,
               affiliateName,
+              lockedCost,
+              customerId,
+              customerName,
             },
             productInput,
             cost
@@ -269,6 +350,8 @@ export function useProductSalesMargin(productId: string) {
         cost,
         isAffiliateProduct: Boolean(prod.created_by_affiliate),
         linkmePriceHt,
+        targetPrice:
+          prod.target_price != null ? Number(prod.target_price) : null,
       };
     },
   });

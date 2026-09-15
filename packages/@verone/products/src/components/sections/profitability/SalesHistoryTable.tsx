@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 import Link from 'next/link';
 
@@ -9,15 +9,18 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ResponsiveDataView } from '@verone/ui';
 
 import type { ComputedSaleLine } from '../../../hooks/use-product-sales-margin';
+import { summarizeFilteredLines } from '../../../utils/product-sales-margin';
+import { CostSourceBadge } from './CostSourceBadge';
+import { SalesHistoryFiltersBar } from './SalesHistoryFiltersBar';
 import {
   clrMargin,
+  fmtCoef,
   fmtDate,
   fmtEur,
   fmtPct,
   fmtQty,
 } from './profitability-format';
 
-/** Libellés canaux */
 const CHANNEL_LABELS: Record<string, string> = {
   linkme: 'LinkMe',
   manuel: 'Manuel',
@@ -37,7 +40,46 @@ interface Props {
 
 export function SalesHistoryTable({ lines }: Props): React.JSX.Element {
   const [expanded, setExpanded] = useState(false);
-  const visible = expanded ? lines : lines.slice(0, INITIAL_ROWS);
+  const [periodFilter, setPeriodFilter] = useState('all');
+  const [clientFilter, setClientFilter] = useState('');
+  const [channelFilter, setChannelFilter] = useState('');
+
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    for (const l of lines) {
+      if (l.orderDate) {
+        const y = new Date(l.orderDate).getFullYear();
+        if (!Number.isNaN(y)) years.add(y);
+      }
+    }
+    return Array.from(years).sort((a, b) => b - a);
+  }, [lines]);
+
+  const clientOptions = useMemo(() => {
+    const names = new Set<string>();
+    for (const l of lines) {
+      if (l.customerName) names.add(l.customerName);
+    }
+    return Array.from(names).sort((a, b) => a.localeCompare(b, 'fr'));
+  }, [lines]);
+
+  const filtered = useMemo(() => {
+    const now = Date.now();
+    return lines.filter(l => {
+      if (channelFilter && l.channelCode !== channelFilter) return false;
+      if (clientFilter && l.customerName !== clientFilter) return false;
+      if (periodFilter === 'all') return true;
+      if (!l.orderDate) return false;
+      const t = new Date(l.orderDate).getTime();
+      if (periodFilter === '12m') return t >= now - 365 * 24 * 3600 * 1000;
+      if (periodFilter === 'current_year')
+        return new Date(l.orderDate).getFullYear() === new Date().getFullYear();
+      return new Date(l.orderDate).getFullYear() === Number(periodFilter);
+    });
+  }, [lines, periodFilter, clientFilter, channelFilter]);
+
+  const totals = useMemo(() => summarizeFilteredLines(filtered), [filtered]);
+  const visible = expanded ? filtered : filtered.slice(0, INITIAL_ROWS);
 
   if (lines.length === 0) {
     return (
@@ -48,10 +90,21 @@ export function SalesHistoryTable({ lines }: Props): React.JSX.Element {
   }
 
   return (
-    <div>
+    <div className="space-y-3">
+      <SalesHistoryFiltersBar
+        periodFilter={periodFilter}
+        clientFilter={clientFilter}
+        channelFilter={channelFilter}
+        availableYears={availableYears}
+        clientOptions={clientOptions}
+        onPeriod={setPeriodFilter}
+        onClient={setClientFilter}
+        onChannel={setChannelFilter}
+      />
+
       <ResponsiveDataView
         data={visible}
-        emptyMessage="Aucune vente enregistrée pour ce produit."
+        emptyMessage="Aucun résultat pour ces filtres."
         breakpoint="md"
         renderTable={rows => (
           <div className="overflow-x-auto rounded-lg border border-neutral-200">
@@ -60,16 +113,25 @@ export function SalesHistoryTable({ lines }: Props): React.JSX.Element {
                 <tr>
                   <th className="px-3 py-2 w-[100px]">Date</th>
                   <th className="px-3 py-2 min-w-[140px]">N° commande</th>
+                  <th className="px-3 py-2 hidden lg:table-cell min-w-[140px]">
+                    Client
+                  </th>
                   <th className="px-3 py-2">Canal</th>
                   <th className="px-3 py-2 text-right w-[70px]">Qté</th>
                   <th className="px-3 py-2 text-right hidden lg:table-cell">
                     PV Vérone HT
                   </th>
                   <th className="px-3 py-2 text-right hidden lg:table-cell">
+                    Coût
+                  </th>
+                  <th className="px-3 py-2 text-right hidden lg:table-cell">
                     Marge unit.
                   </th>
                   <th className="px-3 py-2 text-right hidden xl:table-cell">
                     Marge %
+                  </th>
+                  <th className="px-3 py-2 text-right hidden xl:table-cell">
+                    Coef.
                   </th>
                   <th className="px-3 py-2 text-right w-[120px]">
                     Total Vérone
@@ -90,6 +152,12 @@ export function SalesHistoryTable({ lines }: Props): React.JSX.Element {
                         {s.orderNumber}
                       </Link>
                     </td>
+                    <td
+                      className="px-3 py-2 hidden lg:table-cell truncate max-w-[160px]"
+                      title={s.customerName ?? undefined}
+                    >
+                      {s.customerName ?? '—'}
+                    </td>
                     <td className="px-3 py-2">
                       <span className="text-xs text-neutral-500">
                         {channelLabel(s)}
@@ -105,6 +173,14 @@ export function SalesHistoryTable({ lines }: Props): React.JSX.Element {
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums hidden lg:table-cell">
                       {fmtEur(s.veroneUnitPrice)}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums hidden lg:table-cell">
+                      <div className="flex flex-col items-end gap-0.5">
+                        <span>{fmtEur(s.costUnit)}</span>
+                        {s.costSource != null && (
+                          <CostSourceBadge source={s.costSource} />
+                        )}
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums hidden lg:table-cell">
                       {s.marginUnit != null ? (
@@ -123,6 +199,9 @@ export function SalesHistoryTable({ lines }: Props): React.JSX.Element {
                       ) : (
                         '—'
                       )}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums hidden xl:table-cell">
+                      {fmtCoef(s.coefficient)}
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums font-medium">
                       {fmtEur(s.veroneRevenue)}
@@ -149,6 +228,14 @@ export function SalesHistoryTable({ lines }: Props): React.JSX.Element {
                 {fmtDate(s.orderDate)}
               </span>
             </div>
+            {s.customerName && (
+              <p
+                className="text-xs text-neutral-600 truncate"
+                title={s.customerName}
+              >
+                {s.customerName}
+              </p>
+            )}
             <p className="text-xs text-neutral-500">
               {channelLabel(s)}
               {s.isLinkMe && s.affiliateName ? ` (${s.affiliateName})` : ''}
@@ -157,24 +244,48 @@ export function SalesHistoryTable({ lines }: Props): React.JSX.Element {
               <span>
                 {fmtQty(s.quantity)} × {fmtEur(s.veroneUnitPrice)}
               </span>
+              {s.costUnit != null && (
+                <span className="flex items-center gap-1">
+                  Coût : {fmtEur(s.costUnit)}
+                  {s.costSource != null && (
+                    <CostSourceBadge source={s.costSource} />
+                  )}
+                </span>
+              )}
               <span className="font-medium">
                 Total Vérone : {fmtEur(s.veroneRevenue)}
               </span>
               {s.marginUnit != null && (
                 <span className={clrMargin(s.marginUnit)}>
                   Marge : {fmtEur(s.marginUnit)} / pièce ·{' '}
-                  {fmtPct(s.marginPercent)}
+                  {fmtPct(s.marginPercent)} · {fmtCoef(s.coefficient)}
                 </span>
               )}
             </div>
           </div>
         )}
       />
-      {lines.length > INITIAL_ROWS && (
+
+      {/* Totaux filtrés */}
+      <div className="rounded-lg bg-neutral-50 px-3 py-2 text-xs text-neutral-600 flex flex-wrap gap-x-4 gap-y-0.5">
+        <span className="font-medium">
+          {filtered.length} vente{filtered.length > 1 ? 's' : ''} ·{' '}
+          {fmtQty(totals.quantity)} pièces
+        </span>
+        <span>Encaissé : {fmtEur(totals.veroneRevenue)}</span>
+        {totals.marginTotal != null && (
+          <span className={clrMargin(totals.marginTotal)}>
+            Marge : {fmtEur(totals.marginTotal)} ·{' '}
+            {fmtPct(totals.marginPercent)} · {fmtCoef(totals.coefficient)}
+          </span>
+        )}
+      </div>
+
+      {filtered.length > INITIAL_ROWS && (
         <button
           type="button"
           onClick={() => setExpanded(v => !v)}
-          className="mt-2 flex h-11 items-center gap-1 text-xs text-blue-600 hover:text-blue-800 md:h-auto"
+          className="flex h-11 items-center gap-1 text-xs text-blue-600 hover:text-blue-800 md:h-auto"
         >
           {expanded ? (
             <>
@@ -183,7 +294,7 @@ export function SalesHistoryTable({ lines }: Props): React.JSX.Element {
           ) : (
             <>
               <ChevronDown className="h-3 w-3" /> Voir les{' '}
-              {lines.length - INITIAL_ROWS} autres
+              {filtered.length - INITIAL_ROWS} autres
             </>
           )}
         </button>

@@ -44,7 +44,6 @@ export function LinkMeNetMarginCard({ productId }: Props): React.JSX.Element {
   const { linkme, cost, isAffiliateProduct, linkmePriceHt } = data;
   const { theoreticalUnitMargin: th } = linkme;
 
-  // Tuile prix de revient
   const costTile = cost.missing ? (
     <span className="text-neutral-400">Manquant</span>
   ) : (
@@ -56,7 +55,6 @@ export function LinkMeNetMarginCard({ productId }: Props): React.JSX.Element {
     </span>
   );
 
-  // Tuile marge théorique
   const marginTile =
     th.amount != null ? (
       <span className={clrMargin(th.amount)}>
@@ -68,7 +66,6 @@ export function LinkMeNetMarginCard({ productId }: Props): React.JSX.Element {
 
   return (
     <div className="rounded-lg border border-neutral-200 bg-white p-4 space-y-4">
-      {/* En-tête */}
       <div>
         <h3 className="text-sm font-semibold text-neutral-900">
           Rentabilité LinkMe — marge nette Vérone
@@ -79,7 +76,7 @@ export function LinkMeNetMarginCard({ productId }: Props): React.JSX.Element {
         </p>
       </div>
 
-      {/* Tuiles */}
+      {/* Tuiles prix actuel */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <Tile
           label="Prix LinkMe fixé"
@@ -126,7 +123,6 @@ export function LinkMeNetMarginCard({ productId }: Props): React.JSX.Element {
         isAffiliateProduct={isAffiliateProduct}
       />
 
-      {/* Par affilié */}
       {linkme.byAffiliate.length > 0 && (
         <div className="space-y-1.5">
           <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide">

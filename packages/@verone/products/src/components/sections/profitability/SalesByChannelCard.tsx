@@ -1,14 +1,22 @@
 'use client';
 
-import { Loader2, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
 
-import { ResponsiveDataView } from '@verone/ui';
+import { Loader2, AlertCircle, ArrowRightLeft } from 'lucide-react';
+
+import { Button, ResponsiveDataView } from '@verone/ui';
 
 import { useProductSalesMargin } from '../../../hooks/use-product-sales-margin';
 import type { ChannelSummary } from '../../../utils/product-sales-margin';
-import { clrMargin, fmtEur, fmtPct, fmtQty } from './profitability-format';
+import {
+  clrMargin,
+  fmtCoef,
+  fmtEur,
+  fmtPct,
+  fmtQty,
+} from './profitability-format';
+import { UsePriceDialog } from './UsePriceDialog';
 
-/** Libellés humains par code canal */
 const CHANNEL_LABELS: Record<string, string> = {
   linkme: 'LinkMe (hors commission affiliés)',
   manuel: 'Manuel',
@@ -28,6 +36,9 @@ interface Props {
 
 export function SalesByChannelCard({ productId }: Props): React.JSX.Element {
   const { data, isLoading, error } = useProductSalesMargin(productId);
+  const [dialogChannel, setDialogChannel] = useState<ChannelSummary | null>(
+    null
+  );
 
   if (isLoading) {
     return (
@@ -49,7 +60,12 @@ export function SalesByChannelCard({ productId }: Props): React.JSX.Element {
     );
   }
 
-  const { byChannel, cost } = data;
+  const { byChannel, cost, targetPrice } = data;
+  const totalWithoutFees = byChannel.reduce(
+    (s, r) => s + r.withoutFeesLines,
+    0
+  );
+  const totalUncovered = byChannel.reduce((s, r) => s + r.uncoveredLines, 0);
 
   return (
     <div className="rounded-lg border border-neutral-200 bg-white p-4 space-y-3">
@@ -80,9 +96,13 @@ export function SalesByChannelCard({ productId }: Props): React.JSX.Element {
                   <th className="px-3 py-2 text-right w-[80px] hidden xl:table-cell">
                     Marge %
                   </th>
+                  <th className="px-3 py-2 text-right w-[80px] hidden lg:table-cell">
+                    Coef.
+                  </th>
                   <th className="px-3 py-2 text-right w-[80px] hidden xl:table-cell">
                     Commandes
                   </th>
+                  <th className="px-3 py-2 w-[44px]" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
@@ -113,8 +133,23 @@ export function SalesByChannelCard({ productId }: Props): React.JSX.Element {
                         {fmtPct(row.marginPercent)}
                       </span>
                     </td>
+                    <td className="px-3 py-2 text-right tabular-nums hidden lg:table-cell">
+                      {fmtCoef(row.coefficient)}
+                    </td>
                     <td className="px-3 py-2 text-right tabular-nums hidden xl:table-cell">
                       {row.orderCount}
+                    </td>
+                    <td className="px-3 py-1 text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Utiliser ce prix"
+                        aria-label="Utiliser ce prix"
+                        className="h-11 w-11 md:h-9 md:w-9"
+                        onClick={() => setDialogChannel(row)}
+                      >
+                        <ArrowRightLeft className="h-4 w-4" />
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -127,14 +162,26 @@ export function SalesByChannelCard({ productId }: Props): React.JSX.Element {
             key={row.channelId ?? String(i)}
             className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 space-y-1"
           >
-            <p className="text-sm font-medium">{channelLabel(row)}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-medium">{channelLabel(row)}</p>
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Utiliser ce prix"
+                aria-label="Utiliser ce prix"
+                className="h-11 w-11 md:h-9 md:w-9 flex-shrink-0"
+                onClick={() => setDialogChannel(row)}
+              >
+                <ArrowRightLeft className="h-4 w-4" />
+              </Button>
+            </div>
             <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-neutral-600">
               <span>{fmtQty(row.quantity)} pièces</span>
               <span>Encaissé : {fmtEur(row.veroneRevenue)}</span>
               {row.marginTotal != null && (
                 <span className={clrMargin(row.marginTotal)}>
                   Marge : {fmtEur(row.marginTotal)} ·{' '}
-                  {fmtPct(row.marginPercent)}
+                  {fmtPct(row.marginPercent)} · {fmtCoef(row.coefficient)}
                 </span>
               )}
             </div>
@@ -142,16 +189,29 @@ export function SalesByChannelCard({ productId }: Props): React.JSX.Element {
         )}
       />
 
-      {!cost.missing && !cost.includesFees && (
+      {totalWithoutFees > 0 && (
         <p className="text-xs text-amber-600">
-          ⚠ Prix d&apos;achat seul — frais d&apos;approche non inclus, marge
-          surestimée.
+          ⚠ {totalWithoutFees} ligne{totalWithoutFees > 1 ? 's' : ''} au prix
+          d&apos;achat seul (frais d&apos;approche non inclus, marge
+          surestimée).
         </p>
       )}
-      {cost.missing && (
+      {totalUncovered > 0 && (
         <p className="text-xs text-neutral-400">
-          Marge non calculable : prix de revient manquant.
+          {totalUncovered} ligne{totalUncovered > 1 ? 's' : ''} sans prix de
+          revient (marge partielle).
         </p>
+      )}
+
+      {dialogChannel != null && (
+        <UsePriceDialog
+          open
+          onClose={() => setDialogChannel(null)}
+          productId={productId}
+          suggestedPrice={dialogChannel.avgVeronePrice}
+          cost={cost}
+          currentTargetPrice={targetPrice}
+        />
       )}
     </div>
   );

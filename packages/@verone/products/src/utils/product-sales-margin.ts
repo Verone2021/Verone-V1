@@ -2,7 +2,7 @@
  * product-sales-margin.ts — calculs purs de marge LinkMe et par canal.
  * Aucun accès réseau. Toutes les fonctions sont pures.
  *
- * Sprint : BO-PRODUCTS-PROFIT-001
+ * Sprint : BO-PRODUCTS-PROFIT-001 / PROFIT-002
  */
 
 // ---------- Constants ----------
@@ -21,7 +21,32 @@ export const VALID_SALE_STATUSES = [
 
 export type ValidSaleStatus = (typeof VALID_SALE_STATUSES)[number];
 
+// ---------- CostSource ----------
+
+/**
+ * Sources du coût unitaire stockées dans sales_order_item_costs.
+ * 'missing' = aucun coût disponible à la vente.
+ */
+export type CostSource =
+  | 'validation'
+  | 'purchase_history'
+  | 'current_cost_net_avg'
+  | 'current_cost_price'
+  | 'missing';
+
+/**
+ * Type étendu pour l'affichage : inclut 'current_not_frozen' pour les lignes
+ * sans coût figé (on retombe sur le coût produit actuel, non figé à la vente).
+ */
+export type CostSourceDisplay = CostSource | 'current_not_frozen';
+
 // ---------- Input types ----------
+
+export interface LockedCostInput {
+  costUnitHt: number | null;
+  source: CostSource;
+  includesFees: boolean;
+}
 
 export interface SaleLineInput {
   orderId: string;
@@ -39,6 +64,12 @@ export interface SaleLineInput {
   retrocessionAmount: number | null;
   affiliateId: string | null;
   affiliateName: string | null;
+  /** Coût figé à la vente (provient de sales_order_item_costs). null si absent. */
+  lockedCost: LockedCostInput | null;
+  /** Identifiant client de la commande (organisations.id ou individual_customers.id) */
+  customerId?: string | null;
+  /** Nom affiché du client (trade_name/legal_name ou prénom+nom) */
+  customerName?: string | null;
 }
 
 export interface ProductCostInput {
@@ -66,6 +97,8 @@ export interface ComputedSaleLine {
   status: string;
   quantity: number;
   isLinkMe: boolean;
+  /** Vrai si le produit a été créé par un affilié (commission Vérone au lieu de marge) */
+  isAffiliateProduct: boolean;
   veroneUnitPrice: number;
   veroneRevenue: number;
   clientRevenue: number;
@@ -73,6 +106,16 @@ export interface ComputedSaleLine {
   veroneCommission: number | null;
   affiliateId: string | null;
   affiliateName: string | null;
+  /** Identifiant client de la commande */
+  customerId: string | null;
+  /** Nom affiché du client */
+  customerName: string | null;
+  /** Coût unitaire effectif (figé si disponible, actuel sinon) */
+  costUnit: number | null;
+  /** Source du coût utilisé */
+  costSource: CostSourceDisplay | null;
+  /** Vrai si le coût inclut les frais d'approche */
+  costIncludesFees: boolean | null;
   marginTotal: number | null;
   marginUnit: number | null;
   marginPercent: number | null;
@@ -86,8 +129,17 @@ export interface ChannelSummary {
   quantity: number;
   veroneRevenue: number;
   avgVeronePrice: number | null;
+  /** Somme des marges sur lignes couvertes. null si aucune ligne couverte. */
   marginTotal: number | null;
+  /** Marge / revenu couvert × 100. null si coveredRevenue = 0. */
   marginPercent: number | null;
+  /** Revenu couvert ÷ coût total. null si costTotal = 0. */
+  coefficient: number | null;
+  coveredLines: number;
+  uncoveredLines: number;
+  withoutFeesLines: number;
+  costTotal: number;
+  coveredRevenue: number;
   orderCount: number;
 }
 
@@ -109,8 +161,18 @@ export interface LinkMeSummary {
   quantity: number;
   veroneRevenue: number;
   avgVeronePrice: number | null;
+  /** Somme des marges sur lignes couvertes. null si aucune ligne couverte. */
   marginTotal: number | null;
+  /** Marge / revenu couvert × 100. null si coveredRevenue = 0. */
   marginPercent: number | null;
+  /** Revenu couvert ÷ coût total. null si costTotal = 0. */
+  coefficient: number | null;
+  coveredLines: number;
+  uncoveredLines: number;
+  withoutFeesLines: number;
+  affiliateProductLines: number;
+  costTotal: number;
+  coveredRevenue: number;
   affiliateCommissionTotal: number;
   clientRevenue: number;
   veroneCommissionTotal: number;
@@ -177,17 +239,36 @@ export function computeSaleLine(
       (line.unitPriceHt * qty * (product.affiliateCommissionRate ?? 0)) / 100;
   }
 
+  // Coût effectif : coût figé (sales_order_item_costs) prioritaire sur coût produit actuel
+  let effectiveCost: ResolvedCost;
+  let costSource: CostSourceDisplay;
+
+  if (line.lockedCost != null) {
+    const lc = line.lockedCost;
+    const isMissing = lc.source === 'missing' || lc.costUnitHt == null;
+    effectiveCost = {
+      cost: isMissing ? null : lc.costUnitHt,
+      includesFees: lc.includesFees,
+      missing: isMissing,
+    };
+    costSource = lc.source;
+  } else {
+    effectiveCost = cost;
+    costSource = cost.missing ? 'missing' : 'current_not_frozen';
+  }
+
   let marginTotal: number | null = null;
   let marginUnit: number | null = null;
   let marginPercent: number | null = null;
   let coefficient: number | null = null;
 
-  if (!product.createdByAffiliate && cost.cost != null) {
-    marginUnit = veroneUnitPrice - cost.cost;
+  if (!product.createdByAffiliate && effectiveCost.cost != null) {
+    marginUnit = veroneUnitPrice - effectiveCost.cost;
     marginTotal = marginUnit * qty;
     marginPercent =
       veroneRevenue > 0 ? (marginTotal / veroneRevenue) * 100 : null;
-    coefficient = cost.cost > 0 ? veroneUnitPrice / cost.cost : null;
+    coefficient =
+      effectiveCost.cost > 0 ? veroneUnitPrice / effectiveCost.cost : null;
   }
 
   return {
@@ -200,6 +281,7 @@ export function computeSaleLine(
     status: line.status,
     quantity: qty,
     isLinkMe,
+    isAffiliateProduct: Boolean(product.createdByAffiliate),
     veroneUnitPrice,
     veroneRevenue,
     clientRevenue,
@@ -207,6 +289,11 @@ export function computeSaleLine(
     veroneCommission,
     affiliateId: line.affiliateId,
     affiliateName: line.affiliateName,
+    customerId: line.customerId ?? null,
+    customerName: line.customerName ?? null,
+    costUnit: effectiveCost.cost,
+    costSource,
+    costIncludesFees: effectiveCost.missing ? null : effectiveCost.includesFees,
     marginTotal,
     marginUnit,
     marginPercent,
@@ -214,177 +301,10 @@ export function computeSaleLine(
   };
 }
 
-/** Synthèse par canal (lignes valides uniquement) */
-export function summarizeByChannel(
-  lines: ComputedSaleLine[]
-): ChannelSummary[] {
-  type Acc = {
-    channelId: string | null;
-    channelCode: string | null;
-    channelName: string | null;
-    quantity: number;
-    veroneRevenue: number;
-    marginTotal: number | null;
-    marginMissing: boolean;
-    orderIds: Set<string>;
-  };
-
-  const byChannel = new Map<string, Acc>();
-
-  for (const line of lines) {
-    if (!isValidLine(line)) continue;
-    const key = line.channelId ?? '__none__';
-    const acc = byChannel.get(key);
-    if (acc) {
-      acc.quantity += line.quantity;
-      acc.veroneRevenue += line.veroneRevenue;
-      if (line.marginTotal != null && !acc.marginMissing) {
-        acc.marginTotal = (acc.marginTotal ?? 0) + line.marginTotal;
-      } else if (line.marginTotal == null) {
-        acc.marginMissing = true;
-      }
-      acc.orderIds.add(line.orderId);
-    } else {
-      byChannel.set(key, {
-        channelId: line.channelId,
-        channelCode: line.channelCode,
-        channelName: line.channelName,
-        quantity: line.quantity,
-        veroneRevenue: line.veroneRevenue,
-        marginTotal: line.marginTotal,
-        marginMissing: line.marginTotal == null,
-        orderIds: new Set([line.orderId]),
-      });
-    }
-  }
-
-  return Array.from(byChannel.values()).map(ch => ({
-    channelId: ch.channelId,
-    channelCode: ch.channelCode,
-    channelName: ch.channelName,
-    quantity: ch.quantity,
-    veroneRevenue: ch.veroneRevenue,
-    avgVeronePrice: ch.quantity > 0 ? ch.veroneRevenue / ch.quantity : null,
-    marginTotal: ch.marginMissing ? null : ch.marginTotal,
-    marginPercent:
-      !ch.marginMissing && ch.marginTotal != null && ch.veroneRevenue > 0
-        ? (ch.marginTotal / ch.veroneRevenue) * 100
-        : null,
-    orderCount: ch.orderIds.size,
-  }));
-}
-
-/** Synthèse LinkMe détaillée (lignes valides uniquement) */
-export function summarizeLinkMe(
-  lines: ComputedSaleLine[],
-  options: {
-    linkmePriceHt: number | null;
-    cost: ResolvedCost;
-    offeringAffiliateCount: number;
-  }
-): LinkMeSummary {
-  type AffAcc = {
-    affiliateId: string;
-    name: string;
-    quantity: number;
-    veroneRevenue: number;
-    marginTotal: number | null;
-    marginMissing: boolean;
-  };
-
-  let quantity = 0;
-  let veroneRevenue = 0;
-  let affiliateCommissionTotal = 0;
-  let clientRevenue = 0;
-  let veroneCommissionTotal = 0;
-  let marginTotalAcc: number | null = null;
-  let marginMissing = false;
-  const orderIds = new Set<string>();
-  const sellingAffiliateIds = new Set<string>();
-  const byAffiliateMap = new Map<string, AffAcc>();
-
-  for (const line of lines) {
-    if (!line.isLinkMe || !isValidLine(line)) continue;
-    quantity += line.quantity;
-    veroneRevenue += line.veroneRevenue;
-    affiliateCommissionTotal += line.affiliateCommission;
-    clientRevenue += line.clientRevenue;
-    veroneCommissionTotal += line.veroneCommission ?? 0;
-    orderIds.add(line.orderId);
-
-    if (line.marginTotal != null && !marginMissing) {
-      marginTotalAcc = (marginTotalAcc ?? 0) + line.marginTotal;
-    } else if (line.marginTotal == null) {
-      marginMissing = true;
-    }
-
-    if (line.affiliateId) {
-      sellingAffiliateIds.add(line.affiliateId);
-      const acc = byAffiliateMap.get(line.affiliateId);
-      if (acc) {
-        acc.quantity += line.quantity;
-        acc.veroneRevenue += line.veroneRevenue;
-        if (line.marginTotal != null && !acc.marginMissing) {
-          acc.marginTotal = (acc.marginTotal ?? 0) + line.marginTotal;
-        } else if (line.marginTotal == null) {
-          acc.marginMissing = true;
-        }
-      } else {
-        byAffiliateMap.set(line.affiliateId, {
-          affiliateId: line.affiliateId,
-          name: line.affiliateName ?? line.affiliateId,
-          quantity: line.quantity,
-          veroneRevenue: line.veroneRevenue,
-          marginTotal: line.marginTotal,
-          marginMissing: line.marginTotal == null,
-        });
-      }
-    }
-  }
-
-  const finalMarginTotal = marginMissing ? null : marginTotalAcc;
-  const theoreticalUnitMargin = computeTheoreticalMargin(
-    options.linkmePriceHt,
-    options.cost
-  );
-
-  return {
-    quantity,
-    veroneRevenue,
-    avgVeronePrice: quantity > 0 ? veroneRevenue / quantity : null,
-    marginTotal: finalMarginTotal,
-    marginPercent:
-      finalMarginTotal != null && veroneRevenue > 0
-        ? (finalMarginTotal / veroneRevenue) * 100
-        : null,
-    affiliateCommissionTotal,
-    clientRevenue,
-    veroneCommissionTotal,
-    orderCount: orderIds.size,
-    sellingAffiliateCount: sellingAffiliateIds.size,
-    offeringAffiliateCount: options.offeringAffiliateCount,
-    byAffiliate: Array.from(byAffiliateMap.values()).map(a => ({
-      affiliateId: a.affiliateId,
-      name: a.name,
-      quantity: a.quantity,
-      veroneRevenue: a.veroneRevenue,
-      marginTotal: a.marginMissing ? null : a.marginTotal,
-    })),
-    theoreticalUnitMargin,
-  };
-}
-
-function computeTheoreticalMargin(
-  linkmePriceHt: number | null,
-  cost: ResolvedCost
-): TheoreticalMargin {
-  if (linkmePriceHt == null || cost.cost == null) {
-    return { amount: null, percent: null, coefficient: null };
-  }
-  const amount = linkmePriceHt - cost.cost;
-  return {
-    amount,
-    percent: linkmePriceHt > 0 ? (amount / linkmePriceHt) * 100 : null,
-    coefficient: cost.cost > 0 ? linkmePriceHt / cost.cost : null,
-  };
-}
+// Synthèses dans un fichier séparé pour respecter la limite < 400 lignes
+export {
+  summarizeByChannel,
+  summarizeLinkMe,
+  summarizeFilteredLines,
+} from './product-sales-margin-summaries';
+export type { FilteredSummary } from './product-sales-margin-summaries';
