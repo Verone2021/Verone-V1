@@ -114,8 +114,8 @@ export interface CreateProductData {
   // 🔥 FIX: cost_price RESTAURÉ (migration 20251017_007)
   cost_price?: number; // Prix d'achat HT fournisseur
 
-  // 🔥 FIX: Champs de completion et status (pour wizard workflow)
-  status?: string; // Statut de disponibilité (DEPRECATED - utiliser product_status + stock_status)
+  // Champs de complétion (pour wizard workflow). La colonne `status` n'existe
+  // plus sur products : product_status + stock_status la remplacent.
   completion_status?: string; // 'draft' ou 'active'
   completion_percentage?: number; // Pourcentage de complétion (0-100)
 
@@ -238,7 +238,6 @@ export function useProducts(filters?: ProductFilters, page: number = 0) {
           supplier_id: productData.supplier_id,
           manufacturer: productData.manufacturer,
           target_margin_percentage: productData.target_margin_percentage,
-          status: productData.status,
           completion_status: productData.completion_status,
           completion_percentage: productData.completion_percentage,
           requires_sample: productData.requires_sample,

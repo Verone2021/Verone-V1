@@ -1,6 +1,5 @@
 // Auto-generated hooks index for @verone/products
 
-export * from './use-top-products';
 export * from './use-product-packages';
 export * from './use-color-selection';
 export * from './use-completion-status';
@@ -17,6 +16,7 @@ export * from './use-products';
 export * from './use-product-primary-image';
 export * from './use-archived-products';
 export * from './use-product-profitability';
+export * from './use-product-sales-margin';
 export * from './use-variant-products-create';
 export * from './use-product-images-batch';
 export * from './use-product';
@@ -28,3 +28,4 @@ export * from './use-media-asset-publications';
 export * from './use-marketing-eligibility';
 export * from './use-supplier-availability';
 export * from './use-product-performance';
+export * from './use-update-target-price';

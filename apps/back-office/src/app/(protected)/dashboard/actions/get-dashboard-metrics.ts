@@ -65,16 +65,18 @@ export const getDashboardMetrics = cache(
           .is('cancelled_at', null),
 
         // 4. Total Products + New 30 days
+        // (products n'a pas de deleted_at : l'archivage passe par archived_at)
         supabase
           .from('products')
           .select('id, created_at', { count: 'exact' })
-          .is('deleted_at', null),
+          .is('archived_at', null),
 
-        // 5. Active Consultations
+        // 5. Active Consultations (statuts réels : en_attente, en_cours, terminee, annulee)
         supabase
           .from('client_consultations')
           .select('id', { count: 'exact' })
-          .in('status', ['pending', 'in_progress']),
+          .in('status', ['en_attente', 'en_cours'])
+          .is('deleted_at', null),
 
         // 6. Active Customers
         supabase
@@ -82,11 +84,11 @@ export const getDashboardMetrics = cache(
           .select('id', { count: 'exact' })
           .eq('is_active', true),
 
-        // 7. Organisations + New 30 days
+        // 7. Organisations + New 30 days (pas de deleted_at : archived_at)
         supabase
           .from('organisations')
           .select('id, created_at', { count: 'exact' })
-          .is('deleted_at', null),
+          .is('archived_at', null),
 
         // 8. Pending Commissions
         supabase
@@ -98,8 +100,8 @@ export const getDashboardMetrics = cache(
         supabase
           .from('products')
           .select('id', { count: 'exact' })
-          .eq('current_stock_real', 0)
-          .is('deleted_at', null),
+          .eq('stock_real', 0)
+          .is('archived_at', null),
 
         // 10. Top 5 Stock Alerts Details
         supabase

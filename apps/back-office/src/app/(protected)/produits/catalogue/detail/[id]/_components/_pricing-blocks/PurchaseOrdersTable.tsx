@@ -12,6 +12,7 @@
 
 import { useState, useCallback } from 'react';
 
+import { ResponsiveDataView } from '@verone/ui';
 import { cn, formatPrice } from '@verone/utils';
 import { Download, ChevronDown, ChevronUp } from 'lucide-react';
 import type { PurchaseOrderRow } from '@verone/products';
@@ -102,63 +103,120 @@ export function PurchaseOrdersTable({
 
       {!isLoading && purchases.length > 0 && (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-[10px] uppercase tracking-wide text-neutral-500 border-b border-neutral-100">
-                  <th className="text-left py-2 font-medium">Réf PO</th>
-                  <th className="text-left py-2 font-medium hidden md:table-cell">
-                    Date
-                  </th>
-                  <th className="text-left py-2 font-medium hidden lg:table-cell">
-                    Fournisseur
-                  </th>
-                  <th className="text-right py-2 font-medium">Prix achat</th>
-                  <th className="text-right py-2 font-medium hidden md:table-cell">
-                    Prix revient
-                  </th>
-                  <th className="text-right py-2 font-medium">Qté</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayed.map(row => (
-                  <tr
-                    key={row.id}
-                    className="border-b border-neutral-50 last:border-0 hover:bg-neutral-50"
-                  >
-                    <td className="py-2 font-mono text-xs text-neutral-700">
-                      {row.poNumber}
-                    </td>
-                    <td className="py-2 text-xs text-neutral-500 hidden md:table-cell">
-                      {formatDateFr(row.orderDate)}
-                    </td>
-                    <td
-                      className={cn(
-                        'py-2 text-xs text-neutral-600 hidden lg:table-cell max-w-[140px] truncate'
-                      )}
-                    >
-                      {row.supplierName}
-                    </td>
-                    <td className="py-2 text-right tabular-nums text-xs">
+          <ResponsiveDataView
+            data={displayed}
+            breakpoint="md"
+            emptyMessage="Aucun achat fournisseur enregistré."
+            renderTable={(rows: PurchaseOrderRow[]) => (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-[10px] uppercase tracking-wide text-neutral-500 border-b border-neutral-100">
+                      <th className="text-left py-2 font-medium">Réf PO</th>
+                      <th className="text-left py-2 font-medium hidden md:table-cell">
+                        Date
+                      </th>
+                      <th className="text-left py-2 font-medium hidden lg:table-cell">
+                        Fournisseur
+                      </th>
+                      <th className="text-right py-2 font-medium">
+                        Prix achat
+                      </th>
+                      <th className="text-right py-2 font-medium hidden md:table-cell">
+                        Prix revient
+                      </th>
+                      <th className="text-right py-2 font-medium">Qté</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map(row => (
+                      <tr
+                        key={row.id}
+                        className="border-b border-neutral-50 last:border-0 hover:bg-neutral-50"
+                      >
+                        <td className="py-2 font-mono text-xs text-neutral-700">
+                          {row.poNumber}
+                        </td>
+                        <td className="py-2 text-xs text-neutral-500 hidden md:table-cell">
+                          {formatDateFr(row.orderDate)}
+                        </td>
+                        <td
+                          className={cn(
+                            'py-2 text-xs text-neutral-600 hidden lg:table-cell max-w-[140px] truncate'
+                          )}
+                        >
+                          {row.supplierName}
+                        </td>
+                        <td className="py-2 text-right tabular-nums text-xs">
+                          {formatPrice(row.unitPriceHt)}
+                        </td>
+                        <td className="py-2 text-right tabular-nums text-xs hidden md:table-cell">
+                          {row.unitCostNet != null ? (
+                            <span className="font-medium text-indigo-700">
+                              {formatPrice(row.unitCostNet)}
+                            </span>
+                          ) : (
+                            <span className="text-neutral-300">—</span>
+                          )}
+                        </td>
+                        <td className="py-2 text-right tabular-nums text-xs text-neutral-700">
+                          {row.quantity}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            renderCard={(row: PurchaseOrderRow) => (
+              <div
+                key={row.id}
+                className="rounded-lg border border-neutral-200 bg-white p-3 space-y-1.5"
+              >
+                {/* Header: PO ref + date */}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs font-medium text-neutral-700">
+                    {row.poNumber}
+                  </span>
+                  <span className="text-xs text-neutral-500">
+                    {formatDateFr(row.orderDate)}
+                  </span>
+                </div>
+
+                {/* Supplier */}
+                <p
+                  className="text-xs text-neutral-600 truncate"
+                  title={row.supplierName}
+                >
+                  {row.supplierName}
+                </p>
+
+                {/* Prices + qty */}
+                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs">
+                  <span className="text-neutral-600">
+                    Achat :{' '}
+                    <span className="tabular-nums font-medium">
                       {formatPrice(row.unitPriceHt)}
-                    </td>
-                    <td className="py-2 text-right tabular-nums text-xs hidden md:table-cell">
-                      {row.unitCostNet != null ? (
-                        <span className="font-medium text-indigo-700">
-                          {formatPrice(row.unitCostNet)}
-                        </span>
-                      ) : (
-                        <span className="text-neutral-300">—</span>
-                      )}
-                    </td>
-                    <td className="py-2 text-right tabular-nums text-xs text-neutral-700">
+                    </span>
+                  </span>
+                  {row.unitCostNet != null && (
+                    <span className="text-neutral-600">
+                      Revient :{' '}
+                      <span className="tabular-nums font-medium text-indigo-700">
+                        {formatPrice(row.unitCostNet)}
+                      </span>
+                    </span>
+                  )}
+                  <span className="text-neutral-600">
+                    Qté :{' '}
+                    <span className="tabular-nums font-medium">
                       {row.quantity}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </span>
+                  </span>
+                </div>
+              </div>
+            )}
+          />
 
           {/* Pagination hint */}
           {purchases.length > PAGE_SIZE && (

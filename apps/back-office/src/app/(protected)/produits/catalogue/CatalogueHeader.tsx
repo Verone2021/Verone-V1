@@ -68,11 +68,11 @@ export function CatalogueHeader({ dashboardSLO }: CatalogueHeaderProps) {
   };
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
       <h1 className="text-3xl font-light text-black">Catalogue Produits</h1>
 
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-wrap items-center gap-3 md:gap-4">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Export dropdown */}
           <div className="relative">
             <ButtonUnified
@@ -133,7 +133,7 @@ export function CatalogueHeader({ dashboardSLO }: CatalogueHeaderProps) {
           </ButtonUnified>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           <Badge variant={dashboardSLO.isCompliant ? 'success' : 'destructive'}>
             {dashboardSLO.duration}ms
           </Badge>

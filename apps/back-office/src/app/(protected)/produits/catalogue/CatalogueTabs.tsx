@@ -27,7 +27,7 @@ export function CatalogueTabs({
   syncFiltersToUrl,
 }: CatalogueTabsProps) {
   return (
-    <div className="flex border-b border-black">
+    <div className="flex border-b border-black overflow-x-auto">
       <button
         onClick={() => {
           onTabChange('active');

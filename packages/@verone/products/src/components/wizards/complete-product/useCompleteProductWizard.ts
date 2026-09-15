@@ -15,6 +15,14 @@ interface UseCompleteProductWizardOptions {
   onSuccess?: (productId: string) => void;
 }
 
+const MISSING_REQUIRED_MESSAGE =
+  'Renseignez le nom et la sous-catégorie du produit : la référence du produit (SKU) est créée à partir de la sous-catégorie.';
+
+/** Un identifiant vide du formulaire ne doit jamais partir en base ('' n'est pas un uuid). */
+function optionalId(value: string): string | undefined {
+  return value.trim() === '' ? undefined : value;
+}
+
 export function useCompleteProductWizard({
   editMode = false,
   draftId,
@@ -132,7 +140,22 @@ export function useCompleteProductWizard({
     return Math.round((totalProgress / totalFields) * 100);
   };
 
-  const saveDraft = async (showToast = true) => {
+  const saveDraft = async (showToast = true): Promise<Product | null> => {
+    // Création impossible sans nom ni sous-catégorie : la base génère la
+    // référence (SKU) depuis la sous-catégorie et la refuse vide.
+    const hasRequired =
+      formData.name.trim() !== '' && formData.subcategory_id.trim() !== '';
+    if (!draftIdState && !hasRequired) {
+      if (showToast) {
+        toast({
+          title: 'Informations manquantes',
+          description: MISSING_REQUIRED_MESSAGE,
+          variant: 'destructive',
+        });
+      }
+      return null;
+    }
+
     try {
       setIsSaving(true);
 
@@ -153,8 +176,8 @@ export function useCompleteProductWizard({
         condition: formData.condition || 'new',
         availability_type: formData.availability_type || 'normal',
         video_url: formData.video_url ?? undefined,
-        subcategory_id: formData.subcategory_id ?? undefined,
-        supplier_id: formData.supplier_id ?? undefined,
+        subcategory_id: optionalId(formData.subcategory_id),
+        supplier_id: optionalId(formData.supplier_id),
         supplier_page_url: formData.supplier_page_url ?? undefined,
         supplier_reference: formData.supplier_reference ?? undefined,
         cost_price: formData.cost_price
@@ -178,7 +201,7 @@ export function useCompleteProductWizard({
         weight: formData.weight ? parseFloat(formData.weight) : undefined,
         gtin: formData.gtin ?? undefined,
         product_type: formData.product_type || 'standard',
-        assigned_client_id: formData.assigned_client_id ?? undefined,
+        assigned_client_id: optionalId(formData.assigned_client_id),
         creation_mode: 'complete' as const,
         requires_sample: formData.requires_sample ?? false,
         stock_quantity: formData.stock_quantity
@@ -200,7 +223,6 @@ export function useCompleteProductWizard({
           ? parseInt(formData.reorder_point)
           : undefined,
         completion_status: 'draft' as const,
-        status: 'coming_soon' as const,
       };
 
       let result: Product | null;
@@ -213,7 +235,8 @@ export function useCompleteProductWizard({
         }
       }
 
-      if (showToast) {
+      // createProduct / updateProduct affichent déjà leur propre erreur
+      if (showToast && result) {
         toast({
           title: 'Brouillon sauvegardé',
           description: 'Vos modifications ont été enregistrées',
@@ -242,15 +265,17 @@ export function useCompleteProductWizard({
   const finalizeDraft = async () => {
     try {
       setIsLoading(true);
-      await saveDraft(false);
+      // L'identifiant renvoyé par la sauvegarde fait foi : l'état React
+      // n'est pas encore à jour juste après la création du brouillon.
+      const saved = await saveDraft(false);
+      const productId = saved?.id ?? draftIdState;
 
-      if (!draftIdState) {
-        throw new Error('Aucun produit à finaliser');
+      if (!productId) {
+        throw new Error(MISSING_REQUIRED_MESSAGE);
       }
 
-      const finalizedProduct = await updateProduct(draftIdState, {
+      const finalizedProduct = await updateProduct(productId, {
         completion_status: 'active' as const,
-        status: 'in_stock' as const,
         completion_percentage: 100,
       });
 

@@ -20,7 +20,8 @@ interface WizardNavigationCardProps {
   progress: number;
   isLoading: boolean;
   isSaving: boolean;
-  draftIdState: string | null;
+  /** Nom et sous-catégorie renseignés : minimum pour créer le produit */
+  canFinalize: boolean;
   onPrev: () => void;
   onNext: () => void;
   onSave: () => void;
@@ -33,7 +34,7 @@ export function WizardNavigationCard({
   progress,
   isLoading,
   isSaving,
-  draftIdState,
+  canFinalize,
   onPrev,
   onNext,
   onSave,
@@ -87,7 +88,7 @@ export function WizardNavigationCard({
 
             <Button
               onClick={onFinalize}
-              disabled={isLoading || !draftIdState}
+              disabled={isLoading || isSaving || !canFinalize}
               className="bg-black hover:bg-gray-800 text-white"
             >
               {isLoading ? (
@@ -105,13 +106,14 @@ export function WizardNavigationCard({
           </div>
         </div>
 
-        {progress < 30 && (
+        {(!canFinalize || progress < 30) && (
           <Alert className="mt-4">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               <strong>Astuce :</strong> Vous pouvez finaliser le produit à tout
-              moment, même avec des informations partielles. Complétez au
-              minimum le nom pour une meilleure organisation.
+              moment, même avec des informations partielles. Renseignez au
+              minimum le nom et la sous-catégorie (la référence du produit en
+              dépend).
             </AlertDescription>
           </Alert>
         )}

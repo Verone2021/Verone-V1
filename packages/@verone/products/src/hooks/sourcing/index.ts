@@ -44,12 +44,10 @@ export function useSourcingProducts(filters?: SourcingFilters) {
 
   const {
     validateSourcing,
-    approveSample,
-    rejectSample,
     archiveSourcingProduct,
     unarchiveSourcingProduct,
     deleteSourcingProduct,
-  } = useSourcingMutations({ products, refetch: fetchSourcingProducts });
+  } = useSourcingMutations({ refetch: fetchSourcingProducts });
 
   const { orderSample } = useSourcingSampleOrder({
     refetch: fetchSourcingProducts,
@@ -65,8 +63,6 @@ export function useSourcingProducts(filters?: SourcingFilters) {
     refetch: fetchSourcingProducts,
     validateSourcing,
     orderSample,
-    approveSample,
-    rejectSample,
     createSourcingProduct,
     updateSourcingProduct,
     archiveSourcingProduct,

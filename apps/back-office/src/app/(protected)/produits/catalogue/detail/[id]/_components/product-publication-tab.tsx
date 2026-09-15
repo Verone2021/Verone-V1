@@ -131,11 +131,29 @@ export function ProductPublicationTab({
     {
       label: 'Meta description SEO',
       ok: Boolean(product.meta_description?.trim()),
-      required: false,
+      required: true,
     },
     { label: 'Image(s)', ok: product.has_images === true, required: true },
     { label: 'Categorie', ok: Boolean(product.subcategory_id), required: true },
     { label: 'Slug URL', ok: Boolean(product.slug), required: true },
+    // BO-PUBLICATION-001 (#1022) — garde-fou 7 critères : poids + dimensions requis
+    {
+      label: 'Poids',
+      ok:
+        product.weight !== null &&
+        product.weight !== undefined &&
+        Number(product.weight) > 0,
+      required: true,
+    },
+    {
+      label: 'Dimensions',
+      ok:
+        product.dimensions !== null &&
+        typeof product.dimensions === 'object' &&
+        !Array.isArray(product.dimensions) &&
+        Object.keys(product.dimensions).length > 0,
+      required: true,
+    },
     {
       label: 'Prix de vente (canal)',
       ok: channels.some(c => c.custom_price_ht && c.custom_price_ht > 0),

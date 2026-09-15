@@ -14,3 +14,10 @@ export { ProductSelectionsCard } from './ProductSelectionsCard';
 
 // Composants commandes LinkMe
 export { LinkMeOrderDetailModal } from './LinkMeOrderDetailModal';
+
+// Commission Vérone pour produits affiliés
+export { AffiliateCommissionCard } from './AffiliateCommissionCard';
+
+// Marge nette Vérone — historique LinkMe global
+export { VeroneNetMarginCard } from './VeroneNetMarginCard';
+export { VeroneMarginProductsTable } from './VeroneMarginProductsTable';

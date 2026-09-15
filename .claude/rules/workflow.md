@@ -255,6 +255,16 @@ Un seul critère manquant : pas de PR, continuer commits/push.
 
 ## Quand MERGER une PR — AUTO-MERGE PAR DÉFAUT (ADR-032 — 2026-05-09)
 
+> **SUSPENDU depuis le 2026-09-11 (ADR-040).** Le dépôt est privé sur GitHub Free : la protection de branches
+> et les checks requis ne sont plus appliqués par GitHub. `gh pr merge --auto` fusionnerait **immédiatement**,
+> même avec un check rouge. Tant que le dépôt reste privé sur Free : **jamais `--auto`**. Procédure :
+> `gh pr checks <num>` → vérifier soi-même les 4 checks requis au vert (`ESLint + Type-Check + Build`,
+> `DB FK drift check (blocking)`, `E2E Smoke (Playwright — back-office)`, `Supabase TS types drift (blocking)`)
+> → fusion `--squash` à la main sur ordre de Roméo, **sans `--delete-branch` sur `staging`** (incident du
+> 2026-09-14 : réglage « supprimer la branche après fusion » a supprimé `staging`). Release staging → main :
+> fusion en merge commit, branche conservée. Le reste de cette section redevient valable si le dépôt passe
+> sur GitHub Pro ou redevient public.
+
 **Pratique senior standard** (Google, Meta, GitHub, Vercel) : la PR est
 créée AVEC auto-merge activé. La CI = sanity check, pas une décision.
 Si la CI passe verte → merge automatique. Si elle échoue → on corrige.

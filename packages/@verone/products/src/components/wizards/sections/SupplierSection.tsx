@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 'use client';
 
 import { Save } from 'lucide-react';
@@ -23,12 +22,17 @@ interface SupplierSectionProps {
   onSave: () => void;
 }
 
+type SupplierTextField =
+  | 'supplier_id'
+  | 'supplier_reference'
+  | 'supplier_page_url';
+
 export function SupplierSection({
   formData,
   setFormData,
   onSave,
 }: SupplierSectionProps) {
-  const handleChange = (field: keyof WizardFormData, value: any) => {
+  const handleChange = (field: SupplierTextField, value: string) => {
     setFormData({ ...formData, [field]: value });
   };
 
@@ -41,14 +45,15 @@ export function SupplierSection({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Sélecteur de fournisseur */}
+        {/* Sélecteur de fournisseur (le composant affiche son propre libellé) */}
         <div className="space-y-2">
-          <Label>Fournisseur</Label>
           <SupplierSelector
-            {...({
-              value: formData.supplier_id,
-              onChange: value => handleChange('supplier_id', value),
-            } as any)}
+            selectedSupplierId={
+              formData.supplier_id !== '' ? formData.supplier_id : null
+            }
+            onSupplierChange={supplierId =>
+              handleChange('supplier_id', supplierId ?? '')
+            }
           />
         </div>
 
