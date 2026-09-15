@@ -52,7 +52,16 @@ setup('authenticate', async ({ page }) => {
 
   // Attendre redirection vers dashboard (timeout élargi en CI : cold-start
   // Supabase auth = 2-5 s réels avant redirect)
-  await page.waitForURL('/dashboard', { timeout: 30000 });
+  try {
+    await page.waitForURL('/dashboard', { timeout: 30000 });
+  } catch (error) {
+    // [INFRA-E2E-002] En cas d'échec, Playwright recopie la page dans
+    // error-context.md (artefact CI) : vider les champs pour que le mot de
+    // passe saisi n'y apparaisse jamais en clair.
+    await page.getByRole('textbox', { name: /mot de passe/i }).fill('');
+    await page.getByRole('textbox', { name: /email/i }).fill('');
+    throw error;
+  }
 
   // Vérifier que l'utilisateur est bien connecté
   await expect(page).toHaveURL('/dashboard');

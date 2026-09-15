@@ -60,6 +60,10 @@ export default defineConfig({
       use: {
         // PAS de storageState pour le setup (sinon erreur fichier manquant)
         storageState: undefined,
+        // [INFRA-E2E-002] La trace enregistre la valeur saisie dans le champ mot
+        // de passe : aucune trace ni vidéo pour l'étape de connexion.
+        trace: 'off',
+        video: 'off',
       },
     },
 
