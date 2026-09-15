@@ -5,6 +5,8 @@ import { useState } from 'react';
 
 import { X, Plus, Save } from 'lucide-react';
 
+import { CategoryHierarchySelector } from '@verone/categories';
+
 import { Badge } from '@verone/ui';
 import { Button } from '@verone/ui';
 import {
@@ -78,6 +80,22 @@ export function GeneralInfoSection({
             onChange={e => handleChange('name', e.target.value)}
             required
           />
+        </div>
+
+        {/* Sous-catégorie : obligatoire, la référence (SKU) en est déduite */}
+        <div className="space-y-2">
+          <CategoryHierarchySelector
+            value={formData.subcategory_id}
+            onChange={subcategoryId =>
+              handleChange('subcategory_id', subcategoryId ?? '')
+            }
+            placeholder="Sélectionner une sous-catégorie"
+            required
+          />
+          <p className="text-sm text-muted-foreground">
+            Obligatoire : la référence du produit (SKU) est créée à partir de la
+            sous-catégorie.
+          </p>
         </div>
 
         {/* Slug (URL) */}

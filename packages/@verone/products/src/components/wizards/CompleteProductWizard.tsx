@@ -40,7 +40,6 @@ export function CompleteProductWizard({
     setSelectedImages,
     isLoading,
     isSaving,
-    draftIdState,
     progress,
     saveDraft,
     finalizeDraft,
@@ -152,7 +151,9 @@ export function CompleteProductWizard({
         progress={progress}
         isLoading={isLoading}
         isSaving={isSaving}
-        draftIdState={draftIdState}
+        canFinalize={
+          formData.name.trim() !== '' && formData.subcategory_id !== ''
+        }
         onPrev={prevSection}
         onNext={nextSection}
         onSave={() => {
