@@ -1,7 +1,7 @@
 {
-  "anon_security_definer_function_executable": 19,
+  "anon_security_definer_function_executable": 13,
   "auth_leaked_password_protection": 1,
-  "authenticated_security_definer_function_executable": 144,
+  "authenticated_security_definer_function_executable": 141,
   "function_search_path_mutable": 7,
-  "security_definer_view": 4
+  "security_definer_view": 1
 }
