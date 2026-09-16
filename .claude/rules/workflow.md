@@ -265,6 +265,10 @@ Un seul critère manquant : pas de PR, continuer commits/push.
 > fusion en merge commit, branche conservée. Le reste de cette section redevient valable si le dépôt passe
 > sur GitHub Pro ou redevient public.
 
+> **Fenêtre de mise en ligne (ADR-041, 2026-09-16).** Aucune release `staging → main`, aucune migration appliquée en
+> production et aucune requête lourde de statistiques (`pg_stat_statements`, `information_schema`) entre 07 h et 17 h UTC
+> un jour ouvré : le soir (après 17 h UTC) ou le week-end. Exception : correctif d'urgence décidé par Roméo.
+
 **Pratique senior standard** (Google, Meta, GitHub, Vercel) : la PR est
 créée AVEC auto-merge activé. La CI = sanity check, pas une décision.
 Si la CI passe verte → merge automatique. Si elle échoue → on corrige.

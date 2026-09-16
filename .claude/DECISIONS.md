@@ -1690,3 +1690,27 @@ après fusion » a en outre supprimé `staging` (recréée à `65917563`).
 
 - Repasser le dépôt en public pour retrouver la protection : exclu par Roméo (historique sensible).
 - GitHub Pro : dépense non décidée.
+
+## ADR-041 — `[INFRA-RULES-041]` Fenêtre de mise en ligne hors heures ouvrées
+
+**Date** : 2026-09-16 · **Statut** : appliqué (règle) · **Fichiers** : `.claude/rules/workflow.md` (section « Quand
+MERGER une PR »), feuille de route `docs/scratchpad/feuille-de-route-2026-09-16/README.md` (préambule V8)
+
+### Constat
+
+Le 2026-09-15, la release #1159 a été fusionnée à 12:34 UTC, en pleine journée de travail. De 12:34 à 14:00 UTC, la
+production a renvoyé 194 erreurs 500 (comptage `linkme_orders_enriched` en `statement timeout`, trafic triplé par les
+onglets anciens et nouveaux), et une migration (`sales_order_item_costs`) a été appliquée à 13:59-14:02 UTC pendant
+l'incident. Les lectures lourdes de statistiques (11 et 14 s relevées ce jour-là) aggravent la charge d'une instance
+Supabase qui n'a pas de marge. Deux salariés travaillent sur le back-office en journée.
+
+### Décision
+
+- Aucune release `staging → main`, aucune migration appliquée en production et aucune requête lourde sur
+  `pg_stat_statements` / `information_schema` entre 07 h et 17 h UTC un jour ouvré.
+- Ces opérations se font le soir (après 17 h UTC) ou le week-end.
+- Exception : correctif d'urgence d'une production cassée, décidé par Roméo.
+
+### Écarté
+
+- Fenêtre libre avec surveillance renforcée : l'incident du 15/09 montre que la bascule elle-même crée la charge.
