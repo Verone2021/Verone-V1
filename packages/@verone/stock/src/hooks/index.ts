@@ -1,6 +1,5 @@
 // Stock hooks barrel exports
 export * from './use-stock-alerts';
-export * from './use-stock-alerts-count';
 export * from './use-stock-analytics';
 export * from './use-stock-inventory';
 export * from './use-stock-optimized';

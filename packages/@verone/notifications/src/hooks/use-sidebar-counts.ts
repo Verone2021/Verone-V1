@@ -1,10 +1,9 @@
 /**
- * Hook useSidebarCounts — Agrégateur optimisé pour la sidebar
+ * Hook useSidebarCounts — les 11 compteurs du menu de gauche.
  *
- * Remplace 10 hooks individuels par un seul qui :
- *   - Fait 1 seul auth.getUser() au lieu de 10
- *   - Lance toutes les requêtes en Promise.all()
- *   - Cache via TanStack Query (staleTime 5 min, refetch au retour sur l'onglet)
+ * Une seule requête (`get_sidebar_counts()`), partagée avec tous les compteurs
+ * individuels via `useSidebarCountsQuery` (`use-menu-count.ts`).
+ *   - Cache TanStack Query (staleTime 5 min, refetch au retour sur l'onglet)
  *   - Realtime uniquement sur les tables publiées : products + sales_orders
  *   - Pas de polling fallback — un canal en erreur → warn silencieux, c'est tout
  *
@@ -13,21 +12,19 @@
 
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
-import { MENU_COUNT_QUERY_KEYS } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
 
 import { useDebouncedInvalidate } from './use-debounce-invalidate';
+import {
+  SIDEBAR_COUNTS_QUERY_KEY,
+  useSidebarCountsQuery,
+  ZERO_COUNTS,
+} from './use-menu-count';
 
-/**
- * Clé de cache TanStack Query pour les compteurs sidebar.
- * Alias de `MENU_COUNT_QUERY_KEYS.sidebar` : les mutations métier passent par
- * `invalidateMenuCounts` (`@verone/utils/query`).
- */
-export const SIDEBAR_COUNTS_QUERY_KEY = MENU_COUNT_QUERY_KEYS.sidebar;
+export { SIDEBAR_COUNTS_QUERY_KEY } from './use-menu-count';
 
 export interface SidebarCounts {
   stockAlerts: number;
@@ -45,77 +42,6 @@ export interface SidebarCounts {
   refetch: () => Promise<void>;
 }
 
-interface RawCounts {
-  stockAlerts: number;
-  consultations: number;
-  linkmePending: number;
-  productsIncomplete: number;
-  sourcingProducts: number;
-  ordersPending: number;
-  expeditionsPending: number;
-  transactionsUnreconciled: number;
-  linkmeApprovals: number;
-  formSubmissions: number;
-  linkmeMissingInfo: number;
-}
-
-const ZERO_COUNTS: RawCounts = {
-  stockAlerts: 0,
-  consultations: 0,
-  linkmePending: 0,
-  productsIncomplete: 0,
-  sourcingProducts: 0,
-  ordersPending: 0,
-  expeditionsPending: 0,
-  transactionsUnreconciled: 0,
-  linkmeApprovals: 0,
-  formSubmissions: 0,
-  linkmeMissingInfo: 0,
-};
-
-const COUNT_KEYS = Object.keys(ZERO_COUNTS) as Array<keyof RawCounts>;
-
-/** Lit un compteur du JSON renvoyé par la base (nombre ou chaîne numérique). */
-function readCount(source: Record<string, unknown>, key: string): number {
-  const value = source[key];
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-}
-
-/**
- * Récupère les 11 compteurs sidebar en UNE requête : fonction SQL
- * `get_sidebar_counts()` (mêmes filtres que les 11 comptages d'origine,
- * vérifiés identiques le 2026-09-15). Avant : 11 requêtes HTTP par rafraîchissement.
- */
-async function fetchAllCounts(
-  supabase: ReturnType<typeof createClient>
-): Promise<RawCounts> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { ...ZERO_COUNTS };
-
-  const { data, error } = await supabase.rpc('get_sidebar_counts');
-  if (error) {
-    console.error('[useSidebarCounts] get_sidebar_counts:', error);
-    throw error;
-  }
-  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
-    return { ...ZERO_COUNTS };
-  }
-
-  const source = data as Record<string, unknown>;
-  const counts = { ...ZERO_COUNTS };
-  for (const key of COUNT_KEYS) {
-    counts[key] = readCount(source, key);
-  }
-  return counts;
-}
-
 /**
  * Hook agrégateur des compteurs de la sidebar.
  *
@@ -129,23 +55,11 @@ export function useSidebarCounts(_options?: {
   /** @deprecated ignoré — TanStack Query gère le cache */
   pollingInterval?: number;
 }): SidebarCounts {
-  const queryClient = useQueryClient();
   const supabase = useMemo(() => createClient(), []);
+  const { counts, loading, refetch } = useSidebarCountsQuery();
 
   const channelSalesOrdersRef = useRef<RealtimeChannel | null>(null);
   const channelProductsRef = useRef<RealtimeChannel | null>(null);
-
-  const { data, isPending } = useQuery({
-    queryKey: SIDEBAR_COUNTS_QUERY_KEY,
-    queryFn: () => fetchAllCounts(supabase),
-    staleTime: 5 * 60_000,
-    refetchOnWindowFocus: true,
-    refetchInterval: false,
-    // Une seule relance espacée : quand la base est lente, les relances en rafale
-    // aggravent la charge (épisode du 15/09 12:50 → 13:10 UTC).
-    retry: 1,
-    retryDelay: attempt => Math.min(30_000, 5_000 * 2 ** attempt),
-  });
 
   const triggerInvalidate = useDebouncedInvalidate(SIDEBAR_COUNTS_QUERY_KEY);
 
@@ -196,13 +110,10 @@ export function useSidebarCounts(_options?: {
     };
   }, [supabase, triggerInvalidate]);
 
-  const refetch = useCallback(async (): Promise<void> => {
-    await queryClient.invalidateQueries({ queryKey: SIDEBAR_COUNTS_QUERY_KEY });
-  }, [queryClient]);
-
   return {
-    ...(data ?? ZERO_COUNTS),
-    loading: isPending,
+    ...ZERO_COUNTS,
+    ...counts,
+    loading,
     refetch,
   };
 }

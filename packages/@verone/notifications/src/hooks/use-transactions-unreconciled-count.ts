@@ -1,30 +1,18 @@
 /**
  * Hook Transactions Unreconciled Count - Vérone Back Office
- * Compte les transactions bancaires non rapprochées (matching_status = 'unmatched').
+ * Transactions bancaires non rapprochées.
  *
- * Implémentation : TanStack Query (staleTime 5 min, refetch au retour sur
- * l'onglet). bank_transactions n'est pas publiée dans Supabase Realtime
- * → pas d'abonnement, pas de polling.
+ * Valeur lue dans l'appel unique du menu (`get_sidebar_counts`, champ
+ * `transactionsUnreconciled`) : aucune requête propre. `bank_transactions` n'est
+ * pas publiée en temps réel — les écritures passent par `invalidateMenuCounts`.
  */
 
 'use client';
 
-import { useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { MenuCountHook } from './use-menu-count';
+import { useMenuCount } from './use-menu-count';
 
-import { MENU_COUNT_QUERY_KEYS } from '@verone/utils/query';
-import { createClient } from '@verone/utils/supabase/client';
-
-export interface TransactionsUnreconciledCountHook {
-  count: number;
-  loading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
-  lastUpdated: Date | null;
-}
-
-const TRANSACTIONS_UNRECONCILED_QUERY_KEY =
-  MENU_COUNT_QUERY_KEYS.bankTransactions;
+export type TransactionsUnreconciledCountHook = MenuCountHook;
 
 /**
  * Hook pour compter les transactions bancaires non rapprochées.
@@ -38,52 +26,5 @@ export function useTransactionsUnreconciledCount(_options?: {
   /** @deprecated ignoré */
   refetchInterval?: number;
 }): TransactionsUnreconciledCountHook {
-  const queryClient = useQueryClient();
-
-  const {
-    data = 0,
-    isPending,
-    error,
-    dataUpdatedAt,
-  } = useQuery({
-    queryKey: TRANSACTIONS_UNRECONCILED_QUERY_KEY,
-    queryFn: async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return 0;
-
-      const { count: totalCount, error: countError } = await supabase
-        .from('bank_transactions')
-        .select('id', { count: 'exact', head: true })
-        .eq('matching_status', 'unmatched');
-
-      if (countError) {
-        console.error(
-          '[useTransactionsUnreconciledCount] Count error:',
-          countError
-        );
-        throw new Error(countError.message);
-      }
-      return totalCount ?? 0;
-    },
-    staleTime: 5 * 60_000,
-    refetchOnWindowFocus: true,
-    refetchInterval: false,
-  });
-
-  const refetch = useCallback(async (): Promise<void> => {
-    await queryClient.invalidateQueries({
-      queryKey: TRANSACTIONS_UNRECONCILED_QUERY_KEY,
-    });
-  }, [queryClient]);
-
-  return {
-    count: data,
-    loading: isPending,
-    error: error ?? null,
-    refetch,
-    lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
-  };
+  return useMenuCount('transactionsUnreconciled');
 }
