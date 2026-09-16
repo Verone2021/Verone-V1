@@ -14,7 +14,9 @@ import type { ClientConsultation } from '../hooks/use-consultations';
 import type { ConsultationItem } from '../hooks/use-consultations';
 import type { ConsultationPdfClientInfo } from './ConsultationSummaryPdf';
 import { filterActiveItems } from '../lib/consultation-order-guards';
-import { computeConsultationEconomics } from '../lib/consultation-economics';
+import { computeItemsEconomics } from '../lib/consultation-economics-input';
+import { isCandidateLine } from '../lib/consultation-line-status';
+import type { SupplierCostInput } from '../lib/consultation-supplier-costs';
 import { s } from './consultation-margin-report-pdf-styles';
 
 interface ConsultationMarginReportPdfProps {
@@ -22,6 +24,8 @@ interface ConsultationMarginReportPdfProps {
   items: ConsultationItem[];
   clientName: string;
   clientInfo?: ConsultationPdfClientInfo | null;
+  /** Frais saisis par fournisseur — inclus dans le prix de revient. */
+  supplierCosts?: SupplierCostInput[];
 }
 
 export function ConsultationMarginReportPdf({
@@ -29,29 +33,37 @@ export function ConsultationMarginReportPdf({
   items,
   clientName,
   clientInfo,
+  supplierCosts = [],
 }: ConsultationMarginReportPdfProps) {
   // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du rapport marges
   const activeItems = filterActiveItems(items);
 
   // Économie via fonction canonique B2 (formules § B2 du plan)
-  const { lines: econLines, totals: economics } = computeConsultationEconomics(
-    activeItems
-      .filter(item => item.quantity > 0)
-      .map(item => ({
-        id: item.id,
-        quantity: item.quantity,
-        unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
-        ecoTax: item.product?.eco_tax_default ?? 0,
-        shippingCost: item.shipping_cost ?? 0,
-        sellingShippingCost: item.selling_shipping_cost ?? 0,
-        proposedPrice: item.unit_price ?? null,
-        isFree: item.is_free,
-        isSample: item.is_sample,
-        status: item.status ?? 'pending',
-        supplierId: item.product?.supplier_id ?? null,
-      }))
-  );
-  const econByItemId = new Map(econLines.map(l => [l.lineId, l]));
+  const {
+    totals: economics,
+    byItemId: econByItemId,
+    suppliers: supplierEconomics,
+  } = computeItemsEconomics(activeItems, consultation, supplierCosts);
+
+  // Noms de fournisseurs — le calcul ne connaît que leurs identifiants
+  const supplierNameById = new Map<string, string>();
+  for (const item of activeItems) {
+    const supplierId = item.product?.supplier_id;
+    if (supplierId && !supplierNameById.has(supplierId)) {
+      supplierNameById.set(
+        supplierId,
+        item.product?.supplier_name ?? 'Fournisseur'
+      );
+    }
+  }
+
+  // Écart au budget annoncé par le client (tarif_maximum), s'il existe
+  const clientBudget =
+    consultation.tarif_maximum != null
+      ? Number(consultation.tarif_maximum)
+      : null;
+  const budgetGap =
+    clientBudget !== null ? economics.billed - clientBudget : null;
 
   const totalRevenue = economics.revenue;
   const totalCost = economics.cost;
@@ -240,6 +252,11 @@ export function ConsultationMarginReportPdf({
                       Retiré — absent du PDF client
                     </Text>
                   ) : null}
+                  {isCandidateLine(item.status) ? (
+                    <Text style={{ fontSize: 6, color: veroneColors.pearl }}>
+                      Option — hors chiffre d&apos;affaires et hors marge
+                    </Text>
+                  ) : null}
                 </View>
                 <Text style={[s.td, { width: '11%' }]}>
                   {item.product?.supplier_name ?? '—'}
@@ -250,18 +267,34 @@ export function ConsultationMarginReportPdf({
                 <Text style={[s.td, { width: '10%', textAlign: 'right' }]}>
                   {formatVeronePrice(econ?.unitCost ?? 0, 2)}
                 </Text>
-                <Text style={[s.td, { width: '10%', textAlign: 'right' }]}>
-                  {item.is_sample
-                    ? '—'
-                    : formatVeronePrice(item.shipping_cost, 2)}
-                </Text>
+                <View style={{ width: '10%' }}>
+                  <Text style={[s.td, { textAlign: 'right' }]}>
+                    {item.is_sample
+                      ? '—'
+                      : formatVeronePrice(item.shipping_cost, 2)}
+                  </Text>
+                  {econ && econ.supplierFees > 0 ? (
+                    <Text
+                      style={{
+                        fontSize: 6,
+                        color: veroneColors.pearl,
+                        textAlign: 'right',
+                      }}
+                    >
+                      + {formatVeronePrice(econ.supplierFees, 2)} frais
+                    </Text>
+                  ) : null}
+                </View>
                 <Text style={[s.tdBold, { width: '10%', textAlign: 'right' }]}>
                   {formatVeronePrice(costPerUnit, 2)}
                 </Text>
                 <Text style={[s.td, { width: '10%', textAlign: 'right' }]}>
                   {item.is_free || item.is_sample
                     ? 'Offert'
-                    : formatVeronePrice(item.unit_price ?? 0, 2)}
+                    : formatVeronePrice(
+                        econ?.unitPrice ?? item.unit_price ?? 0,
+                        2
+                      )}
                 </Text>
                 <Text
                   style={[
@@ -284,6 +317,71 @@ export function ConsultationMarginReportPdf({
             );
           })}
         </View>
+
+        {/* Ventilation par fournisseur */}
+        {supplierEconomics.length > 0 && (
+          <>
+            <Text style={veroneStyles.sectionTitleEyebrow}>
+              Par fournisseur
+            </Text>
+            <View style={s.table}>
+              <View style={s.tableHeader}>
+                <Text style={[s.th, { width: '34%' }]}>Fournisseur</Text>
+                <Text style={[s.th, { width: '11%', textAlign: 'center' }]}>
+                  Lignes
+                </Text>
+                <Text style={[s.th, { width: '15%', textAlign: 'right' }]}>
+                  Frais
+                </Text>
+                <Text style={[s.th, { width: '15%', textAlign: 'right' }]}>
+                  Revient
+                </Text>
+                <Text style={[s.th, { width: '15%', textAlign: 'right' }]}>
+                  Vente
+                </Text>
+                <Text style={[s.th, { width: '10%', textAlign: 'right' }]}>
+                  Marge
+                </Text>
+              </View>
+              {supplierEconomics.map(supplier => (
+                <View key={supplier.supplierId} style={s.tableRow} wrap={false}>
+                  <Text style={[s.tdBold, { width: '34%' }]}>
+                    {supplierNameById.get(supplier.supplierId) ?? 'Fournisseur'}
+                  </Text>
+                  <Text style={[s.td, { width: '11%', textAlign: 'center' }]}>
+                    {supplier.optionCount}
+                  </Text>
+                  <Text style={[s.td, { width: '15%', textAlign: 'right' }]}>
+                    {formatVeronePrice(supplier.supplierCosts, 2)}
+                  </Text>
+                  <Text style={[s.td, { width: '15%', textAlign: 'right' }]}>
+                    {formatVeronePrice(supplier.costPriceTotal, 2)}
+                  </Text>
+                  <Text style={[s.td, { width: '15%', textAlign: 'right' }]}>
+                    {formatVeronePrice(supplier.proposedTotal, 2)}
+                  </Text>
+                  <Text
+                    style={[
+                      (supplier.marginPercent ?? 0) < 0 ? s.tdRed : s.tdGold,
+                      { width: '10%', textAlign: 'right' },
+                    ]}
+                  >
+                    {supplier.marginPercent === null
+                      ? '—'
+                      : `${supplier.marginPercent.toFixed(0)} %`}
+                  </Text>
+                </View>
+              ))}
+            </View>
+            {economics.unallocatedSupplierFees > 0 && (
+              <Text style={s.analysisLine}>
+                {formatVeronePrice(economics.unallocatedSupplierFees, 2)} de
+                frais ne sont imputés à aucune ligne : hors prix de revient et
+                hors marge.
+              </Text>
+            )}
+          </>
+        )}
 
         {/* Analyse */}
         <Text style={veroneStyles.sectionTitleEyebrow}>Analyse</Text>
@@ -309,6 +407,15 @@ export function ConsultationMarginReportPdf({
                 </Text>
               );
             })}
+          {clientBudget !== null && budgetGap !== null && (
+            <Text style={[s.analysisLine, { marginTop: 6 }]}>
+              Budget annoncé par le client :{' '}
+              {formatVeronePrice(clientBudget, 2)} —{' '}
+              {budgetGap > 0
+                ? `proposition supérieure de ${formatVeronePrice(budgetGap, 2)}`
+                : `proposition inférieure de ${formatVeronePrice(-budgetGap, 2)}`}
+            </Text>
+          )}
           {totalShipping > 0 && totalCost - totalShipping > 0 && (
             <Text style={[s.analysisLine, { marginTop: 6 }]}>
               Impact transport :{' '}

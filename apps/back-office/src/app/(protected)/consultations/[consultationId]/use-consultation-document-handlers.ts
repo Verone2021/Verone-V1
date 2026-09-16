@@ -9,7 +9,12 @@ import type {
   ConsultationItem,
   ConsultationQuote,
 } from '@verone/consultations';
-import { countUnpricedLines } from '@verone/consultations';
+import {
+  computeItemsEconomics,
+  countUnpricedLines,
+  withResolvedPrices,
+  type SupplierCostInput,
+} from '@verone/consultations';
 import type { IOrderForDocument } from '@verone/finance/components';
 
 import {
@@ -35,6 +40,8 @@ interface UseConsultationDocumentHandlersDeps {
   refetchLinkedQuotes: () => Promise<void>;
   fetchHistory: () => Promise<void>;
   deleteQuote: (id: string) => Promise<boolean>;
+  /** Frais par fournisseur — entrent dans le prix produit par la marge. */
+  supplierCosts: SupplierCostInput[];
 }
 
 export function useConsultationDocumentHandlers({
@@ -45,6 +52,7 @@ export function useConsultationDocumentHandlers({
   refetchLinkedQuotes,
   fetchHistory,
   deleteQuote,
+  supplierCosts,
 }: UseConsultationDocumentHandlersDeps) {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
@@ -118,7 +126,13 @@ export function useConsultationDocumentHandlers({
   const handleOpenQuoteModal = () => {
     void (async () => {
       if (!consultation) return;
-      const n = countUnpricedLines(consultationItems);
+      // BO-CONSULT-MULTI-001 : une ligne dont le prix vient de la marge n'est
+      // pas « à fixer » — on contrôle le prix effectif, pas le prix saisi.
+      const pricedItems = withResolvedPrices(
+        consultationItems,
+        computeItemsEconomics(consultationItems, consultation, supplierCosts)
+      );
+      const n = countUnpricedLines(pricedItems);
       if (n > 0) {
         toast.error(`Prix de vente à fixer pour ${n} ligne(s)`);
         return;
@@ -146,7 +160,8 @@ export function useConsultationDocumentHandlers({
         consultation,
         consultationItems,
         partner.partnerId,
-        partner.partnerOrg
+        partner.partnerOrg,
+        supplierCosts
       );
 
       setOrderForQuoteModal(orderData);

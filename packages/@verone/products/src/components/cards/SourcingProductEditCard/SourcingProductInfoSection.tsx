@@ -1,5 +1,6 @@
 'use client';
 
+import { CategoryHierarchySelector } from '@verone/categories';
 import { Badge, ButtonV2, CardTitle, Input, Label } from '@verone/ui';
 import {
   AlertCircle,
@@ -115,7 +116,7 @@ export function SourcingProductInfoSection({
               htmlFor="supplier_reference"
               className="text-xs text-gray-600"
             >
-              Réf. fournisseur
+              Réf. fournisseur *
             </Label>
             <Input
               id="supplier_reference"
@@ -126,6 +127,21 @@ export function SourcingProductInfoSection({
               placeholder="ART-12345"
               className="mt-1"
             />
+          </div>
+          {/* Sous-catégorie : exigée pour valider au catalogue et jusqu'ici
+              saisissable nulle part dans le sourcing
+              (BO-SOURCING-COMPLETUDE-001). */}
+          <div>
+            <Label className="text-xs text-gray-600">Sous-catégorie *</Label>
+            <div className="mt-1">
+              <CategoryHierarchySelector
+                value={editedData?.subcategory_id ?? ''}
+                onChange={subcategoryId =>
+                  onUpdateData({ subcategory_id: subcategoryId ?? '' })
+                }
+                placeholder="Sélectionner une sous-catégorie"
+              />
+            </div>
           </div>
         </div>
 

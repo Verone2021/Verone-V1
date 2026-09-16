@@ -261,12 +261,16 @@ export function useCustomerSamples(filters?: SampleFilters) {
         sampleData.purchase_orders as { supplier_id: string }
       ).supplier_id;
 
-      // 2. Chercher PO draft existant pour ce fournisseur
+      // 2. Chercher la commande échantillon brouillon de ce fournisseur.
+      //    Le filtre po_type='sample' est indispensable : sans lui on tombait
+      //    sur une commande fournisseur ordinaire et la ligne cessait d'être
+      //    reconnue comme échantillon (fiche sourcing, garde anti-doublon).
       const { data: existingPO, error: poError } = await supabase
         .from('purchase_orders')
         .select('id')
         .eq('supplier_id', supplierId)
         .eq('status', 'draft')
+        .eq('po_type', 'sample')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -295,6 +299,7 @@ export function useCustomerSamples(filters?: SampleFilters) {
           .insert({
             supplier_id: supplierId,
             status: 'draft' as const,
+            po_type: 'sample',
             total_ht: 0,
             total_ttc: 0,
             po_number: poNumber,

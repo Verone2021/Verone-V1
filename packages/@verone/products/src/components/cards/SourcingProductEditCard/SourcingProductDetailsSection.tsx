@@ -124,42 +124,32 @@ export function SourcingProductDetailsSection({
             Dimensions (cm) L x l x H
           </Label>
           <div className="grid grid-cols-3 gap-2 mt-1">
-            <Input
-              type="number"
-              step="0.1"
-              min="0"
-              value={editedData?.dimensions_length ?? ''}
-              onChange={e =>
-                onUpdateData({
-                  dimensions_length: parseFloat(e.target.value) || 0,
-                })
-              }
-              placeholder="L"
-            />
-            <Input
-              type="number"
-              step="0.1"
-              min="0"
-              value={editedData?.dimensions_width ?? ''}
-              onChange={e =>
-                onUpdateData({
-                  dimensions_width: parseFloat(e.target.value) || 0,
-                })
-              }
-              placeholder="l"
-            />
-            <Input
-              type="number"
-              step="0.1"
-              min="0"
-              value={editedData?.dimensions_height ?? ''}
-              onChange={e =>
-                onUpdateData({
-                  dimensions_height: parseFloat(e.target.value) || 0,
-                })
-              }
-              placeholder="H"
-            />
+            {(
+              [
+                ['length', 'L'],
+                ['width', 'l'],
+                ['height', 'H'],
+              ] as const
+            ).map(([axis, placeholder]) => (
+              <Input
+                key={axis}
+                type="number"
+                step="0.1"
+                min="0"
+                value={editedData?.dimensions?.[axis] ?? ''}
+                onChange={e =>
+                  onUpdateData({
+                    dimensions: {
+                      length: editedData?.dimensions?.length ?? 0,
+                      width: editedData?.dimensions?.width ?? 0,
+                      height: editedData?.dimensions?.height ?? 0,
+                      [axis]: parseFloat(e.target.value) || 0,
+                    },
+                  })
+                }
+                placeholder={placeholder}
+              />
+            ))}
           </div>
         </div>
 

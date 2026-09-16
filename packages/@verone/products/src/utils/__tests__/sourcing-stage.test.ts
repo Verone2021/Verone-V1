@@ -85,6 +85,12 @@ assert.deepEqual(availableLifecycleActions('cancelled', false), [
   'reopen',
   'withdraw',
 ]);
+// `archived` s'affiche « Refusé » : il doit offrir la même sortie
+// (BO-SOURCING-COMPLETUDE-001, sinon produit sans aucune action possible)
+assert.deepEqual(availableLifecycleActions('archived', false), [
+  'reopen',
+  'withdraw',
+]);
 assert.deepEqual(availableLifecycleActions('validated', false), ['withdraw']);
 // Statut vide : la base refuse tout changement d'étape
 assert.deepEqual(availableLifecycleActions(null, false), ['withdraw']);

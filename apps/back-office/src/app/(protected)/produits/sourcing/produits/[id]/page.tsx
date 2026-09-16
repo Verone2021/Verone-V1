@@ -1,168 +1,95 @@
 'use client';
 
 import type { ComponentProps } from 'react';
-import { useRef, useState } from 'react';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 
-import { useToast } from '@verone/common';
-import { useProductConsultations } from '@verone/consultations/hooks';
 import {
   ProductEvaluationDialog,
   ProductEvaluationSummary,
   ProductPhotosModal,
+  RfqTemplateDialog,
+  SampleOrderCard,
+  SampleOrderPickerDialog,
   SourcingActionBar,
+  SourcingCompletenessCard,
   SourcingJournal,
   SourcingOffersSection,
+  SourcingPhotos,
   SourcingProductEditCard,
   SourcingStageHeader,
+  SourcingStagePanel,
   SourcingUrls,
-  useProductEvaluation,
-  useProductImages,
-  useSampleState,
-  useSourcingLifecycle,
-  useSourcingNotebook,
-  useSourcingProducts,
-  useSupplierSearch,
-  type SourcingBarLifecycleAction,
-  type SourcingJournalFormMode,
-  type SourcingLifecycleInput,
 } from '@verone/products';
 import { availableLifecycleActions } from '@verone/products/utils';
 import { Badge, ButtonV2, Card, CardContent } from '@verone/ui';
-import { associateProductToConsultation } from '@verone/utils';
 import { ArrowLeft, Building2, Package } from 'lucide-react';
 
 import { SourcingConsultationsSection } from './SourcingConsultationsSection';
-import {
-  SourcingLifecycleDialogs,
-  type SourcingReasonAction,
-} from './SourcingLifecycleDialogs';
+import { SourcingLifecycleDialogs } from './SourcingLifecycleDialogs';
 import { SourcingProductHeaderActions } from './SourcingProductHeaderActions';
 import {
   SourcingProductLoading,
   SourcingProductNotFound,
 } from './SourcingProductStates';
+import { useSourcingDetailPage } from './use-sourcing-detail-page';
 
 export default function SourcingProductDetailPage() {
-  const router = useRouter();
   const params = useParams();
   const productId = params.id as string;
-  const { toast } = useToast();
-
-  // Chargement par identifiant : la fiche d'un produit retiré reste lisible.
-  const { products, loading, orderSample, refetch } = useSourcingProducts({
-    product_id: productId,
-  });
-  const product = products.find(p => p.id === productId);
-
-  const notebook = useSourcingNotebook(productId);
-  const supplierSearch = useSupplierSearch();
-  const sample = useSampleState(productId);
-  const lifecycle = useSourcingLifecycle(productId);
-  const evaluation = useProductEvaluation(productId, notebook.addCommunication);
   const {
+    router,
+    toast,
+    product,
+    loading,
+    refetch,
+    draftOrder,
+    notebook,
+    sample,
+    sampleCandidates,
+    evaluation,
     linkedConsultations,
-    loading: consultationsLoading,
-    refetch: refetchConsultations,
-  } = useProductConsultations(productId);
-  const {
+    consultationsLoading,
     primaryImage,
     images,
-    loading: imagesLoading,
+    imagesLoading,
     fetchImages,
-  } = useProductImages({ productId, autoFetch: true });
-
-  const [isPhotosModalOpen, setIsPhotosModalOpen] = useState(false);
-  const [isEvaluationDialogOpen, setIsEvaluationDialogOpen] = useState(false);
-  const [journalMode, setJournalMode] =
-    useState<SourcingJournalFormMode | null>(null);
-  const [reasonAction, setReasonAction] = useState<SourcingReasonAction | null>(
-    null
-  );
-  const [confirmValidateOpen, setConfirmValidateOpen] = useState(false);
-  const [orderingSample, setOrderingSample] = useState(false);
-  const journalRef = useRef<HTMLDivElement>(null);
-
-  const runAction = async (input: SourcingLifecycleInput): Promise<boolean> => {
-    const ok = await lifecycle.applyAction(input);
-    if (!ok) return false;
-    if (input.action === 'validate') {
-      // Le produit a quitté le sourcing : sa fiche est désormais au catalogue
-      router.push(`/produits/catalogue/${productId}`);
-      return true;
-    }
-    await Promise.all([refetch(), notebook.refetch()]);
-    return true;
-  };
-
-  const handleLifecycle = (action: SourcingBarLifecycleAction) => {
-    if (action === 'refuse' || action === 'withdraw') {
-      setReasonAction(action);
-      return;
-    }
-    if (action === 'validate') {
-      setConfirmValidateOpen(true);
-      return;
-    }
-    void runAction({ action }).catch(error => {
-      console.error('[SourcingDetail] lifecycle failed:', error);
-    });
-  };
-
-  const handleOrderSample = async () => {
-    setOrderingSample(true);
-    try {
-      await orderSample(productId);
-    } finally {
-      setOrderingSample(false);
-    }
-  };
-
-  const handleAddNote = () => {
-    setJournalMode('note');
-    journalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
-  const handlePriorityChange = async (priority: string) => {
-    try {
-      await notebook.updatePriority(priority);
-      await refetch();
-    } catch (error) {
-      console.error('[SourcingDetail] priority update failed:', error);
-      toast({
-        title: 'Erreur',
-        description: "La priorité n'a pas pu être enregistrée",
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleLinkToConsultation = async (consultationId: string) => {
-    try {
-      await associateProductToConsultation({
-        consultationId,
-        productId,
-        quantity: 1,
-        proposedPrice: null,
-        isFree: false,
-      });
-      toast({
-        title: 'Produit associé',
-        description: 'Le produit a été associé à la consultation',
-      });
-      await refetchConsultations();
-    } catch (error) {
-      toast({
-        title: 'Erreur',
-        description:
-          error instanceof Error
-            ? error.message
-            : "Impossible d'associer le produit",
-        variant: 'destructive',
-      });
-    }
-  };
+    bulkSample,
+    adoptOffer,
+    pricing,
+    currentStatus,
+    isWithdrawn,
+    busy,
+    draftOrderForProduct,
+    showCompleteness,
+    currentStage,
+    stageProgress,
+    isPhotosModalOpen,
+    setIsPhotosModalOpen,
+    isEvaluationDialogOpen,
+    setIsEvaluationDialogOpen,
+    journalMode,
+    setJournalMode,
+    reasonAction,
+    setReasonAction,
+    confirmValidateOpen,
+    setConfirmValidateOpen,
+    openSections,
+    setOpenSections,
+    isSamplePickerOpen,
+    setIsSamplePickerOpen,
+    rfqMode,
+    setRfqMode,
+    journalRef,
+    handleGoToField,
+    runAction,
+    handleLifecycle,
+    handleOrderSample,
+    handleAddNote,
+    handlePriorityChange,
+    handleLinkToConsultation,
+    handleStageAction,
+  } = useSourcingDetailPage(productId);
 
   if (loading) {
     return <SourcingProductLoading />;
@@ -175,10 +102,6 @@ export default function SourcingProductDetailPage() {
       />
     );
   }
-
-  const currentStatus = product.sourcing_status;
-  const isWithdrawn = Boolean(product.archived_at);
-  const busy = lifecycle.pendingAction !== null || orderingSample;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -230,6 +153,7 @@ export default function SourcingProductDetailPage() {
                   'set_stage'
                 )
               }
+              progress={stageProgress}
               onStageSelect={toStage => {
                 void runAction({ action: 'set_stage', toStage }).catch(
                   error => {
@@ -247,8 +171,7 @@ export default function SourcingProductDetailPage() {
             <SourcingActionBar
               status={currentStatus}
               isWithdrawn={isWithdrawn}
-              hasSupplier={Boolean(product.supplier_id)}
-              hasCostPrice={(product.cost_price ?? 0) > 0}
+              product={product}
               sample={sample}
               busy={busy}
               hasEvaluation={Boolean(evaluation.evaluation)}
@@ -267,6 +190,38 @@ export default function SourcingProductDetailPage() {
           </CardContent>
         </Card>
 
+        {showCompleteness && (
+          <SourcingCompletenessCard
+            product={product}
+            onGoToField={handleGoToField}
+          />
+        )}
+
+        <SourcingStagePanel
+          stage={currentStage}
+          progress={stageProgress}
+          busy={busy}
+          unavailableActions={
+            sample.state !== 'none' && sample.state !== 'cancelled'
+              ? { order_sample: 'Un échantillon est déjà en cours.' }
+              : {}
+          }
+          onAction={handleStageAction}
+        />
+
+        {draftOrderForProduct !== null && product.supplier_id !== null && (
+          <SampleOrderCard
+            order={draftOrderForProduct}
+            currentProductId={productId}
+            candidateCount={sampleCandidates.data?.length ?? 0}
+            busy={busy || bulkSample.running}
+            onAddProducts={() => setIsSamplePickerOpen(true)}
+            onOpenOrder={orderId =>
+              router.push(`/commandes/fournisseurs?id=${orderId}`)
+            }
+          />
+        )}
+
         <ProductEvaluationSummary
           evaluation={evaluation.evaluation}
           sampleState={sample.state}
@@ -283,6 +238,8 @@ export default function SourcingProductDetailPage() {
             primaryImage={primaryImage}
             images={images}
             imagesLoading={imagesLoading}
+            openSections={openSections}
+            onOpenSectionsChange={setOpenSections}
             onProductUpdate={async () => {
               // La carte a déjà écrit en base (useInlineEdit) : ici on se
               // contente de recharger, sans seconde écriture.
@@ -294,27 +251,61 @@ export default function SourcingProductDetailPage() {
             }}
             onOpenPhotosModal={() => setIsPhotosModalOpen(true)}
           />
-          <SourcingUrls
-            urls={notebook.urls}
-            onAdd={notebook.addUrl}
-            onRemove={notebook.removeUrl}
-          />
+          <div id="sourcing-links" className="scroll-mt-4">
+            <SourcingUrls
+              urls={notebook.urls}
+              onAdd={notebook.addUrl}
+              onRemove={notebook.removeUrl}
+            />
+          </div>
         </section>
 
-        <SourcingOffersSection
-          candidates={{
-            candidates: notebook.candidates,
-            onAdd: notebook.addCandidateSupplier,
-            onUpdateStatus: notebook.updateCandidateStatus,
-            supplierSearch,
-          }}
-          prices={{
-            priceHistory: notebook.priceHistory,
-            onAdd: notebook.addPriceEntry,
-            currentCostPrice: product.cost_price,
-            targetPrice: product.target_price,
-          }}
-        />
+        <div id="sourcing-offers" className="scroll-mt-4">
+          <SourcingOffersSection
+            product={{
+              supplier_id: product.supplier_id,
+              cost_price: product.cost_price,
+              target_price: product.target_price ?? null,
+              eco_tax_default: product.eco_tax_default ?? null,
+            }}
+            offers={notebook.candidates}
+            priceHistory={notebook.priceHistory}
+            busy={busy || adoptOffer.adoptingId !== null}
+            onAddOffer={notebook.addCandidateSupplier}
+            onUpdateOffer={notebook.updateCandidateOffer}
+            onUpdateStatus={(offerId, status) => {
+              void notebook
+                .updateCandidateStatus(offerId, status)
+                .catch(error => {
+                  console.error('[SourcingDetail] statut offre:', error);
+                });
+            }}
+            onUpdateStatuses={(offerIds, status) => {
+              void notebook
+                .updateCandidateStatuses(offerIds, status)
+                .catch(error => {
+                  console.error('[SourcingDetail] statuts offres:', error);
+                });
+            }}
+            onAdoptOffer={offerId => {
+              void adoptOffer.adoptOffer(offerId).catch(error => {
+                console.error('[SourcingDetail] adoption offre:', error);
+              });
+            }}
+            adoptingOfferId={adoptOffer.adoptingId}
+            onAddPrice={notebook.addPriceEntry}
+            onSaveTargetPrice={pricing.updateTargetPrice}
+            savingTargetPrice={pricing.savingTargetPrice}
+            onAdoptPrice={entry => {
+              void pricing.adoptCostPrice(entry).catch(error => {
+                console.error('[SourcingDetail] adoption prix:', error);
+              });
+            }}
+            adoptingPriceId={pricing.adoptingPriceId}
+          />
+        </div>
+
+        <SourcingPhotos photos={notebook.photos} />
 
         <div ref={journalRef} className="scroll-mt-4">
           <SourcingJournal
@@ -364,6 +355,36 @@ export default function SourcingProductDetailPage() {
             console.error('[SourcingDetail] fetchImages failed:', error);
           });
         }}
+      />
+
+      <SampleOrderPickerDialog
+        open={isSamplePickerOpen}
+        onOpenChange={setIsSamplePickerOpen}
+        supplierName={product.supplier?.name ?? 'ce fournisseur'}
+        candidates={sampleCandidates.data ?? []}
+        loading={sampleCandidates.isLoading}
+        busy={bulkSample.running}
+        poNumber={draftOrder?.poNumber}
+        onConfirm={async productIds => {
+          await bulkSample.orderSamples(productIds);
+          await sampleCandidates.refetch();
+        }}
+      />
+
+      <RfqTemplateDialog
+        key={rfqMode ?? 'closed'}
+        open={rfqMode !== null}
+        onOpenChange={open => {
+          if (!open) setRfqMode(null);
+        }}
+        mode={rfqMode ?? 'request'}
+        productName={product.name}
+        supplierReference={product.supplier_reference ?? null}
+        targetPrice={product.target_price ?? null}
+        defaultQuantity={product.supplier_moq ?? null}
+        supplierId={product.supplier_id}
+        saving={busy}
+        onLogExchange={notebook.addCommunication}
       />
 
       <ProductEvaluationDialog

@@ -1,10 +1,11 @@
 /**
  * Hook Consultations Count - Vérone Back Office
- * Compte les consultations actives (en_attente, en_cours).
+ * Consultations actives (en_attente, en_cours).
  *
- * Implémentation : TanStack Query (staleTime 5 min, refetch au retour sur
- * l'onglet). client_consultations n'est pas publiée dans Supabase Realtime
- * → pas d'abonnement, pas de polling.
+ * Le nombre vient de l'appel unique du menu (`get_sidebar_counts`, champ
+ * `consultations`) : aucune requête propre. Le détail par statut
+ * (`includeBreakdown`) reste optionnel et n'émet ses 2 comptages que s'il est
+ * demandé explicitement — aucun écran ne le demande aujourd'hui.
  */
 
 'use client';
@@ -14,6 +15,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { MENU_COUNT_QUERY_KEYS } from '@verone/utils/query';
 import { createClient } from '@verone/utils/supabase/client';
+
+import { useMenuCount } from './use-menu-count';
 
 export interface ConsultationsCountHook {
   count: number;
@@ -30,7 +33,7 @@ export interface ConsultationsCountHook {
 const CONSULTATIONS_COUNT_QUERY_KEY = MENU_COUNT_QUERY_KEYS.consultations;
 
 /**
- * Hook pour compter les consultations actives en temps réel.
+ * Hook pour compter les consultations actives.
  *
  * @param options.enableRealtime  @deprecated ignoré — client_consultations non publiée
  * @param options.refetchInterval @deprecated ignoré — TanStack Query gère le cache
@@ -46,28 +49,23 @@ export function useConsultationsCount(options?: {
   const { includeBreakdown = false } = options ?? {};
   const queryClient = useQueryClient();
 
-  const { data, isPending, error, dataUpdatedAt } = useQuery({
-    queryKey: [...CONSULTATIONS_COUNT_QUERY_KEY, { includeBreakdown }],
+  const {
+    count,
+    loading,
+    error,
+    lastUpdated,
+    refetch: refetchMenuCounts,
+  } = useMenuCount('consultations');
+
+  const { data: breakdown } = useQuery({
+    queryKey: [...CONSULTATIONS_COUNT_QUERY_KEY, 'breakdown'],
+    enabled: includeBreakdown,
     queryFn: async () => {
       const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) return { count: 0, breakdown: null };
-
-      const { count: totalCount, error: countError } = await supabase
-        .from('client_consultations')
-        .select('id', { count: 'exact', head: true })
-        .in('status', ['en_attente', 'en_cours'])
-        .is('archived_at', null)
-        .is('deleted_at', null);
-
-      if (countError) {
-        console.error('[useConsultationsCount] Count error:', countError);
-        throw new Error(countError.message);
-      }
-
-      if (!includeBreakdown) return { count: totalCount ?? 0, breakdown: null };
+      if (!user) return { pending: 0, inProgress: 0 };
 
       const [{ count: pendingCount }, { count: inProgressCount }] =
         await Promise.all([
@@ -86,11 +84,8 @@ export function useConsultationsCount(options?: {
         ]);
 
       return {
-        count: totalCount ?? 0,
-        breakdown: {
-          pending: pendingCount ?? 0,
-          inProgress: inProgressCount ?? 0,
-        },
+        pending: pendingCount ?? 0,
+        inProgress: inProgressCount ?? 0,
       };
     },
     staleTime: 5 * 60_000,
@@ -99,17 +94,20 @@ export function useConsultationsCount(options?: {
   });
 
   const refetch = useCallback(async (): Promise<void> => {
-    await queryClient.invalidateQueries({
-      queryKey: CONSULTATIONS_COUNT_QUERY_KEY,
-    });
-  }, [queryClient]);
+    await Promise.all([
+      refetchMenuCounts(),
+      queryClient.invalidateQueries({
+        queryKey: CONSULTATIONS_COUNT_QUERY_KEY,
+      }),
+    ]);
+  }, [queryClient, refetchMenuCounts]);
 
   return {
-    count: data?.count ?? 0,
-    loading: isPending,
-    error: error ?? null,
+    count,
+    loading,
+    error,
     refetch,
-    lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
-    breakdown: includeBreakdown ? (data?.breakdown ?? undefined) : undefined,
+    lastUpdated,
+    breakdown: includeBreakdown ? breakdown : undefined,
   };
 }

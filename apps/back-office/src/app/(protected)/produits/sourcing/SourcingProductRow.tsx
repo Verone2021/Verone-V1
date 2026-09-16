@@ -2,7 +2,7 @@
 
 import type { SourcingProduct } from '@verone/products';
 import type { SourcingListSegment } from '@verone/products/utils';
-import { CloudflareImage } from '@verone/ui';
+import { Checkbox, CloudflareImage } from '@verone/ui';
 import { Package } from 'lucide-react';
 
 import {
@@ -21,6 +21,10 @@ interface SourcingProductRowProps extends SourcingProductActionHandlers {
   product: SourcingProduct;
   segment: SourcingListSegment;
   canDelete: boolean;
+  /** Sélection multiple (commande d'échantillons groupée). */
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 export function supplierNameOf(product: SourcingProduct): string | undefined {
@@ -66,12 +70,25 @@ export function SourcingProductRow({
   product,
   segment,
   canDelete,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
   ...handlers
 }: SourcingProductRowProps) {
   const supplierName = supplierNameOf(product);
 
   return (
     <tr className="border-b border-gray-100 transition-colors hover:bg-gray-50/50">
+      {selectable && (
+        <td className="w-[44px] p-3">
+          <Checkbox
+            checked={selected}
+            onCheckedChange={() => onToggleSelect?.()}
+            aria-label={`Sélectionner ${product.name}`}
+          />
+        </td>
+      )}
+
       {/* Photo + Nom */}
       <td className="min-w-[220px] p-3">
         <div className="flex items-center gap-3">

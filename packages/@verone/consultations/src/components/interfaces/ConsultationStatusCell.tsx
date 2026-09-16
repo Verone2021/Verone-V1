@@ -5,6 +5,7 @@ const STATUS_LABELS: Record<string, string> = {
   approved: 'OK',
   rejected: 'Refus',
   ordered: 'Cmdé',
+  candidate: 'Option',
 };
 
 interface ConsultationStatusCellProps {
@@ -58,6 +59,25 @@ export function ConsultationStatusCell({
             }`}
           >
             Non
+          </button>
+          {/* Option : proposée au client, hors chiffre d'affaires tant qu'elle
+              n'est pas retenue (consultation-line-status) */}
+          <button
+            type="button"
+            title="Option comparée : ne compte ni dans le total ni dans la marge tant qu'elle n'est pas retenue"
+            onClick={() =>
+              void onChangeStatus(
+                itemId,
+                status === 'candidate' ? 'pending' : 'candidate'
+              )
+            }
+            className={`px-1.5 py-0.5 rounded transition-all ${
+              status === 'candidate'
+                ? 'bg-violet-500 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-600'
+            }`}
+          >
+            {STATUS_LABELS['candidate']}
           </button>
         </div>
       )}

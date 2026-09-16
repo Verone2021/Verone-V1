@@ -26,6 +26,9 @@ export interface ClientConsultation {
   deleted_at?: string;
   deleted_by?: string;
   tva_rate?: number;
+  /** Marge par défaut de la consultation en % — produit le prix de vente
+   *  quand aucun prix n'est saisi sur la ligne (BO-CONSULT-MULTI-001). */
+  default_margin_percentage?: number | null;
   // Relations (optionnelles, pour joins)
   enseigne?: { id: string; name: string };
   organisation?: { id: string; legal_name: string; trade_name?: string };
@@ -70,6 +73,11 @@ export interface ConsultationItem {
   /** Transport vente facturé au client (total ligne, EUR HT). 0 = aucun. */
   selling_shipping_cost: number;
   cost_price_override?: number;
+  /** Marge de la ligne en % — prioritaire sur la marge par défaut de la
+   *  consultation (BO-CONSULT-MULTI-001). null = suit la marge par défaut. */
+  margin_percentage?: number | null;
+  /** Besoin du client auquel la ligne répond. null = ligne libre. */
+  need_id?: string | null;
   status: string;
   product?: {
     id: string;
@@ -142,6 +150,8 @@ export interface UpdateConsultationItemData {
   shipping_cost_currency?: string;
   selling_shipping_cost?: number;
   cost_price_override?: number;
+  margin_percentage?: number | null;
+  need_id?: string | null;
   status?: string;
 }
 

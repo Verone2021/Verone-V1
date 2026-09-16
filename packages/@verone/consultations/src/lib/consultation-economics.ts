@@ -9,6 +9,7 @@
  * Sprints BO-CONSULT-P2-001 — 2026-09-12 · BO-CONSULT-P9-001 — 2026-09-13
  */
 
+import { isRetainedLine } from './consultation-line-status';
 import {
   allocateSupplierCosts,
   summarizeSuppliers,
@@ -55,7 +56,7 @@ export interface ConsultationEconomicsSettings {
 
 export interface LineEconomics {
   lineId: string;
-  /** Ligne incluse dans les totaux (status !== 'rejected') */
+  /** Ligne comptée dans les totaux (ni refusée ni simple option) */
   included: boolean;
   /** Coût unitaire absent en base (unitCost était null) */
   costMissing: boolean;
@@ -141,7 +142,8 @@ export function computeLineEconomics(
   const sellingShippingCost: number = line.sellingShippingCost ?? 0;
 
   // --- Inclusion ---
-  const included = line.status !== 'rejected';
+  // Refusée ou encore à l'état d'option : hors chiffre d'affaires et hors marge
+  const included = isRetainedLine(line.status);
 
   // --- Frais de transport et part fournisseur (exclus pour gratuit ou échantillon) ---
   const fees: number = line.isFree || line.isSample ? 0 : shippingCost;
@@ -226,7 +228,7 @@ export function computeLineEconomics(
  * Calcule la rentabilité de toutes les lignes d'une consultation.
  * Les frais saisis par fournisseur sont répartis sur ses seules lignes
  * éligibles avant le calcul de chaque ligne. Les totaux n'incluent que les
- * lignes « included » (status !== 'rejected').
+ * lignes retenues (ni refusées ni options candidates).
  *
  * @throws {RangeError} si une ligne a quantity ≤ 0
  */

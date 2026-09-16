@@ -7,9 +7,10 @@ import { associateProductToConsultation } from '@verone/utils';
 import { createClient } from '@verone/utils/supabase/client';
 
 import {
-  computeConsultationEconomics,
-  type ConsultationEconomicsLineInput,
-} from '../lib/consultation-economics';
+  computeItemsEconomics,
+  type ConsultationEconomicsSettingsSource,
+} from '../lib/consultation-economics-input';
+import type { SupplierCostInput } from '../lib/consultation-supplier-costs';
 
 import type {
   ConsultationItem,
@@ -52,6 +53,8 @@ export function useConsultationItems(consultationId?: string) {
           shipping_cost_currency,
           selling_shipping_cost,
           cost_price_override,
+          margin_percentage,
+          need_id,
           product:products(
             id,
             name,
@@ -111,6 +114,8 @@ export function useConsultationItems(consultationId?: string) {
           shipping_cost_currency: item.shipping_cost_currency ?? 'EUR',
           selling_shipping_cost: item.selling_shipping_cost ?? 0,
           cost_price_override: item.cost_price_override ?? undefined,
+          margin_percentage: item.margin_percentage ?? null,
+          need_id: item.need_id ?? null,
           product: productData
             ? {
                 id: productData.id,
@@ -235,6 +240,9 @@ export function useConsultationItems(consultationId?: string) {
         updateData.cost_price_override = updates.cost_price_override;
       if (updates.is_sample !== undefined)
         updateData.is_sample = updates.is_sample;
+      if (updates.margin_percentage !== undefined)
+        updateData.margin_percentage = updates.margin_percentage;
+      if (updates.need_id !== undefined) updateData.need_id = updates.need_id;
       if (updates.status !== undefined) updateData.status = updates.status;
 
       const { error: updateError } = await supabase
@@ -261,6 +269,14 @@ export function useConsultationItems(consultationId?: string) {
                   updates.selling_shipping_cost ?? item.selling_shipping_cost,
                 cost_price_override:
                   updates.cost_price_override ?? item.cost_price_override,
+                margin_percentage:
+                  updates.margin_percentage !== undefined
+                    ? updates.margin_percentage
+                    : item.margin_percentage,
+                need_id:
+                  updates.need_id !== undefined
+                    ? updates.need_id
+                    : item.need_id,
                 status: updates.status ?? item.status,
               }
             : item
@@ -316,25 +332,15 @@ export function useConsultationItems(consultationId?: string) {
     return updateItem(itemId, { is_free: !item.is_free });
   };
 
-  const calculateTotal = () => {
+  const calculateTotal = (
+    consultation?: ConsultationEconomicsSettingsSource | null,
+    supplierCosts?: readonly SupplierCostInput[]
+  ) => {
     // Décision BO-CONSULT-P2-001 : toujours via la fonction d'économie (source unique).
     // totals.billed = Σ(unitPrice × quantity) pour les lignes incluses, non gratuites, avec prix.
-    const econInputs: ConsultationEconomicsLineInput[] = consultationItems.map(
-      item => ({
-        id: item.id,
-        quantity: item.quantity,
-        unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
-        ecoTax: item.product?.eco_tax_default ?? 0,
-        shippingCost: item.shipping_cost ?? 0,
-        sellingShippingCost: item.selling_shipping_cost ?? 0,
-        proposedPrice: item.unit_price ?? null,
-        isFree: item.is_free,
-        isSample: item.is_sample,
-        status: item.status ?? 'pending',
-        supplierId: item.product?.supplier_id ?? null,
-      })
-    );
-    return computeConsultationEconomics(econInputs).totals.billed;
+    // BO-CONSULT-MULTI-001 : prix produit par la marge quand aucun prix n'est saisi.
+    return computeItemsEconomics(consultationItems, consultation, supplierCosts)
+      .totals.billed;
   };
 
   const getTotalItemsCount = () => {

@@ -7,6 +7,8 @@
  * Sprint BO-CONSULT-P2-001 — 2026-09-12
  */
 
+import { isRetainedLine } from './consultation-line-status';
+
 // ---------------------------------------------------------------------------
 // Type minimal pour les fonctions de garde
 // ---------------------------------------------------------------------------
@@ -33,7 +35,8 @@ export function isWithdrawnItem(item: OrderGuardable): boolean {
 // ---------------------------------------------------------------------------
 
 /**
- * Items facturables : non refusés, non gratuits, avec prix de vente renseigné.
+ * Items facturables : retenus (ni refusés ni options), non gratuits, avec prix
+ * de vente renseigné.
  * Le type de retour est un type predicate — unit_price est garanti `number`.
  * Utilisé pour créer les lignes de commande/devis et calculer les totaux.
  */
@@ -42,7 +45,7 @@ export function filterBillableItems<T extends OrderGuardable>(
 ): (T & { unit_price: number })[] {
   return items.filter(
     (item): item is T & { unit_price: number } =>
-      item.status !== 'rejected' &&
+      isRetainedLine(item.status) &&
       !isWithdrawnItem(item) &&
       !item.is_free &&
       item.unit_price !== null
@@ -50,32 +53,33 @@ export function filterBillableItems<T extends OrderGuardable>(
 }
 
 /**
- * Compte les lignes non refusées, non gratuites, SANS prix de vente.
+ * Compte les lignes retenues, non gratuites, SANS prix de vente.
  * Retourne 0 si tous les prix sont renseignés.
  * Utilisé pour refuser la création d'un devis avec des prix manquants.
  */
 export function countUnpricedLines(items: OrderGuardable[]): number {
   return items.filter(
     item =>
-      item.status !== 'rejected' &&
+      isRetainedLine(item.status) &&
       !isWithdrawnItem(item) &&
       !item.is_free &&
       item.unit_price === null
   ).length;
 }
 
-/** Lignes montrées au client (PDF client) : ni refusées ni retirées. */
+/** Lignes montrées au client (PDF client) : retenues et non retirées. */
 export function filterClientVisibleItems<T extends OrderGuardable>(
   items: T[]
 ): T[] {
   return items.filter(
-    item => item.status !== 'rejected' && !isWithdrawnItem(item)
+    item => isRetainedLine(item.status) && !isWithdrawnItem(item)
   );
 }
 
 /**
  * Items non refusés (toutes catégories : gratuit, sample, avec prix ou sans).
- * Utilisé pour l'affichage dans les PDFs (filtre les lignes « Refusé »).
+ * Utilisé pour l'affichage dans le rapport interne — les options candidates y
+ * restent visibles (elles sont comparées), même si elles ne comptent pas.
  */
 export function filterActiveItems<T extends OrderGuardable>(items: T[]): T[] {
   return items.filter(item => item.status !== 'rejected');
