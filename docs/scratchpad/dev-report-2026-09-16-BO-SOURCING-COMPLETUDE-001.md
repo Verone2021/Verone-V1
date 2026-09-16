@@ -2,7 +2,16 @@
 
 **Date** : 2026-09-16 · **Branche** : `fix/BO-SOURCING-COMPLETUDE-001` (depuis `staging` `be9bbcf3`)
 **Plan** : `~/.claude/plans/streamed-skipping-quill.md` (lots A1 et A2)
-**Base** : migration appliquée le 2026-09-16 après accord écrit de Roméo, hors fenêtre 07-17 h UTC.
+**Base** : migration appliquée le 2026-09-16 vers 14 h 20 UTC après accord écrit de Roméo.
+
+> ⚠️ **Écart de procédure assumé et signalé.** La règle ajoutée le 16/09 interdit toute migration
+> entre 07 h et 17 h UTC un jour ouvré ; l'application a eu lieu **dans** cette fenêtre, par erreur
+> d'appréciation de l'heure de ma part (heures de processus obsolètes prises pour l'heure courante).
+> Nature du changement : trois `CREATE OR REPLACE FUNCTION`, verrou sur la ligne `pg_proc`
+> uniquement, aucun parcours de table, aucun réécriture, aucune donnée modifiée, aucune requête
+> lourde. Seul effet visible en production avant le déploiement de l'écran : la validation au
+> catalogue exige désormais aussi sous-catégorie, photo et référence fournisseur — elle refuse avec
+> un message en français, elle ne casse rien. Décision de retour arrière laissée à Roméo.
 
 ---
 
@@ -129,10 +138,30 @@ rien ne permettait d'en profiter : tout le manque était à l'écran, **aucune m
 - **Type-check + lint** : `@verone/products`, `@verone/common`, `@verone/customers`,
   `@verone/types`, `@verone/back-office` — verts.
 
+### Essai à l'écran (local, port 3000, Chrome système — aucun navigateur Playwright installé)
+
+Captures dans `.playwright-mcp/screenshots/20260916/` (gitignoré). **Lecture seule : aucune
+écriture en base**, la sélection multiple ne touche que l'état React.
+
+| Contrôle                                    | Résultat                                                                                                                                                                                                                |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fiche SRC-MU2QFJ2R (ni fournisseur ni prix) | les 2 boutons grisés + « Pour commander l'échantillon et valider au catalogue : renseignez fournisseur, prix d'achat, sous-catégorie et référence fournisseur. »                                                        |
+| Fiche SRC-MU2O45CK (fournisseur + prix)     | « Commander l'échantillon » **actif**, « Valider au catalogue » grisé + « renseignez sous-catégorie et référence fournisseur »                                                                                          |
+| Checklist                                   | 2 portes affichées, pastilles « Prêt » / « 2 champs à remplir », 5 champs listés, bloc « Conseillé — ne bloque rien » pour le poids                                                                                     |
+| Liste sourcing                              | 6 cases à cocher ; 2 sélectionnés → barre « 2 produits sélectionnés · Commander les échantillons · 2 sans fournisseur ou sans prix d'achat — non commandables » ; tout sélectionner → 6 ; tout décocher → barre masquée |
+| 375 px                                      | pas de débordement horizontal, actions secondaires dans « Plus », phrase de blocage lisible sur 3 lignes                                                                                                                |
+| Erreurs console                             | uniquement les échecs Qonto du tableau de bord, préexistants en local (aucune erreur venant du sourcing)                                                                                                                |
+
+---
+
 ## 6. Reste à faire avant la demande de fusion
 
-- Essai à l'écran (1440 et 375 px) sur le produit TEST PRD-0314 : compléter les champs, voir la
-  checklist passer au vert, commander l'échantillon, ajouter un second produit du même
-  fournisseur, remettre la base à l'identique.
+- **Non vérifié à l'écran, faute de donnée utilisable sans écrire** : la carte « Commande
+  d'échantillons » et la fenêtre « Ajouter d'autres produits » ne s'affichent que pour un produit
+  qui a déjà un échantillon en cours. La seule commande échantillon existante (PO-2026-00039)
+  porte sur PRD-0314, sorti du sourcing depuis sa validation. Vérifier ces deux écrans demande
+  une vraie commande d'échantillon : à faire sur un produit que Roméo désigne, ou par lui en
+  30 secondes après la mise en ligne. Le regroupement lui-même est le comportement de la base,
+  déjà en production et inchangé.
 - Relecture `reviewer-agent`.
 - Lots A3 à A7 puis partie B (consultations) — voir le plan.
