@@ -6,6 +6,7 @@
 export * from './product-status-utils';
 export * from './sku-generator';
 export * from './sourcing-stage';
+export * from './sourcing-completeness';
 export * from './derive-sample-state';
 export * from './sourcing-journal';
 export * from './product-evaluation';

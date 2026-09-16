@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 // import { deleteProductAlerts } from '@/app/actions/delete-product-alerts'; // ❌ Cannot import Server Actions from packages
 import { createClient } from '@verone/utils/supabase/client';
@@ -105,7 +105,31 @@ export function useInlineEdit(options: UseInlineEditOptions) {
   const [sections, setSections] = useState<
     Record<EditableSection, SectionEditState>
   >({} as Record<EditableSection, SectionEditState>);
+  /**
+   * Miroir synchrone de `sections`.
+   *
+   * `saveChanges` doit lire l'état le plus récent, y compris lorsqu'un appelant
+   * enchaîne `updateEditedData(...)` puis `saveChanges(...)` dans le même tick :
+   * `sections` n'est alors pas encore rafraîchi et l'ancienne valeur partait en
+   * base (section « Détails produit » du sourcing jamais enregistrée).
+   */
+  const sectionsRef = useRef<Record<EditableSection, SectionEditState>>(
+    {} as Record<EditableSection, SectionEditState>
+  );
   const supabase = createClient();
+
+  /** Écrit l'état ET son miroir synchrone, dans le même geste. */
+  const writeSections = useCallback(
+    (
+      updater: (
+        prev: Record<EditableSection, SectionEditState>
+      ) => Record<EditableSection, SectionEditState>
+    ) => {
+      sectionsRef.current = updater(sectionsRef.current);
+      setSections(sectionsRef.current);
+    },
+    []
+  );
 
   // Getters par section
   const isEditing = useCallback(
@@ -146,7 +170,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
   // Actions par section
   const startEdit = useCallback(
     (section: EditableSection, initialData: SectionData) => {
-      setSections(prev => ({
+      writeSections(prev => ({
         ...prev,
         [section]: {
           isEditing: true,
@@ -157,25 +181,28 @@ export function useInlineEdit(options: UseInlineEditOptions) {
         },
       }));
     },
-    []
+    [writeSections]
   );
 
-  const cancelEdit = useCallback((section: EditableSection) => {
-    setSections(prev => ({
-      ...prev,
-      [section]: {
-        isEditing: false,
-        editedData: null,
-        isSaving: false,
-        error: null,
-        hasChanges: false,
-      },
-    }));
-  }, []);
+  const cancelEdit = useCallback(
+    (section: EditableSection) => {
+      writeSections(prev => ({
+        ...prev,
+        [section]: {
+          isEditing: false,
+          editedData: null,
+          isSaving: false,
+          error: null,
+          hasChanges: false,
+        },
+      }));
+    },
+    [writeSections]
+  );
 
   const updateEditedData = useCallback(
     (section: EditableSection, updates: SectionData) => {
-      setSections(prev => ({
+      writeSections(prev => ({
         ...prev,
         [section]: {
           ...prev[section],
@@ -184,15 +211,29 @@ export function useInlineEdit(options: UseInlineEditOptions) {
         },
       }));
     },
-    []
+    [writeSections]
   );
 
   const saveChanges = useCallback(
-    async (section: EditableSection): Promise<boolean> => {
-      const sectionState = sections[section];
-      if (!sectionState?.editedData || !sectionState.hasChanges) return false;
+    async (
+      section: EditableSection,
+      /**
+       * Données à enregistrer. Quand elles sont fournies, elles REMPLACENT
+       * l'état de la section : c'est le seul moyen sûr d'enregistrer une
+       * transformation calculée dans le même tick que l'appel (l'état React
+       * n'est pas encore rafraîchi à ce moment-là).
+       */
+      payload?: SectionData
+    ): Promise<boolean> => {
+      const sectionState = sectionsRef.current[section];
+      const source = payload ?? sectionState?.editedData;
+      if (!source) return false;
+      if (payload === undefined && !sectionState?.hasChanges) return false;
+      // Copie : la règle métier « stock » ci-dessous ajuste des champs, et on ne
+      // mute ni l'état React ni l'objet fourni par l'appelant.
+      const dataToSave: SectionData = { ...source };
 
-      setSections(prev => ({
+      writeSections(prev => ({
         ...prev,
         [section]: { ...prev[section], isSaving: true, error: null },
       }));
@@ -203,13 +244,13 @@ export function useInlineEdit(options: UseInlineEditOptions) {
         if (productId) {
           // ✅ BUSINESS RULE: Précommande/Arrêté → min_stock=0 + Supprimer alertes
           if (section === 'stock') {
-            const newStatus = sectionState.editedData['product_status'] as
+            const newStatus = dataToSave['product_status'] as
               | string
               | undefined;
 
             if (newStatus === 'preorder' || newStatus === 'discontinued') {
               // Forcer min_stock à 0 (règle métier)
-              sectionState.editedData['min_stock'] = 0;
+              dataToSave['min_stock'] = 0;
 
               // ❌ TODO: Supprimer alertes stock (géré dans l'app via use-product-status.ts)
               // Cannot call Server Actions from packages - must be called from app layer
@@ -240,20 +281,17 @@ export function useInlineEdit(options: UseInlineEditOptions) {
           // Mise à jour produit
           const { error } = await supabase
             .from('products')
-            .update(sectionState.editedData)
+            .update(dataToSave)
             .eq('id', productId);
 
           success = !error;
           if (error) throw error;
         } else if (organisationId) {
           // Mise à jour organisation/fournisseur
-          console.warn(
-            '🔄 Updating organisation with data:',
-            sectionState.editedData
-          );
+          console.warn('🔄 Updating organisation with data:', dataToSave);
 
           // Nettoyer les données avant la mise à jour
-          const cleanedData = { ...sectionState.editedData };
+          const cleanedData = { ...dataToSave };
 
           // Sync legacy address fields from billing_* (legacy fields still read by some components)
           const LEGACY_SYNC_MAP: Record<string, string> = {
@@ -319,13 +357,10 @@ export function useInlineEdit(options: UseInlineEditOptions) {
           }
         } else if (contactId) {
           // Mise à jour contact
-          console.warn(
-            '🔄 Updating contact with data:',
-            sectionState.editedData
-          );
+          console.warn('🔄 Updating contact with data:', dataToSave);
 
           // Nettoyer les données avant la mise à jour
-          const cleanedData = { ...sectionState.editedData };
+          const cleanedData = { ...dataToSave };
 
           // Convertir les chaînes vides en null pour les champs optionnels
           Object.keys(cleanedData).forEach(key => {
@@ -359,12 +394,9 @@ export function useInlineEdit(options: UseInlineEditOptions) {
           }
         } else if (salesOrderId) {
           // Mise à jour commande client
-          console.warn(
-            '🔄 Updating sales order with data:',
-            sectionState.editedData
-          );
+          console.warn('🔄 Updating sales order with data:', dataToSave);
 
-          const cleanedData = { ...sectionState.editedData };
+          const cleanedData = { ...dataToSave };
 
           // Convertir les chaînes vides en null pour les champs optionnels
           Object.keys(cleanedData).forEach(key => {
@@ -394,12 +426,9 @@ export function useInlineEdit(options: UseInlineEditOptions) {
           }
         } else if (purchaseOrderId) {
           // Mise à jour commande fournisseur
-          console.warn(
-            '🔄 Updating purchase order with data:',
-            sectionState.editedData
-          );
+          console.warn('🔄 Updating purchase order with data:', dataToSave);
 
-          const cleanedData = { ...sectionState.editedData };
+          const cleanedData = { ...dataToSave };
 
           // Convertir les chaînes vides en null pour les champs optionnels
           Object.keys(cleanedData).forEach(key => {
@@ -433,8 +462,8 @@ export function useInlineEdit(options: UseInlineEditOptions) {
         }
 
         if (success) {
-          onUpdate(sectionState.editedData);
-          setSections(prev => ({
+          onUpdate(dataToSave);
+          writeSections(prev => ({
             ...prev,
             [section]: {
               isEditing: false,
@@ -450,7 +479,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Erreur inconnue';
-        setSections(prev => ({
+        writeSections(prev => ({
           ...prev,
           [section]: { ...prev[section], isSaving: false, error: errorMessage },
         }));
@@ -463,7 +492,7 @@ export function useInlineEdit(options: UseInlineEditOptions) {
       }
     },
     [
-      sections,
+      writeSections,
       productId,
       organisationId,
       contactId,

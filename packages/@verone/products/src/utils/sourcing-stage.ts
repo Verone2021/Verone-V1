@@ -120,8 +120,11 @@ export function availableLifecycleActions(
   switch (status) {
     case 'on_hold':
       return ['resume', 'refuse', 'withdraw'];
+    // `archived` s'affiche « Refusé » (stageOfStatus) : il doit donc offrir la
+    // même sortie. Sans lui, le produit restait sans aucune action possible.
     case 'refused':
     case 'cancelled':
+    case 'archived':
       return ['reopen', 'withdraw'];
     default:
       return ['withdraw'];

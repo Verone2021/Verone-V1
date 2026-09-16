@@ -3,6 +3,7 @@
 import type { SourcingProduct } from '@verone/products';
 import {
   availableLifecycleActions,
+  canPassGate,
   type SourcingListSegment,
 } from '@verone/products/utils';
 import {
@@ -71,11 +72,12 @@ export function SourcingProductActions({
     product.sourcing_status,
     isWithdrawn
   );
+  // Même règle que la fiche et que la base (sourcing_missing_fields) :
+  // le bouton n'apparaît que si la validation passera vraiment.
   const canValidate =
     !isValidated &&
     allowed.includes('validate') &&
-    Boolean(product.supplier_id) &&
-    (product.cost_price ?? 0) > 0;
+    canPassGate(product, 'catalogue');
   const canWithdraw = !isValidated && allowed.includes('withdraw');
   const viewLabel = isValidated ? 'Voir au catalogue' : 'Voir la fiche';
 

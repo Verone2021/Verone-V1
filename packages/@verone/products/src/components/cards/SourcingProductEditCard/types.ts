@@ -4,6 +4,7 @@ export interface InfoSectionData {
   name: string;
   supplier_page_url: string;
   supplier_reference: string;
+  subcategory_id: string;
 }
 
 export interface PricingSectionData {
@@ -20,9 +21,15 @@ export interface DetailsSectionData {
   description: string;
   supplier_moq: number | null;
   weight: number;
-  dimensions_length: number;
-  dimensions_width: number;
-  dimensions_height: number;
+  /**
+   * `products` n'a pas de colonnes dimensions_length/width/height : les trois
+   * saisies vivent dans la colonne JSON `dimensions`.
+   */
+  dimensions: {
+    length: number;
+    width: number;
+    height: number;
+  };
 }
 
 export interface NotesSectionData {
@@ -35,6 +42,7 @@ export interface SourcingProduct {
   sku: string;
   supplier_page_url: string | null;
   supplier_reference?: string | null;
+  subcategory_id?: string | null;
   cost_price: number | null;
   cost_net_avg?: number | null;
   eco_tax_default?: number | null;
@@ -75,5 +83,11 @@ export interface SourcingProductEditCardProps {
   imagesLoading?: boolean;
   onProductUpdate: (updates: Partial<SourcingProduct>) => Promise<void>;
   onOpenPhotosModal: () => void;
+  /**
+   * Sections ouvertes de l'accordéon. Fourni = accordéon piloté par le parent
+   * (la checklist de complétude ouvre la section du champ manquant).
+   */
+  openSections?: string[];
+  onOpenSectionsChange?: (sections: string[]) => void;
   className?: string;
 }

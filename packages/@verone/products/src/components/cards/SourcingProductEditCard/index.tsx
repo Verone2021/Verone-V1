@@ -34,6 +34,8 @@ export function SourcingProductEditCard({
   imagesLoading = false,
   onProductUpdate,
   onOpenPhotosModal,
+  openSections,
+  onOpenSectionsChange,
   className,
 }: SourcingProductEditCardProps) {
   const {
@@ -73,6 +75,7 @@ export function SourcingProductEditCard({
       name: product.name,
       supplier_page_url: product.supplier_page_url ?? '',
       supplier_reference: product.supplier_reference ?? '',
+      subcategory_id: product.subcategory_id ?? '',
     });
   };
 
@@ -89,7 +92,17 @@ export function SourcingProductEditCard({
         return;
       }
     }
-    const success = await saveChanges(infoSection);
+    // Colonne uuid : une chaîne vide n'est pas une valeur acceptée.
+    const success = await saveChanges(infoSection, {
+      name: infoData?.name ?? null,
+      supplier_page_url: infoData?.supplier_page_url?.trim()
+        ? infoData.supplier_page_url
+        : null,
+      supplier_reference: infoData?.supplier_reference?.trim()
+        ? infoData.supplier_reference
+        : null,
+      subcategory_id: infoData?.subcategory_id ? infoData.subcategory_id : null,
+    });
     if (success) {
       console.warn('Informations mises à jour');
     }
@@ -149,36 +162,32 @@ export function SourcingProductEditCard({
       manufacturer: product.manufacturer ?? '',
       description: product.description ?? '',
       supplier_moq: product.supplier_moq ?? 0,
-      dimensions_length: product.dimensions?.length ?? 0,
-      dimensions_width: product.dimensions?.width ?? 0,
-      dimensions_height: product.dimensions?.height ?? 0,
+      dimensions: {
+        length: product.dimensions?.length ?? 0,
+        width: product.dimensions?.width ?? 0,
+        height: product.dimensions?.height ?? 0,
+      },
       weight: product.weight ?? 0,
     });
   };
 
   const handleSaveDetails = async () => {
-    const dims =
-      (detailsData?.dimensions_length ??
-      detailsData?.dimensions_width ??
-      detailsData?.dimensions_height)
-        ? {
-            length: detailsData.dimensions_length ?? 0,
-            width: detailsData.dimensions_width ?? 0,
-            height: detailsData.dimensions_height ?? 0,
-          }
-        : null;
+    const length = detailsData?.dimensions?.length ?? 0;
+    const width = detailsData?.dimensions?.width ?? 0;
+    const height = detailsData?.dimensions?.height ?? 0;
+    // `products` n'a pas de colonnes dimensions_length/width/height : les trois
+    // saisies sont regroupées dans la colonne `dimensions` (JSON).
+    const dims = length || width || height ? { length, width, height } : null;
 
-    const toSave = {
+    // Enregistrement explicite : `saveChanges` reçoit les données transformées,
+    // sans dépendre d'un état React pas encore rafraîchi.
+    const success = await saveChanges(detailsSection, {
       manufacturer: detailsData?.manufacturer ?? null,
       description: detailsData?.description ?? null,
       supplier_moq: detailsData?.supplier_moq ?? null,
       dimensions: dims,
       weight: detailsData?.weight ?? null,
-    };
-
-    updateEditedData(detailsSection, toSave);
-
-    const success = await saveChanges(detailsSection);
+    });
     if (success) {
       console.warn('Détails produit mis à jour');
     }
@@ -248,7 +257,7 @@ export function SourcingProductEditCard({
             onOpenPhotosModal={onOpenPhotosModal}
           />
 
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0" id="sourcing-section-general">
             <SourcingProductInfoSection
               product={product}
               isEditing={isEditing(infoSection)}
@@ -269,12 +278,20 @@ export function SourcingProductEditCard({
         {/* Accordion : 4 sections empilées, Pricing ouvert par défaut.
             Refonte 2026-05-27 pour soulager visuellement la fiche
             (auparavant 4 sections empilées à plat, charge visuelle élevée). */}
+        {/* Accordéon piloté de l'extérieur quand la checklist de complétude
+            demande d'ouvrir la section d'un champ manquant. */}
         <Accordion
           type="multiple"
-          defaultValue={['pricing']}
+          {...(openSections !== undefined
+            ? { value: openSections, onValueChange: onOpenSectionsChange }
+            : { defaultValue: ['pricing'] })}
           className="w-full"
         >
-          <AccordionItem value="pricing" className="border-gray-200">
+          <AccordionItem
+            value="pricing"
+            id="sourcing-section-pricing"
+            className="border-gray-200"
+          >
             <AccordionTrigger className="py-3 hover:no-underline">
               <div className="flex items-center justify-between w-full pr-2">
                 <span className="font-semibold text-sm">Tarification</span>
@@ -299,7 +316,11 @@ export function SourcingProductEditCard({
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="supplier" className="border-gray-200">
+          <AccordionItem
+            value="supplier"
+            id="sourcing-section-supplier"
+            className="border-gray-200"
+          >
             <AccordionTrigger className="py-3 hover:no-underline">
               <div className="flex items-center justify-between w-full pr-2">
                 <span className="font-semibold text-sm">Fournisseur</span>
@@ -324,7 +345,11 @@ export function SourcingProductEditCard({
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="details" className="border-gray-200">
+          <AccordionItem
+            value="details"
+            id="sourcing-section-details"
+            className="border-gray-200"
+          >
             <AccordionTrigger className="py-3 hover:no-underline">
               <div className="flex items-center justify-between w-full pr-2">
                 <span className="font-semibold text-sm">Détails produit</span>

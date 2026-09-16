@@ -12,6 +12,7 @@ import {
   ProductEvaluationSummary,
   ProductPhotosModal,
   SourcingActionBar,
+  SourcingCompletenessCard,
   SourcingJournal,
   SourcingOffersSection,
   SourcingProductEditCard,
@@ -28,7 +29,10 @@ import {
   type SourcingJournalFormMode,
   type SourcingLifecycleInput,
 } from '@verone/products';
-import { availableLifecycleActions } from '@verone/products/utils';
+import {
+  availableLifecycleActions,
+  type SourcingFieldSection,
+} from '@verone/products/utils';
 import { Badge, ButtonV2, Card, CardContent } from '@verone/ui';
 import { associateProductToConsultation } from '@verone/utils';
 import { ArrowLeft, Building2, Package } from 'lucide-react';
@@ -82,7 +86,34 @@ export default function SourcingProductDetailPage() {
   );
   const [confirmValidateOpen, setConfirmValidateOpen] = useState(false);
   const [orderingSample, setOrderingSample] = useState(false);
+  const [openSections, setOpenSections] = useState<string[]>(['pricing']);
   const journalRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Amène l'utilisateur au champ manquant signalé par la checklist : ouvre la
+   * bonne section de la fiche puis fait défiler jusqu'à elle.
+   */
+  const handleGoToField = (section: SourcingFieldSection) => {
+    if (section === 'photos') {
+      setIsPhotosModalOpen(true);
+      return;
+    }
+    if (
+      section === 'pricing' ||
+      section === 'supplier' ||
+      section === 'details'
+    ) {
+      setOpenSections(previous =>
+        previous.includes(section) ? previous : [...previous, section]
+      );
+    }
+    const target = `sourcing-section-${section}`;
+    requestAnimationFrame(() => {
+      document
+        .getElementById(target)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  };
 
   const runAction = async (input: SourcingLifecycleInput): Promise<boolean> => {
     const ok = await lifecycle.applyAction(input);
@@ -179,6 +210,11 @@ export default function SourcingProductDetailPage() {
   const currentStatus = product.sourcing_status;
   const isWithdrawn = Boolean(product.archived_at);
   const busy = lifecycle.pendingAction !== null || orderingSample;
+  // La checklist n'a de sens que tant que le produit peut encore être validé.
+  const showCompleteness = availableLifecycleActions(
+    currentStatus,
+    isWithdrawn
+  ).includes('validate');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -247,8 +283,7 @@ export default function SourcingProductDetailPage() {
             <SourcingActionBar
               status={currentStatus}
               isWithdrawn={isWithdrawn}
-              hasSupplier={Boolean(product.supplier_id)}
-              hasCostPrice={(product.cost_price ?? 0) > 0}
+              product={product}
               sample={sample}
               busy={busy}
               hasEvaluation={Boolean(evaluation.evaluation)}
@@ -267,6 +302,13 @@ export default function SourcingProductDetailPage() {
           </CardContent>
         </Card>
 
+        {showCompleteness && (
+          <SourcingCompletenessCard
+            product={product}
+            onGoToField={handleGoToField}
+          />
+        )}
+
         <ProductEvaluationSummary
           evaluation={evaluation.evaluation}
           sampleState={sample.state}
@@ -283,6 +325,8 @@ export default function SourcingProductDetailPage() {
             primaryImage={primaryImage}
             images={images}
             imagesLoading={imagesLoading}
+            openSections={openSections}
+            onOpenSectionsChange={setOpenSections}
             onProductUpdate={async () => {
               // La carte a déjà écrit en base (useInlineEdit) : ici on se
               // contente de recharger, sans seconde écriture.
