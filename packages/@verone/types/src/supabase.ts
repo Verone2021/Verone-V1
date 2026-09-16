@@ -7,6 +7,11 @@ export type Json =
   | Json[];
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '14.5';
+  };
   public: {
     Tables: {
       addresses: {
@@ -15438,6 +15443,10 @@ export type Database = {
       set_current_user_id: { Args: { user_id: string }; Returns: undefined };
       slugify: { Args: { text_input: string }; Returns: string };
       snapshot_channel_stats: { Args: never; Returns: undefined };
+      sourcing_missing_fields: {
+        Args: { p_product_id: string; p_scope: string };
+        Returns: string[];
+      };
       submit_affiliate_product_for_approval: {
         Args: { p_product_id: string };
         Returns: boolean;
