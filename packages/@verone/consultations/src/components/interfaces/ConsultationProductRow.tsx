@@ -4,6 +4,7 @@ import { Input } from '@verone/ui';
 import { Plus, Minus, Package, Euro } from 'lucide-react';
 
 import type { ConsultationItem } from '@verone/consultations/hooks';
+import type { ConsultationNeed } from '../../hooks/use-consultation-needs';
 import type { LineEconomics } from '../../lib/consultation-economics';
 import { ConsultationSampleCell } from './ConsultationSampleCell';
 import { ConsultationStatusCell } from './ConsultationStatusCell';
@@ -28,6 +29,10 @@ export interface ConsultationProductRowProps {
   defaultMarginPercentage: number | null;
   /** Taux de TVA de la consultation, en % (plus de 20 % en dur). */
   tvaPercentage: number;
+  /** Besoins du client, pour rattacher la ligne à l'un d'eux. */
+  needs: ConsultationNeed[];
+  editNeedId: string;
+  onSetEditNeedId: (v: string) => void;
   editQuantity: number;
   editPrice: string;
   editNotes: string;
@@ -60,6 +65,9 @@ export function ConsultationProductRow({
   econ,
   defaultMarginPercentage,
   tvaPercentage,
+  needs,
+  editNeedId,
+  onSetEditNeedId,
   editQuantity,
   editPrice,
   editNotes,
@@ -90,6 +98,9 @@ export function ConsultationProductRow({
   const priceFromMargin =
     econ !== null && item.unit_price === null ? econ.defaultUnitPrice : null;
   const appliedMargin = item.margin_percentage ?? defaultMarginPercentage;
+  const needLabel = item.need_id
+    ? (needs.find(need => need.id === item.need_id)?.label ?? null)
+    : null;
 
   const rowClass = [
     'h-10 hover:bg-zinc-50 transition-colors',
@@ -99,7 +110,9 @@ export function ConsultationProductRow({
         ? 'opacity-60'
         : item.status === 'ordered'
           ? 'border-l-2 border-l-blue-400 bg-blue-50/10'
-          : '',
+          : item.status === 'candidate'
+            ? 'border-l-2 border-l-violet-400 bg-violet-50/10'
+            : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -146,6 +159,14 @@ export function ConsultationProductRow({
                 Retiré
               </span>
             )}
+            {!isEditing && needLabel && (
+              <p
+                className="text-[9px] text-violet-600 truncate"
+                title="Besoin du client auquel cette ligne répond"
+              >
+                Besoin : {needLabel}
+              </p>
+            )}
             {isEditing && (
               <Input
                 type="text"
@@ -154,6 +175,21 @@ export function ConsultationProductRow({
                 placeholder="Note..."
                 className="mt-0.5 h-5 text-[11px] px-1 py-0 w-full"
               />
+            )}
+            {isEditing && needs.length > 0 && (
+              <select
+                value={editNeedId}
+                onChange={e => onSetEditNeedId(e.target.value)}
+                title="Rattacher cette ligne à un besoin du client"
+                className="mt-0.5 h-5 w-full rounded border border-zinc-200 text-[11px] px-1 py-0 text-zinc-700"
+              >
+                <option value="">Aucun besoin</option>
+                {needs.map(need => (
+                  <option key={need.id} value={need.id}>
+                    {need.label}
+                  </option>
+                ))}
+              </select>
             )}
             {!isEditing && item.notes && (
               <p className="text-[9px] text-blue-600 truncate">{item.notes}</p>

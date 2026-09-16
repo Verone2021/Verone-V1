@@ -298,4 +298,68 @@ test('fraction pour les documents financiers (0.2 et non 20)', () => {
   assert.ok(approxEqual(resolveConsultationTaxRate(null), 0.2));
 });
 
+// ---------------------------------------------------------------------------
+// (f) Statut « option » (candidate) — neutralisé avant toute exposition
+// ---------------------------------------------------------------------------
+
+console.log('\n--- (f) OPTION CANDIDATE ---');
+
+test('une option ne compte ni en chiffre d’affaires ni en marge', () => {
+  const items = [
+    makeItem({ id: 'retenue', unit_price: 200 }),
+    makeItem({ id: 'option', unit_price: 900, status: 'candidate' }),
+  ];
+  const { totals, byItemId } = computeItemsEconomics(items, null);
+  assert.equal(byItemId.get('option')?.included, false);
+  assert.equal(totals.includedLines, 1);
+  assert.ok(approxEqual(totals.billed, 200), `billed=${totals.billed}`);
+  assert.ok(approxEqual(totals.revenue, 200));
+});
+
+test('une option ne bloque pas le devis et n’y entre pas', () => {
+  const items = [
+    makeItem({ id: 'retenue', unit_price: 200 }),
+    makeItem({ id: 'option', status: 'candidate' }),
+  ];
+  assert.equal(
+    countUnpricedLines(items),
+    0,
+    'option sans prix : non bloquante'
+  );
+  assert.equal(filterBillableItems(items).length, 1);
+  assert.equal(filterBillableItems(items)[0]?.id, 'retenue');
+});
+
+test('une option ne porte aucune part des frais du fournisseur', () => {
+  const items = [
+    makeItem({ id: 'retenue', unit_price: 200 }),
+    makeItem({ id: 'option', unit_price: 200, status: 'candidate' }),
+  ];
+  const { byItemId, totals } = computeItemsEconomics(items, null, [
+    {
+      supplierId: 'sup-1',
+      shippingCostHt: 100,
+      customsCostHt: 0,
+      otherCostHt: 0,
+    },
+  ]);
+  assert.equal(byItemId.get('option')?.supplierFees, 0);
+  assert.ok(approxEqual(byItemId.get('retenue')?.supplierFees ?? 0, 100));
+  assert.equal(totals.unallocatedSupplierFees, 0);
+});
+
+test('fournisseur sans ligne retenue : frais signalés comme non imputés', () => {
+  const items = [makeItem({ id: 'option', status: 'candidate' })];
+  const { totals } = computeItemsEconomics(items, null, [
+    {
+      supplierId: 'sup-1',
+      shippingCostHt: 80,
+      customsCostHt: 0,
+      otherCostHt: 0,
+    },
+  ]);
+  assert.ok(approxEqual(totals.unallocatedSupplierFees, 80));
+  assert.equal(totals.supplierFees, 0);
+});
+
 report('consultation-economics-input');

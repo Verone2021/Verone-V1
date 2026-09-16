@@ -21,7 +21,13 @@ import type {
   UpdateConsultationItemData,
 } from '@verone/consultations/hooks';
 
+import type {
+  ConsultationNeed,
+  CreateConsultationNeedData,
+} from '../../hooks/use-consultation-needs';
+
 import { ConsultationMarginKpis } from './ConsultationMarginKpis';
+import { ConsultationNeedsCard } from './ConsultationNeedsCard';
 import { ConsultationProductsTable } from './ConsultationProductsTable';
 import type {
   ConsultationSupplierCost,
@@ -45,6 +51,10 @@ interface ConsultationOrderInterfaceProps {
   supplierCosts?: ConsultationSupplierCost[];
   supplierCostInputs?: SupplierCostInput[];
   onSaveSupplierCost?: (data: UpsertSupplierCostData) => Promise<boolean>;
+  /** Besoins du client — chargés par la page (source unique). */
+  needs?: ConsultationNeed[];
+  onAddNeed?: (data: CreateConsultationNeedData) => Promise<boolean>;
+  onRemoveNeed?: (needId: string) => Promise<boolean>;
   consultationItems: ConsultationItem[];
   loading: boolean;
   error: string | null;
@@ -65,6 +75,9 @@ export function ConsultationOrderInterface({
   supplierCosts = [],
   supplierCostInputs = [],
   onSaveSupplierCost,
+  needs = [],
+  onAddNeed,
+  onRemoveNeed,
   consultationItems,
   loading,
   error,
@@ -88,6 +101,7 @@ export function ConsultationOrderInterface({
   const [editCostPriceOverride, setEditCostPriceOverride] = useState('');
   const [editIsSample, setEditIsSample] = useState(false);
   const [editMarginPercentage, setEditMarginPercentage] = useState('');
+  const [editNeedId, setEditNeedId] = useState<string>('');
 
   // Décision 1 BO-CONSULT-P2-001 : plus d'effet de re-sync local
   // (les items arrivent du parent via props — la re-sync est dans le hook parent)
@@ -107,6 +121,7 @@ export function ConsultationOrderInterface({
     setEditCostPriceOverride(item.cost_price_override?.toString() ?? '');
     setEditIsSample(item.is_sample ?? false);
     setEditMarginPercentage(item.margin_percentage?.toString() ?? '');
+    setEditNeedId(item.need_id ?? '');
   };
 
   const saveEditItem = (itemId: string): void => {
@@ -129,6 +144,7 @@ export function ConsultationOrderInterface({
         marginParsed !== null && Number.isFinite(marginParsed)
           ? marginParsed
           : null,
+      need_id: editNeedId === '' ? null : editNeedId,
     })
       .then(success => {
         if (success) setEditingItem(null);
@@ -225,6 +241,9 @@ export function ConsultationOrderInterface({
     supplierCostInputs
   );
 
+  // La carte « besoins » ne s'affiche que si elle sert à quelque chose
+  const hasNeedLines = consultationItems.some(item => item.need_id);
+
   // Fournisseurs présents dans la consultation, dans l'ordre des lignes
   const suppliers: ConsultationSupplierRef[] = [];
   for (const item of consultationItems) {
@@ -278,6 +297,23 @@ export function ConsultationOrderInterface({
         />
       )}
 
+      {/* Besoins du client et options comparées */}
+      {onAddNeed && onRemoveNeed && (needs.length > 0 || hasNeedLines) && (
+        <ConsultationNeedsCard
+          needs={needs}
+          lines={consultationItems.map(item => ({
+            id: item.id,
+            need_id: item.need_id ?? null,
+            status: item.status,
+            productName: item.product?.name ?? item.product_id,
+            quantity: item.quantity,
+          }))}
+          economicsByItemId={economicsByItemId}
+          onAdd={onAddNeed}
+          onRemove={onRemoveNeed}
+        />
+      )}
+
       {/* Frais par fournisseur */}
       {onSaveSupplierCost && (
         <ConsultationSupplierCostsCard
@@ -328,6 +364,8 @@ export function ConsultationOrderInterface({
           editCostPriceOverride={editCostPriceOverride}
           editIsSample={editIsSample}
           editMarginPercentage={editMarginPercentage}
+          editNeedId={editNeedId}
+          needs={needs}
           economicsByItemId={economicsByItemId}
           defaultMarginPercentage={
             consultation?.default_margin_percentage ?? null
@@ -340,6 +378,7 @@ export function ConsultationOrderInterface({
           onSetEditSellingShippingCost={setEditSellingShippingCost}
           onSetEditCostPriceOverride={setEditCostPriceOverride}
           onSetEditMarginPercentage={setEditMarginPercentage}
+          onSetEditNeedId={setEditNeedId}
           onStartEdit={startEditItem}
           onSaveEdit={saveEditItem}
           onCancelEdit={cancelEditItem}

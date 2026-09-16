@@ -76,6 +76,8 @@ export interface ConsultationItem {
   /** Marge de la ligne en % — prioritaire sur la marge par défaut de la
    *  consultation (BO-CONSULT-MULTI-001). null = suit la marge par défaut. */
   margin_percentage?: number | null;
+  /** Besoin du client auquel la ligne répond. null = ligne libre. */
+  need_id?: string | null;
   status: string;
   product?: {
     id: string;
@@ -149,6 +151,7 @@ export interface UpdateConsultationItemData {
   selling_shipping_cost?: number;
   cost_price_override?: number;
   margin_percentage?: number | null;
+  need_id?: string | null;
   status?: string;
 }
 

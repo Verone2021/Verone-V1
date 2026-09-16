@@ -8,6 +8,7 @@ import { useRouter, useParams } from 'next/navigation';
 import {
   ConsultationOrderInterface,
   ConsultationTimeline,
+  useConsultationNeeds,
   useConsultationSupplierCosts,
 } from '@verone/consultations';
 import { ConsultationMarginReportPdf } from '@verone/consultations/pdf-templates';
@@ -51,6 +52,7 @@ export default function ConsultationDetailPage() {
 
   const { supplierCosts, supplierCostInputs, upsertSupplierCost } =
     useConsultationSupplierCosts(consultationId);
+  const { needs, addNeed, removeNeed } = useConsultationNeeds(consultationId);
   const { createOrder: createPurchaseOrder } = usePurchaseOrders();
 
   // Cas « consultation absente » : on vérifie en DB directe si elle existe
@@ -294,6 +296,9 @@ export default function ConsultationDetailPage() {
               supplierCosts={supplierCosts}
               supplierCostInputs={supplierCostInputs}
               onSaveSupplierCost={upsertSupplierCost}
+              needs={needs}
+              onAddNeed={addNeed}
+              onRemoveNeed={removeNeed}
               consultationItems={detail.consultationItems}
               loading={detail.itemsLoading}
               error={detail.itemsError}

@@ -3,6 +3,7 @@
 export * from './use-consultation-history';
 export * from './use-consultation-images';
 export * from './use-consultation-items';
+export * from './use-consultation-needs';
 export * from './use-consultation-quotes';
 export * from './use-consultation-sales-orders';
 export * from './use-consultation-supplier-costs';
