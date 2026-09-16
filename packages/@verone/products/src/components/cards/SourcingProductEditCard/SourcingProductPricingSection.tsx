@@ -153,8 +153,11 @@ export function SourcingProductPricingSection({
               : 'Non défini'}
             {product.cost_net_avg != null &&
               product.cost_net_avg !== product.cost_price && (
-                <span className="text-sm font-normal text-red-600 ml-1">
-                  ({formatPrice(product.cost_net_avg)} net)
+                <span
+                  className="text-sm font-normal text-red-600 ml-1"
+                  title="Ce que le produit vous coûte réellement, transport, douane et éco-participation compris, d'après vos commandes déjà reçues."
+                >
+                  ({formatPrice(product.cost_net_avg)} frais compris)
                 </span>
               )}
           </p>

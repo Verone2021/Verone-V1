@@ -26,6 +26,12 @@ const READABLE_CODES = new Set([
   'VL004',
   'VS001',
   'VS002',
+  // Refus d'`adopt_sourcing_offer` : offre sans prix (VO001), offre dans une
+  // monnaie qu'on ne sait pas convertir (VO002). Sans ces deux codes ici,
+  // l'écran affichait « Réessayez » alors que la base disait exactement quoi
+  // corriger.
+  'VO001',
+  'VO002',
 ]);
 
 /** Codes dont `details` contient la liste des champs manquants. */
