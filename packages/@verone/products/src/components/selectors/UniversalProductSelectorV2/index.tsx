@@ -97,7 +97,9 @@ export function UniversalProductSelectorV2({
       creationMode: creationModeFilter,
       sourcingType: sourcingFilter,
       supplierId: supplierId,
-      productStatus: context === 'consultations' ? 'active' : null,
+      // Consultations : on propose aussi les produits encore en sourcing
+      // (règle partagée isProductProposableInConsultation).
+      proposableInConsultation: context === 'consultations',
       // Pour le contexte variants : exclure les produits deja membres d'un groupe variantes
       excludeProductsInVariantGroup: context === 'variants',
       sellableOnly,

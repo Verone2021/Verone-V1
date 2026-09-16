@@ -15,6 +15,8 @@ export interface ProductData {
   product_status: 'active' | 'preorder' | 'discontinued' | 'draft';
   creation_mode: 'complete' | 'sourcing';
   sourcing_type?: string;
+  /** Étape de sourcing — sert à écarter les sourcings clos (refusé, validé…) */
+  sourcing_status?: string | null;
   supplier_id: string | null;
   subcategory_id?: string | null;
   stock_real?: number;
@@ -138,7 +140,12 @@ export interface ProductSearchFilters {
   creationMode?: 'complete' | 'sourcing' | null;
   sourcingType?: string | null;
   supplierId?: string | null;
-  productStatus?: string | null;
+  /**
+   * Si true, applique la règle « proposable en consultation » : produits
+   * vendables OU encore en sourcing (hors sourcing clos). Miroir de
+   * `isProductProposableInConsultation` et de `get_consultation_eligible_products`.
+   */
+  proposableInConsultation?: boolean;
   /** Si true, exclut les produits qui ont deja un variant_group_id (regle 1 produit = 1 variante max) */
   excludeProductsInVariantGroup?: boolean;
   /** Si true, seulement les produits vendables (non retirés, actifs ou en précommande, hors sourcing) */
