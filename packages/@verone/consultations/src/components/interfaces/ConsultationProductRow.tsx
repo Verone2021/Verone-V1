@@ -266,6 +266,27 @@ export function ConsultationProductRow({
         )}
       </td>
 
+      {/* Revient — coût + éco-taxe + transport + part des frais fournisseur */}
+      <td className="px-3 py-0 h-10 hidden lg:table-cell">
+        {econ === null ? (
+          <span className="text-[12px] text-zinc-400">—</span>
+        ) : (
+          <div className="flex flex-col leading-none">
+            <span className="text-[12px] font-medium text-zinc-700">
+              {econ.unitCostPrice.toFixed(2)}€
+            </span>
+            {econ.supplierFees > 0 && (
+              <span
+                className="text-[9px] text-amber-600 mt-0.5"
+                title="Part des frais du fournisseur imputée à cette ligne, au prorata de sa valeur"
+              >
+                dont {(econ.supplierFees / item.quantity).toFixed(2)}€ de frais
+              </span>
+            )}
+          </div>
+        )}
+      </td>
+
       {/* Transport vente — total ligne refacturé au client */}
       <td className="px-3 py-0 h-10 hidden lg:table-cell">
         {isEditing ? (

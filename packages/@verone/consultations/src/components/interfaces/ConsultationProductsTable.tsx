@@ -19,6 +19,31 @@ interface ConsultationProductsTableProps
   economicsByItemId: Map<string, LineEconomics>;
 }
 
+/** Lignes regroupées par fournisseur, dans l'ordre d'apparition. */
+interface SupplierBlock {
+  supplierId: string | null;
+  supplierName: string;
+  items: ConsultationItem[];
+}
+
+function groupBySupplier(items: ConsultationItem[]): SupplierBlock[] {
+  const blocks: SupplierBlock[] = [];
+  for (const item of items) {
+    const supplierId = item.product?.supplier_id ?? null;
+    const block = blocks.find(b => b.supplierId === supplierId);
+    if (block) {
+      block.items.push(item);
+    } else {
+      blocks.push({
+        supplierId,
+        supplierName: item.product?.supplier_name ?? 'Sans fournisseur',
+        items: [item],
+      });
+    }
+  }
+  return blocks;
+}
+
 // ── Component ──────────────────────────────────────────────────────
 
 export function ConsultationProductsTable({
@@ -27,6 +52,9 @@ export function ConsultationProductsTable({
   economicsByItemId,
   ...rowProps
 }: ConsultationProductsTableProps) {
+  // Un seul fournisseur : pas d'en-tête de groupe, ce serait du bruit
+  const showSupplierGroups = groupBySupplier(items).length > 1;
+
   if (items.length === 0) {
     return (
       <div className="p-8 text-center text-zinc-400">
@@ -56,6 +84,9 @@ export function ConsultationProductsTable({
             <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[80px]">
               Transport
             </th>
+            <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[90px] hidden lg:table-cell">
+              Revient
+            </th>
             <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[80px] hidden lg:table-cell">
               Transp. vente
             </th>
@@ -80,17 +111,45 @@ export function ConsultationProductsTable({
             <th className="pr-4 pl-3 py-2 w-[40px]" aria-label="Actions" />
           </tr>
         </thead>
-        <tbody className="divide-y divide-zinc-50">
-          {items.map(item => (
-            <ConsultationProductRow
-              key={item.id}
-              item={item}
-              isEditing={editingItem === item.id}
-              econ={economicsByItemId.get(item.id) ?? null}
-              {...rowProps}
-            />
-          ))}
-        </tbody>
+        {/* Un bloc par fournisseur : la commande fournisseur suit ce découpage */}
+        {groupBySupplier(items).map(block => {
+          const blockFees = block.items.reduce(
+            (sum, item) =>
+              sum + (economicsByItemId.get(item.id)?.supplierFees ?? 0),
+            0
+          );
+          return (
+            <tbody
+              key={block.supplierId ?? 'sans-fournisseur'}
+              className="divide-y divide-zinc-50"
+            >
+              {showSupplierGroups && (
+                <tr className="bg-zinc-50/70 border-t border-zinc-100">
+                  <td colSpan={13} className="pl-4 pr-3 py-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                      {block.supplierName}
+                    </span>
+                    <span className="ml-2 text-[10px] text-zinc-400">
+                      {block.items.length} ligne
+                      {block.items.length > 1 ? 's' : ''}
+                      {blockFees > 0 &&
+                        ` · ${blockFees.toFixed(2)}€ de frais répartis`}
+                    </span>
+                  </td>
+                </tr>
+              )}
+              {block.items.map(item => (
+                <ConsultationProductRow
+                  key={item.id}
+                  item={item}
+                  isEditing={editingItem === item.id}
+                  econ={economicsByItemId.get(item.id) ?? null}
+                  {...rowProps}
+                />
+              ))}
+            </tbody>
+          );
+        })}
       </table>
     </div>
   );

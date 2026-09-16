@@ -23,6 +23,16 @@ import type {
 
 import { ConsultationMarginKpis } from './ConsultationMarginKpis';
 import { ConsultationProductsTable } from './ConsultationProductsTable';
+import type {
+  ConsultationSupplierCost,
+  UpsertSupplierCostData,
+} from '../../hooks/use-consultation-supplier-costs';
+import type { SupplierCostInput } from '../../lib/consultation-supplier-costs';
+
+import {
+  ConsultationSupplierCostsCard,
+  type ConsultationSupplierRef,
+} from './ConsultationSupplierCostsCard';
 
 // Décision 1 BO-CONSULT-P2-001 : items + mutations via props (source unique dans page.tsx)
 interface ConsultationOrderInterfaceProps {
@@ -31,6 +41,10 @@ interface ConsultationOrderInterfaceProps {
   consultation?:
     | (ConsultationEconomicsSettingsSource & ConsultationTaxSource)
     | null;
+  /** Frais saisis par fournisseur — chargés par la page (source unique). */
+  supplierCosts?: ConsultationSupplierCost[];
+  supplierCostInputs?: SupplierCostInput[];
+  onSaveSupplierCost?: (data: UpsertSupplierCostData) => Promise<boolean>;
   consultationItems: ConsultationItem[];
   loading: boolean;
   error: string | null;
@@ -48,6 +62,9 @@ interface ConsultationOrderInterfaceProps {
 export function ConsultationOrderInterface({
   consultationId,
   consultation,
+  supplierCosts = [],
+  supplierCostInputs = [],
+  onSaveSupplierCost,
   consultationItems,
   loading,
   error,
@@ -196,9 +213,34 @@ export function ConsultationOrderInterface({
   const hasAcceptedItems = acceptedItems.length > 0;
 
   // Calcul unique de la consultation — source des KPIs ET de chaque ligne
-  // (adaptateur partagé, réglages de la consultation inclus : marge par défaut)
-  const { totals: economics, byItemId: economicsByItemId } =
-    computeItemsEconomics(consultationItems, consultation);
+  // (adaptateur partagé, réglages de la consultation inclus : marge par défaut
+  // et frais saisis par fournisseur, répartis au prorata de la valeur de ligne)
+  const {
+    totals: economics,
+    byItemId: economicsByItemId,
+    suppliers: supplierEconomics,
+  } = computeItemsEconomics(
+    consultationItems,
+    consultation,
+    supplierCostInputs
+  );
+
+  // Fournisseurs présents dans la consultation, dans l'ordre des lignes
+  const suppliers: ConsultationSupplierRef[] = [];
+  for (const item of consultationItems) {
+    const supplierId = item.product?.supplier_id;
+    if (!supplierId) continue;
+    const known = suppliers.find(s => s.supplierId === supplierId);
+    if (known) {
+      known.lineCount++;
+    } else {
+      suppliers.push({
+        supplierId,
+        supplierName: item.product?.supplier_name ?? 'Fournisseur',
+        lineCount: 1,
+      });
+    }
+  }
 
   const total = economics.revenue;
   const totalCost = economics.cost;
@@ -233,6 +275,17 @@ export function ConsultationOrderInterface({
           totalShipping={totalShipping}
           totalMargin={totalMargin}
           totalMarginPercent={totalMarginPercent}
+        />
+      )}
+
+      {/* Frais par fournisseur */}
+      {onSaveSupplierCost && (
+        <ConsultationSupplierCostsCard
+          suppliers={suppliers}
+          supplierCosts={supplierCosts}
+          supplierEconomics={supplierEconomics}
+          unallocatedSupplierFees={economics.unallocatedSupplierFees}
+          onSave={onSaveSupplierCost}
         />
       )}
 
