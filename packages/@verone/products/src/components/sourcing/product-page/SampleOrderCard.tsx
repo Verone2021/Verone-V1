@@ -98,6 +98,16 @@ export function SampleOrderCard({
                       + {euros(line.allocatedFeesHt)} de frais
                     </span>
                   )}
+                  {line.unitCostNet !== null && (
+                    <span
+                      className={cn(
+                        'ml-2 whitespace-nowrap text-xs',
+                        isCurrent ? 'font-medium text-black' : 'text-gray-500'
+                      )}
+                    >
+                      → revient à {euros(line.unitCostNet)} la pièce
+                    </span>
+                  )}
                 </span>
               </li>
             );
@@ -111,7 +121,9 @@ export function SampleOrderCard({
         {fees > 0 && (
           <p className="text-xs text-gray-500">
             {euros(fees)} de frais (transport, douane, assurance) répartis sur
-            les lignes au prorata de leur montant.
+            les lignes au prorata de leur montant. Sur si peu de pièces, les
+            frais pèsent lourd : ce prix de revient ne vaut que pour cette
+            commande, pas pour une commande de série.
           </p>
         )}
 
