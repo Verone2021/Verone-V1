@@ -3,6 +3,7 @@
 import { Package } from 'lucide-react';
 
 import type { ConsultationItem } from '@verone/consultations/hooks';
+import type { LineEconomics } from '../../lib/consultation-economics';
 import {
   ConsultationProductRow,
   type ConsultationProductRowProps,
@@ -11,9 +12,11 @@ import {
 // ── Props ──────────────────────────────────────────────────────────
 
 interface ConsultationProductsTableProps
-  extends Omit<ConsultationProductRowProps, 'item' | 'isEditing'> {
+  extends Omit<ConsultationProductRowProps, 'item' | 'isEditing' | 'econ'> {
   items: ConsultationItem[];
   editingItem: string | null;
+  /** Calcul de chaque ligne, fait une seule fois pour la consultation. */
+  economicsByItemId: Map<string, LineEconomics>;
 }
 
 // ── Component ──────────────────────────────────────────────────────
@@ -21,6 +24,7 @@ interface ConsultationProductsTableProps
 export function ConsultationProductsTable({
   items,
   editingItem,
+  economicsByItemId,
   ...rowProps
 }: ConsultationProductsTableProps) {
   if (items.length === 0) {
@@ -82,6 +86,7 @@ export function ConsultationProductsTable({
               key={item.id}
               item={item}
               isEditing={editingItem === item.id}
+              econ={economicsByItemId.get(item.id) ?? null}
               {...rowProps}
             />
           ))}

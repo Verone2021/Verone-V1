@@ -34,6 +34,8 @@ export interface EditFormData {
   descriptif: string;
   notes_internes: string;
   tarif_maximum: number;
+  /** Marge par défaut en % — chaîne vide = aucune (prix saisi à la main). */
+  default_margin_percentage: string;
   estimated_response_date: string;
   priority_level: number;
   source_channel: SourceChannel;
@@ -280,6 +282,40 @@ export function ConsultationParamsSection({
           />
           {errors.tarif_maximum && (
             <p className="text-xs text-red-600">{errors.tarif_maximum}</p>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <Label
+            htmlFor="default-margin-percentage"
+            className="text-xs font-medium"
+          >
+            Marge par défaut (%)
+          </Label>
+          <Input
+            id="default-margin-percentage"
+            type="number"
+            step="1"
+            min="0"
+            value={formData.default_margin_percentage}
+            onChange={e => {
+              onChange('default_margin_percentage', e.target.value);
+              if (errors.default_margin_percentage)
+                onClearError('default_margin_percentage');
+            }}
+            placeholder="Aucune"
+            className={cn(
+              errors.default_margin_percentage &&
+                'border-red-300 focus:border-red-500'
+            )}
+          />
+          <p className="text-xs text-zinc-500">
+            Applique un prix de vente calculé sur les lignes sans prix saisi.
+          </p>
+          {errors.default_margin_percentage && (
+            <p className="text-xs text-red-600">
+              {errors.default_margin_percentage}
+            </p>
           )}
         </div>
 

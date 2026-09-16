@@ -4,5 +4,6 @@
  */
 
 export * from './consultation-economics';
+export * from './consultation-economics-input';
 export * from './consultation-order-guards';
 export * from './consultation-supplier-costs';

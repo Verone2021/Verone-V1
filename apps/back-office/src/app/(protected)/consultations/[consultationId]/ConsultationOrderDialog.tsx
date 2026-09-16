@@ -4,8 +4,8 @@ import { useMemo } from 'react';
 
 import type { ConsultationItem } from '@verone/consultations';
 import {
-  computeConsultationEconomics,
-  type ConsultationEconomicsLineInput,
+  computeItemsEconomics,
+  type ConsultationEconomicsSettingsSource,
 } from '@verone/consultations';
 import { Badge } from '@verone/ui';
 import {
@@ -17,28 +17,12 @@ import {
 } from '@verone/ui';
 import { ShoppingCart, Truck, AlertTriangle, Package } from 'lucide-react';
 
-function itemToEconInput(
-  item: ConsultationItem
-): ConsultationEconomicsLineInput {
-  return {
-    id: item.id,
-    quantity: item.quantity,
-    unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
-    ecoTax: item.product?.eco_tax_default ?? 0,
-    shippingCost: item.shipping_cost ?? 0,
-    sellingShippingCost: item.selling_shipping_cost ?? 0,
-    proposedPrice: item.unit_price ?? null,
-    isFree: item.is_free,
-    isSample: item.is_sample,
-    status: item.status ?? 'pending',
-    supplierId: item.product?.supplier_id ?? null,
-  };
-}
-
 interface ConsultationOrderDialogProps {
   open: boolean;
   onClose: () => void;
   acceptedItems: ConsultationItem[];
+  /** Consultation porteuse des réglages de calcul (marge par défaut). */
+  consultation?: ConsultationEconomicsSettingsSource | null;
   onCreateSalesOrder: () => void;
   onCreatePurchaseOrder: (supplierGroups: SupplierGroup[]) => void;
   creatingSO: boolean;
@@ -55,17 +39,17 @@ export function ConsultationOrderDialog({
   open,
   onClose,
   acceptedItems,
+  consultation,
   onCreateSalesOrder,
   onCreatePurchaseOrder,
   creatingSO,
 }: ConsultationOrderDialogProps) {
   // Grouper par fournisseur pour les PO + totaux via computeConsultationEconomics
   const { supplierGroups, totalSellingPrice, totalCostPrice } = useMemo(() => {
-    const validItems = acceptedItems.filter(item => item.quantity > 0);
-    const { lines: econLines, totals } = computeConsultationEconomics(
-      validItems.map(itemToEconInput)
+    const { totals, byItemId: econMap } = computeItemsEconomics(
+      acceptedItems,
+      consultation
     );
-    const econMap = new Map(econLines.map(l => [l.lineId, l]));
 
     const groups = new Map<string, SupplierGroup>();
     for (const item of acceptedItems) {
@@ -91,7 +75,7 @@ export function ConsultationOrderDialog({
       totalSellingPrice: totals.revenue,
       totalCostPrice: totals.cost,
     };
-  }, [acceptedItems]);
+  }, [acceptedItems, consultation]);
 
   // Calculer le stock disponible par produit
   const itemsWithStock = acceptedItems.map(item => {

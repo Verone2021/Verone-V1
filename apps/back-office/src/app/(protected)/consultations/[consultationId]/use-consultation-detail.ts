@@ -11,7 +11,12 @@ import { useConsultationImages } from '@verone/consultations';
 import { useConsultationItems } from '@verone/consultations';
 import { useConsultationQuotes } from '@verone/consultations';
 import { useConsultationSalesOrders } from '@verone/consultations';
-import { filterBillableItems, countUnpricedLines } from '@verone/consultations';
+import {
+  computeItemsEconomics,
+  countUnpricedLines,
+  filterBillableItems,
+  withResolvedPrices,
+} from '@verone/consultations';
 import { useQuotes } from '@verone/finance/hooks';
 import { useSalesOrders } from '@verone/orders';
 
@@ -57,7 +62,7 @@ export function useConsultationDetail(consultationId: string) {
     consultationItems,
     loading: itemsLoading,
     error: itemsError,
-    calculateTotal,
+    calculateTotal: calculateItemsTotal,
     fetchConsultationItems,
     addItem,
     updateItem,
@@ -65,6 +70,9 @@ export function useConsultationDetail(consultationId: string) {
     toggleFreeItem,
     getTotalItemsCount,
   } = useConsultationItems(consultationId);
+
+  // BO-CONSULT-MULTI-001 : le total des documents suit la marge par défaut
+  const calculateTotal = () => calculateItemsTotal(consultation);
 
   const { images } = useConsultationImages({ consultationId, autoFetch: true });
 
@@ -196,8 +204,14 @@ export function useConsultationDetail(consultationId: string) {
     if (!consultation || consultationItems.length === 0) return;
     setCreatingOrder(true);
     try {
+      // BO-CONSULT-MULTI-001 : prix saisi, sinon prix produit par la marge
+      const pricedItems = withResolvedPrices(
+        consultationItems,
+        computeItemsEconomics(consultationItems, consultation)
+      );
+
       // Décision 2 BO-CONSULT-P2-001 : refus explicite si prix manquants
-      const n = countUnpricedLines(consultationItems);
+      const n = countUnpricedLines(pricedItems);
       if (n > 0) {
         toast.error(`Prix de vente à fixer pour ${n} ligne(s)`);
         return;
@@ -209,7 +223,7 @@ export function useConsultationDetail(consultationId: string) {
         return;
       }
 
-      const items = filterBillableItems(consultationItems).map(item => ({
+      const items = filterBillableItems(pricedItems).map(item => ({
         product_id: item.product_id,
         quantity: item.quantity,
         unit_price_ht: item.unit_price,

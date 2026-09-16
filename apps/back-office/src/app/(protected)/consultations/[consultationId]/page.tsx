@@ -218,6 +218,7 @@ export default function ConsultationDetailPage() {
           <div className="lg:col-span-8 space-y-4">
             <ConsultationOrderInterface
               consultationId={consultationId}
+              consultation={detail.consultation}
               consultationItems={detail.consultationItems}
               loading={detail.itemsLoading}
               error={detail.itemsError}
@@ -276,6 +277,7 @@ export default function ConsultationDetailPage() {
         open={showOrderDialog}
         onClose={() => setShowOrderDialog(false)}
         acceptedItems={pendingOrderItems}
+        consultation={detail.consultation}
         creatingSO={detail.creatingOrder}
         onCreateSalesOrder={() => {
           setShowOrderDialog(false);

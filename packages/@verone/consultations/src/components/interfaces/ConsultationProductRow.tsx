@@ -4,33 +4,12 @@ import { Input } from '@verone/ui';
 import { Plus, Minus, Package, Euro } from 'lucide-react';
 
 import type { ConsultationItem } from '@verone/consultations/hooks';
-import {
-  computeLineEconomics,
-  type ConsultationEconomicsLineInput,
-} from '../../lib/consultation-economics';
+import type { LineEconomics } from '../../lib/consultation-economics';
 import { ConsultationSampleCell } from './ConsultationSampleCell';
 import { ConsultationStatusCell } from './ConsultationStatusCell';
 import { ConsultationRowActions } from './ConsultationRowActions';
 
 // ── Helpers locaux ─────────────────────────────────────────────────
-
-function itemToEconInput(
-  item: ConsultationItem
-): ConsultationEconomicsLineInput {
-  return {
-    id: item.id,
-    quantity: item.quantity,
-    unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
-    ecoTax: item.product?.eco_tax_default ?? 0,
-    shippingCost: item.shipping_cost ?? 0,
-    sellingShippingCost: item.selling_shipping_cost ?? 0,
-    proposedPrice: item.unit_price ?? null,
-    isFree: item.is_free,
-    isSample: item.is_sample,
-    status: item.status ?? 'pending',
-    supplierId: item.product?.supplier_id ?? null,
-  };
-}
 
 const fmt = (p: number | null) => (p === null ? 'À fixer' : `${p.toFixed(2)}€`);
 
@@ -39,6 +18,14 @@ const fmt = (p: number | null) => (p === null ? 'À fixer' : `${p.toFixed(2)}€
 export interface ConsultationProductRowProps {
   item: ConsultationItem;
   isEditing: boolean;
+  /**
+   * Calcul de la ligne, fait une seule fois pour toute la consultation par le
+   * parent (réglages inclus : marge par défaut). null si la ligne n'a pas de
+   * calcul possible — quantité ≤ 0.
+   */
+  econ: LineEconomics | null;
+  /** Marge par défaut de la consultation, affichée en repère de saisie. */
+  defaultMarginPercentage: number | null;
   editQuantity: number;
   editPrice: string;
   editNotes: string;
@@ -46,12 +33,14 @@ export interface ConsultationProductRowProps {
   editSellingShippingCost: string;
   editCostPriceOverride: string;
   editIsSample: boolean;
+  editMarginPercentage: string;
   onSetEditQuantity: (v: number) => void;
   onSetEditPrice: (v: string) => void;
   onSetEditNotes: (v: string) => void;
   onSetEditShippingCost: (v: string) => void;
   onSetEditSellingShippingCost: (v: string) => void;
   onSetEditCostPriceOverride: (v: string) => void;
+  onSetEditMarginPercentage: (v: string) => void;
   onStartEdit: (item: ConsultationItem) => void;
   onSaveEdit: (itemId: string) => void;
   onCancelEdit: () => void;
@@ -66,6 +55,8 @@ export interface ConsultationProductRowProps {
 export function ConsultationProductRow({
   item,
   isEditing,
+  econ,
+  defaultMarginPercentage,
   editQuantity,
   editPrice,
   editNotes,
@@ -73,12 +64,14 @@ export function ConsultationProductRow({
   editSellingShippingCost,
   editCostPriceOverride,
   editIsSample,
+  editMarginPercentage,
   onSetEditQuantity,
   onSetEditPrice,
   onSetEditNotes,
   onSetEditShippingCost,
   onSetEditSellingShippingCost,
   onSetEditCostPriceOverride,
+  onSetEditMarginPercentage,
   onStartEdit,
   onSaveEdit,
   onCancelEdit,
@@ -87,10 +80,13 @@ export function ConsultationProductRow({
   onSampleChange,
   onRemove,
 }: ConsultationProductRowProps) {
-  const econ = computeLineEconomics(itemToEconInput(item));
-  const margin = econ.margin;
-  const marginPct = econ.marginPercent ?? 0;
+  const margin = econ?.margin ?? 0;
+  const marginPct = econ?.marginPercent ?? 0;
   const stockReal = item.product?.stock_real ?? 0;
+  // Prix produit par la marge (aucun prix saisi sur la ligne)
+  const priceFromMargin =
+    econ !== null && item.unit_price === null ? econ.defaultUnitPrice : null;
+  const appliedMargin = item.margin_percentage ?? defaultMarginPercentage;
 
   const rowClass = [
     'h-10 hover:bg-zinc-50 transition-colors',
@@ -216,10 +212,10 @@ export function ConsultationProductRow({
         ) : (
           <div className="flex flex-col leading-none">
             <span className="text-[12px] font-medium text-zinc-700">
-              {econ.unitCost.toFixed(2)}€
+              {(econ?.unitCost ?? 0).toFixed(2)}€
             </span>
             {/* Sous-total si plusieurs unités */}
-            {item.quantity > 1 && (
+            {item.quantity > 1 && econ !== null && (
               <span className="text-[9px] text-zinc-400 mt-0.5">
                 × {item.quantity} = {econ.purchaseAmount.toFixed(2)}€
               </span>
@@ -305,28 +301,61 @@ export function ConsultationProductRow({
       {/* Vente */}
       <td className="px-3 py-0 h-10">
         {isEditing ? (
-          <div className="relative">
-            <Input
-              type="number"
-              step="0.01"
-              value={editPrice}
-              onChange={e => onSetEditPrice(e.target.value)}
-              className="w-20 h-6 text-[11px] px-1 pr-5 py-0"
-              disabled={item.is_free}
-            />
-            <Euro className="absolute right-1 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-zinc-400 pointer-events-none" />
+          <div className="flex flex-col gap-0.5">
+            <div className="relative">
+              <Input
+                type="number"
+                step="0.01"
+                value={editPrice}
+                onChange={e => onSetEditPrice(e.target.value)}
+                className="w-20 h-6 text-[11px] px-1 pr-5 py-0"
+                disabled={item.is_free}
+              />
+              <Euro className="absolute right-1 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-zinc-400 pointer-events-none" />
+            </div>
+            {/* Marge de la ligne : vide = marge par défaut de la consultation */}
+            <div className="relative">
+              <Input
+                type="number"
+                step="1"
+                value={editMarginPercentage}
+                onChange={e => onSetEditMarginPercentage(e.target.value)}
+                placeholder={
+                  defaultMarginPercentage !== null
+                    ? `${defaultMarginPercentage} %`
+                    : 'marge %'
+                }
+                title="Marge de cette ligne en %. Vide : la marge par défaut de la consultation s'applique."
+                className="w-20 h-6 text-[11px] px-1 pr-5 py-0"
+                disabled={item.is_free}
+              />
+              <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[9px] text-zinc-400 pointer-events-none">
+                %
+              </span>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col leading-none">
             <span
               className={`text-[12px] font-medium ${item.is_free ? 'text-zinc-400' : 'text-zinc-900'}`}
             >
-              {item.is_free ? 'Gratuit' : fmt(item.unit_price)}
+              {item.is_free
+                ? 'Gratuit'
+                : fmt(econ?.unitPrice ?? item.unit_price)}
             </span>
+            {/* Prix produit par la marge, aucun prix saisi sur la ligne */}
+            {!item.is_free && priceFromMargin !== null && (
+              <span
+                className="text-[9px] text-blue-600 mt-0.5"
+                title="Prix calculé à partir du prix de revient et de la marge. Saisir un prix ici le remplace."
+              >
+                calculé · marge {appliedMargin}%
+              </span>
+            )}
             {/* Sous-total vente si plusieurs unités et payant */}
             {!item.is_free &&
               item.quantity > 1 &&
-              econ.salesAmount !== null && (
+              econ?.salesAmount != null && (
                 <span className="text-[9px] text-zinc-400 mt-0.5">
                   × {item.quantity} = {econ.salesAmount.toFixed(2)}€
                 </span>
@@ -357,7 +386,7 @@ export function ConsultationProductRow({
       <td className="px-3 py-0 h-10">
         {item.is_free || item.is_sample ? (
           <span className="text-[11px] text-red-500 font-medium">
-            -{econ.cost.toFixed(0)}€
+            -{(econ?.cost ?? 0).toFixed(0)}€
           </span>
         ) : (
           <div className="flex items-center gap-1">

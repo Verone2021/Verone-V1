@@ -16,7 +16,7 @@ import type { ClientConsultation } from '../hooks/use-consultations';
 import type { ConsultationItem } from '../hooks/use-consultations';
 import type { ConsultationImage } from '../hooks/use-consultation-images';
 import { filterClientVisibleItems } from '../lib/consultation-order-guards';
-import { computeConsultationEconomics } from '../lib/consultation-economics';
+import { computeItemsEconomics } from '../lib/consultation-economics-input';
 
 // ── Client info shape (mirror of resolveClientInfo) ──────────────────
 export interface ConsultationPdfClientInfo {
@@ -79,24 +79,10 @@ export function ConsultationSummaryPdf({
   // Décision D5 (BO-PRODUCTS-P8-001) : lignes de produits retirés exclues aussi
   const activeItems = filterClientVisibleItems(items);
   // Total HT via totals.billed (décision 5 BO-CONSULT-P2-001 — source unique)
-  const { lines: econLines, totals: economics } = computeConsultationEconomics(
-    activeItems
-      .filter(item => item.quantity > 0)
-      .map(item => ({
-        id: item.id,
-        quantity: item.quantity,
-        unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
-        ecoTax: item.product?.eco_tax_default ?? 0,
-        shippingCost: item.shipping_cost ?? 0,
-        sellingShippingCost: item.selling_shipping_cost ?? 0,
-        proposedPrice: item.unit_price ?? null,
-        isFree: item.is_free,
-        isSample: item.is_sample,
-        status: item.status ?? 'pending',
-        supplierId: item.product?.supplier_id ?? null,
-      }))
+  const { totals: economics, byItemId: econByItemId } = computeItemsEconomics(
+    activeItems,
+    consultation
   );
-  const econByItemId = new Map(econLines.map(l => [l.lineId, l]));
   const computedTotalHT = economics.billed;
   const tvaRate =
     consultation.tva_rate != null ? Number(consultation.tva_rate) : 0;
@@ -220,8 +206,9 @@ export function ConsultationSummaryPdf({
         ) : (
           <View>
             {activeItems.map(item => {
-              const unitPrice = item.unit_price; // null → « À fixer » (affichage)
               const econ = econByItemId.get(item.id);
+              // Prix saisi, sinon prix produit par la marge ; null → « À fixer »
+              const unitPrice = econ?.unitPrice ?? item.unit_price;
               // billedAmount : 0 si gratuit ou prix non fixé (décision 5)
               const lineTotal =
                 econ?.billedAmount && econ.billedAmount > 0

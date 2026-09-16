@@ -9,8 +9,9 @@ import type {
   ConsultationItem,
 } from '@verone/consultations';
 import {
-  computeConsultationEconomics,
+  computeItemsEconomics,
   filterBillableItems,
+  withResolvedPrices,
 } from '@verone/consultations';
 import type { IOrderForDocument } from '@verone/finance/components';
 import { createClient } from '@verone/utils/supabase/client';
@@ -269,24 +270,19 @@ export function buildOrderForDocument(
   partnerId: string,
   org: Record<string, string | null | boolean | number>
 ): IOrderForDocument {
+  // BO-CONSULT-MULTI-001 : le prix retenu est le prix saisi, sinon celui que
+  // produit la marge. Les lignes portent ce prix effectif avant tout filtrage.
+  const pricedItems = withResolvedPrices(
+    consultationItems,
+    computeItemsEconomics(consultationItems, consultation)
+  );
   // Décision 2 BO-CONSULT-P2-001 : seules les lignes facturables dans le devis
-  const billableItems = filterBillableItems(consultationItems);
+  const billableItems = filterBillableItems(pricedItems);
   // totals.billed = Σ (unitPrice × quantity) pour les lignes incluses non gratuites
   // avec prix renseigné — même périmètre que filterBillableItems.
-  const { totals: billableTotals } = computeConsultationEconomics(
-    billableItems.map(item => ({
-      id: item.id,
-      quantity: item.quantity,
-      unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
-      ecoTax: item.product?.eco_tax_default ?? 0,
-      shippingCost: item.shipping_cost ?? 0,
-      sellingShippingCost: item.selling_shipping_cost ?? 0,
-      proposedPrice: item.unit_price,
-      isFree: item.is_free,
-      isSample: item.is_sample,
-      status: item.status ?? 'pending',
-      supplierId: item.product?.supplier_id ?? null,
-    }))
+  const { totals: billableTotals } = computeItemsEconomics(
+    billableItems,
+    consultation
   );
   const totalHT = billableTotals.billed;
   return {

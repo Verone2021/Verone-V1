@@ -14,7 +14,7 @@ import type { ClientConsultation } from '../hooks/use-consultations';
 import type { ConsultationItem } from '../hooks/use-consultations';
 import type { ConsultationPdfClientInfo } from './ConsultationSummaryPdf';
 import { filterActiveItems } from '../lib/consultation-order-guards';
-import { computeConsultationEconomics } from '../lib/consultation-economics';
+import { computeItemsEconomics } from '../lib/consultation-economics-input';
 import { s } from './consultation-margin-report-pdf-styles';
 
 interface ConsultationMarginReportPdfProps {
@@ -34,24 +34,10 @@ export function ConsultationMarginReportPdf({
   const activeItems = filterActiveItems(items);
 
   // Économie via fonction canonique B2 (formules § B2 du plan)
-  const { lines: econLines, totals: economics } = computeConsultationEconomics(
-    activeItems
-      .filter(item => item.quantity > 0)
-      .map(item => ({
-        id: item.id,
-        quantity: item.quantity,
-        unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
-        ecoTax: item.product?.eco_tax_default ?? 0,
-        shippingCost: item.shipping_cost ?? 0,
-        sellingShippingCost: item.selling_shipping_cost ?? 0,
-        proposedPrice: item.unit_price ?? null,
-        isFree: item.is_free,
-        isSample: item.is_sample,
-        status: item.status ?? 'pending',
-        supplierId: item.product?.supplier_id ?? null,
-      }))
+  const { totals: economics, byItemId: econByItemId } = computeItemsEconomics(
+    activeItems,
+    consultation
   );
-  const econByItemId = new Map(econLines.map(l => [l.lineId, l]));
 
   const totalRevenue = economics.revenue;
   const totalCost = economics.cost;
@@ -261,7 +247,10 @@ export function ConsultationMarginReportPdf({
                 <Text style={[s.td, { width: '10%', textAlign: 'right' }]}>
                   {item.is_free || item.is_sample
                     ? 'Offert'
-                    : formatVeronePrice(item.unit_price ?? 0, 2)}
+                    : formatVeronePrice(
+                        econ?.unitPrice ?? item.unit_price ?? 0,
+                        2
+                      )}
                 </Text>
                 <Text
                   style={[
