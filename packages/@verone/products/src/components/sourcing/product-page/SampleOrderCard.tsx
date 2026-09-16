@@ -101,8 +101,10 @@ export function SampleOrderCard({
                   {line.unitCostNet !== null && (
                     <span
                       className={cn(
-                        'ml-2 whitespace-nowrap text-xs',
-                        isCurrent ? 'font-medium text-black' : 'text-gray-500'
+                        // `text-sm` et non `text-xs` : c'est le chiffre qui
+                        // compte, il doit rester lisible jusqu'à 320 px.
+                        'ml-2 whitespace-nowrap text-sm',
+                        isCurrent ? 'font-medium text-black' : 'text-gray-600'
                       )}
                     >
                       → revient à {euros(line.unitCostNet)} la pièce
