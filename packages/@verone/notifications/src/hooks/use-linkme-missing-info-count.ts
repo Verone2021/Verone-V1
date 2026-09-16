@@ -1,36 +1,21 @@
-'use client';
-
 /**
- * Hook LinkmeMissingInfoCount - Vérone Back Office
- * Compte les demandes d'info LinkMe en attente de retour.
+ * Hook LinkMe Missing Info Count - Vérone Back Office
+ * Demandes d'informations LinkMe envoyées, non complétées et non expirées.
  *
- * Implémentation : TanStack Query (staleTime 5 min, refetch au retour sur
- * l'onglet). linkme_info_requests n'est pas publiée dans Supabase Realtime
- * → pas d'abonnement, pas de polling.
+ * Valeur lue dans l'appel unique du menu (`get_sidebar_counts`, champ
+ * `linkmeMissingInfo`) : aucune requête propre. `linkme_info_requests` n'est pas
+ * publiée en temps réel — les écritures passent par `invalidateMenuCounts`.
  */
 
-import { useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+'use client';
 
-import { MENU_COUNT_QUERY_KEYS } from '@verone/utils/query';
-import { createClient } from '@verone/utils/supabase/client';
+import type { MenuCountHook } from './use-menu-count';
+import { useMenuCount } from './use-menu-count';
 
-export interface LinkmeMissingInfoCountHook {
-  count: number;
-  loading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
-  lastUpdated: Date | null;
-}
-
-const LINKME_MISSING_INFO_QUERY_KEY = MENU_COUNT_QUERY_KEYS.linkmeInfoRequests;
+export type LinkmeMissingInfoCountHook = MenuCountHook;
 
 /**
- * Compte les enregistrements `linkme_info_requests` qui sont :
- * - envoyés (sent_at IS NOT NULL)
- * - non complétés (completed_at IS NULL)
- * - non annulés (cancelled_at IS NULL)
- * - non expirés (token_expires_at > now())
+ * Hook pour compter les demandes d'informations LinkMe en attente.
  *
  * @param options.enableRealtime  @deprecated ignoré — linkme_info_requests non publiée
  * @param options.refetchInterval @deprecated ignoré — TanStack Query gère le cache
@@ -41,52 +26,5 @@ export function useLinkmeMissingInfoCount(_options?: {
   /** @deprecated ignoré */
   refetchInterval?: number;
 }): LinkmeMissingInfoCountHook {
-  const queryClient = useQueryClient();
-
-  const {
-    data = 0,
-    isPending,
-    error,
-    dataUpdatedAt,
-  } = useQuery({
-    queryKey: LINKME_MISSING_INFO_QUERY_KEY,
-    queryFn: async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return 0;
-
-      const { count: totalCount, error: countError } = await supabase
-        .from('linkme_info_requests')
-        .select('id', { count: 'exact', head: true })
-        .not('sent_at', 'is', null)
-        .is('completed_at', null)
-        .is('cancelled_at', null)
-        .gt('token_expires_at', new Date().toISOString());
-
-      if (countError) {
-        console.error('[useLinkmeMissingInfoCount] Count error:', countError);
-        throw new Error(countError.message);
-      }
-      return totalCount ?? 0;
-    },
-    staleTime: 5 * 60_000,
-    refetchOnWindowFocus: true,
-    refetchInterval: false,
-  });
-
-  const refetch = useCallback(async (): Promise<void> => {
-    await queryClient.invalidateQueries({
-      queryKey: LINKME_MISSING_INFO_QUERY_KEY,
-    });
-  }, [queryClient]);
-
-  return {
-    count: data,
-    loading: isPending,
-    error: error ?? null,
-    refetch,
-    lastUpdated: dataUpdatedAt > 0 ? new Date(dataUpdatedAt) : null,
-  };
+  return useMenuCount('linkmeMissingInfo');
 }
