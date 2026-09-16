@@ -34,6 +34,15 @@ export interface RfqTemplateDialogProps {
   onLogExchange: (entry: NewSourcingJournalEntry) => Promise<void>;
 }
 
+/**
+ * « 1 pièce » et non « 1 pièces » : ce texte part chez le fournisseur.
+ * `quantity` arrive en chaîne depuis le champ de saisie ; une valeur non
+ * numérique retombe sur le pluriel, qui reste lisible.
+ */
+function pieces(quantity: string): string {
+  return `${quantity} ${Number(quantity) === 1 ? 'pièce' : 'pièces'}`;
+}
+
 function buildMessage(params: {
   mode: RfqMode;
   productName: string;
@@ -66,7 +75,7 @@ function buildMessage(params: {
         ? `Pour que ce produit entre dans notre gamme, nous devons atteindre ${targetPrice} € HT par pièce en ${incoterm}.`
         : `Nous devons encore ajuster le prix pour que ce produit entre dans notre gamme.`,
       quantity !== ''
-        ? `Nous envisageons ${quantity} pièces sur la première commande, avec des réassorts réguliers ensuite.`
+        ? `Nous envisageons ${pieces(quantity)} sur la première commande, avec des réassorts réguliers ensuite.`
         : `Des réassorts réguliers sont prévus après la première commande.`,
       ``,
       `Pouvez-vous nous confirmer :`,
@@ -84,7 +93,7 @@ function buildMessage(params: {
     `Nous souhaitons référencer le produit suivant : « ${productName} »${reference}.`,
     ``,
     `Pourriez-vous nous communiquer :`,
-    `- le prix unitaire HT${quantity !== '' ? ` pour ${quantity} pièces` : ''},`,
+    `- le prix unitaire HT${quantity !== '' ? ` pour ${pieces(quantity)}` : ''},`,
     `- la quantité minimale de commande,`,
     `- le coût du transport${incoterm !== '' ? ` en ${incoterm}` : ''} et les droits de douane éventuels,`,
     leadDays !== ''
@@ -162,7 +171,7 @@ export function RfqTemplateDialog({
       summary:
         mode === 'counter_offer'
           ? `Contre-proposition envoyée${price.trim() !== '' ? ` à ${price.trim()} € HT` : ''}`
-          : `Demande de prix envoyée${quantity.trim() !== '' ? ` pour ${quantity.trim()} pièces` : ''}`,
+          : `Demande de prix envoyée${quantity.trim() !== '' ? ` pour ${pieces(quantity.trim())}` : ''}`,
       next_action: 'Relancer si pas de réponse',
       ...(supplierId !== null ? { supplier_id: supplierId } : {}),
     })
