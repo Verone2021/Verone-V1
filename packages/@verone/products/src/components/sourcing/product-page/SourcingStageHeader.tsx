@@ -16,6 +16,10 @@ import {
   stageOfStatus,
   type SourcingStage,
 } from '../../../utils/sourcing-stage';
+import {
+  stageCounter,
+  type SourcingStageProgressInput,
+} from '../../../utils/sourcing-stage-playbook';
 
 const PRIORITY_OPTIONS = [
   { value: 'low', label: 'Basse' },
@@ -48,6 +52,8 @@ interface SourcingStageHeaderProps {
   sampleLoading: boolean;
   priority: string;
   canChangeStage: boolean;
+  /** Avancement réel, pour chiffrer chaque étape sous son libellé. */
+  progress?: SourcingStageProgressInput;
   onStageSelect: (stage: SourcingStage) => void;
   onPriorityChange: (priority: string) => void;
 }
@@ -63,6 +69,7 @@ export function SourcingStageHeader({
   sampleLoading,
   priority,
   canChangeStage,
+  progress,
   onStageSelect,
   onPriorityChange,
 }: SourcingStageHeaderProps) {
@@ -79,6 +86,8 @@ export function SourcingStageHeader({
           const isCurrent = index === currentIndex;
           const isDone = currentIndex >= 0 && index < currentIndex;
           const clickable = canChangeStage && !isCurrent;
+          const counter =
+            progress !== undefined ? stageCounter(item, progress) : null;
           return (
             <li key={item}>
               <button
@@ -92,7 +101,7 @@ export function SourcingStageHeader({
                     : undefined
                 }
                 className={cn(
-                  'flex h-11 w-full items-center gap-2 rounded-md border px-3 text-sm font-medium transition-colors md:h-10',
+                  'flex min-h-11 w-full items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors md:min-h-10',
                   isCurrent && 'border-black bg-black text-white',
                   isDone && 'border-green-200 bg-green-50 text-green-800',
                   !isCurrent &&
@@ -114,7 +123,21 @@ export function SourcingStageHeader({
                 >
                   {isDone ? <Check className="h-3.5 w-3.5" /> : index + 1}
                 </span>
-                <span className="truncate">{SOURCING_STAGE_LABELS[item]}</span>
+                <span className="min-w-0 flex-1 text-left">
+                  <span className="block truncate">
+                    {SOURCING_STAGE_LABELS[item]}
+                  </span>
+                  {counter !== null && (
+                    <span
+                      className={cn(
+                        'block truncate text-[11px] font-normal',
+                        isCurrent ? 'text-white/70' : 'text-gray-500'
+                      )}
+                    >
+                      {counter}
+                    </span>
+                  )}
+                </span>
               </button>
             </li>
           );

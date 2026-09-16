@@ -20,6 +20,10 @@ export interface SourcingProduct {
   subcategory_id?: string | null;
   /** Référence chez le fournisseur : exigée pour valider au catalogue. */
   supplier_reference?: string | null;
+  /** Éco-participation unitaire : entre dans le coût rendu d'une offre. */
+  eco_tax_default?: number | null;
+  /** Quantité minimale de commande annoncée par le fournisseur retenu. */
+  supplier_moq?: number | null;
   supplier_id: string | null;
   supplier?: {
     id: string;

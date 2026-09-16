@@ -6,6 +6,7 @@ export { useSourcingMutations } from './use-sourcing-mutations';
 export { useSourcingSampleOrder } from './use-sourcing-sample-order';
 export { useSourcingCreateUpdate } from './use-sourcing-create-update';
 export { useSourcingNotebook } from './use-sourcing-notebook';
+export type { SourcingOfferInput } from './use-sourcing-notebook';
 export type {
   SourcingUrl,
   SourcingCommunication,
@@ -31,6 +32,8 @@ export type {
   SampleCandidateProduct,
 } from './use-sample-draft-order';
 export { useBulkSampleOrder } from './use-bulk-sample-order';
+export { useAdoptOffer } from './use-adopt-offer';
+export { useSourcingPricing } from './use-sourcing-pricing';
 export type {
   BulkSampleOutcome,
   BulkSampleResult,
