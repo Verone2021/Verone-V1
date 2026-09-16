@@ -230,3 +230,32 @@ dans `sourcing_candidate_suppliers`, aucun `manufacturer`. L'écran disait vrai.
 Le bloc nomme désormais les produits concernés (« Sofá Modular Lounge — aucun
 fournisseur n'est enregistré sur cette fiche produit… ») au lieu d'un simple
 compteur, pour qu'on sache lequel corriger.
+
+---
+
+# Lisibilité : la livraison est celle du fournisseur, pas de la ligne (17/09)
+
+Roméo, après essai : « le fournisseur ne fait pas payer par ligne, il fait payer
+une livraison ». Le comportement demandé existait déjà depuis le commit précédent,
+mais l'écran ne le disait pas : sur sa consultation, chaque fournisseur n'avait
+qu'une ligne, donc aucune case n'apparaissait, et la colonne « Transport » du
+tableau laissait croire à une facturation ligne par ligne.
+
+Corrections, sans toucher au calcul :
+
+- Sous-titre du bloc : « une livraison et une douane par fournisseur, **pas par
+  produit** — réparties sur les produits cochés, au prorata de leur valeur ».
+- La ligne des cases est **toujours affichée**, y compris pour un fournisseur à
+  un seul produit : « Cette livraison concerne » (plusieurs produits, cases
+  actives) ou « Livraison portée par » (un seul produit, case cochée et
+  verrouillée). Le mécanisme est visible partout, sans être modifiable là où il
+  n'y a rien à choisir.
+- Colonne du tableau renommée « **Transport ligne** », avec infobulle : « Frais
+  propres à cette ligne seulement. La livraison facturée une fois par le
+  fournisseur se saisit dans le bloc Frais par fournisseur ».
+
+Vérifié à l'écran sur la consultation « Black & White Burger » (Opjet, 2 lignes) :
+74 € saisis **une seule fois** (port 60 + douane 14) → 47,57 € et 26,43 € sur les
+deux ampoules (9/14 et 5/14) ; produit décoché → **74,00 € entièrement** sur
+l'autre ; Dongguan, qui n'a qu'une ligne, inchangé. Frais remis à zéro et cases
+recochées ; état de la consultation revérifié en base, identique à celui de Roméo.

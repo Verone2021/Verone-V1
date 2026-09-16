@@ -124,7 +124,8 @@ export function ConsultationSupplierCostsCard({
           Frais par fournisseur
         </h3>
         <span className="text-[10px] text-zinc-400">
-          répartis sur les lignes du fournisseur, au prorata de leur valeur
+          une livraison et une douane par fournisseur, pas par produit —
+          réparties sur les produits cochés, au prorata de leur valeur
         </span>
       </div>
 
@@ -243,12 +244,15 @@ export function ConsultationSupplierCostsCard({
                 )}
               </div>
 
-              {/* Un seul produit : il porte les frais d'office. Plusieurs :
-                  on choisit ceux qui sont concernés (demande Roméo 17/09). */}
-              {supplier.lines.length > 1 && (
+              {/* La livraison du fournisseur est unique : on choisit les
+                  produits qu'elle concerne. Un seul produit : il la porte
+                  d'office, la case est montrée mais verrouillée (Roméo 17/09). */}
+              {supplier.lines.length > 0 && (
                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                    Produits concernés
+                    {supplier.lines.length > 1
+                      ? 'Cette livraison concerne'
+                      : 'Livraison portée par'}
                   </span>
                   {supplier.lines.map(line => (
                     <label
@@ -256,7 +260,9 @@ export function ConsultationSupplierCostsCard({
                       title={
                         line.ineligible
                           ? 'Ligne refusée, gratuite ou échantillon : jamais concernée par les frais'
-                          : 'Décocher pour sortir ce produit de la répartition des frais'
+                          : supplier.lines.length === 1
+                            ? 'Seul produit de ce fournisseur : il porte ses frais'
+                            : 'Décocher pour sortir ce produit de la répartition des frais'
                       }
                       className={`flex items-center gap-1.5 text-[11px] ${
                         line.ineligible
@@ -267,7 +273,12 @@ export function ConsultationSupplierCostsCard({
                       <input
                         type="checkbox"
                         checked={line.carriesFees && !line.ineligible}
-                        disabled={line.ineligible || !onToggleLineFees}
+                        disabled={
+                          line.ineligible ||
+                          !onToggleLineFees ||
+                          // Seul produit du fournisseur : il porte les frais d'office
+                          supplier.lines.length === 1
+                        }
                         onChange={e =>
                           onToggleLineFees?.(line.itemId, e.target.checked)
                         }
