@@ -22,6 +22,8 @@ export interface ConsultationSupplierRef {
 
 interface ConsultationSupplierCostsCardProps {
   suppliers: ConsultationSupplierRef[];
+  /** Lignes dont le produit n'a pas encore de fournisseur : elles ne peuvent porter aucun frais. */
+  linesWithoutSupplier?: number;
   supplierCosts: ConsultationSupplierCost[];
   supplierEconomics: SupplierEconomics[];
   unallocatedSupplierFees: number;
@@ -37,6 +39,7 @@ interface ConsultationSupplierCostsCardProps {
  */
 export function ConsultationSupplierCostsCard({
   suppliers,
+  linesWithoutSupplier = 0,
   supplierCosts,
   supplierEconomics,
   unallocatedSupplierFees,
@@ -46,9 +49,10 @@ export function ConsultationSupplierCostsCard({
   const [shipping, setShipping] = useState('');
   const [customs, setCustoms] = useState('');
   const [other, setOther] = useState('');
+  const [otherLabel, setOtherLabel] = useState('');
   const [saving, setSaving] = useState(false);
 
-  if (suppliers.length === 0) return null;
+  if (suppliers.length === 0 && linesWithoutSupplier === 0) return null;
 
   const costBySupplier = new Map(
     supplierCosts.map(cost => [cost.supplier_id, cost])
@@ -63,6 +67,7 @@ export function ConsultationSupplierCostsCard({
     setShipping(cost?.shipping_cost_ht ? String(cost.shipping_cost_ht) : '');
     setCustoms(cost?.customs_cost_ht ? String(cost.customs_cost_ht) : '');
     setOther(cost?.other_cost_ht ? String(cost.other_cost_ht) : '');
+    setOtherLabel(cost?.other_cost_label ?? '');
   };
 
   const parseAmount = (value: string): number => {
@@ -77,6 +82,8 @@ export function ConsultationSupplierCostsCard({
       shipping_cost_ht: parseAmount(shipping),
       customs_cost_ht: parseAmount(customs),
       other_cost_ht: parseAmount(other),
+      // Intitulé libre : « manutention », « emballage », « assurance »…
+      other_cost_label: otherLabel.trim() === '' ? null : otherLabel.trim(),
     })
       .then(success => {
         if (success) setEditingSupplier(null);
@@ -119,6 +126,10 @@ export function ConsultationSupplierCostsCard({
           const econ = econBySupplier.get(supplier.supplierId);
           const total = econ?.supplierCosts ?? 0;
           const isEditing = editingSupplier === supplier.supplierId;
+          // Intitulé libre des « autres frais », sinon le mot générique
+          const otherName = cost?.other_cost_label?.trim()
+            ? cost.other_cost_label.trim()
+            : 'Autres';
 
           return (
             <div
@@ -171,6 +182,14 @@ export function ConsultationSupplierCostsCard({
                     title="Autres frais (€ HT)"
                     className="w-20 h-8 text-[11px] px-1.5 py-0"
                   />
+                  <Input
+                    type="text"
+                    value={otherLabel}
+                    onChange={e => setOtherLabel(e.target.value)}
+                    placeholder="Intitulé (manutention…)"
+                    title="À quoi correspondent les autres frais"
+                    className="w-40 h-8 text-[11px] px-1.5 py-0"
+                  />
                   <button
                     type="button"
                     disabled={saving}
@@ -192,7 +211,7 @@ export function ConsultationSupplierCostsCard({
                 <div className="flex items-center gap-3">
                   <span className="text-[11px] text-zinc-500">
                     {cost
-                      ? `Port ${cost.shipping_cost_ht.toFixed(2)}€ · Douane ${cost.customs_cost_ht.toFixed(2)}€ · Autres ${cost.other_cost_ht.toFixed(2)}€`
+                      ? `Port ${cost.shipping_cost_ht.toFixed(2)}€ · Douane ${cost.customs_cost_ht.toFixed(2)}€ · ${otherName} ${cost.other_cost_ht.toFixed(2)}€`
                       : 'Aucun frais saisi'}
                   </span>
                   <button
@@ -207,6 +226,21 @@ export function ConsultationSupplierCostsCard({
             </div>
           );
         })}
+
+        {linesWithoutSupplier > 0 && (
+          <div className="px-4 py-2.5">
+            <p className="text-[12px] font-semibold text-zinc-500">
+              Sans fournisseur
+            </p>
+            <p className="text-[10px] text-zinc-400">
+              {linesWithoutSupplier} ligne
+              {linesWithoutSupplier > 1 ? 's' : ''} · port et douane impossibles
+              ici tant qu&apos;aucun fournisseur n&apos;est rattaché au produit.
+              En attendant, le transport se saisit directement sur la ligne,
+              colonne Transport.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

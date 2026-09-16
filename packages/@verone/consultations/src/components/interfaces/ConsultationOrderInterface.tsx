@@ -271,6 +271,12 @@ export function ConsultationOrderInterface({
     }
   }
 
+  // Lignes dont le produit n'a pas de fournisseur : aucun frais ne peut leur
+  // être affecté, le bloc frais le dit au lieu de les passer sous silence.
+  const linesWithoutSupplier = consultationItems.filter(
+    item => !item.product?.supplier_id
+  ).length;
+
   const total = economics.revenue;
   const totalCost = economics.cost;
   const totalShipping = economics.fees;
@@ -328,6 +334,7 @@ export function ConsultationOrderInterface({
       {onSaveSupplierCost && (
         <ConsultationSupplierCostsCard
           suppliers={suppliers}
+          linesWithoutSupplier={linesWithoutSupplier}
           supplierCosts={supplierCosts}
           supplierEconomics={supplierEconomics}
           unallocatedSupplierFees={economics.unallocatedSupplierFees}

@@ -133,3 +133,45 @@ ou une commande, c'est-à-dire par une vente réelle.
    niveau de la consultation et du besoin, pas comme objectif par ligne.
 5. **Le rapport interne ne montre pas le point mort** (quantité minimale pour couvrir les frais
    fixes) ; il donne marge, bénéfice et part des frais.
+
+---
+
+# Contrôle à l'écran des frais par fournisseur (17/09)
+
+## Ce qui marche déjà — vérifié dans le navigateur
+
+Test sur la consultation réelle « Pokawa », deux fauteuils Opjet ajoutés
+temporairement (achat 209 € et 599 €) + 150 € de frais (port 100 € + douane 50 €) :
+
+| Ligne                        | Achat    | Part des frais | Revient  |
+| ---------------------------- | -------- | -------------- | -------- |
+| FAU-0003                     | 209,00 € | **38,80 €**    | 253,47 € |
+| FAU-0008                     | 599,00 € | **111,20 €**   | 721,45 € |
+| PRD-0313 (autre fournisseur) | 5,00 €   | 0,00 €         | 10,50 €  |
+
+38,80 + 111,20 = 150,00 € : répartition exacte au prorata de la valeur de ligne
+(209/808 et 599/808), affichée par ligne (« dont X € de frais ») et isolée au
+fournisseur concerné. Les deux lignes de test et les frais ont été retirés, état
+de la consultation revérifié en base (1 ligne, 0 frais, valeurs d'origine).
+
+## Deux manques constatés, corrigés sans toucher la base
+
+1. **Les « autres frais » n'avaient pas d'intitulé.** La colonne
+   `other_cost_label` existait en base depuis `BO-CONSULT-P9-001` mais n'était
+   jamais remplie : impossible de dire si les 30 € étaient de la manutention, de
+   l'emballage ou de l'assurance. Champ texte ajouté à côté du montant, affiché
+   ensuite à la place du mot « Autres ».
+2. **Une ligne dont le produit n'a pas de fournisseur disparaissait du bloc.**
+   `consultation_supplier_costs.supplier_id` est NOT NULL : ces lignes ne peuvent
+   porter aucun frais de port ou de douane, et rien ne le disait. Une mention
+   « Sans fournisseur — N lignes » apparaît maintenant, avec la marche à suivre
+   (rattacher un fournisseur au produit, ou saisir le transport sur la ligne).
+
+## Ce qui reste demandé par Roméo et qui, lui, demande la base
+
+**Choisir quels produits d'un fournisseur portent ses frais.** Aujourd'hui tous
+les produits retenus de ce fournisseur se partagent les frais au prorata, sans
+exception possible. Il faudrait un marqueur par ligne (`consultation_products`,
+colonne booléenne type `carries_supplier_fees` à `true` par défaut) + une case à
+cocher par produit dans le bloc frais. **En attente du feu vert de Roméo**
+(modification de base de données).
