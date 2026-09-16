@@ -8,6 +8,7 @@ import { useRouter, useParams } from 'next/navigation';
 import {
   ConsultationOrderInterface,
   ConsultationTimeline,
+  useConsultationNeeds,
 } from '@verone/consultations';
 import { ConsultationMarginReportPdf } from '@verone/consultations/pdf-templates';
 import { createClient } from '@verone/utils/supabase/client';
@@ -18,7 +19,8 @@ const PdfPreviewModal = dynamic(
 );
 
 import type { ConsultationItem } from '@verone/consultations';
-import { QuickPurchaseOrderModal } from '@verone/orders';
+import { usePurchaseOrders } from '@verone/orders';
+import { toast } from 'sonner';
 
 import { ConsultationHeader } from './ConsultationHeader';
 import { ConsultationNotFoundState } from './ConsultationNotFoundState';
@@ -26,7 +28,10 @@ import { ConsultationInfoCard } from './ConsultationInfoCard';
 import { ConsultationLinkedOrders } from './ConsultationLinkedOrders';
 import { ConsultationLinkedQuotes } from './ConsultationLinkedQuotes';
 import { ConsultationModals } from './ConsultationModals';
-import { ConsultationOrderDialog } from './ConsultationOrderDialog';
+import {
+  ConsultationOrderDialog,
+  type SupplierGroup,
+} from './ConsultationOrderDialog';
 import { ConsultationToolbar } from './ConsultationToolbar';
 import { getClientName } from './helpers';
 import { useConsultationDetail } from './use-consultation-detail';
@@ -42,7 +47,11 @@ export default function ConsultationDetailPage() {
   const [pendingOrderItems, setPendingOrderItems] = useState<
     ConsultationItem[]
   >([]);
-  const [quickPOQueue, setQuickPOQueue] = useState<string[]>([]);
+  const [creatingPO, setCreatingPO] = useState(false);
+
+  const { supplierCosts, supplierCostInputs, upsertSupplierCost } = detail;
+  const { needs, addNeed, removeNeed } = useConsultationNeeds(consultationId);
+  const { createOrder: createPurchaseOrder } = usePurchaseOrders();
 
   // Cas « consultation absente » : on vérifie en DB directe si elle existe
   // mais est supprimée (deleted_at NOT NULL), pour différencier l'UX entre
@@ -95,6 +104,69 @@ export default function ConsultationDetailPage() {
 
     void checkDeleted();
   }, [detail.loading, detail.consultation, consultationId, deletedChecked]);
+
+  /**
+   * BO-CONSULT-MULTI-001 : UNE commande fournisseur par fournisseur, en
+   * brouillon, avec ses frais de port et de douane. Avant, l'écran ouvrait
+   * une fenêtre de saisie par produit et le regroupement calculé était perdu.
+   */
+  const handleCreatePurchaseOrders = async (
+    supplierGroups: SupplierGroup[]
+  ): Promise<void> => {
+    if (supplierGroups.length === 0) return;
+    setShowOrderDialog(false);
+    setCreatingPO(true);
+    try {
+      const createdNumbers: string[] = [];
+      const orderedItemIds: string[] = [];
+
+      for (const group of supplierGroups) {
+        if (group.purchaseLines.length === 0) continue;
+        // Les « autres frais » n'ont pas d'équivalent sur la commande : ils
+        // sont signalés en note plutôt que rangés dans une case inexacte.
+        const otherCostNote =
+          group.otherCostHt > 0
+            ? ` — autres frais à ajouter : ${group.otherCostHt.toFixed(2)}€ HT`
+            : '';
+
+        const order = await createPurchaseOrder({
+          supplier_id: group.supplierId,
+          shipping_cost_ht: group.shippingCostHt,
+          customs_cost_ht: group.customsCostHt,
+          notes: `Consultation ${consultationId.slice(0, 8).toUpperCase()}${otherCostNote}`,
+          items: group.purchaseLines,
+        });
+
+        if (order) {
+          createdNumbers.push(order.po_number);
+          orderedItemIds.push(...group.items.map(item => item.id));
+        }
+      }
+
+      if (createdNumbers.length === 0) {
+        toast.error('Aucune commande fournisseur créée');
+        return;
+      }
+
+      // Les lignes commandées ne seront plus reproposées à la commande
+      for (const itemId of orderedItemIds) {
+        await detail.updateItem(itemId, { status: 'ordered' });
+      }
+
+      await detail.fetchHistory();
+      toast.success(
+        createdNumbers.length > 1
+          ? `${createdNumbers.length} commandes fournisseur créées : ${createdNumbers.join(', ')}`
+          : `Commande fournisseur ${createdNumbers[0]} créée`
+      );
+      router.push('/commandes/fournisseurs');
+    } catch (error) {
+      console.error('[ConsultationDetailPage] Create PO failed:', error);
+      toast.error('La création des commandes fournisseur a échoué');
+    } finally {
+      setCreatingPO(false);
+    }
+  };
 
   if (detail.loading) {
     return (
@@ -218,6 +290,13 @@ export default function ConsultationDetailPage() {
           <div className="lg:col-span-8 space-y-4">
             <ConsultationOrderInterface
               consultationId={consultationId}
+              consultation={detail.consultation}
+              supplierCosts={supplierCosts}
+              supplierCostInputs={supplierCostInputs}
+              onSaveSupplierCost={upsertSupplierCost}
+              needs={needs}
+              onAddNeed={addNeed}
+              onRemoveNeed={removeNeed}
               consultationItems={detail.consultationItems}
               loading={detail.itemsLoading}
               error={detail.itemsError}
@@ -257,25 +336,13 @@ export default function ConsultationDetailPage() {
         </div>
       </div>
 
-      {/* Modal PO rapide pré-rempli — itère sur toute la queue */}
-      {quickPOQueue.length > 0 && quickPOQueue[0] && (
-        <QuickPurchaseOrderModal
-          open={quickPOQueue.length > 0}
-          onClose={() => {
-            setQuickPOQueue([]);
-          }}
-          productId={quickPOQueue[0]}
-          onSuccess={() => {
-            setQuickPOQueue(prev => prev.slice(1));
-            void detail.fetchHistory().catch(console.error);
-          }}
-        />
-      )}
-
       <ConsultationOrderDialog
         open={showOrderDialog}
         onClose={() => setShowOrderDialog(false)}
         acceptedItems={pendingOrderItems}
+        consultation={detail.consultation}
+        supplierCosts={supplierCosts}
+        creatingPO={creatingPO}
         creatingSO={detail.creatingOrder}
         onCreateSalesOrder={() => {
           setShowOrderDialog(false);
@@ -284,14 +351,7 @@ export default function ConsultationDetailPage() {
           });
         }}
         onCreatePurchaseOrder={supplierGroups => {
-          setShowOrderDialog(false);
-          // Collecter TOUS les product_ids des items acceptés (un par groupe fournisseur)
-          const productIds = supplierGroups.flatMap(group =>
-            group.items.map(item => item.product_id)
-          );
-          if (productIds.length > 0) {
-            setQuickPOQueue(productIds);
-          }
+          void handleCreatePurchaseOrders(supplierGroups);
         }}
       />
 
@@ -314,6 +374,7 @@ export default function ConsultationDetailPage() {
               items={detail.consultationItems}
               clientName={clientName}
               clientInfo={detail.clientInfo}
+              supplierCosts={supplierCostInputs}
             />
           }
         />
@@ -327,6 +388,7 @@ export default function ConsultationDetailPage() {
         linkedQuotes={detail.linkedQuotes}
         linkedSalesOrdersCount={detail.linkedSalesOrders.length}
         calculateTotal={detail.calculateTotal}
+        supplierCosts={supplierCostInputs}
         showEditModal={detail.showEditModal}
         setShowEditModal={detail.setShowEditModal}
         handleUpdateConsultation={detail.handleUpdateConsultation}

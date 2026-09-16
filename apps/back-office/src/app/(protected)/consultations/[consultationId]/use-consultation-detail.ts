@@ -11,7 +11,14 @@ import { useConsultationImages } from '@verone/consultations';
 import { useConsultationItems } from '@verone/consultations';
 import { useConsultationQuotes } from '@verone/consultations';
 import { useConsultationSalesOrders } from '@verone/consultations';
-import { filterBillableItems, countUnpricedLines } from '@verone/consultations';
+import { useConsultationSupplierCosts } from '@verone/consultations';
+import {
+  computeItemsEconomics,
+  countUnpricedLines,
+  filterBillableItems,
+  resolveConsultationTaxRate,
+  withResolvedPrices,
+} from '@verone/consultations';
 import { useQuotes } from '@verone/finance/hooks';
 import { useSalesOrders } from '@verone/orders';
 
@@ -57,7 +64,7 @@ export function useConsultationDetail(consultationId: string) {
     consultationItems,
     loading: itemsLoading,
     error: itemsError,
-    calculateTotal,
+    calculateTotal: calculateItemsTotal,
     fetchConsultationItems,
     addItem,
     updateItem,
@@ -65,6 +72,16 @@ export function useConsultationDetail(consultationId: string) {
     toggleFreeItem,
     getTotalItemsCount,
   } = useConsultationItems(consultationId);
+
+  // BO-CONSULT-MULTI-001 : le total des documents suit la marge par défaut
+  const calculateTotal = () =>
+    calculateItemsTotal(consultation, supplierCostInputs);
+
+  // Frais par fournisseur : chargés ici une seule fois. Ils entrent dans le
+  // prix de revient, donc dans le prix produit par la marge — l'écran, le
+  // devis, la commande et les deux PDF doivent partir des mêmes frais.
+  const { supplierCosts, supplierCostInputs, upsertSupplierCost } =
+    useConsultationSupplierCosts(consultationId);
 
   const { images } = useConsultationImages({ consultationId, autoFetch: true });
 
@@ -99,6 +116,7 @@ export function useConsultationDetail(consultationId: string) {
     refetchLinkedQuotes,
     fetchHistory,
     deleteQuote,
+    supplierCosts: supplierCostInputs,
   });
 
   useEffect(() => {
@@ -196,8 +214,18 @@ export function useConsultationDetail(consultationId: string) {
     if (!consultation || consultationItems.length === 0) return;
     setCreatingOrder(true);
     try {
+      // BO-CONSULT-MULTI-001 : prix saisi, sinon prix produit par la marge
+      const pricedItems = withResolvedPrices(
+        consultationItems,
+        computeItemsEconomics(
+          consultationItems,
+          consultation,
+          supplierCostInputs
+        )
+      );
+
       // Décision 2 BO-CONSULT-P2-001 : refus explicite si prix manquants
-      const n = countUnpricedLines(consultationItems);
+      const n = countUnpricedLines(pricedItems);
       if (n > 0) {
         toast.error(`Prix de vente à fixer pour ${n} ligne(s)`);
         return;
@@ -209,11 +237,13 @@ export function useConsultationDetail(consultationId: string) {
         return;
       }
 
-      const items = filterBillableItems(consultationItems).map(item => ({
+      // BO-CONSULT-MULTI-001 : taux de la consultation, plus de 20 % en dur
+      const taxRate = resolveConsultationTaxRate(consultation);
+      const items = filterBillableItems(pricedItems).map(item => ({
         product_id: item.product_id,
         quantity: item.quantity,
         unit_price_ht: item.unit_price,
-        tax_rate: 0.2,
+        tax_rate: taxRate,
         discount_percentage: 0,
         eco_tax: 0,
       }));
@@ -264,6 +294,9 @@ export function useConsultationDetail(consultationId: string) {
     historyEvents,
     historyLoading,
     calculateTotal,
+    supplierCosts,
+    supplierCostInputs,
+    upsertSupplierCost,
     // Modal states
     showEditModal,
     setShowEditModal,

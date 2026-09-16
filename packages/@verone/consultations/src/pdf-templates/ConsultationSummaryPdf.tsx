@@ -16,7 +16,13 @@ import type { ClientConsultation } from '../hooks/use-consultations';
 import type { ConsultationItem } from '../hooks/use-consultations';
 import type { ConsultationImage } from '../hooks/use-consultation-images';
 import { filterClientVisibleItems } from '../lib/consultation-order-guards';
-import { computeConsultationEconomics } from '../lib/consultation-economics';
+import {
+  CONSULTATION_PROPOSAL_VALIDITY_DAYS,
+  computeItemsEconomics,
+  consultationProposalValidUntil,
+  resolveConsultationTvaPercentage,
+} from '../lib/consultation-economics-input';
+import type { SupplierCostInput } from '../lib/consultation-supplier-costs';
 
 // ── Client info shape (mirror of resolveClientInfo) ──────────────────
 export interface ConsultationPdfClientInfo {
@@ -51,6 +57,8 @@ export interface ConsultationSummaryPdfProps {
   totalHT: number;
   clientName: string;
   clientInfo?: ConsultationPdfClientInfo | null;
+  /** Frais par fournisseur — entrent dans le prix produit par la marge. */
+  supplierCosts?: SupplierCostInput[];
   preloadedImages?: {
     consultationImages: Array<{ id: string; base64: string }>;
     productImages: Record<string, string>;
@@ -65,6 +73,7 @@ export function ConsultationSummaryPdf({
   totalHT,
   clientName,
   clientInfo,
+  supplierCosts = [],
   preloadedImages,
 }: ConsultationSummaryPdfProps) {
   const now = new Date().toLocaleDateString('fr-FR', {
@@ -74,32 +83,19 @@ export function ConsultationSummaryPdf({
   });
 
   const proposalRef = `PROP-${consultation.id.slice(0, 8).toUpperCase()}`;
+  const validUntil = consultationProposalValidUntil();
   const productBase64 = preloadedImages?.productImages ?? {};
   // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du PDF client
   // Décision D5 (BO-PRODUCTS-P8-001) : lignes de produits retirés exclues aussi
   const activeItems = filterClientVisibleItems(items);
   // Total HT via totals.billed (décision 5 BO-CONSULT-P2-001 — source unique)
-  const { lines: econLines, totals: economics } = computeConsultationEconomics(
-    activeItems
-      .filter(item => item.quantity > 0)
-      .map(item => ({
-        id: item.id,
-        quantity: item.quantity,
-        unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
-        ecoTax: item.product?.eco_tax_default ?? 0,
-        shippingCost: item.shipping_cost ?? 0,
-        sellingShippingCost: item.selling_shipping_cost ?? 0,
-        proposedPrice: item.unit_price ?? null,
-        isFree: item.is_free,
-        isSample: item.is_sample,
-        status: item.status ?? 'pending',
-        supplierId: item.product?.supplier_id ?? null,
-      }))
+  const { totals: economics, byItemId: econByItemId } = computeItemsEconomics(
+    activeItems,
+    consultation,
+    supplierCosts
   );
-  const econByItemId = new Map(econLines.map(l => [l.lineId, l]));
   const computedTotalHT = economics.billed;
-  const tvaRate =
-    consultation.tva_rate != null ? Number(consultation.tva_rate) : 0;
+  const tvaRate = resolveConsultationTvaPercentage(consultation);
   const tvaAmount = (computedTotalHT * tvaRate) / 100;
   const totalTTC = computedTotalHT + tvaAmount;
   // Param totalHT conservé pour compatibilité appellants (unused en interne)
@@ -220,8 +216,9 @@ export function ConsultationSummaryPdf({
         ) : (
           <View>
             {activeItems.map(item => {
-              const unitPrice = item.unit_price; // null → « À fixer » (affichage)
               const econ = econByItemId.get(item.id);
+              // Prix saisi, sinon prix produit par la marge ; null → « À fixer »
+              const unitPrice = econ?.unitPrice ?? item.unit_price;
               // billedAmount : 0 si gratuit ou prix non fixé (décision 5)
               const lineTotal =
                 econ?.billedAmount && econ.billedAmount > 0
@@ -301,7 +298,7 @@ export function ConsultationSummaryPdf({
             {tvaRate > 0 && (
               <View style={veroneStyles.totalBarPearl}>
                 <Text style={veroneStyles.totalLabelPearl}>
-                  TVA ({String(consultation.tva_rate)} %)
+                  TVA ({tvaRate} %)
                 </Text>
                 <Text style={veroneStyles.totalValuePearl}>
                   {formatVeronePrice(tvaAmount, 2)}
@@ -323,7 +320,8 @@ export function ConsultationSummaryPdf({
         <View style={s.conditionsBlock}>
           <Text style={[s.partyTitle, { marginBottom: 4 }]}>Conditions</Text>
           <Text style={s.conditionsLine}>
-            · Proposition valable 30 jours à compter de la date d&apos;émission
+            · Proposition valable {CONSULTATION_PROPOSAL_VALIDITY_DAYS} jours,
+            soit jusqu&apos;au {validUntil}
           </Text>
           <Text style={s.conditionsLine}>
             · Prix indiqués hors taxes, sauf mention contraire

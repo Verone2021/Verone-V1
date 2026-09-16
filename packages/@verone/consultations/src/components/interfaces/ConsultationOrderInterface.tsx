@@ -8,7 +8,12 @@ import { SourcingProductModal } from '@verone/products/components/sourcing/Sourc
 import { Alert, AlertDescription } from '@verone/ui';
 import { Plus, Sparkles, ShoppingCart, Calculator } from 'lucide-react';
 
-import { computeConsultationEconomics } from '../../lib/consultation-economics';
+import {
+  computeItemsEconomics,
+  resolveConsultationTvaPercentage,
+  type ConsultationEconomicsSettingsSource,
+  type ConsultationTaxSource,
+} from '../../lib/consultation-economics-input';
 
 import type {
   ConsultationItem,
@@ -16,12 +21,40 @@ import type {
   UpdateConsultationItemData,
 } from '@verone/consultations/hooks';
 
+import type {
+  ConsultationNeed,
+  CreateConsultationNeedData,
+} from '../../hooks/use-consultation-needs';
+
 import { ConsultationMarginKpis } from './ConsultationMarginKpis';
+import { ConsultationNeedsCard } from './ConsultationNeedsCard';
 import { ConsultationProductsTable } from './ConsultationProductsTable';
+import type {
+  ConsultationSupplierCost,
+  UpsertSupplierCostData,
+} from '../../hooks/use-consultation-supplier-costs';
+import type { SupplierCostInput } from '../../lib/consultation-supplier-costs';
+
+import {
+  ConsultationSupplierCostsCard,
+  type ConsultationSupplierRef,
+} from './ConsultationSupplierCostsCard';
 
 // Décision 1 BO-CONSULT-P2-001 : items + mutations via props (source unique dans page.tsx)
 interface ConsultationOrderInterfaceProps {
   consultationId: string;
+  /** Consultation porteuse des réglages (marge par défaut, TVA). */
+  consultation?:
+    | (ConsultationEconomicsSettingsSource & ConsultationTaxSource)
+    | null;
+  /** Frais saisis par fournisseur — chargés par la page (source unique). */
+  supplierCosts?: ConsultationSupplierCost[];
+  supplierCostInputs?: SupplierCostInput[];
+  onSaveSupplierCost?: (data: UpsertSupplierCostData) => Promise<boolean>;
+  /** Besoins du client — chargés par la page (source unique). */
+  needs?: ConsultationNeed[];
+  onAddNeed?: (data: CreateConsultationNeedData) => Promise<boolean>;
+  onRemoveNeed?: (needId: string) => Promise<boolean>;
   consultationItems: ConsultationItem[];
   loading: boolean;
   error: string | null;
@@ -38,6 +71,13 @@ interface ConsultationOrderInterfaceProps {
 
 export function ConsultationOrderInterface({
   consultationId,
+  consultation,
+  supplierCosts = [],
+  supplierCostInputs = [],
+  onSaveSupplierCost,
+  needs = [],
+  onAddNeed,
+  onRemoveNeed,
   consultationItems,
   loading,
   error,
@@ -60,6 +100,8 @@ export function ConsultationOrderInterface({
   const [editSellingShippingCost, setEditSellingShippingCost] = useState('');
   const [editCostPriceOverride, setEditCostPriceOverride] = useState('');
   const [editIsSample, setEditIsSample] = useState(false);
+  const [editMarginPercentage, setEditMarginPercentage] = useState('');
+  const [editNeedId, setEditNeedId] = useState<string>('');
 
   // Décision 1 BO-CONSULT-P2-001 : plus d'effet de re-sync local
   // (les items arrivent du parent via props — la re-sync est dans le hook parent)
@@ -78,9 +120,13 @@ export function ConsultationOrderInterface({
     setEditSellingShippingCost(item.selling_shipping_cost?.toString() ?? '0');
     setEditCostPriceOverride(item.cost_price_override?.toString() ?? '');
     setEditIsSample(item.is_sample ?? false);
+    setEditMarginPercentage(item.margin_percentage?.toString() ?? '');
+    setEditNeedId(item.need_id ?? '');
   };
 
   const saveEditItem = (itemId: string): void => {
+    const marginRaw = editMarginPercentage.trim();
+    const marginParsed = marginRaw === '' ? null : Number(marginRaw);
     void updateItem(itemId, {
       quantity: editQuantity,
       unit_price: editPrice ? parseFloat(editPrice) : undefined,
@@ -93,6 +139,12 @@ export function ConsultationOrderInterface({
         ? parseFloat(editCostPriceOverride)
         : undefined,
       is_sample: editIsSample,
+      // vide ou illisible → null : la ligne suit la marge par défaut
+      margin_percentage:
+        marginParsed !== null && Number.isFinite(marginParsed)
+          ? marginParsed
+          : null,
+      need_id: editNeedId === '' ? null : editNeedId,
     })
       .then(success => {
         if (success) setEditingItem(null);
@@ -176,25 +228,38 @@ export function ConsultationOrderInterface({
   );
   const hasAcceptedItems = acceptedItems.length > 0;
 
-  // KPIs via computeConsultationEconomics — source unique des formules B2
-  // (lignes refusées exclues, transport = total ligne, ecoTax inclus)
-  const { totals: economics } = computeConsultationEconomics(
-    consultationItems
-      .filter(item => item.quantity > 0)
-      .map(item => ({
-        id: item.id,
-        quantity: item.quantity,
-        unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
-        ecoTax: item.product?.eco_tax_default ?? 0,
-        shippingCost: item.shipping_cost ?? 0,
-        sellingShippingCost: item.selling_shipping_cost ?? 0,
-        proposedPrice: item.unit_price,
-        isFree: item.is_free,
-        isSample: item.is_sample ?? false,
-        status: item.status ?? 'pending',
-        supplierId: item.product?.supplier_id ?? null,
-      }))
+  // Calcul unique de la consultation — source des KPIs ET de chaque ligne
+  // (adaptateur partagé, réglages de la consultation inclus : marge par défaut
+  // et frais saisis par fournisseur, répartis au prorata de la valeur de ligne)
+  const {
+    totals: economics,
+    byItemId: economicsByItemId,
+    suppliers: supplierEconomics,
+  } = computeItemsEconomics(
+    consultationItems,
+    consultation,
+    supplierCostInputs
   );
+
+  // La carte « besoins » ne s'affiche que si elle sert à quelque chose
+  const hasNeedLines = consultationItems.some(item => item.need_id);
+
+  // Fournisseurs présents dans la consultation, dans l'ordre des lignes
+  const suppliers: ConsultationSupplierRef[] = [];
+  for (const item of consultationItems) {
+    const supplierId = item.product?.supplier_id;
+    if (!supplierId) continue;
+    const known = suppliers.find(s => s.supplierId === supplierId);
+    if (known) {
+      known.lineCount++;
+    } else {
+      suppliers.push({
+        supplierId,
+        supplierName: item.product?.supplier_name ?? 'Fournisseur',
+        lineCount: 1,
+      });
+    }
+  }
 
   const total = economics.revenue;
   const totalCost = economics.cost;
@@ -229,6 +294,34 @@ export function ConsultationOrderInterface({
           totalShipping={totalShipping}
           totalMargin={totalMargin}
           totalMarginPercent={totalMarginPercent}
+        />
+      )}
+
+      {/* Besoins du client et options comparées */}
+      {onAddNeed && onRemoveNeed && (needs.length > 0 || hasNeedLines) && (
+        <ConsultationNeedsCard
+          needs={needs}
+          lines={consultationItems.map(item => ({
+            id: item.id,
+            need_id: item.need_id ?? null,
+            status: item.status,
+            productName: item.product?.name ?? item.product_id,
+            quantity: item.quantity,
+          }))}
+          economicsByItemId={economicsByItemId}
+          onAdd={onAddNeed}
+          onRemove={onRemoveNeed}
+        />
+      )}
+
+      {/* Frais par fournisseur */}
+      {onSaveSupplierCost && (
+        <ConsultationSupplierCostsCard
+          suppliers={suppliers}
+          supplierCosts={supplierCosts}
+          supplierEconomics={supplierEconomics}
+          unallocatedSupplierFees={economics.unallocatedSupplierFees}
+          onSave={onSaveSupplierCost}
         />
       )}
 
@@ -270,12 +363,22 @@ export function ConsultationOrderInterface({
           editSellingShippingCost={editSellingShippingCost}
           editCostPriceOverride={editCostPriceOverride}
           editIsSample={editIsSample}
+          editMarginPercentage={editMarginPercentage}
+          editNeedId={editNeedId}
+          needs={needs}
+          economicsByItemId={economicsByItemId}
+          defaultMarginPercentage={
+            consultation?.default_margin_percentage ?? null
+          }
+          tvaPercentage={resolveConsultationTvaPercentage(consultation)}
           onSetEditQuantity={setEditQuantity}
           onSetEditPrice={setEditPrice}
           onSetEditNotes={setEditNotes}
           onSetEditShippingCost={setEditShippingCost}
           onSetEditSellingShippingCost={setEditSellingShippingCost}
           onSetEditCostPriceOverride={setEditCostPriceOverride}
+          onSetEditMarginPercentage={setEditMarginPercentage}
+          onSetEditNeedId={setEditNeedId}
           onStartEdit={startEditItem}
           onSaveEdit={saveEditItem}
           onCancelEdit={cancelEditItem}

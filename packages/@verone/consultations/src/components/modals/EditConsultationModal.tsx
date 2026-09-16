@@ -42,6 +42,8 @@ const DEFAULT_FORM: EditFormData = {
   descriptif: '',
   notes_internes: '',
   tarif_maximum: 0,
+  default_margin_percentage: '',
+  tva_rate: '',
   estimated_response_date: '',
   priority_level: 2,
   source_channel: 'website',
@@ -83,6 +85,12 @@ export function EditConsultationModal({
         descriptif: consultation.descriptif ?? '',
         notes_internes: consultation.notes_internes ?? '',
         tarif_maximum: consultation.tarif_maximum ?? 0,
+        default_margin_percentage:
+          consultation.default_margin_percentage != null
+            ? String(consultation.default_margin_percentage)
+            : '',
+        tva_rate:
+          consultation.tva_rate != null ? String(consultation.tva_rate) : '',
         estimated_response_date: consultation.estimated_response_date
           ? new Date(consultation.estimated_response_date)
               .toISOString()
@@ -208,6 +216,23 @@ export function EditConsultationModal({
       newErrors.tarif_maximum = 'Le budget ne peut pas être négatif';
     }
 
+    const margin = formData.default_margin_percentage.trim();
+    if (margin !== '') {
+      const parsed = Number(margin);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        newErrors.default_margin_percentage =
+          'La marge doit être un nombre positif';
+      }
+    }
+
+    const tva = formData.tva_rate.trim();
+    if (tva !== '') {
+      const parsed = Number(tva);
+      if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
+        newErrors.tva_rate = 'La TVA doit être comprise entre 0 et 100';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -229,6 +254,16 @@ export function EditConsultationModal({
         notes_internes: formData.notes_internes || undefined,
         tarif_maximum:
           formData.tarif_maximum > 0 ? formData.tarif_maximum : undefined,
+        // vide = on efface la marge par défaut (null), pas « ne pas toucher »
+        default_margin_percentage:
+          formData.default_margin_percentage.trim() === ''
+            ? null
+            : Number(formData.default_margin_percentage),
+        // vide = taux par défaut (20 %) résolu à la lecture
+        tva_rate:
+          formData.tva_rate.trim() === ''
+            ? undefined
+            : Number(formData.tva_rate),
         estimated_response_date: formData.estimated_response_date || undefined,
         priority_level: formData.priority_level,
         source_channel: formData.source_channel,

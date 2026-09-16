@@ -12,6 +12,8 @@
  * Sprint BO-CONSULT-P9-001 — 2026-09-13
  */
 
+import { isRetainedLine } from './consultation-line-status';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -53,7 +55,7 @@ export interface SupplierEconomics {
   supplierId: string;
   /** Frais saisis pour ce fournisseur (port + douane + autres) */
   supplierCosts: number;
-  /** Options incluses (non refusées) de ce fournisseur */
+  /** Lignes retenues de ce fournisseur (ni refusées ni simples options) */
   optionCount: number;
   /** Σ prix de vente (unitPrice × quantité) des lignes incluses facturables */
   proposedTotal: number;
@@ -75,14 +77,16 @@ export function supplierCostTotal(cost: SupplierCostInput): number {
 }
 
 /**
- * Ligne qui porte une part des frais de son fournisseur : incluse (non
- * refusée), ni gratuite ni échantillon — même règle que les frais de ligne.
+ * Ligne qui porte une part des frais de son fournisseur : retenue (ni refusée
+ * ni simple option), ni gratuite ni échantillon — même règle que les frais de
+ * ligne. Une option candidate ne compte pas dans les totaux : lui imputer des
+ * frais les ferait disparaître du prix de revient des lignes retenues.
  */
 export function isEligibleForSupplierCosts(
   line: SupplierCostLineInput
 ): boolean {
   return (
-    line.status !== 'rejected' &&
+    isRetainedLine(line.status) &&
     !line.isFree &&
     !line.isSample &&
     line.supplierId !== null
@@ -93,8 +97,9 @@ export function isEligibleForSupplierCosts(
  * Répartit les frais de chaque fournisseur sur ses seules lignes éligibles,
  * au prorata de la valeur de ligne (coût unitaire × quantité). Si toutes ces
  * lignes ont une valeur nulle (coût absent), répartition au prorata des
- * quantités. Avant le choix du client, chaque option porte sa part comme si
- * elle était retenue.
+ * quantités. Les options encore candidates en sont exclues : elles ne comptent
+ * pas dans les totaux, leur imputer des frais les retirerait du prix de
+ * revient des lignes retenues.
  */
 export function allocateSupplierCosts(
   lines: readonly SupplierCostLineInput[],
