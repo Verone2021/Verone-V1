@@ -7,7 +7,9 @@
 import { strict as assert } from 'node:assert';
 
 import {
+  CONSULTATION_PROPOSAL_VALIDITY_DAYS,
   computeItemsEconomics,
+  consultationProposalValidUntil,
   consultationToEconomicsSettings,
   itemToEconomicsInput,
   itemsToEconomicsInputs,
@@ -360,6 +362,33 @@ test('fournisseur sans ligne retenue : frais signalés comme non imputés', () =
   ]);
   assert.ok(approxEqual(totals.unallocatedSupplierFees, 80));
   assert.equal(totals.supplierFees, 0);
+});
+
+// ---------------------------------------------------------------------------
+// (g) Validité de la proposition client
+// ---------------------------------------------------------------------------
+
+console.log('\n--- (g) VALIDITÉ DE LA PROPOSITION ---');
+
+test('30 jours après l’émission, au format français', () => {
+  assert.equal(CONSULTATION_PROPOSAL_VALIDITY_DAYS, 30);
+  assert.equal(
+    consultationProposalValidUntil(new Date('2026-09-16T10:00:00Z')),
+    '16/10/2026'
+  );
+});
+
+test('passage d’une année', () => {
+  assert.equal(
+    consultationProposalValidUntil(new Date('2026-12-20T10:00:00Z')),
+    '19/01/2027'
+  );
+});
+
+test('la date d’émission n’est pas modifiée', () => {
+  const issued = new Date('2026-09-16T10:00:00Z');
+  consultationProposalValidUntil(issued);
+  assert.equal(issued.toISOString(), '2026-09-16T10:00:00.000Z');
 });
 
 report('consultation-economics-input');
