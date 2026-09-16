@@ -78,6 +78,10 @@ export interface ConsultationItem {
   margin_percentage?: number | null;
   /** Besoin du client auquel la ligne répond. null = ligne libre. */
   need_id?: string | null;
+  /** La ligne porte-t-elle une part des frais saisis pour son fournisseur ?
+   *  true par défaut ; décochée, elle sort de la répartition au prorata
+   *  (BO-CONSULT-SOURCING-001). */
+  carries_supplier_fees?: boolean;
   status: string;
   product?: {
     id: string;
@@ -152,6 +156,8 @@ export interface UpdateConsultationItemData {
   selling_shipping_cost?: number;
   /** null = prix d'achat effacé : la ligne reprend le prix d'achat du produit */
   cost_price_override?: number | null;
+  /** La ligne porte-t-elle une part des frais de son fournisseur ? */
+  carries_supplier_fees?: boolean;
   margin_percentage?: number | null;
   need_id?: string | null;
   status?: string;

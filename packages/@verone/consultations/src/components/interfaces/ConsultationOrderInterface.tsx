@@ -33,7 +33,10 @@ import type {
   ConsultationSupplierCost,
   UpsertSupplierCostData,
 } from '../../hooks/use-consultation-supplier-costs';
-import type { SupplierCostInput } from '../../lib/consultation-supplier-costs';
+import {
+  isEligibleForSupplierCosts,
+  type SupplierCostInput,
+} from '../../lib/consultation-supplier-costs';
 
 import {
   ConsultationSupplierCostsCard,
@@ -259,23 +262,52 @@ export function ConsultationOrderInterface({
   for (const item of consultationItems) {
     const supplierId = item.product?.supplier_id;
     if (!supplierId) continue;
+    const lineRef = {
+      itemId: item.id,
+      productName: item.product?.name ?? 'Produit',
+      carriesFees: item.carries_supplier_fees ?? true,
+      // Refusée, option candidate, gratuite ou échantillon : jamais concernée
+      ineligible: !isEligibleForSupplierCosts({
+        id: item.id,
+        quantity: item.quantity,
+        unitCost: null,
+        status: item.status,
+        isFree: item.is_free,
+        isSample: item.is_sample,
+        supplierId,
+      }),
+    };
     const known = suppliers.find(s => s.supplierId === supplierId);
     if (known) {
       known.lineCount++;
+      known.lines.push(lineRef);
     } else {
       suppliers.push({
         supplierId,
         supplierName: item.product?.supplier_name ?? 'Fournisseur',
         lineCount: 1,
+        lines: [lineRef],
       });
     }
   }
 
+  // Coche/décoche : une ligne décochée sort de la répartition au prorata
+  const toggleLineFees = (itemId: string, carriesFees: boolean): void => {
+    void updateItem(itemId, { carries_supplier_fees: carriesFees }).catch(
+      err => {
+        console.error(
+          '[ConsultationOrderInterface] toggleLineFees failed:',
+          err
+        );
+      }
+    );
+  };
+
   // Lignes dont le produit n'a pas de fournisseur : aucun frais ne peut leur
   // être affecté, le bloc frais le dit au lieu de les passer sous silence.
-  const linesWithoutSupplier = consultationItems.filter(
-    item => !item.product?.supplier_id
-  ).length;
+  const productsWithoutSupplier = consultationItems
+    .filter(item => !item.product?.supplier_id)
+    .map(item => item.product?.name ?? 'Produit');
 
   const total = economics.revenue;
   const totalCost = economics.cost;
@@ -334,7 +366,8 @@ export function ConsultationOrderInterface({
       {onSaveSupplierCost && (
         <ConsultationSupplierCostsCard
           suppliers={suppliers}
-          linesWithoutSupplier={linesWithoutSupplier}
+          productsWithoutSupplier={productsWithoutSupplier}
+          onToggleLineFees={toggleLineFees}
           supplierCosts={supplierCosts}
           supplierEconomics={supplierEconomics}
           unallocatedSupplierFees={economics.unallocatedSupplierFees}

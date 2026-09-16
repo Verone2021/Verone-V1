@@ -36,6 +36,8 @@ export interface ConsultationEconomicsLineInput {
   isSample: boolean;
   status: string;
   supplierId: string | null;
+  /** La ligne porte-t-elle les frais de son fournisseur ? défaut true */
+  carriesSupplierFees?: boolean;
   /** Marge par défaut de la ligne (prioritaire sur le réglage global) */
   marginPercentage?: number | null;
 }

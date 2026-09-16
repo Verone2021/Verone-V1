@@ -41,6 +41,8 @@ export interface ConsultationEconomicsItemLike {
   shipping_cost?: number | null;
   selling_shipping_cost?: number | null;
   cost_price_override?: number | null;
+  /** La ligne porte-t-elle les frais de son fournisseur ? défaut true. */
+  carries_supplier_fees?: boolean | null;
   /** Marge de la ligne en % — prioritaire sur la marge par défaut. */
   margin_percentage?: number | null;
   product?: {
@@ -114,6 +116,7 @@ export function itemToEconomicsInput(
     isSample: item.is_sample,
     status: item.status,
     supplierId: item.product?.supplier_id ?? null,
+    carriesSupplierFees: item.carries_supplier_fees ?? true,
     marginPercentage: item.margin_percentage ?? null,
   };
 }

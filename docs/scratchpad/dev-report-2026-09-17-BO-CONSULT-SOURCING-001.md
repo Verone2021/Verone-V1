@@ -175,3 +175,58 @@ exception possible. Il faudrait un marqueur par ligne (`consultation_products`,
 colonne booléenne type `carries_supplier_fees` à `true` par défaut) + une case à
 cocher par produit dans le bloc frais. **En attente du feu vert de Roméo**
 (modification de base de données).
+
+---
+
+# Choisir les produits qui portent les frais d'un fournisseur (17/09)
+
+Feu vert de Roméo, demande précisée : « s'il n'y a qu'une ligne de produits, elle
+est impactée automatiquement ; s'il y en a deux, on peut choisir, on peut décocher ».
+
+## Base de données
+
+Migration `20260917000000_bo_consult_sourcing_001_carries_supplier_fees.sql` :
+colonne `consultation_products.carries_supplier_fees BOOLEAN NOT NULL DEFAULT true`,
+avec commentaire. Un marqueur sur la ligne existante, pas de table d'association :
+une ligne appartient déjà à un seul fournisseur, via son produit
+(`database-modeling-patterns.md` règle 1). Appliquée hors fenêtre 07-17 h UTC
+(ADR-041), inscrite au carnet `supabase_migrations.schema_migrations`, types
+`packages/@verone/types/src/supabase.ts` régénérés dans la même PR (checklist
+`workflow.md` question 4). Les 8 lignes existantes sont à `true` : comportement
+inchangé.
+
+## Code
+
+- `consultation-supplier-costs.ts` : `SupplierCostLineInput.carriesSupplierFees`
+  (optionnel, absent = true) et `isEligibleForSupplierCosts` qui écarte les lignes
+  décochées. Les frais d'une ligne décochée se reportent sur les autres lignes du
+  fournisseur ; si toutes sont décochées, ils partent en « non répartis » (alerte
+  existante), jamais perdus en silence.
+- `consultation-economics.ts` / `consultation-economics-input.ts` : champ transporté
+  jusqu'au calcul.
+- `use-consultation-items.ts` + `consultations-types.ts` : chargement, écriture et
+  fusion optimiste.
+- `ConsultationSupplierCostsCard` : ligne « Produits concernés » avec une case par
+  produit, **affichée seulement quand le fournisseur a plus d'une ligne**. Les
+  lignes refusées, gratuites ou échantillons sont grisées et non cochables.
+
+## Tests
+
+- 17 tests unitaires au vert sur la répartition (4 nouveaux : report sur les autres
+  lignes, champ absent = comportement d'avant, toutes décochées, prix de revient
+  de la ligne décochée).
+- `type-check` + `lint` verts sur `@verone/consultations`, `@verone/types`,
+  `@verone/back-office`.
+- À l'écran (consultation « Pokawa », deux fauteuils Opjet ajoutés puis retirés) :
+  170 € de frais (port 100 + douane 50 + manutention 20) répartis 43,97 € / 126,03 € ;
+  après décochage du premier produit, **170,00 € portés entièrement par le second**
+  et le premier revenu à son coût nu. Données de test supprimées, consultation
+  revérifiée en base (1 ligne, 0 frais, valeurs d'origine).
+
+## Au passage — « le plateau Pokawa a déjà un fournisseur »
+
+Vérifié en base : `PRD-0313` a `supplier_id = NULL`, aucun fournisseur candidat
+dans `sourcing_candidate_suppliers`, aucun `manufacturer`. L'écran disait vrai.
+Le bloc nomme désormais les produits concernés (« Sofá Modular Lounge — aucun
+fournisseur n'est enregistré sur cette fiche produit… ») au lieu d'un simple
+compteur, pour qu'on sache lequel corriger.

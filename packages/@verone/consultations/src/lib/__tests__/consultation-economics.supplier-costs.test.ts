@@ -347,4 +347,80 @@ test('computeLineEconomics : part fournisseur passée en paramètre', () => {
   assertApprox(r.defaultUnitPrice, 12.75, 'prix par défaut');
 });
 
+// ---------------------------------------------------------------------------
+// (u) Lignes décochées — BO-CONSULT-SOURCING-001
+// ---------------------------------------------------------------------------
+// Roméo 17/09 : avec plusieurs produits chez un fournisseur, on doit pouvoir
+// sortir de la répartition ceux qui ne sont pas concernés par le port ou la
+// douane. Avec un seul produit, il porte les frais d'office.
+
+console.log('\n--- (u) LIGNES DÉCOCHÉES ---');
+
+test('ligne décochée : les frais se reportent sur les autres lignes du fournisseur', () => {
+  const allocation = allocateSupplierCosts(
+    [
+      makeLine({ id: 'a1', supplierId: 'sup-a', quantity: 1, unitCost: 10 }),
+      makeLine({
+        id: 'a2',
+        supplierId: 'sup-a',
+        quantity: 1,
+        unitCost: 30,
+        carriesSupplierFees: false,
+      }),
+    ],
+    [costs('sup-a', 40)]
+  );
+
+  assertApprox(allocation.shares.get('a1') ?? null, 40, 'a1 porte tout');
+  assert.equal(allocation.shares.has('a2'), false, 'a2 décochée : aucune part');
+  assert.equal(allocation.unallocated, 0);
+});
+
+test("champ absent : la ligne porte les frais (comportement d'avant)", () => {
+  const allocation = allocateSupplierCosts(
+    [makeLine({ id: 'a1', supplierId: 'sup-a', quantity: 1, unitCost: 10 })],
+    [costs('sup-a', 25)]
+  );
+
+  assertApprox(allocation.shares.get('a1') ?? null, 25, 'a1 porte les frais');
+});
+
+test('toutes les lignes décochées : frais non répartis, jamais perdus en silence', () => {
+  const allocation = allocateSupplierCosts(
+    [
+      makeLine({
+        id: 'a1',
+        supplierId: 'sup-a',
+        quantity: 1,
+        unitCost: 10,
+        carriesSupplierFees: false,
+      }),
+    ],
+    [costs('sup-a', 25)]
+  );
+
+  assert.equal(allocation.shares.size, 0);
+  assert.equal(allocation.unallocated, 25);
+});
+
+test('décochage et prix de revient : la ligne décochée garde son coût nu', () => {
+  const r = computeConsultationEconomics(
+    [
+      makeLine({ id: 'a1', supplierId: 'sup-a', quantity: 1, unitCost: 10 }),
+      makeLine({
+        id: 'a2',
+        supplierId: 'sup-a',
+        quantity: 1,
+        unitCost: 30,
+        carriesSupplierFees: false,
+      }),
+    ],
+    { supplierCosts: [costs('sup-a', 40)] }
+  );
+
+  assertApprox(r.lines[0].unitCostPrice, 50, 'a1 : 10 + 40 de frais');
+  assertApprox(r.lines[1].unitCostPrice, 30, 'a2 : coût nu');
+  assertApprox(r.totals.supplierFees, 40, 'total des parts réparties');
+});
+
 report('SUPPLIER COSTS');

@@ -54,6 +54,7 @@ export function useConsultationItems(consultationId?: string) {
           selling_shipping_cost,
           cost_price_override,
           margin_percentage,
+          carries_supplier_fees,
           need_id,
           product:products(
             id,
@@ -115,6 +116,7 @@ export function useConsultationItems(consultationId?: string) {
           selling_shipping_cost: item.selling_shipping_cost ?? 0,
           cost_price_override: item.cost_price_override ?? undefined,
           margin_percentage: item.margin_percentage ?? null,
+          carries_supplier_fees: item.carries_supplier_fees ?? true,
           need_id: item.need_id ?? null,
           product: productData
             ? {
@@ -242,6 +244,8 @@ export function useConsultationItems(consultationId?: string) {
         updateData.is_sample = updates.is_sample;
       if (updates.margin_percentage !== undefined)
         updateData.margin_percentage = updates.margin_percentage;
+      if (updates.carries_supplier_fees !== undefined)
+        updateData.carries_supplier_fees = updates.carries_supplier_fees;
       if (updates.need_id !== undefined) updateData.need_id = updates.need_id;
       if (updates.status !== undefined) updateData.status = updates.status;
 
@@ -278,6 +282,8 @@ export function useConsultationItems(consultationId?: string) {
                   updates.margin_percentage !== undefined
                     ? updates.margin_percentage
                     : item.margin_percentage,
+                carries_supplier_fees:
+                  updates.carries_supplier_fees ?? item.carries_supplier_fees,
                 need_id:
                   updates.need_id !== undefined
                     ? updates.need_id

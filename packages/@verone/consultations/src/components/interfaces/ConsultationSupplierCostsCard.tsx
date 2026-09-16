@@ -18,16 +18,33 @@ export interface ConsultationSupplierRef {
   supplierName: string;
   /** Nombre de lignes de la consultation portées par ce fournisseur. */
   lineCount: number;
+  /**
+   * Lignes de ce fournisseur, pour choisir lesquelles portent ses frais.
+   * Avec une seule ligne, elle les porte d'office : aucune case n'est montrée.
+   */
+  lines: ConsultationSupplierLineRef[];
+}
+
+/** Ligne d'un fournisseur présentée pour cocher/décocher les frais. */
+export interface ConsultationSupplierLineRef {
+  itemId: string;
+  productName: string;
+  /** false = l'utilisateur l'a sortie de la répartition. */
+  carriesFees: boolean;
+  /** true = ligne refusée, gratuite ou échantillon : jamais concernée. */
+  ineligible: boolean;
 }
 
 interface ConsultationSupplierCostsCardProps {
   suppliers: ConsultationSupplierRef[];
-  /** Lignes dont le produit n'a pas encore de fournisseur : elles ne peuvent porter aucun frais. */
-  linesWithoutSupplier?: number;
+  /** Produits sans fournisseur enregistré : ils ne peuvent porter aucun frais. */
+  productsWithoutSupplier?: string[];
   supplierCosts: ConsultationSupplierCost[];
   supplierEconomics: SupplierEconomics[];
   unallocatedSupplierFees: number;
   onSave: (data: UpsertSupplierCostData) => Promise<boolean>;
+  /** Coche/décoche une ligne dans la répartition des frais de son fournisseur. */
+  onToggleLineFees?: (itemId: string, carriesFees: boolean) => void;
 }
 
 // ── Component ──────────────────────────────────────────────────────
@@ -39,11 +56,12 @@ interface ConsultationSupplierCostsCardProps {
  */
 export function ConsultationSupplierCostsCard({
   suppliers,
-  linesWithoutSupplier = 0,
+  productsWithoutSupplier = [],
   supplierCosts,
   supplierEconomics,
   unallocatedSupplierFees,
   onSave,
+  onToggleLineFees,
 }: ConsultationSupplierCostsCardProps) {
   const [editingSupplier, setEditingSupplier] = useState<string | null>(null);
   const [shipping, setShipping] = useState('');
@@ -52,7 +70,9 @@ export function ConsultationSupplierCostsCard({
   const [otherLabel, setOtherLabel] = useState('');
   const [saving, setSaving] = useState(false);
 
-  if (suppliers.length === 0 && linesWithoutSupplier === 0) return null;
+  if (suppliers.length === 0 && productsWithoutSupplier.length === 0) {
+    return null;
+  }
 
   const costBySupplier = new Map(
     supplierCosts.map(cost => [cost.supplier_id, cost])
@@ -132,112 +152,152 @@ export function ConsultationSupplierCostsCard({
             : 'Autres';
 
           return (
-            <div
-              key={supplier.supplierId}
-              className="px-4 py-2.5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
-            >
-              <div className="min-w-0">
-                <p className="text-[12px] font-semibold text-zinc-900 truncate">
-                  {supplier.supplierName}
-                </p>
-                <p className="text-[10px] text-zinc-400">
-                  {supplier.lineCount} ligne
-                  {supplier.lineCount > 1 ? 's' : ''}
-                  {total > 0 && ` · ${total.toFixed(2)}€ de frais`}
-                  {econ?.costPriceTotal
-                    ? ` · revient ${econ.costPriceTotal.toFixed(2)}€`
-                    : ''}
-                </p>
+            <div key={supplier.supplierId} className="px-4 py-2.5">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[12px] font-semibold text-zinc-900 truncate">
+                    {supplier.supplierName}
+                  </p>
+                  <p className="text-[10px] text-zinc-400">
+                    {supplier.lineCount} ligne
+                    {supplier.lineCount > 1 ? 's' : ''}
+                    {total > 0 && ` · ${total.toFixed(2)}€ de frais`}
+                    {econ?.costPriceTotal
+                      ? ` · revient ${econ.costPriceTotal.toFixed(2)}€`
+                      : ''}
+                  </p>
+                </div>
+
+                {isEditing ? (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={shipping}
+                      onChange={e => setShipping(e.target.value)}
+                      placeholder="Port"
+                      title="Transport (€ HT)"
+                      className="w-20 h-8 text-[11px] px-1.5 py-0"
+                    />
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={customs}
+                      onChange={e => setCustoms(e.target.value)}
+                      placeholder="Douane"
+                      title="Douane (€ HT)"
+                      className="w-20 h-8 text-[11px] px-1.5 py-0"
+                    />
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={other}
+                      onChange={e => setOther(e.target.value)}
+                      placeholder="Autres"
+                      title="Autres frais (€ HT)"
+                      className="w-20 h-8 text-[11px] px-1.5 py-0"
+                    />
+                    <Input
+                      type="text"
+                      value={otherLabel}
+                      onChange={e => setOtherLabel(e.target.value)}
+                      placeholder="Intitulé (manutention…)"
+                      title="À quoi correspondent les autres frais"
+                      className="w-40 h-8 text-[11px] px-1.5 py-0"
+                    />
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => save(supplier.supplierId)}
+                      className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded border border-emerald-200 text-emerald-600 hover:bg-emerald-50 disabled:opacity-40"
+                      aria-label="Enregistrer les frais"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingSupplier(null)}
+                      className="h-11 px-3 md:h-8 text-[11px] text-zinc-500 hover:bg-zinc-100 rounded"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <span className="text-[11px] text-zinc-500">
+                      {cost
+                        ? `Port ${cost.shipping_cost_ht.toFixed(2)}€ · Douane ${cost.customs_cost_ht.toFixed(2)}€ · ${otherName} ${cost.other_cost_ht.toFixed(2)}€`
+                        : 'Aucun frais saisi'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => startEdit(supplier.supplierId)}
+                      className="h-11 px-3 md:h-8 text-[11px] font-bold uppercase tracking-wider text-blue-600 hover:bg-blue-50 rounded"
+                    >
+                      {cost ? 'Modifier' : 'Saisir'}
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {isEditing ? (
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={shipping}
-                    onChange={e => setShipping(e.target.value)}
-                    placeholder="Port"
-                    title="Transport (€ HT)"
-                    className="w-20 h-8 text-[11px] px-1.5 py-0"
-                  />
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={customs}
-                    onChange={e => setCustoms(e.target.value)}
-                    placeholder="Douane"
-                    title="Douane (€ HT)"
-                    className="w-20 h-8 text-[11px] px-1.5 py-0"
-                  />
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={other}
-                    onChange={e => setOther(e.target.value)}
-                    placeholder="Autres"
-                    title="Autres frais (€ HT)"
-                    className="w-20 h-8 text-[11px] px-1.5 py-0"
-                  />
-                  <Input
-                    type="text"
-                    value={otherLabel}
-                    onChange={e => setOtherLabel(e.target.value)}
-                    placeholder="Intitulé (manutention…)"
-                    title="À quoi correspondent les autres frais"
-                    className="w-40 h-8 text-[11px] px-1.5 py-0"
-                  />
-                  <button
-                    type="button"
-                    disabled={saving}
-                    onClick={() => save(supplier.supplierId)}
-                    className="h-11 w-11 md:h-8 md:w-8 flex items-center justify-center rounded border border-emerald-200 text-emerald-600 hover:bg-emerald-50 disabled:opacity-40"
-                    aria-label="Enregistrer les frais"
-                  >
-                    <Check className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingSupplier(null)}
-                    className="h-11 px-3 md:h-8 text-[11px] text-zinc-500 hover:bg-zinc-100 rounded"
-                  >
-                    Annuler
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <span className="text-[11px] text-zinc-500">
-                    {cost
-                      ? `Port ${cost.shipping_cost_ht.toFixed(2)}€ · Douane ${cost.customs_cost_ht.toFixed(2)}€ · ${otherName} ${cost.other_cost_ht.toFixed(2)}€`
-                      : 'Aucun frais saisi'}
+              {/* Un seul produit : il porte les frais d'office. Plusieurs :
+                  on choisit ceux qui sont concernés (demande Roméo 17/09). */}
+              {supplier.lines.length > 1 && (
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                    Produits concernés
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => startEdit(supplier.supplierId)}
-                    className="h-11 px-3 md:h-8 text-[11px] font-bold uppercase tracking-wider text-blue-600 hover:bg-blue-50 rounded"
-                  >
-                    {cost ? 'Modifier' : 'Saisir'}
-                  </button>
+                  {supplier.lines.map(line => (
+                    <label
+                      key={line.itemId}
+                      title={
+                        line.ineligible
+                          ? 'Ligne refusée, gratuite ou échantillon : jamais concernée par les frais'
+                          : 'Décocher pour sortir ce produit de la répartition des frais'
+                      }
+                      className={`flex items-center gap-1.5 text-[11px] ${
+                        line.ineligible
+                          ? 'text-zinc-300 cursor-not-allowed'
+                          : 'text-zinc-600 cursor-pointer'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={line.carriesFees && !line.ineligible}
+                        disabled={line.ineligible || !onToggleLineFees}
+                        onChange={e =>
+                          onToggleLineFees?.(line.itemId, e.target.checked)
+                        }
+                        className="h-4 w-4 rounded border-zinc-300 accent-emerald-600"
+                      />
+                      <span className="max-w-[180px] truncate">
+                        {line.productName}
+                      </span>
+                    </label>
+                  ))}
                 </div>
               )}
             </div>
           );
         })}
 
-        {linesWithoutSupplier > 0 && (
+        {productsWithoutSupplier.length > 0 && (
           <div className="px-4 py-2.5">
             <p className="text-[12px] font-semibold text-zinc-500">
               Sans fournisseur
             </p>
             <p className="text-[10px] text-zinc-400">
-              {linesWithoutSupplier} ligne
-              {linesWithoutSupplier > 1 ? 's' : ''} · port et douane impossibles
-              ici tant qu&apos;aucun fournisseur n&apos;est rattaché au produit.
-              En attendant, le transport se saisit directement sur la ligne,
-              colonne Transport.
+              {productsWithoutSupplier.join(' · ')} — aucun fournisseur
+              n&apos;est enregistré sur{' '}
+              {productsWithoutSupplier.length > 1
+                ? 'ces fiches produit'
+                : 'cette fiche produit'}
+              , donc ni port ni douane ne peuvent leur être affectés ici.
+              Rattache un fournisseur au produit, ou saisis le transport
+              directement sur la ligne, colonne Transport.
             </p>
           </div>
         )}

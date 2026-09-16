@@ -2239,6 +2239,7 @@ export type Database = {
       };
       consultation_products: {
         Row: {
+          carries_supplier_fees: boolean;
           consultation_id: string;
           cost_price_override: number | null;
           created_at: string | null;
@@ -2259,6 +2260,7 @@ export type Database = {
           status: string | null;
         };
         Insert: {
+          carries_supplier_fees?: boolean;
           consultation_id: string;
           cost_price_override?: number | null;
           created_at?: string | null;
@@ -2279,6 +2281,7 @@ export type Database = {
           status?: string | null;
         };
         Update: {
+          carries_supplier_fees?: boolean;
           consultation_id?: string;
           cost_price_override?: number | null;
           created_at?: string | null;
