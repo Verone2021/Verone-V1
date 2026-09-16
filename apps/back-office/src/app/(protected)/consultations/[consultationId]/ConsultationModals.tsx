@@ -9,6 +9,7 @@ import type {
   ConsultationQuote,
 } from '@verone/consultations';
 import { ConsultationSummaryPdf } from '@verone/consultations';
+import type { SupplierCostInput } from '@verone/consultations';
 import { EditConsultationModal } from '@verone/consultations';
 import { SendConsultationEmailModal } from '@verone/consultations';
 import { QuoteCreateFromOrderModal } from '@verone/finance/components';
@@ -53,6 +54,8 @@ interface ConsultationModalsProps {
   linkedQuotes: ConsultationQuote[];
   linkedSalesOrdersCount: number;
   calculateTotal: () => number;
+  /** Frais par fournisseur — mêmes chiffres que l'écran et le devis. */
+  supplierCosts: SupplierCostInput[];
   // Edit modal
   showEditModal: boolean;
   setShowEditModal: (v: boolean) => void;
@@ -91,6 +94,7 @@ export function ConsultationModals({
   linkedQuotes,
   linkedSalesOrdersCount,
   calculateTotal,
+  supplierCosts,
   showEditModal,
   setShowEditModal,
   handleUpdateConsultation,
@@ -143,6 +147,7 @@ export function ConsultationModals({
             items={consultationItems}
             images={images}
             totalHT={calculateTotal()}
+            supplierCosts={supplierCosts}
             clientName={clientName}
             clientInfo={clientInfo}
             preloadedImages={emailPdfImages}
@@ -274,6 +279,7 @@ export function ConsultationModals({
               items={consultationItems}
               images={images}
               totalHT={calculateTotal()}
+              supplierCosts={supplierCosts}
               clientName={clientName}
               clientInfo={clientInfo}
               preloadedImages={pdfImages}

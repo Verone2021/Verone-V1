@@ -9,7 +9,6 @@ import {
   ConsultationOrderInterface,
   ConsultationTimeline,
   useConsultationNeeds,
-  useConsultationSupplierCosts,
 } from '@verone/consultations';
 import { ConsultationMarginReportPdf } from '@verone/consultations/pdf-templates';
 import { createClient } from '@verone/utils/supabase/client';
@@ -50,8 +49,7 @@ export default function ConsultationDetailPage() {
   >([]);
   const [creatingPO, setCreatingPO] = useState(false);
 
-  const { supplierCosts, supplierCostInputs, upsertSupplierCost } =
-    useConsultationSupplierCosts(consultationId);
+  const { supplierCosts, supplierCostInputs, upsertSupplierCost } = detail;
   const { needs, addNeed, removeNeed } = useConsultationNeeds(consultationId);
   const { createOrder: createPurchaseOrder } = usePurchaseOrders();
 
@@ -376,6 +374,7 @@ export default function ConsultationDetailPage() {
               items={detail.consultationItems}
               clientName={clientName}
               clientInfo={detail.clientInfo}
+              supplierCosts={supplierCostInputs}
             />
           }
         />
@@ -389,6 +388,7 @@ export default function ConsultationDetailPage() {
         linkedQuotes={detail.linkedQuotes}
         linkedSalesOrdersCount={detail.linkedSalesOrders.length}
         calculateTotal={detail.calculateTotal}
+        supplierCosts={supplierCostInputs}
         showEditModal={detail.showEditModal}
         setShowEditModal={detail.setShowEditModal}
         handleUpdateConsultation={detail.handleUpdateConsultation}

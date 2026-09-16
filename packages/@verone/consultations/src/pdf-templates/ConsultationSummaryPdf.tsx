@@ -17,9 +17,12 @@ import type { ConsultationItem } from '../hooks/use-consultations';
 import type { ConsultationImage } from '../hooks/use-consultation-images';
 import { filterClientVisibleItems } from '../lib/consultation-order-guards';
 import {
+  CONSULTATION_PROPOSAL_VALIDITY_DAYS,
   computeItemsEconomics,
+  consultationProposalValidUntil,
   resolveConsultationTvaPercentage,
 } from '../lib/consultation-economics-input';
+import type { SupplierCostInput } from '../lib/consultation-supplier-costs';
 
 // ── Client info shape (mirror of resolveClientInfo) ──────────────────
 export interface ConsultationPdfClientInfo {
@@ -54,6 +57,8 @@ export interface ConsultationSummaryPdfProps {
   totalHT: number;
   clientName: string;
   clientInfo?: ConsultationPdfClientInfo | null;
+  /** Frais par fournisseur — entrent dans le prix produit par la marge. */
+  supplierCosts?: SupplierCostInput[];
   preloadedImages?: {
     consultationImages: Array<{ id: string; base64: string }>;
     productImages: Record<string, string>;
@@ -68,6 +73,7 @@ export function ConsultationSummaryPdf({
   totalHT,
   clientName,
   clientInfo,
+  supplierCosts = [],
   preloadedImages,
 }: ConsultationSummaryPdfProps) {
   const now = new Date().toLocaleDateString('fr-FR', {
@@ -77,6 +83,7 @@ export function ConsultationSummaryPdf({
   });
 
   const proposalRef = `PROP-${consultation.id.slice(0, 8).toUpperCase()}`;
+  const validUntil = consultationProposalValidUntil();
   const productBase64 = preloadedImages?.productImages ?? {};
   // Décision 2 BO-CONSULT-P2-001 : lignes refusées exclues du PDF client
   // Décision D5 (BO-PRODUCTS-P8-001) : lignes de produits retirés exclues aussi
@@ -84,7 +91,8 @@ export function ConsultationSummaryPdf({
   // Total HT via totals.billed (décision 5 BO-CONSULT-P2-001 — source unique)
   const { totals: economics, byItemId: econByItemId } = computeItemsEconomics(
     activeItems,
-    consultation
+    consultation,
+    supplierCosts
   );
   const computedTotalHT = economics.billed;
   const tvaRate = resolveConsultationTvaPercentage(consultation);
@@ -312,7 +320,8 @@ export function ConsultationSummaryPdf({
         <View style={s.conditionsBlock}>
           <Text style={[s.partyTitle, { marginBottom: 4 }]}>Conditions</Text>
           <Text style={s.conditionsLine}>
-            · Proposition valable 30 jours à compter de la date d&apos;émission
+            · Proposition valable {CONSULTATION_PROPOSAL_VALIDITY_DAYS} jours,
+            soit jusqu&apos;au {validUntil}
           </Text>
           <Text style={s.conditionsLine}>
             · Prix indiqués hors taxes, sauf mention contraire

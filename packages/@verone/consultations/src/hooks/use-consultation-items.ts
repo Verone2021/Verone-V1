@@ -10,6 +10,7 @@ import {
   computeItemsEconomics,
   type ConsultationEconomicsSettingsSource,
 } from '../lib/consultation-economics-input';
+import type { SupplierCostInput } from '../lib/consultation-supplier-costs';
 
 import type {
   ConsultationItem,
@@ -332,12 +333,14 @@ export function useConsultationItems(consultationId?: string) {
   };
 
   const calculateTotal = (
-    consultation?: ConsultationEconomicsSettingsSource | null
+    consultation?: ConsultationEconomicsSettingsSource | null,
+    supplierCosts?: readonly SupplierCostInput[]
   ) => {
     // Décision BO-CONSULT-P2-001 : toujours via la fonction d'économie (source unique).
     // totals.billed = Σ(unitPrice × quantity) pour les lignes incluses, non gratuites, avec prix.
     // BO-CONSULT-MULTI-001 : prix produit par la marge quand aucun prix n'est saisi.
-    return computeItemsEconomics(consultationItems, consultation).totals.billed;
+    return computeItemsEconomics(consultationItems, consultation, supplierCosts)
+      .totals.billed;
   };
 
   const getTotalItemsCount = () => {

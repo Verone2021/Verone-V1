@@ -13,6 +13,7 @@ import {
   filterBillableItems,
   resolveConsultationTaxRate,
   withResolvedPrices,
+  type SupplierCostInput,
 } from '@verone/consultations';
 import type { IOrderForDocument } from '@verone/finance/components';
 import { createClient } from '@verone/utils/supabase/client';
@@ -269,13 +270,14 @@ export function buildOrderForDocument(
   consultation: ClientConsultation,
   consultationItems: ConsultationItem[],
   partnerId: string,
-  org: Record<string, string | null | boolean | number>
+  org: Record<string, string | null | boolean | number>,
+  supplierCosts: SupplierCostInput[] = []
 ): IOrderForDocument {
   // BO-CONSULT-MULTI-001 : le prix retenu est le prix saisi, sinon celui que
   // produit la marge. Les lignes portent ce prix effectif avant tout filtrage.
   const pricedItems = withResolvedPrices(
     consultationItems,
-    computeItemsEconomics(consultationItems, consultation)
+    computeItemsEconomics(consultationItems, consultation, supplierCosts)
   );
   // Décision 2 BO-CONSULT-P2-001 : seules les lignes facturables dans le devis
   const billableItems = filterBillableItems(pricedItems);
@@ -283,7 +285,8 @@ export function buildOrderForDocument(
   // avec prix renseigné — même périmètre que filterBillableItems.
   const { totals: billableTotals } = computeItemsEconomics(
     billableItems,
-    consultation
+    consultation,
+    supplierCosts
   );
   const totalHT = billableTotals.billed;
   // BO-CONSULT-MULTI-001 : taux de la consultation, plus de 20 % en dur —

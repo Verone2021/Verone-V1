@@ -11,6 +11,7 @@ import { useConsultationImages } from '@verone/consultations';
 import { useConsultationItems } from '@verone/consultations';
 import { useConsultationQuotes } from '@verone/consultations';
 import { useConsultationSalesOrders } from '@verone/consultations';
+import { useConsultationSupplierCosts } from '@verone/consultations';
 import {
   computeItemsEconomics,
   countUnpricedLines,
@@ -73,7 +74,14 @@ export function useConsultationDetail(consultationId: string) {
   } = useConsultationItems(consultationId);
 
   // BO-CONSULT-MULTI-001 : le total des documents suit la marge par défaut
-  const calculateTotal = () => calculateItemsTotal(consultation);
+  const calculateTotal = () =>
+    calculateItemsTotal(consultation, supplierCostInputs);
+
+  // Frais par fournisseur : chargés ici une seule fois. Ils entrent dans le
+  // prix de revient, donc dans le prix produit par la marge — l'écran, le
+  // devis, la commande et les deux PDF doivent partir des mêmes frais.
+  const { supplierCosts, supplierCostInputs, upsertSupplierCost } =
+    useConsultationSupplierCosts(consultationId);
 
   const { images } = useConsultationImages({ consultationId, autoFetch: true });
 
@@ -108,6 +116,7 @@ export function useConsultationDetail(consultationId: string) {
     refetchLinkedQuotes,
     fetchHistory,
     deleteQuote,
+    supplierCosts: supplierCostInputs,
   });
 
   useEffect(() => {
@@ -208,7 +217,11 @@ export function useConsultationDetail(consultationId: string) {
       // BO-CONSULT-MULTI-001 : prix saisi, sinon prix produit par la marge
       const pricedItems = withResolvedPrices(
         consultationItems,
-        computeItemsEconomics(consultationItems, consultation)
+        computeItemsEconomics(
+          consultationItems,
+          consultation,
+          supplierCostInputs
+        )
       );
 
       // Décision 2 BO-CONSULT-P2-001 : refus explicite si prix manquants
@@ -281,6 +294,9 @@ export function useConsultationDetail(consultationId: string) {
     historyEvents,
     historyLoading,
     calculateTotal,
+    supplierCosts,
+    supplierCostInputs,
+    upsertSupplierCost,
     // Modal states
     showEditModal,
     setShowEditModal,

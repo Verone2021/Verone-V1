@@ -144,6 +144,26 @@ export function consultationToEconomicsSettings(
   };
 }
 
+/** Durée de validité d'une proposition client, en jours. */
+export const CONSULTATION_PROPOSAL_VALIDITY_DAYS = 30;
+
+/**
+ * Date de fin de validité d'une proposition, au format JJ/MM/AAAA.
+ * Le PDF client annonçait « valable 30 jours » sans jamais dire jusqu'à quand.
+ */
+export function consultationProposalValidUntil(
+  issuedAt: Date = new Date(),
+  validityDays: number = CONSULTATION_PROPOSAL_VALIDITY_DAYS
+): string {
+  const until = new Date(issuedAt);
+  until.setDate(until.getDate() + validityDays);
+  return until.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Calcul prêt à l'emploi
 // ---------------------------------------------------------------------------
