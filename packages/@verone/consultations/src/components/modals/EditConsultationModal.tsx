@@ -43,6 +43,7 @@ const DEFAULT_FORM: EditFormData = {
   notes_internes: '',
   tarif_maximum: 0,
   default_margin_percentage: '',
+  tva_rate: '',
   estimated_response_date: '',
   priority_level: 2,
   source_channel: 'website',
@@ -88,6 +89,8 @@ export function EditConsultationModal({
           consultation.default_margin_percentage != null
             ? String(consultation.default_margin_percentage)
             : '',
+        tva_rate:
+          consultation.tva_rate != null ? String(consultation.tva_rate) : '',
         estimated_response_date: consultation.estimated_response_date
           ? new Date(consultation.estimated_response_date)
               .toISOString()
@@ -222,6 +225,14 @@ export function EditConsultationModal({
       }
     }
 
+    const tva = formData.tva_rate.trim();
+    if (tva !== '') {
+      const parsed = Number(tva);
+      if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
+        newErrors.tva_rate = 'La TVA doit être comprise entre 0 et 100';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -248,6 +259,11 @@ export function EditConsultationModal({
           formData.default_margin_percentage.trim() === ''
             ? null
             : Number(formData.default_margin_percentage),
+        // vide = taux par défaut (20 %) résolu à la lecture
+        tva_rate:
+          formData.tva_rate.trim() === ''
+            ? undefined
+            : Number(formData.tva_rate),
         estimated_response_date: formData.estimated_response_date || undefined,
         priority_level: formData.priority_level,
         source_channel: formData.source_channel,

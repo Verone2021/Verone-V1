@@ -11,6 +11,7 @@ import type {
 import {
   computeItemsEconomics,
   filterBillableItems,
+  resolveConsultationTaxRate,
   withResolvedPrices,
 } from '@verone/consultations';
 import type { IOrderForDocument } from '@verone/finance/components';
@@ -285,13 +286,15 @@ export function buildOrderForDocument(
     consultation
   );
   const totalHT = billableTotals.billed;
+  // BO-CONSULT-MULTI-001 : taux de la consultation, plus de 20 % en dur —
+  // sans quoi le devis diverge du PDF client qui lit déjà `tva_rate`.
+  const taxRate = resolveConsultationTaxRate(consultation);
   return {
     id: consultationId,
     order_number: `CONSULT-${consultationId.slice(0, 8).toUpperCase()}`,
     total_ht: totalHT,
-    // TVA figée à 20 % (règle R8, hors périmètre BO-CONSULT-P2-001)
-    total_ttc: totalHT * 1.2,
-    tax_rate: 0.2,
+    total_ttc: totalHT * (1 + taxRate),
+    tax_rate: taxRate,
     currency: 'EUR',
     customer_id: partnerId,
     customer_type: 'organization',
@@ -320,7 +323,7 @@ export function buildOrderForDocument(
       id: item.id,
       quantity: item.quantity,
       unit_price_ht: item.unit_price,
-      tax_rate: 0.2,
+      tax_rate: taxRate,
       products: item.product ? { name: item.product.name } : null,
     })),
   };

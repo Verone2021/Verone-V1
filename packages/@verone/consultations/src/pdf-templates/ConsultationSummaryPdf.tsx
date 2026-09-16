@@ -16,7 +16,10 @@ import type { ClientConsultation } from '../hooks/use-consultations';
 import type { ConsultationItem } from '../hooks/use-consultations';
 import type { ConsultationImage } from '../hooks/use-consultation-images';
 import { filterClientVisibleItems } from '../lib/consultation-order-guards';
-import { computeItemsEconomics } from '../lib/consultation-economics-input';
+import {
+  computeItemsEconomics,
+  resolveConsultationTvaPercentage,
+} from '../lib/consultation-economics-input';
 
 // ── Client info shape (mirror of resolveClientInfo) ──────────────────
 export interface ConsultationPdfClientInfo {
@@ -84,8 +87,7 @@ export function ConsultationSummaryPdf({
     consultation
   );
   const computedTotalHT = economics.billed;
-  const tvaRate =
-    consultation.tva_rate != null ? Number(consultation.tva_rate) : 0;
+  const tvaRate = resolveConsultationTvaPercentage(consultation);
   const tvaAmount = (computedTotalHT * tvaRate) / 100;
   const totalTTC = computedTotalHT + tvaAmount;
   // Param totalHT conservé pour compatibilité appellants (unused en interne)
@@ -288,7 +290,7 @@ export function ConsultationSummaryPdf({
             {tvaRate > 0 && (
               <View style={veroneStyles.totalBarPearl}>
                 <Text style={veroneStyles.totalLabelPearl}>
-                  TVA ({String(consultation.tva_rate)} %)
+                  TVA ({tvaRate} %)
                 </Text>
                 <Text style={veroneStyles.totalValuePearl}>
                   {formatVeronePrice(tvaAmount, 2)}

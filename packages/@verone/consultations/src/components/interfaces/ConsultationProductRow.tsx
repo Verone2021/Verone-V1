@@ -26,6 +26,8 @@ export interface ConsultationProductRowProps {
   econ: LineEconomics | null;
   /** Marge par défaut de la consultation, affichée en repère de saisie. */
   defaultMarginPercentage: number | null;
+  /** Taux de TVA de la consultation, en % (plus de 20 % en dur). */
+  tvaPercentage: number;
   editQuantity: number;
   editPrice: string;
   editNotes: string;
@@ -57,6 +59,7 @@ export function ConsultationProductRow({
   isEditing,
   econ,
   defaultMarginPercentage,
+  tvaPercentage,
   editQuantity,
   editPrice,
   editNotes,
@@ -293,9 +296,9 @@ export function ConsultationProductRow({
         )}
       </td>
 
-      {/* TVA — 20% par défaut */}
+      {/* TVA — taux de la consultation */}
       <td className="px-3 py-0 h-10">
-        <span className="text-[12px] text-zinc-600">20%</span>
+        <span className="text-[12px] text-zinc-600">{tvaPercentage}%</span>
       </td>
 
       {/* Vente */}

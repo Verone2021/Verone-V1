@@ -10,7 +10,9 @@ import { Plus, Sparkles, ShoppingCart, Calculator } from 'lucide-react';
 
 import {
   computeItemsEconomics,
+  resolveConsultationTvaPercentage,
   type ConsultationEconomicsSettingsSource,
+  type ConsultationTaxSource,
 } from '../../lib/consultation-economics-input';
 
 import type {
@@ -25,8 +27,10 @@ import { ConsultationProductsTable } from './ConsultationProductsTable';
 // Décision 1 BO-CONSULT-P2-001 : items + mutations via props (source unique dans page.tsx)
 interface ConsultationOrderInterfaceProps {
   consultationId: string;
-  /** Consultation porteuse des réglages de calcul (marge par défaut). */
-  consultation?: ConsultationEconomicsSettingsSource | null;
+  /** Consultation porteuse des réglages (marge par défaut, TVA). */
+  consultation?:
+    | (ConsultationEconomicsSettingsSource & ConsultationTaxSource)
+    | null;
   consultationItems: ConsultationItem[];
   loading: boolean;
   error: string | null;
@@ -275,6 +279,7 @@ export function ConsultationOrderInterface({
           defaultMarginPercentage={
             consultation?.default_margin_percentage ?? null
           }
+          tvaPercentage={resolveConsultationTvaPercentage(consultation)}
           onSetEditQuantity={setEditQuantity}
           onSetEditPrice={setEditPrice}
           onSetEditNotes={setEditNotes}

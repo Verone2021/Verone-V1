@@ -15,6 +15,7 @@ import {
   computeItemsEconomics,
   countUnpricedLines,
   filterBillableItems,
+  resolveConsultationTaxRate,
   withResolvedPrices,
 } from '@verone/consultations';
 import { useQuotes } from '@verone/finance/hooks';
@@ -223,11 +224,13 @@ export function useConsultationDetail(consultationId: string) {
         return;
       }
 
+      // BO-CONSULT-MULTI-001 : taux de la consultation, plus de 20 % en dur
+      const taxRate = resolveConsultationTaxRate(consultation);
       const items = filterBillableItems(pricedItems).map(item => ({
         product_id: item.product_id,
         quantity: item.quantity,
         unit_price_ht: item.unit_price,
-        tax_rate: 0.2,
+        tax_rate: taxRate,
         discount_percentage: 0,
         eco_tax: 0,
       }));

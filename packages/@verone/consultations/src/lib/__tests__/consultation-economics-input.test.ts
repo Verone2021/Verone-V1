@@ -11,6 +11,8 @@ import {
   consultationToEconomicsSettings,
   itemToEconomicsInput,
   itemsToEconomicsInputs,
+  resolveConsultationTaxRate,
+  resolveConsultationTvaPercentage,
   withResolvedPrices,
   type ConsultationEconomicsItemLike,
 } from '../consultation-economics-input';
@@ -266,6 +268,34 @@ test('total facturé = somme des prix calculés', () => {
     default_margin_percentage: 50,
   });
   assert.ok(approxEqual(totals.billed, 150 + 450), `billed=${totals.billed}`);
+});
+
+// ---------------------------------------------------------------------------
+// (e) TVA — une seule règle pour le devis, la commande et le PDF client
+// ---------------------------------------------------------------------------
+
+console.log('\n--- (e) TVA ---');
+
+test('taux absent → 20 % (défaut de la colonne)', () => {
+  assert.equal(resolveConsultationTvaPercentage(null), 20);
+  assert.equal(resolveConsultationTvaPercentage({}), 20);
+  assert.equal(resolveConsultationTvaPercentage({ tva_rate: null }), 20);
+});
+
+test('taux saisi respecté', () => {
+  assert.equal(resolveConsultationTvaPercentage({ tva_rate: 5.5 }), 5.5);
+  assert.equal(resolveConsultationTvaPercentage({ tva_rate: 0 }), 0);
+});
+
+test('taux illisible ou négatif → 20 %', () => {
+  assert.equal(resolveConsultationTvaPercentage({ tva_rate: NaN }), 20);
+  assert.equal(resolveConsultationTvaPercentage({ tva_rate: -3 }), 20);
+});
+
+test('fraction pour les documents financiers (0.2 et non 20)', () => {
+  assert.ok(approxEqual(resolveConsultationTaxRate({ tva_rate: 20 }), 0.2));
+  assert.ok(approxEqual(resolveConsultationTaxRate({ tva_rate: 5.5 }), 0.055));
+  assert.ok(approxEqual(resolveConsultationTaxRate(null), 0.2));
 });
 
 report('consultation-economics-input');

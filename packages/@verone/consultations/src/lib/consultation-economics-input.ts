@@ -55,6 +55,45 @@ export interface ConsultationEconomicsSettingsSource {
   default_margin_percentage?: number | null;
 }
 
+/** Consultation porteuse du taux de TVA. */
+export interface ConsultationTaxSource {
+  /** Taux en POURCENTAGE (20 = 20 %), comme la colonne `tva_rate`. */
+  tva_rate?: number | null;
+}
+
+/** Taux de TVA de la consultation, en % — défaut 20 (défaut de la colonne). */
+export const DEFAULT_CONSULTATION_TVA_PERCENTAGE = 20;
+
+/**
+ * Taux de TVA à appliquer aux documents de la consultation, en %.
+ *
+ * Avant BO-CONSULT-MULTI-001, le devis et la commande écrivaient 20 % en dur
+ * pendant que le PDF client lisait `tva_rate` : les deux documents auraient
+ * divergé au premier taux différent de 20.
+ */
+export function resolveConsultationTvaPercentage(
+  consultation?: ConsultationTaxSource | null
+): number {
+  const raw = consultation?.tva_rate;
+  if (raw === null || raw === undefined) {
+    return DEFAULT_CONSULTATION_TVA_PERCENTAGE;
+  }
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 0
+    ? parsed
+    : DEFAULT_CONSULTATION_TVA_PERCENTAGE;
+}
+
+/**
+ * Même taux exprimé en fraction (0.2), unité de `sales_order_items.tax_rate`
+ * et des payloads de documents financiers.
+ */
+export function resolveConsultationTaxRate(
+  consultation?: ConsultationTaxSource | null
+): number {
+  return resolveConsultationTvaPercentage(consultation) / 100;
+}
+
 // ---------------------------------------------------------------------------
 // Adaptateurs
 // ---------------------------------------------------------------------------
