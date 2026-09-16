@@ -258,7 +258,10 @@ export function useConsultationItems(consultationId?: string) {
             ? {
                 ...item,
                 quantity: updates.quantity ?? item.quantity,
-                unit_price: updates.unit_price ?? item.unit_price,
+                unit_price:
+                  updates.unit_price !== undefined
+                    ? updates.unit_price
+                    : item.unit_price,
                 is_free: updates.is_free ?? item.is_free,
                 is_sample: updates.is_sample ?? item.is_sample,
                 notes: updates.notes ?? item.notes,
@@ -268,7 +271,9 @@ export function useConsultationItems(consultationId?: string) {
                 selling_shipping_cost:
                   updates.selling_shipping_cost ?? item.selling_shipping_cost,
                 cost_price_override:
-                  updates.cost_price_override ?? item.cost_price_override,
+                  updates.cost_price_override !== undefined
+                    ? (updates.cost_price_override ?? undefined)
+                    : item.cost_price_override,
                 margin_percentage:
                   updates.margin_percentage !== undefined
                     ? updates.margin_percentage

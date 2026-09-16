@@ -66,3 +66,70 @@ aligne enfin le sélecteur sur la règle unique du 13/09 (vendable = actif ou pr
   éligibles, un produit sourcing peut être hors des 100 premiers : la pastille « Sourcing » ou la
   recherche par nom le retrouve en un clic.
 - Photos de consultation cassées, données de test PRD-0314 : décisions Roméo, inchangées.
+
+---
+
+# Suite — 17/09 : modifier les prix dans une consultation
+
+## Constat Roméo
+
+« On ne peut pas changer le prix des produits dans une consultation. »
+
+## Cause réelle
+
+Les champs existaient déjà (prix d'achat `cost_price_override`, transport de ligne, transport
+refacturé, prix de vente, marge de ligne) — mais **on ne pouvait pas y entrer** : le seul point
+d'entrée était le menu « … » de la colonne Actions, et cette colonne est **hors cadre** dès
+1440 px (tableau 1249 px de large dans un cadre de 853 px, mesuré à l'écran). Les prix affichés
+n'étaient pas cliquables.
+
+Second blocage, pour les simulations : un champ prix vidé était **ignoré** (`editPrice ? … :
+undefined`), donc un prix saisi par erreur ne pouvait plus être effacé.
+
+## Corrections
+
+1. **Prix cliquables** — les cellules Achat, Transport et Vente ouvrent la ligne en modification
+   (`onStartEdit`), avec une infobulle explicite.
+2. **Colonne Actions collée au bord droit** (`sticky right-0`, en-tête compris) : « Modifier »,
+   « Supprimer », ✓ et ✕ restent visibles quel que soit le défilement.
+3. **Un champ vidé efface la valeur** : vente vide → le prix repart de la marge ; achat vide → on
+   reprend le prix d'achat du produit. Helper `toAmountOrNull` + `unit_price` et
+   `cost_price_override` passés en `number | null` dans `UpdateConsultationItemData` et dans la
+   fusion optimiste (`!== undefined` au lieu de `??`, sinon un `null` était ignoré).
+
+## Simulation vs vente réelle — vérifié, rien à faire
+
+Règle Roméo : une consultation ne doit **pas** alimenter les moyennes de prix des produits.
+
+- Aucune fonction ni déclencheur en base ne lit ou n'écrit `consultation_products` (vérifié).
+- Le prix d'achat moyen (`cost_price_avg`) n'est mis à jour que par
+  `update_product_pmp_on_po_received` — à la **réception d'une commande fournisseur**.
+- Côté code, le module consultations n'écrit que dans `consultation_products` (aucun `from('products')`).
+
+La consultation est donc déjà un bac à sable : les prix qu'on y saisit ne sortent que par un devis
+ou une commande, c'est-à-dire par une vente réelle.
+
+## Tests
+
+- `type-check` + `lint` verts : `@verone/consultations`, `@verone/products`, `@verone/back-office`.
+- Écran, consultation réelle « Pokawa » (PRD-0313, 30 pièces) : prix de vente effacé + marge 40 %
+  → 14,70 € « calculé · marge 40 % » sur un revient de 10,50 € (5,00 € d'achat + 165 € de
+  transport sur 30 pièces), CA 441 €, marge 40 %. **État d'origine remis et vérifié en base**
+  (prix 16,50 €, marge NULL, reste inchangé).
+- Consultation « Black & White Burger » (utilisée par Roméo au même moment) : ouverte en
+  modification puis annulée, aucune donnée touchée — revérifié en base.
+
+## Limites qui restent dans la consultation
+
+1. **Un produit sans fournisseur n'a pas de ligne de frais.** Le bloc « Frais par fournisseur »
+   ne liste que les fournisseurs présents sur les lignes ; un produit sourcé sans fournisseur
+   (ex. « Sofá Modular Lounge ») tombe dans le groupe « Sans fournisseur » et ne peut recevoir ni
+   port ni douane. Remède actuel : rattacher un fournisseur au produit.
+2. **Une seule monnaie.** Les frais et les prix sont en euros ; une offre fournisseur libellée en
+   dollars ou en yuans n'est pas convertie (limite déjà notée le 16/09 sur le comparatif d'offres).
+3. **Pas de remise globale ni de ventilation de TVA par taux** sur la proposition client
+   (décision Roméo en attente, demande une colonne en base).
+4. **Pas de prix de vente cible par besoin** : le budget du client (`tarif_maximum`) s'affiche au
+   niveau de la consultation et du besoin, pas comme objectif par ligne.
+5. **Le rapport interne ne montre pas le point mort** (quantité minimale pour couvrir les frais
+   fixes) ; il donne marge, bénéfice et part des frais.

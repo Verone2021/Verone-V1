@@ -30,7 +30,9 @@ export function ConsultationRowActions({
   onRemove,
 }: ConsultationRowActionsProps) {
   return (
-    <td className="pr-4 pl-3 py-0 h-10 text-right">
+    // Collée au bord droit : sans ça, « Modifier » sort du cadre dès que le
+    // tableau défile horizontalement (constat Roméo 17/09).
+    <td className="sticky right-0 z-10 bg-white pr-4 pl-3 py-0 h-10 text-right shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.12)]">
       {isEditing ? (
         <div className="flex items-center justify-end gap-1">
           <button

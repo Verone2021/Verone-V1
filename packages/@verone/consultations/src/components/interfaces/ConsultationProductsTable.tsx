@@ -108,7 +108,10 @@ export function ConsultationProductsTable({
             <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[100px]">
               Statut
             </th>
-            <th className="pr-4 pl-3 py-2 w-[40px]" aria-label="Actions" />
+            <th
+              className="sticky right-0 z-10 bg-zinc-50 pr-4 pl-3 py-2 w-[40px]"
+              aria-label="Actions"
+            />
           </tr>
         </thead>
         {/* Un bloc par fournisseur : la commande fournisseur suit ce découpage */}

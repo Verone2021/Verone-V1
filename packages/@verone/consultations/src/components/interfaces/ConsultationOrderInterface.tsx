@@ -40,6 +40,13 @@ import {
   type ConsultationSupplierRef,
 } from './ConsultationSupplierCostsCard';
 
+/** Montant saisi : vide ou illisible → null (valeur effacée), sinon le nombre. */
+function toAmountOrNull(raw: string): number | null {
+  if (raw === '') return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 // Décision 1 BO-CONSULT-P2-001 : items + mutations via props (source unique dans page.tsx)
 interface ConsultationOrderInterfaceProps {
   consultationId: string;
@@ -127,17 +134,20 @@ export function ConsultationOrderInterface({
   const saveEditItem = (itemId: string): void => {
     const marginRaw = editMarginPercentage.trim();
     const marginParsed = marginRaw === '' ? null : Number(marginRaw);
+    // Champ vidé = valeur effacée (et non « ne pas toucher ») : sans ça, un prix
+    // saisi par erreur reste à vie. Vide côté vente → le prix repart de la marge,
+    // vide côté achat → on reprend le prix d'achat du produit.
+    const priceRaw = editPrice.trim();
+    const costRaw = editCostPriceOverride.trim();
     void updateItem(itemId, {
       quantity: editQuantity,
-      unit_price: editPrice ? parseFloat(editPrice) : undefined,
+      unit_price: toAmountOrNull(priceRaw),
       notes: editNotes || undefined,
       shipping_cost: editShippingCost ? parseFloat(editShippingCost) : 0,
       selling_shipping_cost: editSellingShippingCost
         ? parseFloat(editSellingShippingCost)
         : 0,
-      cost_price_override: editCostPriceOverride
-        ? parseFloat(editCostPriceOverride)
-        : undefined,
+      cost_price_override: toAmountOrNull(costRaw),
       is_sample: editIsSample,
       // vide ou illisible → null : la ligne suit la marge par défaut
       margin_percentage:

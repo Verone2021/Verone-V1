@@ -249,7 +249,12 @@ export function ConsultationProductRow({
             <Euro className="absolute right-1 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-zinc-400 pointer-events-none" />
           </div>
         ) : (
-          <div className="flex flex-col leading-none">
+          <button
+            type="button"
+            onClick={() => onStartEdit(item)}
+            title="Cliquer pour modifier le prix d'achat"
+            className="flex flex-col leading-none text-left rounded px-1 -mx-1 hover:bg-zinc-100"
+          >
             <span className="text-[12px] font-medium text-zinc-700">
               {(econ?.unitCost ?? 0).toFixed(2)}€
             </span>
@@ -266,7 +271,7 @@ export function ConsultationProductRow({
                   Modifié
                 </span>
               )}
-          </div>
+          </button>
         )}
       </td>
 
@@ -287,7 +292,12 @@ export function ConsultationProductRow({
         ) : item.is_sample ? (
           <span className="text-[12px] text-zinc-400">—</span>
         ) : (
-          <div className="flex flex-col leading-none">
+          <button
+            type="button"
+            onClick={() => onStartEdit(item)}
+            title="Cliquer pour modifier le transport de cette ligne"
+            className="flex flex-col leading-none text-left rounded px-1 -mx-1 hover:bg-zinc-100"
+          >
             <span className="text-[12px] text-zinc-700">
               {item.shipping_cost > 0
                 ? `${item.shipping_cost.toFixed(2)}€`
@@ -298,7 +308,7 @@ export function ConsultationProductRow({
                 total ligne
               </span>
             )}
-          </div>
+          </button>
         )}
       </td>
 
@@ -395,7 +405,12 @@ export function ConsultationProductRow({
             </div>
           </div>
         ) : (
-          <div className="flex flex-col leading-none">
+          <button
+            type="button"
+            onClick={() => onStartEdit(item)}
+            title="Cliquer pour modifier le prix de vente ou la marge"
+            className="flex flex-col leading-none text-left rounded px-1 -mx-1 hover:bg-zinc-100"
+          >
             <span
               className={`text-[12px] font-medium ${item.is_free ? 'text-zinc-400' : 'text-zinc-900'}`}
             >
@@ -420,7 +435,7 @@ export function ConsultationProductRow({
                   × {item.quantity} = {econ.salesAmount.toFixed(2)}€
                 </span>
               )}
-          </div>
+          </button>
         )}
       </td>
 

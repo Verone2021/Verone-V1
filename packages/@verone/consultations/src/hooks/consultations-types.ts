@@ -142,14 +142,16 @@ export interface CreateConsultationItemData {
 
 export interface UpdateConsultationItemData {
   quantity?: number;
-  unit_price?: number;
+  /** null = prix de vente effacé : la ligne repasse au prix issu de la marge */
+  unit_price?: number | null;
   is_free?: boolean;
   is_sample?: boolean;
   notes?: string;
   shipping_cost?: number;
   shipping_cost_currency?: string;
   selling_shipping_cost?: number;
-  cost_price_override?: number;
+  /** null = prix d'achat effacé : la ligne reprend le prix d'achat du produit */
+  cost_price_override?: number | null;
   margin_percentage?: number | null;
   need_id?: string | null;
   status?: string;
