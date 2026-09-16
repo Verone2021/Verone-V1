@@ -20,6 +20,22 @@ export { useSourcingLifecycle } from './use-sourcing-lifecycle';
 export type { SourcingLifecycleInput } from './use-sourcing-lifecycle';
 export { useSampleState, SAMPLE_STATE_QUERY_KEY } from './use-sample-state';
 export {
+  useSampleDraftOrder,
+  useSampleCandidates,
+  SAMPLE_DRAFT_ORDER_QUERY_KEY,
+  SAMPLE_CANDIDATES_QUERY_KEY,
+} from './use-sample-draft-order';
+export type {
+  SampleDraftOrder,
+  SampleDraftLine,
+  SampleCandidateProduct,
+} from './use-sample-draft-order';
+export { useBulkSampleOrder } from './use-bulk-sample-order';
+export type {
+  BulkSampleOutcome,
+  BulkSampleResult,
+} from './use-bulk-sample-order';
+export {
   useSourcingSegmentCounts,
   SOURCING_SEGMENT_COUNTS_QUERY_KEY,
 } from './use-sourcing-segment-counts';

@@ -3,6 +3,8 @@ export type {
   SourcingActionBarProps,
   SourcingBarLifecycleAction,
 } from './SourcingActionBar';
+export { SampleOrderCard } from './SampleOrderCard';
+export type { SampleOrderCardProps } from './SampleOrderCard';
 export { SourcingCompletenessCard } from './SourcingCompletenessCard';
 export type { SourcingCompletenessCardProps } from './SourcingCompletenessCard';
 export { SourcingJournal } from './SourcingJournal';

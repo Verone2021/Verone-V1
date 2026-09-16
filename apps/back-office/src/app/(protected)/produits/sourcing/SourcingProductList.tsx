@@ -4,7 +4,13 @@ import { useMemo } from 'react';
 
 import type { SourcingProduct } from '@verone/products';
 import type { SourcingListSegment } from '@verone/products/utils';
-import { Card, CardContent, ResponsiveDataView, cn } from '@verone/ui';
+import {
+  Card,
+  CardContent,
+  Checkbox,
+  ResponsiveDataView,
+  cn,
+} from '@verone/ui';
 import {
   AlertCircle,
   ArrowDown,
@@ -34,6 +40,11 @@ interface SourcingProductListProps {
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
   onSort?: (column: string) => void;
+  /** Sélection multiple, pour commander plusieurs échantillons d'un coup. */
+  selectable?: boolean;
+  selectedIds?: string[];
+  onToggleSelect?: (productId: string) => void;
+  onToggleAll?: (productIds: string[], selectAll: boolean) => void;
 }
 
 const HEADER = 'p-3 font-medium text-xs uppercase tracking-wider text-gray-500';
@@ -95,6 +106,10 @@ export function SourcingProductList({
   sortBy,
   sortDir,
   onSort,
+  selectable = false,
+  selectedIds = [],
+  onToggleSelect,
+  onToggleAll,
 }: SourcingProductListProps) {
   // « Supprimer » n'existe que pour les produits retirés : on ne vérifie qu'eux.
   const archivedIds = useMemo(
@@ -149,6 +164,23 @@ export function SourcingProductList({
               <table className="w-full">
                 <thead className="border-b bg-gray-50/80">
                   <tr className="text-left">
+                    {selectable && (
+                      <th className={cn(HEADER, 'w-[44px]')}>
+                        <Checkbox
+                          checked={
+                            items.length > 0 &&
+                            items.every(p => selectedIds.includes(p.id))
+                          }
+                          onCheckedChange={checked =>
+                            onToggleAll?.(
+                              items.map(p => p.id),
+                              checked === true
+                            )
+                          }
+                          aria-label="Tout sélectionner"
+                        />
+                      </th>
+                    )}
                     <SortableHeader
                       label="Produit"
                       column="name"
@@ -196,6 +228,9 @@ export function SourcingProductList({
                       product={product}
                       segment={segment}
                       canDelete={canDelete(product.id)}
+                      selectable={selectable}
+                      selected={selectedIds.includes(product.id)}
+                      onToggleSelect={() => onToggleSelect?.(product.id)}
                       {...handlersFor(product)}
                     />
                   ))}
@@ -213,6 +248,9 @@ export function SourcingProductList({
           product={product}
           segment={segment}
           canDelete={canDelete(product.id)}
+          selectable={selectable}
+          selected={selectedIds.includes(product.id)}
+          onToggleSelect={() => onToggleSelect?.(product.id)}
           {...handlersFor(product)}
         />
       )}

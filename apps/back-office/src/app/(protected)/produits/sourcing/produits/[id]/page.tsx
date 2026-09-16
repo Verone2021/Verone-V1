@@ -11,6 +11,8 @@ import {
   ProductEvaluationDialog,
   ProductEvaluationSummary,
   ProductPhotosModal,
+  SampleOrderCard,
+  SampleOrderPickerDialog,
   SourcingActionBar,
   SourcingCompletenessCard,
   SourcingJournal,
@@ -18,8 +20,11 @@ import {
   SourcingProductEditCard,
   SourcingStageHeader,
   SourcingUrls,
+  useBulkSampleOrder,
   useProductEvaluation,
   useProductImages,
+  useSampleCandidates,
+  useSampleDraftOrder,
   useSampleState,
   useSourcingLifecycle,
   useSourcingNotebook,
@@ -63,6 +68,8 @@ export default function SourcingProductDetailPage() {
   const notebook = useSourcingNotebook(productId);
   const supplierSearch = useSupplierSearch();
   const sample = useSampleState(productId);
+  const sampleDraft = useSampleDraftOrder(product?.supplier_id);
+  const sampleCandidates = useSampleCandidates(product?.supplier_id, productId);
   const lifecycle = useSourcingLifecycle(productId);
   const evaluation = useProductEvaluation(productId, notebook.addCommunication);
   const {
@@ -87,6 +94,11 @@ export default function SourcingProductDetailPage() {
   const [confirmValidateOpen, setConfirmValidateOpen] = useState(false);
   const [orderingSample, setOrderingSample] = useState(false);
   const [openSections, setOpenSections] = useState<string[]>(['pricing']);
+  const [isSamplePickerOpen, setIsSamplePickerOpen] = useState(false);
+
+  const bulkSample = useBulkSampleOrder(async () => {
+    await Promise.all([refetch(), sampleDraft.refetch(), sample.refetch()]);
+  });
   const journalRef = useRef<HTMLDivElement>(null);
 
   /**
@@ -145,6 +157,11 @@ export default function SourcingProductDetailPage() {
     setOrderingSample(true);
     try {
       await orderSample(productId);
+      await Promise.all([
+        sampleDraft.refetch(),
+        sampleCandidates.refetch(),
+        sample.refetch(),
+      ]);
     } finally {
       setOrderingSample(false);
     }
@@ -210,6 +227,14 @@ export default function SourcingProductDetailPage() {
   const currentStatus = product.sourcing_status;
   const isWithdrawn = Boolean(product.archived_at);
   const busy = lifecycle.pendingAction !== null || orderingSample;
+  // Commande d'échantillons brouillon du fournisseur, quand elle contient
+  // bien ce produit : c'est elle qui accueille les échantillons suivants.
+  const draftOrder = sampleDraft.data ?? null;
+  const draftOrderForProduct = draftOrder?.lines.some(
+    line => line.productId === productId
+  )
+    ? draftOrder
+    : null;
   // La checklist n'a de sens que tant que le produit peut encore être validé.
   const showCompleteness = availableLifecycleActions(
     currentStatus,
@@ -306,6 +331,19 @@ export default function SourcingProductDetailPage() {
           <SourcingCompletenessCard
             product={product}
             onGoToField={handleGoToField}
+          />
+        )}
+
+        {draftOrderForProduct !== null && product.supplier_id !== null && (
+          <SampleOrderCard
+            order={draftOrderForProduct}
+            currentProductId={productId}
+            candidateCount={sampleCandidates.data?.length ?? 0}
+            busy={busy || bulkSample.running}
+            onAddProducts={() => setIsSamplePickerOpen(true)}
+            onOpenOrder={orderId =>
+              router.push(`/commandes/fournisseurs?id=${orderId}`)
+            }
           />
         )}
 
@@ -407,6 +445,20 @@ export default function SourcingProductDetailPage() {
           void fetchImages().catch(error => {
             console.error('[SourcingDetail] fetchImages failed:', error);
           });
+        }}
+      />
+
+      <SampleOrderPickerDialog
+        open={isSamplePickerOpen}
+        onOpenChange={setIsSamplePickerOpen}
+        supplierName={product.supplier?.name ?? 'ce fournisseur'}
+        candidates={sampleCandidates.data ?? []}
+        loading={sampleCandidates.isLoading}
+        busy={bulkSample.running}
+        poNumber={draftOrder?.poNumber}
+        onConfirm={async productIds => {
+          await bulkSample.orderSamples(productIds);
+          await sampleCandidates.refetch();
         }}
       />
 
