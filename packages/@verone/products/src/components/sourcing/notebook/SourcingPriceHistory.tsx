@@ -15,9 +15,21 @@ interface SourcingPriceHistoryProps {
     quantity?: number;
     proposed_by?: 'supplier' | 'verone';
     notes?: string;
+    supplier_id?: string;
   }) => Promise<void>;
   currentCostPrice?: number | null;
   targetPrice?: number | null;
+  /** Fournisseur rattaché par défaut aux prix saisis ici. */
+  defaultSupplierId?: string | null;
+  /** Nom lisible de chaque fournisseur cité dans l'historique. */
+  supplierNames?: Record<string, string>;
+  /**
+   * Reprend ce prix comme prix d'achat du produit. Absent = bouton masqué
+   * (les entrées restaient décoratives : aucun moyen de les adopter).
+   */
+  onAdoptPrice?: (entry: SourcingPriceEntry) => void;
+  adoptingPriceId?: string | null;
+  busy?: boolean;
 }
 
 export function SourcingPriceHistory({
@@ -25,6 +37,11 @@ export function SourcingPriceHistory({
   onAdd,
   currentCostPrice,
   targetPrice,
+  defaultSupplierId = null,
+  supplierNames = {},
+  onAdoptPrice,
+  adoptingPriceId = null,
+  busy = false,
 }: SourcingPriceHistoryProps) {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -47,6 +64,7 @@ export function SourcingPriceHistory({
         quantity: form.quantity ? parseInt(form.quantity) : undefined,
         proposed_by: form.proposed_by,
         notes: form.notes.trim() || undefined,
+        supplier_id: defaultSupplierId ?? undefined,
       });
       setForm({
         price: '',
@@ -237,6 +255,12 @@ export function SourcingPriceHistory({
                       × {entry.quantity} pcs
                     </span>
                   )}
+                  {entry.supplier_id !== null &&
+                    supplierNames[entry.supplier_id] !== undefined && (
+                      <span className="max-w-[120px] truncate text-gray-500">
+                        {supplierNames[entry.supplier_id]}
+                      </span>
+                    )}
                 </div>
                 <div className="flex items-center gap-2">
                   {entry.notes && (
@@ -250,6 +274,18 @@ export function SourcingPriceHistory({
                       month: 'short',
                     })}
                   </span>
+                  {onAdoptPrice !== undefined &&
+                    entry.price !== currentCostPrice && (
+                      <ButtonV2
+                        variant="outline"
+                        size="sm"
+                        disabled={busy || adoptingPriceId === entry.id}
+                        onClick={() => onAdoptPrice(entry)}
+                        className="h-11 px-2 text-[11px] md:h-7"
+                      >
+                        {adoptingPriceId === entry.id ? '…' : 'Adopter ce prix'}
+                      </ButtonV2>
+                    )}
                 </div>
               </div>
             ))}

@@ -84,6 +84,12 @@ export interface SourcingCandidateSupplier {
   quoted_price: number | null;
   quoted_moq: number | null;
   quoted_lead_days: number | null;
+  /** Frais annoncés par le fournisseur (BO-SOURCING-OFFRES-004). */
+  quoted_shipping_ht: number | null;
+  quoted_customs_ht: number | null;
+  quoted_currency: string;
+  /** Les frais valent pour le lot (`per_order`) ou par unité (`per_unit`). */
+  shipping_scope: 'per_order' | 'per_unit';
   notes: string | null;
   created_at: string;
   supplier?: {
@@ -92,6 +98,18 @@ export interface SourcingCandidateSupplier {
     legal_name: string | null;
     preferred_comm_channel: string | null;
   };
+}
+
+/** Champs d'une offre fournisseur saisis à l'écran. */
+export interface SourcingOfferInput {
+  quoted_price?: number | null;
+  quoted_moq?: number | null;
+  quoted_lead_days?: number | null;
+  quoted_shipping_ht?: number | null;
+  quoted_customs_ht?: number | null;
+  quoted_currency?: string;
+  shipping_scope?: 'per_order' | 'per_unit';
+  notes?: string | null;
 }
 
 // ============================================================
@@ -149,7 +167,7 @@ export function useSourcingNotebook(productId: string | null) {
         supabase
           .from('sourcing_candidate_suppliers')
           .select(
-            'id, product_id, supplier_id, status, response_date, quoted_price, quoted_moq, quoted_lead_days, notes, created_at, supplier:organisations(id, trade_name, legal_name, preferred_comm_channel)'
+            'id, product_id, supplier_id, status, response_date, quoted_price, quoted_moq, quoted_lead_days, quoted_shipping_ht, quoted_customs_ht, quoted_currency, shipping_scope, notes, created_at, supplier:organisations(id, trade_name, legal_name, preferred_comm_channel)'
           )
           .eq('product_id', productId)
           .order('created_at', { ascending: false }),
@@ -254,14 +272,9 @@ export function useSourcingNotebook(productId: string | null) {
     [productId, fetchAll]
   );
 
+  /** Champs d'une offre modifiables depuis l'écran. */
   const addCandidateSupplier = useCallback(
-    async (data: {
-      supplier_id: string;
-      quoted_price?: number;
-      quoted_moq?: number;
-      quoted_lead_days?: number;
-      notes?: string;
-    }) => {
+    async (data: SourcingOfferInput & { supplier_id: string }) => {
       if (!productId) return;
       const supabase = createClient();
       const { error } = await supabase
@@ -276,13 +289,50 @@ export function useSourcingNotebook(productId: string | null) {
     [productId, fetchAll]
   );
 
+  const updateCandidateOffer = useCallback(
+    async (candidateId: string, data: SourcingOfferInput) => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('sourcing_candidate_suppliers')
+        .update(data)
+        .eq('id', candidateId);
+      if (error) throw error;
+      await fetchAll();
+    },
+    [fetchAll]
+  );
+
   const updateCandidateStatus = useCallback(
     async (candidateId: string, status: string) => {
       const supabase = createClient();
       const { error } = await supabase
         .from('sourcing_candidate_suppliers')
-        .update({ status })
+        .update({
+          status,
+          // « Devis reçu » date la réponse si elle ne l'était pas déjà.
+          ...(status === 'responded'
+            ? { response_date: new Date().toISOString() }
+            : {}),
+        })
         .eq('id', candidateId);
+      if (error) throw error;
+      await fetchAll();
+    },
+    [fetchAll]
+  );
+
+  /**
+   * Passe plusieurs offres au même statut (« marquer contactés » de l'étape
+   * Contact). Une seule écriture, un seul rechargement.
+   */
+  const updateCandidateStatuses = useCallback(
+    async (candidateIds: string[], status: string) => {
+      if (candidateIds.length === 0) return;
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('sourcing_candidate_suppliers')
+        .update({ status })
+        .in('id', candidateIds);
       if (error) throw error;
       await fetchAll();
     },
@@ -319,7 +369,9 @@ export function useSourcingNotebook(productId: string | null) {
     resolveCommunication,
     addPriceEntry,
     addCandidateSupplier,
+    updateCandidateOffer,
     updateCandidateStatus,
+    updateCandidateStatuses,
     updatePriority,
   };
 }

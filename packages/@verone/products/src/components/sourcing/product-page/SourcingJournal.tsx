@@ -21,6 +21,9 @@ import {
   statusChangeReason,
   statusChangeTitle,
 } from '../../../utils/sourcing-journal';
+import { isOverdueFollowUp } from '../../../utils/sourcing-stage-playbook';
+import { useState } from 'react';
+
 import { journalChannel } from './journal-channels';
 import {
   SourcingJournalForm,
@@ -54,9 +57,26 @@ export function SourcingJournal({
   onAdd,
   onResolve,
 }: SourcingJournalProps) {
+  const [filter, setFilter] = useState<'all' | 'exchange' | 'note'>('all');
+
   const pendingFollowUps = entries.filter(
     entry => entry.follow_up_date && !entry.is_resolved
   );
+  // Les relances dépassées d'abord : c'est ce qui demande une action.
+  const sortedFollowUps = [...pendingFollowUps].sort((a, b) => {
+    const aLate = isOverdueFollowUp(a) ? 0 : 1;
+    const bLate = isOverdueFollowUp(b) ? 0 : 1;
+    if (aLate !== bLate) return aLate - bLate;
+    return (a.follow_up_date ?? '').localeCompare(b.follow_up_date ?? '');
+  });
+  const overdueCount = pendingFollowUps.filter(entry =>
+    isOverdueFollowUp(entry)
+  ).length;
+
+  const visibleEntries =
+    filter === 'all'
+      ? entries
+      : entries.filter(entry => entry.entry_type === filter);
 
   return (
     <Card className="border-gray-200">
@@ -95,14 +115,20 @@ export function SourcingJournal({
             <p className="mb-1 flex items-center gap-1 text-sm font-medium text-amber-800">
               <Clock className="h-4 w-4" />
               {pendingFollowUps.length} relance(s) en attente
+              {overdueCount > 0 ? `, dont ${overdueCount} en retard` : ''}
             </p>
             <ul className="space-y-1">
-              {pendingFollowUps.map(entry => (
+              {sortedFollowUps.map(entry => (
                 <li
                   key={entry.id}
                   className="flex items-center justify-between gap-2 text-sm text-amber-800"
                 >
                   <span className="min-w-0 truncate">
+                    {isOverdueFollowUp(entry) && (
+                      <span className="mr-1 rounded bg-amber-200 px-1 text-[10px] font-medium">
+                        en retard
+                      </span>
+                    )}
                     {entry.next_action ?? entry.summary}
                     {entry.follow_up_date
                       ? ` — ${formatDate(entry.follow_up_date)}`
@@ -139,14 +165,46 @@ export function SourcingJournal({
           />
         )}
 
-        {entries.length === 0 && !formMode ? (
+        {entries.length > 0 && (
+          <div
+            className="flex flex-wrap gap-1"
+            role="group"
+            aria-label="Filtrer le journal"
+          >
+            {(
+              [
+                ['all', 'Tout'],
+                ['exchange', 'Échanges'],
+                ['note', 'Notes'],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setFilter(value)}
+                aria-pressed={filter === value}
+                className={cn(
+                  'min-h-11 rounded-full border px-3 text-xs font-medium md:min-h-0 md:py-1',
+                  filter === value
+                    ? 'border-black bg-black text-white'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-400'
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {visibleEntries.length === 0 && !formMode ? (
           <p className="py-4 text-center text-sm text-gray-500">
-            Aucune entrée : les échanges, notes et changements d&apos;étape
-            apparaîtront ici.
+            {entries.length === 0
+              ? 'Aucune entrée : les échanges, notes et changements d’étape apparaîtront ici.'
+              : 'Aucune entrée de ce type.'}
           </p>
         ) : (
           <ol className="max-h-[480px] space-y-2 overflow-y-auto">
-            {entries.map(entry => (
+            {visibleEntries.map(entry => (
               <li key={entry.id}>
                 <JournalEntry entry={entry} />
               </li>

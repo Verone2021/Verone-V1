@@ -26,6 +26,10 @@ import {
 
 import type { SampleStateResult } from '../../../utils/derive-sample-state';
 import {
+  blockingRequirements,
+  type SourcingCompletenessProduct,
+} from '../../../utils/sourcing-completeness';
+import {
   availableLifecycleActions,
   type SourcingLifecycleAction,
 } from '../../../utils/sourcing-stage';
@@ -50,8 +54,12 @@ interface BarAction {
 export interface SourcingActionBarProps {
   status: string | null | undefined;
   isWithdrawn: boolean;
-  hasSupplier: boolean;
-  hasCostPrice: boolean;
+  /**
+   * Champs du produit contrôlés par la règle de complétude. La barre calcule
+   * elle-même ce qui bloque, avec la même règle que la base
+   * (`sourcing_missing_fields`), et l'affiche en toutes lettres.
+   */
+  product: SourcingCompletenessProduct;
   sample: SampleStateResult;
   busy: boolean;
   /** Vrai si une évaluation a déjà été enregistrée pour ce produit. */
@@ -72,8 +80,7 @@ export interface SourcingActionBarProps {
 export function SourcingActionBar({
   status,
   isWithdrawn,
-  hasSupplier,
-  hasCostPrice,
+  product,
   sample,
   busy,
   hasEvaluation = false,
@@ -84,11 +91,12 @@ export function SourcingActionBar({
   onEvaluateSample,
 }: SourcingActionBarProps) {
   const allowed = new Set(availableLifecycleActions(status, isWithdrawn));
-  const missing = !hasSupplier
-    ? "Liez d'abord un fournisseur"
-    : !hasCostPrice
-      ? "Renseignez d'abord le prix d'achat"
-      : undefined;
+  // Les exigences de l'échantillon sont un sous-ensemble de celles du
+  // catalogue : ce qui bloque l'un bloque forcément l'autre.
+  const sampleBlockers = blockingRequirements(product, 'sample');
+  const catalogueBlockers = blockingRequirements(product, 'catalogue');
+  const sampleBlocked = sampleBlockers.length > 0;
+  const catalogueBlocked = catalogueBlockers.length > 0;
   const actions: BarAction[] = [];
 
   const activeOrder =
@@ -109,8 +117,7 @@ export function SourcingActionBar({
       label: "Commander l'échantillon",
       icon: FlaskConical,
       onClick: onOrderSample,
-      disabled: busy || Boolean(missing),
-      title: missing,
+      disabled: busy || sampleBlocked,
       tone: 'primary',
       primary: true,
     });
@@ -139,8 +146,7 @@ export function SourcingActionBar({
       label: 'Valider au catalogue',
       icon: CheckCircle,
       onClick: () => onLifecycle('validate'),
-      disabled: busy || Boolean(missing),
-      title: missing,
+      disabled: busy || catalogueBlocked,
       tone: 'success',
       primary: true,
     });
@@ -203,53 +209,91 @@ export function SourcingActionBar({
   const primaryActions = actions.filter(action => action.primary);
   const secondaryActions = actions.filter(action => !action.primary);
 
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {primaryActions.map(action => (
-        <BarButton key={action.key} action={action} />
-      ))}
+  // Explication visible sous la barre : un bouton grisé sans phrase laisse
+  // croire que la fonction a disparu (constat du 16/09).
+  const showsOrderSample = actions.some(a => a.key === 'order-sample');
+  const showsValidate = actions.some(a => a.key === 'validate');
+  const blockedNotice = (() => {
+    if (sampleBlocked && (showsOrderSample || showsValidate)) {
+      const cible =
+        showsOrderSample && showsValidate
+          ? "Pour commander l'échantillon et valider au catalogue"
+          : showsOrderSample
+            ? "Pour commander l'échantillon"
+            : 'Pour valider au catalogue';
+      return `${cible} : ${joinLabels(showsValidate ? catalogueBlockers : sampleBlockers)}.`;
+    }
+    if (catalogueBlocked && showsValidate) {
+      return `Pour valider au catalogue : ${joinLabels(catalogueBlockers)}.`;
+    }
+    return null;
+  })();
 
-      <div className="hidden flex-wrap items-center gap-2 lg:flex">
-        {secondaryActions.map(action => (
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        {primaryActions.map(action => (
           <BarButton key={action.key} action={action} />
         ))}
+
+        <div className="hidden flex-wrap items-center gap-2 lg:flex">
+          {secondaryActions.map(action => (
+            <BarButton key={action.key} action={action} />
+          ))}
+        </div>
+
+        {secondaryActions.length > 0 && (
+          <div className="lg:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <ButtonV2
+                  variant="outline"
+                  size="sm"
+                  icon={MoreHorizontal}
+                  className="h-11 md:h-9"
+                >
+                  Plus
+                </ButtonV2>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {secondaryActions.map(action => (
+                  <DropdownMenuItem
+                    key={action.key}
+                    disabled={action.disabled}
+                    onClick={action.onClick}
+                    className={cn(
+                      'min-h-11 md:min-h-0',
+                      action.tone === 'danger' &&
+                        'text-red-600 focus:text-red-600'
+                    )}
+                  >
+                    <action.icon className="mr-2 h-4 w-4" />
+                    {action.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
       </div>
 
-      {secondaryActions.length > 0 && (
-        <div className="lg:hidden">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <ButtonV2
-                variant="outline"
-                size="sm"
-                icon={MoreHorizontal}
-                className="h-11 md:h-9"
-              >
-                Plus
-              </ButtonV2>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {secondaryActions.map(action => (
-                <DropdownMenuItem
-                  key={action.key}
-                  disabled={action.disabled}
-                  onClick={action.onClick}
-                  className={cn(
-                    'min-h-11 md:min-h-0',
-                    action.tone === 'danger' &&
-                      'text-red-600 focus:text-red-600'
-                  )}
-                >
-                  <action.icon className="mr-2 h-4 w-4" />
-                  {action.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+      {blockedNotice !== null && (
+        <p className="text-sm text-amber-700" role="status">
+          {blockedNotice}
+        </p>
       )}
     </div>
   );
+}
+
+/** « renseignez le fournisseur et le prix d'achat » */
+function joinLabels(requirements: ReadonlyArray<{ label: string }>): string {
+  const labels = requirements.map(r => r.label.toLowerCase());
+  const list =
+    labels.length === 1
+      ? labels[0]
+      : `${labels.slice(0, -1).join(', ')} et ${labels[labels.length - 1]}`;
+  return `renseignez ${list}`;
 }
 
 function BarButton({ action }: { action: BarAction }) {

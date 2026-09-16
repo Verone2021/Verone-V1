@@ -32,6 +32,7 @@ export function useSourcingFetch(filters?: SourcingFilters) {
           name,
           supplier_page_url,
           supplier_reference,
+          subcategory_id,
           cost_price,
           cost_net_avg,
           eco_tax_default,

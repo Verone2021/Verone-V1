@@ -9565,10 +9565,14 @@ export type Database = {
           id: string;
           notes: string | null;
           product_id: string;
+          quoted_currency: string;
+          quoted_customs_ht: number | null;
           quoted_lead_days: number | null;
           quoted_moq: number | null;
           quoted_price: number | null;
+          quoted_shipping_ht: number | null;
           response_date: string | null;
+          shipping_scope: string;
           status: string | null;
           supplier_id: string;
           updated_at: string | null;
@@ -9578,10 +9582,14 @@ export type Database = {
           id?: string;
           notes?: string | null;
           product_id: string;
+          quoted_currency?: string;
+          quoted_customs_ht?: number | null;
           quoted_lead_days?: number | null;
           quoted_moq?: number | null;
           quoted_price?: number | null;
+          quoted_shipping_ht?: number | null;
           response_date?: string | null;
+          shipping_scope?: string;
           status?: string | null;
           supplier_id: string;
           updated_at?: string | null;
@@ -9591,10 +9599,14 @@ export type Database = {
           id?: string;
           notes?: string | null;
           product_id?: string;
+          quoted_currency?: string;
+          quoted_customs_ht?: number | null;
           quoted_lead_days?: number | null;
           quoted_moq?: number | null;
           quoted_price?: number | null;
+          quoted_shipping_ht?: number | null;
           response_date?: string | null;
+          shipping_scope?: string;
           status?: string | null;
           supplier_id?: string;
           updated_at?: string | null;
@@ -12901,6 +12913,10 @@ export type Database = {
         };
         Returns: string;
       };
+      adopt_sourcing_offer: {
+        Args: { p_candidate_id: string; p_product_id: string };
+        Returns: Json;
+      };
       apply_all_matching_rules: {
         Args: never;
         Returns: {
@@ -15438,6 +15454,10 @@ export type Database = {
       set_current_user_id: { Args: { user_id: string }; Returns: undefined };
       slugify: { Args: { text_input: string }; Returns: string };
       snapshot_channel_stats: { Args: never; Returns: undefined };
+      sourcing_missing_fields: {
+        Args: { p_product_id: string; p_scope: string };
+        Returns: string[];
+      };
       submit_affiliate_product_for_approval: {
         Args: { p_product_id: string };
         Returns: boolean;

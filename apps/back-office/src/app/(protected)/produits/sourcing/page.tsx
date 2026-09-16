@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import {
   QuickSourcingModal,
   SourcingReasonDialog,
+  useBulkSampleOrder,
   useSourcingProducts,
   useSourcingSegmentCounts,
 } from '@verone/products';
@@ -21,6 +22,7 @@ import { Chrome, Plus } from 'lucide-react';
 
 import { SourcingReportButton } from '@/components/business/sourcing-report/SourcingReportButton';
 
+import { SourcingBulkActionsBar } from './SourcingBulkActionsBar';
 import { SourcingFilters } from './SourcingFilters';
 import { SourcingKanbanView } from './SourcingKanbanView';
 import { SourcingProductList } from './SourcingProductList';
@@ -45,6 +47,8 @@ export default function SourcingPage() {
   // Retrait avec motif obligatoire et validation confirmée (journal écrit par la base)
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null);
   const [validateTargetId, setValidateTargetId] = useState<string | null>(null);
+  // Sélection multiple : commander plusieurs échantillons en un geste.
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const debouncedSearch = useMemo(
     () =>
@@ -121,6 +125,21 @@ export default function SourcingPage() {
   const afterAction = async (ok: boolean) => {
     if (ok) await refetchCounts();
     return ok;
+  };
+
+  const bulkSample = useBulkSampleOrder(async () => {
+    await Promise.all([refetch(), refetchCounts()]);
+  });
+
+  const handleOrderSamples = (productIds: string[]) => {
+    void bulkSample
+      .orderSamples(productIds)
+      .then(() => {
+        setSelectedIds([]);
+      })
+      .catch(error => {
+        console.error('[Sourcing] commande groupée échantillons:', error);
+      });
   };
 
   const openProduct = (id: string) => {
@@ -234,6 +253,29 @@ export default function SourcingPage() {
           onArchive={setWithdrawTargetId}
           onRestore={handleRestore}
           onDelete={handleDelete}
+          selectable={isInProgress}
+          selectedIds={selectedIds}
+          onToggleSelect={productId =>
+            setSelectedIds(previous =>
+              previous.includes(productId)
+                ? previous.filter(id => id !== productId)
+                : [...previous, productId]
+            )
+          }
+          onToggleAll={(productIds, selectAll) =>
+            setSelectedIds(selectAll ? productIds : [])
+          }
+        />
+      )}
+
+      {isInProgress && (
+        <SourcingBulkActionsBar
+          selected={sortedProducts.filter(product =>
+            selectedIds.includes(product.id)
+          )}
+          busy={bulkSample.running}
+          onClear={() => setSelectedIds([])}
+          onOrderSamples={handleOrderSamples}
         />
       )}
 
