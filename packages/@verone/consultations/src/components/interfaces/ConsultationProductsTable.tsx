@@ -17,6 +17,8 @@ interface ConsultationProductsTableProps
   editingItem: string | null;
   /** Calcul de chaque ligne, fait une seule fois pour la consultation. */
   economicsByItemId: Map<string, LineEconomics>;
+  /** Fournisseurs dont la livraison est saisie globalement : transport de ligne verrouillé. */
+  suppliersWithShipping?: ReadonlySet<string>;
 }
 
 /** Lignes regroupées par fournisseur, dans l'ordre d'apparition. */
@@ -50,6 +52,7 @@ export function ConsultationProductsTable({
   items,
   editingItem,
   economicsByItemId,
+  suppliersWithShipping,
   ...rowProps
 }: ConsultationProductsTableProps) {
   // Un seul fournisseur : pas d'en-tête de groupe, ce serait du bruit
@@ -150,6 +153,12 @@ export function ConsultationProductsTable({
                   item={item}
                   isEditing={editingItem === item.id}
                   econ={economicsByItemId.get(item.id) ?? null}
+                  supplierShippingEntered={
+                    item.product?.supplier_id
+                      ? (suppliersWithShipping?.has(item.product.supplier_id) ??
+                        false)
+                      : false
+                  }
                   {...rowProps}
                 />
               ))}

@@ -29,6 +29,9 @@ export interface ClientConsultation {
   /** Marge par défaut de la consultation en % — produit le prix de vente
    *  quand aucun prix n'est saisi sur la ligne (BO-CONSULT-MULTI-001). */
   default_margin_percentage?: number | null;
+  /** Livraison HT refacturée au client pour toute la consultation. Exclusive du
+   *  transport de vente ligne par ligne (BO-CONSULT-SOURCING-001). 0 = aucune. */
+  selling_shipping_cost_ht?: number;
   // Relations (optionnelles, pour joins)
   enseigne?: { id: string; name: string };
   organisation?: { id: string; legal_name: string; trade_name?: string };

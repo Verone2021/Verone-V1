@@ -1632,6 +1632,7 @@ export type Database = {
           priority_level: number | null;
           responded_at: string | null;
           responded_by: string | null;
+          selling_shipping_cost_ht: number;
           source_channel: string | null;
           status: string | null;
           tarif_maximum: number | null;
@@ -1663,6 +1664,7 @@ export type Database = {
           priority_level?: number | null;
           responded_at?: string | null;
           responded_by?: string | null;
+          selling_shipping_cost_ht?: number;
           source_channel?: string | null;
           status?: string | null;
           tarif_maximum?: number | null;
@@ -1694,6 +1696,7 @@ export type Database = {
           priority_level?: number | null;
           responded_at?: string | null;
           responded_by?: string | null;
+          selling_shipping_cost_ht?: number;
           source_channel?: string | null;
           status?: string | null;
           tarif_maximum?: number | null;

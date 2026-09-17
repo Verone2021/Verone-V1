@@ -29,6 +29,13 @@ export interface ConsultationProductRowProps {
   defaultMarginPercentage: number | null;
   /** Taux de TVA de la consultation, en % (plus de 20 % en dur). */
   tvaPercentage: number;
+  /**
+   * Le fournisseur de cette ligne porte déjà une livraison globale : le
+   * transport d'achat de la ligne est verrouillé (l'un OU l'autre, Roméo 17/09).
+   */
+  supplierShippingEntered?: boolean;
+  /** Une livraison client globale est saisie : le transport vente est verrouillé. */
+  globalSellingShippingEntered?: boolean;
   /** Besoins du client, pour rattacher la ligne à l'un d'eux. */
   needs: ConsultationNeed[];
   editNeedId: string;
@@ -65,6 +72,8 @@ export function ConsultationProductRow({
   econ,
   defaultMarginPercentage,
   tvaPercentage,
+  supplierShippingEntered = false,
+  globalSellingShippingEntered = false,
   needs,
   editNeedId,
   onSetEditNeedId,
@@ -295,7 +304,12 @@ export function ConsultationProductRow({
               onFocus={e => e.currentTarget.select()}
               onChange={e => onSetEditShippingCost(e.target.value)}
               className="w-16 h-6 text-[11px] px-1 pr-5 py-0"
-              disabled={editIsSample}
+              disabled={editIsSample || supplierShippingEntered}
+              title={
+                supplierShippingEntered
+                  ? 'La livraison est saisie une fois pour ce fournisseur : remets-la à 0 pour revenir à un transport par ligne'
+                  : undefined
+              }
             />
             <Euro className="absolute right-1 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-zinc-400 pointer-events-none" />
           </div>
@@ -354,7 +368,12 @@ export function ConsultationProductRow({
               onFocus={e => e.currentTarget.select()}
               onChange={e => onSetEditSellingShippingCost(e.target.value)}
               className="w-16 h-6 text-[11px] px-1 pr-5 py-0"
-              disabled={editIsSample}
+              disabled={editIsSample || globalSellingShippingEntered}
+              title={
+                globalSellingShippingEntered
+                  ? 'Une livraison client est saisie pour toute la consultation : mets-la à 0 pour facturer le transport ligne par ligne'
+                  : undefined
+              }
             />
             <Euro className="absolute right-1 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-zinc-400 pointer-events-none" />
           </div>

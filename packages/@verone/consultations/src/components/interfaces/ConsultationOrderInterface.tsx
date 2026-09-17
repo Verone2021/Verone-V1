@@ -277,19 +277,40 @@ export function ConsultationOrderInterface({
         supplierId,
       }),
     };
+    const lineShipping = item.shipping_cost ?? 0;
     const known = suppliers.find(s => s.supplierId === supplierId);
     if (known) {
       known.lineCount++;
       known.lines.push(lineRef);
+      known.lineShippingTotal += lineShipping;
     } else {
       suppliers.push({
         supplierId,
         supplierName: item.product?.supplier_name ?? 'Fournisseur',
         lineCount: 1,
         lines: [lineRef],
+        lineShippingTotal: lineShipping,
       });
     }
   }
+
+  // Exclusivité transport d'achat : un fournisseur qui porte une livraison
+  // globale verrouille le transport de ses lignes, et inversement (Roméo 17/09).
+  const suppliersWithShipping = new Set(
+    (supplierCostInputs ?? [])
+      .filter(
+        cost => cost.shippingCostHt + cost.customsCostHt + cost.otherCostHt > 0
+      )
+      .map(cost => cost.supplierId)
+  );
+
+  // Exclusivité livraison client : globale OU ligne par ligne
+  const globalSellingShipping = Number(
+    consultation?.selling_shipping_cost_ht ?? 0
+  );
+  const hasLineSellingShipping = consultationItems.some(
+    item => (item.selling_shipping_cost ?? 0) > 0
+  );
 
   // Coche/décoche : une ligne décochée sort de la répartition au prorata
   const toggleLineFees = (itemId: string, carriesFees: boolean): void => {
@@ -342,6 +363,7 @@ export function ConsultationOrderInterface({
           totalShipping={totalShipping}
           totalMargin={totalMargin}
           totalMarginPercent={totalMarginPercent}
+          globalSellingShipping={economics.globalSellingShipping}
         />
       )}
 
@@ -379,9 +401,24 @@ export function ConsultationOrderInterface({
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-zinc-100">
         {/* Header tableau */}
         <div className="px-4 py-2.5 flex justify-between items-center bg-zinc-50/50 border-b border-zinc-100">
-          <h3 className="text-xs font-bold text-zinc-700">
-            Articles ({totalItems} · {total.toFixed(2)}€ HT)
-          </h3>
+          <div className="min-w-0">
+            <h3 className="text-xs font-bold text-zinc-700">
+              Articles ({totalItems} · {total.toFixed(2)}€ HT)
+            </h3>
+            {hasLineSellingShipping && globalSellingShipping === 0 && (
+              <p className="text-[10px] text-zinc-400">
+                Livraison client saisie ligne par ligne — remets ces lignes à 0
+                pour facturer une seule livraison sur toute la consultation.
+              </p>
+            )}
+            {globalSellingShipping > 0 && (
+              <p className="text-[10px] text-blue-600">
+                Livraison client de {globalSellingShipping.toFixed(2)}€ pour
+                toute la consultation : le transport de vente des lignes est
+                verrouillé.
+              </p>
+            )}
+          </div>
           <div className="flex gap-1">
             <button
               type="button"
@@ -405,6 +442,8 @@ export function ConsultationOrderInterface({
         {/* Table dense */}
         <ConsultationProductsTable
           items={consultationItems}
+          suppliersWithShipping={suppliersWithShipping}
+          globalSellingShippingEntered={globalSellingShipping > 0}
           editingItem={editingItem}
           editQuantity={editQuantity}
           editPrice={editPrice}

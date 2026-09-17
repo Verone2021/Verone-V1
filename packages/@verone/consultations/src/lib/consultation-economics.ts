@@ -50,6 +50,12 @@ export interface ConsultationEconomicsSettings {
    * déjà calculée en paramètre.
    */
   supplierCosts?: readonly SupplierCostInput[];
+  /**
+   * Livraison HT refacturée au client pour toute la consultation. Alternative
+   * au transport de vente ligne par ligne — l'écran interdit les deux à la fois
+   * (BO-CONSULT-SOURCING-001). Comptée une seule fois dans le CA.
+   */
+  globalSellingShipping?: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -98,7 +104,10 @@ export interface LineEconomics {
 }
 
 export interface ConsultationEconomicsTotals {
+  /** CA HT des lignes + livraison globale refacturée au client */
   revenue: number;
+  /** Livraison refacturée au client saisie pour toute la consultation */
+  globalSellingShipping: number;
   cost: number;
   fees: number;
   /** Somme des parts fournisseur des lignes incluses */
@@ -250,7 +259,15 @@ export function computeConsultationEconomics(
 
   const includedLines = computedLines.filter(l => l.included);
 
-  const totalRevenue = includedLines.reduce((sum, l) => sum + l.revenue, 0);
+  // Livraison refacturée au client saisie une fois pour toute la consultation :
+  // elle s'ajoute au CA sans appartenir à une ligne.
+  const globalSellingShipping =
+    settings.globalSellingShipping && settings.globalSellingShipping > 0
+      ? settings.globalSellingShipping
+      : 0;
+  const totalRevenue =
+    includedLines.reduce((sum, l) => sum + l.revenue, 0) +
+    globalSellingShipping;
   const totalCost = includedLines.reduce((sum, l) => sum + l.cost, 0);
   const totalFees = includedLines.reduce((sum, l) => sum + l.fees, 0);
   const totalSupplierFees = includedLines.reduce(
@@ -269,6 +286,7 @@ export function computeConsultationEconomics(
 
   const totals: ConsultationEconomicsTotals = {
     revenue: totalRevenue,
+    globalSellingShipping,
     cost: totalCost,
     fees: totalFees,
     supplierFees: totalSupplierFees,

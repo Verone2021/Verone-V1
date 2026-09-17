@@ -279,3 +279,49 @@ Roméo : « si on a 1 000 quantités, on doit appuyer 1 000 fois sur + ».
 Vérifié à l'écran : 1000 saisi d'un coup dans la quantité d'une ligne, puis
 annulé — les quantités de la consultation de Roméo sont restées à 1 (vérifié en
 base). Les frais Dongguan qu'il venait de saisir n'ont pas été touchés.
+
+---
+
+# Transport : l'un OU l'autre, jamais les deux (17/09)
+
+Roméo : « on ne peut pas mettre une ligne de transport pour un seul produit […]
+le plus normal serait d'indiquer les prix de transport individuellement, ou sinon
+par fournisseur, l'un ou l'autre. […] Pour la vente, qu'on puisse mettre le prix
+de livraison estimé pour la consultation globale […] mais on ne peut pas mettre
+les deux en même temps, sinon ça crée des bugs. »
+
+## Achat — par ligne OU par fournisseur (aucune migration)
+
+- Dès qu'un fournisseur porte des frais (port + douane + autres > 0), le champ
+  « Transport ligne » de **ses** lignes est verrouillé, avec l'explication au
+  survol.
+- Inversement, si ses lignes portent déjà du transport, le bloc frais affiche
+  « Transport déjà saisi ligne par ligne (X,XX €) — remets ces lignes à 0 pour
+  saisir une livraison unique » à la place du bouton Saisir.
+
+## Vente — globale OU par ligne (une colonne)
+
+Migration `20260917010000_bo_consult_sourcing_001_global_selling_shipping.sql` :
+`client_consultations.selling_shipping_cost_ht NUMERIC NOT NULL DEFAULT 0` +
+CHECK ≥ 0. Types régénérés dans la même PR.
+
+- Saisie dans « Modifier » de la consultation, à côté de la marge par défaut et
+  de la TVA : « Livraison facturée au client (€ HT) — une seule pour toute la
+  consultation ».
+- Comptée **une seule fois** dans le CA, jamais imputée à une ligne (donc sans
+  effet sur le prix de revient ni sur les marges par fournisseur).
+- Tant qu'elle est > 0, le champ « Transp. vente » des lignes est verrouillé ;
+  tant que des lignes en portent, un rappel sous « Articles » explique comment
+  basculer sur la livraison globale.
+- Le bandeau du haut affiche « dont X € de livraison » sous le CA.
+
+## Tests
+
+20 tests unitaires au vert (3 nouveaux : comptée une fois, absente/nulle/négative
+sans effet, aucune ligne ne la porte dans son revient). `type-check` et `lint`
+verts sur `@verone/consultations`, `@verone/types`, `@verone/back-office`.
+
+À l'écran (consultation « Pokawa ») : livraison globale de 80 € → CA 495 → 575 €,
+« dont 80.00€ de livraison », bénéfice 260 €, marge 82,5 %, transport de vente des
+lignes verrouillé. Remise à 0 ensuite ; les deux consultations sont à
+`selling_shipping_cost_ht = 0`, vérifié en base.

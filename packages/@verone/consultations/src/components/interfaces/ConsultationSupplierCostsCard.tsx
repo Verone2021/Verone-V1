@@ -19,6 +19,11 @@ export interface ConsultationSupplierRef {
   /** Nombre de lignes de la consultation portées par ce fournisseur. */
   lineCount: number;
   /**
+   * Transport déjà saisi ligne par ligne chez ce fournisseur. > 0 interdit la
+   * livraison globale : l'un OU l'autre, jamais les deux (Roméo 17/09).
+   */
+  lineShippingTotal: number;
+  /**
    * Lignes de ce fournisseur, pour choisir lesquelles portent ses frais.
    * Avec une seule ligne, elle les porte d'office : aucune case n'est montrée.
    */
@@ -151,6 +156,7 @@ export function ConsultationSupplierCostsCard({
           const otherName = cost?.other_cost_label?.trim()
             ? cost.other_cost_label.trim()
             : 'Autres';
+          const lineShippingTotal = supplier.lineShippingTotal;
 
           return (
             <div key={supplier.supplierId} className="px-4 py-2.5">
@@ -169,7 +175,13 @@ export function ConsultationSupplierCostsCard({
                   </p>
                 </div>
 
-                {isEditing ? (
+                {lineShippingTotal > 0 && !isEditing ? (
+                  <span className="text-[11px] text-amber-700 bg-amber-50 rounded px-2 py-1">
+                    Transport déjà saisi ligne par ligne (
+                    {lineShippingTotal.toFixed(2)}€) — remets ces lignes à 0
+                    pour saisir une livraison unique
+                  </span>
+                ) : isEditing ? (
                   <div className="flex flex-wrap items-center gap-1.5">
                     <Input
                       type="number"

@@ -55,6 +55,8 @@ export interface ConsultationEconomicsItemLike {
 /** Consultation porteuse des réglages de calcul. */
 export interface ConsultationEconomicsSettingsSource {
   default_margin_percentage?: number | null;
+  /** Livraison HT refacturée au client pour toute la consultation. */
+  selling_shipping_cost_ht?: number | null;
 }
 
 /** Consultation porteuse du taux de TVA. */
@@ -139,11 +141,15 @@ export function consultationToEconomicsSettings(
   const raw = consultation?.default_margin_percentage;
   const defaultMarginPercentage =
     raw === null || raw === undefined ? null : Number(raw);
+  const globalShippingRaw = Number(consultation?.selling_shipping_cost_ht ?? 0);
   return {
     defaultMarginPercentage: Number.isFinite(defaultMarginPercentage as number)
       ? defaultMarginPercentage
       : null,
     supplierCosts,
+    globalSellingShipping: Number.isFinite(globalShippingRaw)
+      ? globalShippingRaw
+      : 0,
   };
 }
 
