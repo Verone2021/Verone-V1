@@ -35,6 +35,13 @@ export interface SupplierCostLineInput {
   isFree: boolean;
   isSample: boolean;
   supplierId: string | null;
+  /**
+   * La ligne porte-t-elle une part des frais de son fournisseur ?
+   * Décochée par l'utilisateur quand un fournisseur a plusieurs lignes et que
+   * celle-ci n'est pas concernée (livrée à part, déjà en stock…).
+   * Absent = true (comportement d'avant BO-CONSULT-SOURCING-001).
+   */
+  carriesSupplierFees?: boolean;
 }
 
 /** Résultat de ligne utile à la synthèse (sous-ensemble de LineEconomics). */
@@ -79,8 +86,9 @@ export function supplierCostTotal(cost: SupplierCostInput): number {
 /**
  * Ligne qui porte une part des frais de son fournisseur : retenue (ni refusée
  * ni simple option), ni gratuite ni échantillon — même règle que les frais de
- * ligne. Une option candidate ne compte pas dans les totaux : lui imputer des
- * frais les ferait disparaître du prix de revient des lignes retenues.
+ * ligne — et non décochée par l'utilisateur. Une option candidate ne compte pas
+ * dans les totaux : lui imputer des frais les ferait disparaître du prix de
+ * revient des lignes retenues.
  */
 export function isEligibleForSupplierCosts(
   line: SupplierCostLineInput
@@ -89,7 +97,8 @@ export function isEligibleForSupplierCosts(
     isRetainedLine(line.status) &&
     !line.isFree &&
     !line.isSample &&
-    line.supplierId !== null
+    line.supplierId !== null &&
+    line.carriesSupplierFees !== false
   );
 }
 

@@ -109,7 +109,7 @@ export interface CreateProductData {
   product_type?: 'standard' | 'custom'; // Type de produit
   assigned_client_id?: string; // Client assigné (obligatoire si product_type = 'custom')
   creation_mode?: 'sourcing' | 'complete'; // Mode de création
-  supplier_page_url?: string; // URL fournisseur (obligatoire en mode SOURCING)
+  supplier_page_url?: string; // URL fournisseur (facultative — Roméo 17/09)
 
   // 🔥 FIX: cost_price RESTAURÉ (migration 20251017_007)
   cost_price?: number; // Prix d'achat HT fournisseur

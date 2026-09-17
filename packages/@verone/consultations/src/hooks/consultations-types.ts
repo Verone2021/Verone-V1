@@ -29,6 +29,9 @@ export interface ClientConsultation {
   /** Marge par défaut de la consultation en % — produit le prix de vente
    *  quand aucun prix n'est saisi sur la ligne (BO-CONSULT-MULTI-001). */
   default_margin_percentage?: number | null;
+  /** Livraison HT refacturée au client pour toute la consultation. Exclusive du
+   *  transport de vente ligne par ligne (BO-CONSULT-SOURCING-001). 0 = aucune. */
+  selling_shipping_cost_ht?: number;
   // Relations (optionnelles, pour joins)
   enseigne?: { id: string; name: string };
   organisation?: { id: string; legal_name: string; trade_name?: string };
@@ -73,11 +76,25 @@ export interface ConsultationItem {
   /** Transport vente facturé au client (total ligne, EUR HT). 0 = aucun. */
   selling_shipping_cost: number;
   cost_price_override?: number;
+  /**
+   * Monnaie du prix d'achat de la ligne. 'EUR' par défaut.
+   * [BO-CONSULT-CURRENCY-001]
+   */
+  cost_price_currency?: string;
+  /**
+   * Taux de change → EUR figé au moment de la saisie. 1 par défaut (EUR).
+   * [BO-CONSULT-CURRENCY-001]
+   */
+  cost_price_exchange_rate?: number;
   /** Marge de la ligne en % — prioritaire sur la marge par défaut de la
    *  consultation (BO-CONSULT-MULTI-001). null = suit la marge par défaut. */
   margin_percentage?: number | null;
   /** Besoin du client auquel la ligne répond. null = ligne libre. */
   need_id?: string | null;
+  /** La ligne porte-t-elle une part des frais saisis pour son fournisseur ?
+   *  true par défaut ; décochée, elle sort de la répartition au prorata
+   *  (BO-CONSULT-SOURCING-001). */
+  carries_supplier_fees?: boolean;
   status: string;
   product?: {
     id: string;
@@ -87,6 +104,10 @@ export interface ConsultationItem {
     supplier_id?: string;
     supplier_name?: string;
     cost_price?: number;
+    /** Monnaie du prix d'achat de base. [BO-CONSULT-CURRENCY-001] */
+    cost_price_currency?: string;
+    /** Taux de change → EUR figé sur le produit. [BO-CONSULT-CURRENCY-001] */
+    cost_price_exchange_rate?: number;
     /** Éco-taxe par défaut du produit (Décision 6 BO-CONSULT-P2-001) */
     eco_tax_default?: number | null;
     stock_real?: number;
@@ -142,14 +163,22 @@ export interface CreateConsultationItemData {
 
 export interface UpdateConsultationItemData {
   quantity?: number;
-  unit_price?: number;
+  /** null = prix de vente effacé : la ligne repasse au prix issu de la marge */
+  unit_price?: number | null;
   is_free?: boolean;
   is_sample?: boolean;
   notes?: string;
   shipping_cost?: number;
   shipping_cost_currency?: string;
   selling_shipping_cost?: number;
-  cost_price_override?: number;
+  /** null = prix d'achat effacé : la ligne reprend le prix d'achat du produit */
+  cost_price_override?: number | null;
+  /** Monnaie du prix d'achat de la ligne. [BO-CONSULT-CURRENCY-001] */
+  cost_price_currency?: string;
+  /** Taux de change → EUR figé. [BO-CONSULT-CURRENCY-001] */
+  cost_price_exchange_rate?: number;
+  /** La ligne porte-t-elle une part des frais de son fournisseur ? */
+  carries_supplier_fees?: boolean;
   margin_percentage?: number | null;
   need_id?: string | null;
   status?: string;

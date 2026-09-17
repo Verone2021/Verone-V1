@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { useToast } from '@verone/common/hooks';
 import { associateProductToConsultation } from '@verone/utils';
+import { defaultRateFor } from '@verone/utils/currency';
 import { useOrganisations } from '@verone/organisations/hooks';
 
 import { useSourcingCreateUpdate } from '@verone/products/hooks';
@@ -38,6 +39,8 @@ export function useSourcingQuickForm(onSuccess?: (draftId: string) => void) {
     name: '',
     supplier_page_url: '',
     cost_price: 0,
+    cost_price_currency: 'EUR',
+    cost_price_exchange_rate: 1,
     supplier_reference: '',
     manufacturer: '',
     description: '',
@@ -57,6 +60,28 @@ export function useSourcingQuickForm(onSuccess?: (draftId: string) => void) {
   >(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  /**
+   * Mise à jour du formulaire avec gestion du taux de change automatique.
+   * Quand la monnaie change, le taux est initialisé au taux par défaut.
+   * Le taux peut ensuite être modifié manuellement sur la ligne.
+   */
+  const handleFieldChange = useCallback((updates: Partial<ProductFormData>) => {
+    setFormData(prev => {
+      const merged = { ...prev, ...updates };
+      // Si la monnaie change et que le taux n'est pas explicitement passé,
+      // on initialise le taux au taux par défaut de la nouvelle monnaie.
+      if (
+        updates.cost_price_currency !== undefined &&
+        updates.cost_price_exchange_rate === undefined
+      ) {
+        merged.cost_price_exchange_rate = defaultRateFor(
+          updates.cost_price_currency
+        );
+      }
+      return merged;
+    });
+  }, []);
 
   const handleImagesSelect = useCallback(
     (files: File[]) => {
@@ -122,10 +147,11 @@ export function useSourcingQuickForm(onSuccess?: (draftId: string) => void) {
       newErrors.name = 'Le nom du produit est obligatoire';
     }
 
-    if (!formData.supplier_page_url.trim()) {
-      newErrors.supplier_page_url =
-        "L'URL de la page fournisseur est obligatoire";
-    } else {
+    // URL de la page produit chez le fournisseur : facultative (Roméo, 17/09).
+    // Quand le fournisseur est déjà enregistré avec son site, redemander le lien
+    // de chaque produit bloquait des créations légitimes. Le format reste
+    // vérifié dès que le champ est rempli.
+    if (formData.supplier_page_url.trim()) {
       try {
         new URL(formData.supplier_page_url);
       } catch {
@@ -187,6 +213,8 @@ export function useSourcingQuickForm(onSuccess?: (draftId: string) => void) {
         name: formData.name,
         supplier_page_url: formData.supplier_page_url ?? undefined,
         cost_price: formData.cost_price ?? undefined,
+        cost_price_currency: formData.cost_price_currency,
+        cost_price_exchange_rate: formData.cost_price_exchange_rate,
         supplier_reference: formData.supplier_reference ?? undefined,
         manufacturer: formData.manufacturer ?? undefined,
         description: formData.description ?? undefined,
@@ -268,6 +296,7 @@ export function useSourcingQuickForm(onSuccess?: (draftId: string) => void) {
     setNewSupplier,
     formData,
     setFormData,
+    handleFieldChange,
     selectedImages,
     imagePreviews,
     isSubmitting,

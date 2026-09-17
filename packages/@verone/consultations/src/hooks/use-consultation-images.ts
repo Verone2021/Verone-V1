@@ -2,10 +2,39 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
+import { buildCloudflareImageUrl } from '@verone/utils/cloudflare/images';
 import { createClient } from '@verone/utils/supabase/client';
 import { smartUploadImage } from '@verone/utils/upload';
 
 const supabase = createClient();
+
+/**
+ * Adresse d'affichage d'une photo de consultation.
+ *
+ * Ordre : l'URL calculée en base (déclencheur `generate_consultation_image_url`),
+ * puis l'identifiant Cloudflare, et rien sinon.
+ *
+ * 2026-09-17 — Avant, le code écrasait systématiquement `public_url` par
+ * `storage.from('product-images').getPublicUrl(...)`. Or ce seau est **privé** :
+ * l'adresse produite renvoyait 400 et les photos des consultations existantes
+ * apparaissaient cassées, alors que les fichiers étaient bien là.
+ */
+function resolveImageUrl(image: {
+  public_url?: string | null;
+  cloudflare_image_id?: string | null;
+}): string | null {
+  if (image.public_url) return image.public_url;
+
+  if (image.cloudflare_image_id) {
+    try {
+      return buildCloudflareImageUrl(image.cloudflare_image_id);
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
 
 export interface ConsultationImage {
   id: string;
@@ -92,14 +121,11 @@ export function useConsultationImages({
 
       if (error) throw error;
 
-      // Générer les URLs publiques pour chaque image (utilise le même bucket que les produits)
       const imagesWithUrls: ConsultationImage[] = (data ?? []).map(
         image =>
           ({
             ...image,
-            public_url: supabase.storage
-              .from('product-images')
-              .getPublicUrl(image.storage_path).data.publicUrl,
+            public_url: resolveImageUrl(image),
           }) as unknown as ConsultationImage
       );
 
@@ -125,15 +151,19 @@ export function useConsultationImages({
         const fileExt = data.file.name.split('.').pop()?.toLowerCase();
         const fileName = `consultation-${consultationId}-${Date.now()}.${fileExt}`;
 
-        // 2. Upload via smart-upload (Cloudflare si configuré, Supabase sinon)
+        // 2. Dépôt vers Cloudflare (route serveur depuis le navigateur)
         const uploadResult = await smartUploadImage(data.file, {
-          bucket: 'product-images',
-          path: fileName,
           ownerId: consultationId,
           ownerType: 'product',
         });
 
-        const uploadData = { path: uploadResult.storagePath ?? fileName };
+        // `storage_path` est NOT NULL en base et n'a plus de fichier Supabase
+        // derrière : on y conserve la référence Cloudflare, exactement comme le
+        // fait déjà l'import du plugin navigateur (`/api/sourcing/import`).
+        // L'ancien `fileName` sert encore de repli pour les cas sans Cloudflare.
+        const storagePath = uploadResult.cloudflareImageId
+          ? `cloudflare/${uploadResult.cloudflareImageId}`
+          : fileName;
 
         // 3. Déterminer l'ordre d'affichage
         const maxOrder = Math.max(
@@ -145,7 +175,7 @@ export function useConsultationImages({
         // 4. Créer l'entrée en base
         const imageData = {
           consultation_id: consultationId,
-          storage_path: uploadData.path,
+          storage_path: storagePath,
           display_order: displayOrder,
           is_primary: data.isPrimary ?? state.images.length === 0, // Première image = principale
           image_type: data.imageType ?? 'gallery',
@@ -162,26 +192,18 @@ export function useConsultationImages({
           .from('consultation_images')
           .insert(imageData)
           .select(
-            'id, consultation_id, storage_path, public_url, display_order, is_primary, image_type, alt_text, width, height, file_size, format, created_by, created_at, updated_at'
+            'id, consultation_id, storage_path, public_url, cloudflare_image_id, display_order, is_primary, image_type, alt_text, width, height, file_size, format, created_by, created_at, updated_at'
           )
           .single();
 
         if (dbError) {
-          // Nettoyer le fichier uploadé en cas d'erreur DB
-          if (uploadResult.storagePath) {
-            await supabase.storage
-              .from('product-images')
-              .remove([uploadResult.storagePath]);
-          }
           throw dbError;
         }
 
-        // 5. Ajouter l'URL publique
+        // 5. Adresse d'affichage (URL calculée en base, sinon Cloudflare)
         const imageWithUrl: ConsultationImage = {
           ...newImage,
-          public_url: supabase.storage
-            .from('product-images')
-            .getPublicUrl(newImage.storage_path).data.publicUrl,
+          public_url: resolveImageUrl(newImage),
         } as unknown as ConsultationImage;
 
         // 6. Mettre à jour le state local
@@ -225,16 +247,25 @@ export function useConsultationImages({
 
         if (dbError) throw dbError;
 
-        // 3. Supprimer du storage
-        const { error: storageError } = await supabase.storage
-          .from('product-images')
-          .remove([imageToDelete.storage_path]);
+        // 3. Supprimer le fichier Supabase des seules photos historiques.
+        // Les photos déposées depuis le 17/09 vivent sur Cloudflare : leur
+        // `storage_path` vaut `cloudflare/<id>` et ne correspond à aucun
+        // fichier Supabase. Inutile d'appeler le stockage pour rien.
+        const estPhotoHistorique =
+          !imageToDelete.cloudflare_image_id &&
+          !imageToDelete.storage_path.startsWith('cloudflare/');
 
-        if (storageError) {
-          console.warn(
-            '⚠️ Erreur suppression storage (image supprimée de la DB):',
-            storageError
-          );
+        if (estPhotoHistorique) {
+          const { error: storageError } = await supabase.storage
+            .from('product-images')
+            .remove([imageToDelete.storage_path]);
+
+          if (storageError) {
+            console.warn(
+              '⚠️ Erreur suppression storage (image supprimée de la DB):',
+              storageError
+            );
+          }
         }
 
         // 4. Mettre à jour le state local

@@ -347,4 +347,129 @@ test('computeLineEconomics : part fournisseur passée en paramètre', () => {
   assertApprox(r.defaultUnitPrice, 12.75, 'prix par défaut');
 });
 
+// ---------------------------------------------------------------------------
+// (u) Lignes décochées — BO-CONSULT-SOURCING-001
+// ---------------------------------------------------------------------------
+// Roméo 17/09 : avec plusieurs produits chez un fournisseur, on doit pouvoir
+// sortir de la répartition ceux qui ne sont pas concernés par le port ou la
+// douane. Avec un seul produit, il porte les frais d'office.
+
+console.log('\n--- (u) LIGNES DÉCOCHÉES ---');
+
+test('ligne décochée : les frais se reportent sur les autres lignes du fournisseur', () => {
+  const allocation = allocateSupplierCosts(
+    [
+      makeLine({ id: 'a1', supplierId: 'sup-a', quantity: 1, unitCost: 10 }),
+      makeLine({
+        id: 'a2',
+        supplierId: 'sup-a',
+        quantity: 1,
+        unitCost: 30,
+        carriesSupplierFees: false,
+      }),
+    ],
+    [costs('sup-a', 40)]
+  );
+
+  assertApprox(allocation.shares.get('a1') ?? null, 40, 'a1 porte tout');
+  assert.equal(allocation.shares.has('a2'), false, 'a2 décochée : aucune part');
+  assert.equal(allocation.unallocated, 0);
+});
+
+test("champ absent : la ligne porte les frais (comportement d'avant)", () => {
+  const allocation = allocateSupplierCosts(
+    [makeLine({ id: 'a1', supplierId: 'sup-a', quantity: 1, unitCost: 10 })],
+    [costs('sup-a', 25)]
+  );
+
+  assertApprox(allocation.shares.get('a1') ?? null, 25, 'a1 porte les frais');
+});
+
+test('toutes les lignes décochées : frais non répartis, jamais perdus en silence', () => {
+  const allocation = allocateSupplierCosts(
+    [
+      makeLine({
+        id: 'a1',
+        supplierId: 'sup-a',
+        quantity: 1,
+        unitCost: 10,
+        carriesSupplierFees: false,
+      }),
+    ],
+    [costs('sup-a', 25)]
+  );
+
+  assert.equal(allocation.shares.size, 0);
+  assert.equal(allocation.unallocated, 25);
+});
+
+test('décochage et prix de revient : la ligne décochée garde son coût nu', () => {
+  const r = computeConsultationEconomics(
+    [
+      makeLine({ id: 'a1', supplierId: 'sup-a', quantity: 1, unitCost: 10 }),
+      makeLine({
+        id: 'a2',
+        supplierId: 'sup-a',
+        quantity: 1,
+        unitCost: 30,
+        carriesSupplierFees: false,
+      }),
+    ],
+    { supplierCosts: [costs('sup-a', 40)] }
+  );
+
+  assertApprox(r.lines[0].unitCostPrice, 50, 'a1 : 10 + 40 de frais');
+  assertApprox(r.lines[1].unitCostPrice, 30, 'a2 : coût nu');
+  assertApprox(r.totals.supplierFees, 40, 'total des parts réparties');
+});
+
+// ---------------------------------------------------------------------------
+// (v) Livraison client globale — BO-CONSULT-SOURCING-001
+// ---------------------------------------------------------------------------
+// Roméo 17/09 : la livraison facturée au client s'estime soit ligne par ligne,
+// soit une fois pour toute la consultation. Jamais les deux (l'écran verrouille).
+
+console.log('\n--- (v) LIVRAISON CLIENT GLOBALE ---');
+
+test('livraison globale : comptée une seule fois dans le CA', () => {
+  const lines = [
+    makeLine({ id: 'a1', quantity: 1, unitCost: 10, proposedPrice: 20 }),
+    makeLine({ id: 'a2', quantity: 2, unitCost: 10, proposedPrice: 20 }),
+  ];
+
+  const sans = computeConsultationEconomics(lines, {});
+  const avec = computeConsultationEconomics(lines, {
+    globalSellingShipping: 35,
+  });
+
+  assertApprox(avec.totals.revenue, sans.totals.revenue + 35, 'CA');
+  assertApprox(avec.totals.globalSellingShipping, 35, 'livraison globale');
+  assert.equal(avec.totals.cost, sans.totals.cost, 'le coût ne bouge pas');
+  assertApprox(avec.totals.margin, sans.totals.margin + 35, 'bénéfice');
+});
+
+test('livraison globale absente ou nulle : totaux inchangés', () => {
+  const lines = [makeLine({ id: 'a1', quantity: 1, unitCost: 10 })];
+  const ref = computeConsultationEconomics(lines, {});
+
+  for (const value of [undefined, 0, -5]) {
+    const r = computeConsultationEconomics(lines, {
+      globalSellingShipping: value,
+    });
+    assert.equal(r.totals.revenue, ref.totals.revenue);
+    assert.equal(r.totals.globalSellingShipping, 0);
+  }
+});
+
+test('livraison globale : aucune ligne ne la porte dans son prix de revient', () => {
+  const r = computeConsultationEconomics(
+    [makeLine({ id: 'a1', quantity: 1, unitCost: 10, proposedPrice: 20 })],
+    { globalSellingShipping: 50 }
+  );
+
+  assertApprox(r.lines[0].unitCostPrice, 10, 'revient de la ligne');
+  assertApprox(r.lines[0].revenue, 20, 'CA de la ligne');
+  assertApprox(r.totals.revenue, 70, 'CA total avec la livraison');
+});
+
 report('SUPPLIER COSTS');

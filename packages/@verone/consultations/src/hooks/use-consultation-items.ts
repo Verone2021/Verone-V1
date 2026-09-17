@@ -53,7 +53,10 @@ export function useConsultationItems(consultationId?: string) {
           shipping_cost_currency,
           selling_shipping_cost,
           cost_price_override,
+          cost_price_currency,
+          cost_price_exchange_rate,
           margin_percentage,
+          carries_supplier_fees,
           need_id,
           product:products(
             id,
@@ -61,6 +64,8 @@ export function useConsultationItems(consultationId?: string) {
             sku,
             requires_sample,
             cost_price,
+            cost_price_currency,
+            cost_price_exchange_rate,
             eco_tax_default,
             stock_real,
             stock_forecasted_in,
@@ -83,6 +88,8 @@ export function useConsultationItems(consultationId?: string) {
           sku: string;
           requires_sample: boolean;
           cost_price?: number;
+          cost_price_currency?: string;
+          cost_price_exchange_rate?: number;
           eco_tax_default?: number | null;
           stock_real?: number;
           stock_forecasted_in?: number;
@@ -114,7 +121,10 @@ export function useConsultationItems(consultationId?: string) {
           shipping_cost_currency: item.shipping_cost_currency ?? 'EUR',
           selling_shipping_cost: item.selling_shipping_cost ?? 0,
           cost_price_override: item.cost_price_override ?? undefined,
+          cost_price_currency: item.cost_price_currency ?? 'EUR',
+          cost_price_exchange_rate: item.cost_price_exchange_rate ?? 1,
           margin_percentage: item.margin_percentage ?? null,
+          carries_supplier_fees: item.carries_supplier_fees ?? true,
           need_id: item.need_id ?? null,
           product: productData
             ? {
@@ -128,6 +138,9 @@ export function useConsultationItems(consultationId?: string) {
                   productData.supplier?.legal_name ??
                   undefined,
                 cost_price: productData.cost_price,
+                cost_price_currency: productData.cost_price_currency ?? 'EUR',
+                cost_price_exchange_rate:
+                  productData.cost_price_exchange_rate ?? 1,
                 eco_tax_default: productData.eco_tax_default ?? null,
                 stock_real: productData.stock_real ?? 0,
                 stock_forecasted_in: productData.stock_forecasted_in ?? 0,
@@ -238,10 +251,16 @@ export function useConsultationItems(consultationId?: string) {
         updateData.selling_shipping_cost = updates.selling_shipping_cost;
       if (updates.cost_price_override !== undefined)
         updateData.cost_price_override = updates.cost_price_override;
+      if (updates.cost_price_currency !== undefined)
+        updateData.cost_price_currency = updates.cost_price_currency;
+      if (updates.cost_price_exchange_rate !== undefined)
+        updateData.cost_price_exchange_rate = updates.cost_price_exchange_rate;
       if (updates.is_sample !== undefined)
         updateData.is_sample = updates.is_sample;
       if (updates.margin_percentage !== undefined)
         updateData.margin_percentage = updates.margin_percentage;
+      if (updates.carries_supplier_fees !== undefined)
+        updateData.carries_supplier_fees = updates.carries_supplier_fees;
       if (updates.need_id !== undefined) updateData.need_id = updates.need_id;
       if (updates.status !== undefined) updateData.status = updates.status;
 
@@ -258,7 +277,10 @@ export function useConsultationItems(consultationId?: string) {
             ? {
                 ...item,
                 quantity: updates.quantity ?? item.quantity,
-                unit_price: updates.unit_price ?? item.unit_price,
+                unit_price:
+                  updates.unit_price !== undefined
+                    ? updates.unit_price
+                    : item.unit_price,
                 is_free: updates.is_free ?? item.is_free,
                 is_sample: updates.is_sample ?? item.is_sample,
                 notes: updates.notes ?? item.notes,
@@ -268,11 +290,20 @@ export function useConsultationItems(consultationId?: string) {
                 selling_shipping_cost:
                   updates.selling_shipping_cost ?? item.selling_shipping_cost,
                 cost_price_override:
-                  updates.cost_price_override ?? item.cost_price_override,
+                  updates.cost_price_override !== undefined
+                    ? (updates.cost_price_override ?? undefined)
+                    : item.cost_price_override,
+                cost_price_currency:
+                  updates.cost_price_currency ?? item.cost_price_currency,
+                cost_price_exchange_rate:
+                  updates.cost_price_exchange_rate ??
+                  item.cost_price_exchange_rate,
                 margin_percentage:
                   updates.margin_percentage !== undefined
                     ? updates.margin_percentage
                     : item.margin_percentage,
+                carries_supplier_fees:
+                  updates.carries_supplier_fees ?? item.carries_supplier_fees,
                 need_id:
                   updates.need_id !== undefined
                     ? updates.need_id

@@ -44,6 +44,7 @@ const DEFAULT_FORM: EditFormData = {
   tarif_maximum: 0,
   default_margin_percentage: '',
   tva_rate: '',
+  selling_shipping_cost_ht: '',
   estimated_response_date: '',
   priority_level: 2,
   source_channel: 'website',
@@ -91,6 +92,11 @@ export function EditConsultationModal({
             : '',
         tva_rate:
           consultation.tva_rate != null ? String(consultation.tva_rate) : '',
+        selling_shipping_cost_ht:
+          consultation.selling_shipping_cost_ht != null &&
+          Number(consultation.selling_shipping_cost_ht) > 0
+            ? String(consultation.selling_shipping_cost_ht)
+            : '',
         estimated_response_date: consultation.estimated_response_date
           ? new Date(consultation.estimated_response_date)
               .toISOString()
@@ -264,6 +270,12 @@ export function EditConsultationModal({
           formData.tva_rate.trim() === ''
             ? undefined
             : Number(formData.tva_rate),
+        // vide = aucune livraison globale (0), la facturation redevient possible
+        // ligne par ligne
+        selling_shipping_cost_ht:
+          formData.selling_shipping_cost_ht.trim() === ''
+            ? 0
+            : Number(formData.selling_shipping_cost_ht),
         estimated_response_date: formData.estimated_response_date || undefined,
         priority_level: formData.priority_level,
         source_channel: formData.source_channel,

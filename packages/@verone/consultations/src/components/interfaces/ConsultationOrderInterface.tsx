@@ -33,12 +33,22 @@ import type {
   ConsultationSupplierCost,
   UpsertSupplierCostData,
 } from '../../hooks/use-consultation-supplier-costs';
-import type { SupplierCostInput } from '../../lib/consultation-supplier-costs';
+import {
+  isEligibleForSupplierCosts,
+  type SupplierCostInput,
+} from '../../lib/consultation-supplier-costs';
 
 import {
   ConsultationSupplierCostsCard,
   type ConsultationSupplierRef,
 } from './ConsultationSupplierCostsCard';
+
+/** Montant saisi : vide ou illisible → null (valeur effacée), sinon le nombre. */
+function toAmountOrNull(raw: string): number | null {
+  if (raw === '') return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 // Décision 1 BO-CONSULT-P2-001 : items + mutations via props (source unique dans page.tsx)
 interface ConsultationOrderInterfaceProps {
@@ -99,6 +109,10 @@ export function ConsultationOrderInterface({
   const [editShippingCost, setEditShippingCost] = useState('');
   const [editSellingShippingCost, setEditSellingShippingCost] = useState('');
   const [editCostPriceOverride, setEditCostPriceOverride] = useState('');
+  /** Monnaie du prix d'achat en cours de saisie. [BO-CONSULT-CURRENCY-001] */
+  const [editCostPriceCurrency, setEditCostPriceCurrency] = useState('EUR');
+  /** Taux de change en cours de saisie. [BO-CONSULT-CURRENCY-001] */
+  const [editCostPriceExchangeRate, setEditCostPriceExchangeRate] = useState(1);
   const [editIsSample, setEditIsSample] = useState(false);
   const [editMarginPercentage, setEditMarginPercentage] = useState('');
   const [editNeedId, setEditNeedId] = useState<string>('');
@@ -119,6 +133,15 @@ export function ConsultationOrderInterface({
     setEditShippingCost(item.shipping_cost?.toString() ?? '0');
     setEditSellingShippingCost(item.selling_shipping_cost?.toString() ?? '0');
     setEditCostPriceOverride(item.cost_price_override?.toString() ?? '');
+    // Monnaie + taux figés sur la ligne, sinon repli sur le produit, sinon EUR/1
+    setEditCostPriceCurrency(
+      item.cost_price_currency ?? item.product?.cost_price_currency ?? 'EUR'
+    );
+    setEditCostPriceExchangeRate(
+      item.cost_price_exchange_rate ??
+        item.product?.cost_price_exchange_rate ??
+        1
+    );
     setEditIsSample(item.is_sample ?? false);
     setEditMarginPercentage(item.margin_percentage?.toString() ?? '');
     setEditNeedId(item.need_id ?? '');
@@ -127,17 +150,28 @@ export function ConsultationOrderInterface({
   const saveEditItem = (itemId: string): void => {
     const marginRaw = editMarginPercentage.trim();
     const marginParsed = marginRaw === '' ? null : Number(marginRaw);
+    // Champ vidé = valeur effacée (et non « ne pas toucher ») : sans ça, un prix
+    // saisi par erreur reste à vie. Vide côté vente → le prix repart de la marge,
+    // vide côté achat → on reprend le prix d'achat du produit.
+    const priceRaw = editPrice.trim();
+    const costRaw = editCostPriceOverride.trim();
     void updateItem(itemId, {
       quantity: editQuantity,
-      unit_price: editPrice ? parseFloat(editPrice) : undefined,
+      unit_price: toAmountOrNull(priceRaw),
       notes: editNotes || undefined,
       shipping_cost: editShippingCost ? parseFloat(editShippingCost) : 0,
       selling_shipping_cost: editSellingShippingCost
         ? parseFloat(editSellingShippingCost)
         : 0,
-      cost_price_override: editCostPriceOverride
-        ? parseFloat(editCostPriceOverride)
-        : undefined,
+      cost_price_override: toAmountOrNull(costRaw),
+      // Monnaie + taux figés — enregistrés uniquement si un prix d'achat est saisi
+      // (un champ vide = reprise du prix produit, la monnaie du produit s'applique)
+      cost_price_currency:
+        toAmountOrNull(costRaw) !== null ? editCostPriceCurrency : undefined,
+      cost_price_exchange_rate:
+        toAmountOrNull(costRaw) !== null
+          ? editCostPriceExchangeRate
+          : undefined,
       is_sample: editIsSample,
       // vide ou illisible → null : la ligne suit la marge par défaut
       margin_percentage:
@@ -249,17 +283,73 @@ export function ConsultationOrderInterface({
   for (const item of consultationItems) {
     const supplierId = item.product?.supplier_id;
     if (!supplierId) continue;
+    const lineRef = {
+      itemId: item.id,
+      productName: item.product?.name ?? 'Produit',
+      carriesFees: item.carries_supplier_fees ?? true,
+      // Refusée, option candidate, gratuite ou échantillon : jamais concernée
+      ineligible: !isEligibleForSupplierCosts({
+        id: item.id,
+        quantity: item.quantity,
+        unitCost: null,
+        status: item.status,
+        isFree: item.is_free,
+        isSample: item.is_sample,
+        supplierId,
+      }),
+    };
+    const lineShipping = item.shipping_cost ?? 0;
     const known = suppliers.find(s => s.supplierId === supplierId);
     if (known) {
       known.lineCount++;
+      known.lines.push(lineRef);
+      known.lineShippingTotal += lineShipping;
     } else {
       suppliers.push({
         supplierId,
         supplierName: item.product?.supplier_name ?? 'Fournisseur',
         lineCount: 1,
+        lines: [lineRef],
+        lineShippingTotal: lineShipping,
       });
     }
   }
+
+  // Exclusivité transport d'achat : un fournisseur qui porte une livraison
+  // globale verrouille le transport de ses lignes, et inversement (Roméo 17/09).
+  const suppliersWithShipping = new Set(
+    (supplierCostInputs ?? [])
+      .filter(
+        cost => cost.shippingCostHt + cost.customsCostHt + cost.otherCostHt > 0
+      )
+      .map(cost => cost.supplierId)
+  );
+
+  // Exclusivité livraison client : globale OU ligne par ligne
+  const globalSellingShipping = Number(
+    consultation?.selling_shipping_cost_ht ?? 0
+  );
+  const hasLineSellingShipping = consultationItems.some(
+    item => (item.selling_shipping_cost ?? 0) > 0
+  );
+
+  // Coche/décoche : une ligne décochée sort de la répartition au prorata
+  const toggleLineFees = (itemId: string, carriesFees: boolean): void => {
+    void updateItem(itemId, { carries_supplier_fees: carriesFees }).catch(
+      err => {
+        console.error(
+          '[ConsultationOrderInterface] toggleLineFees failed:',
+          err
+        );
+      }
+    );
+  };
+
+  // Lignes dont le produit n'a pas de fournisseur : aucun frais ne peut leur
+  // être affecté, le bloc frais le dit au lieu de les passer sous silence.
+  const productsWithoutSupplier = consultationItems
+    .filter(item => !item.product?.supplier_id)
+    .map(item => item.product?.name ?? 'Produit');
 
   const total = economics.revenue;
   const totalCost = economics.cost;
@@ -294,6 +384,7 @@ export function ConsultationOrderInterface({
           totalShipping={totalShipping}
           totalMargin={totalMargin}
           totalMarginPercent={totalMarginPercent}
+          globalSellingShipping={economics.globalSellingShipping}
         />
       )}
 
@@ -318,6 +409,8 @@ export function ConsultationOrderInterface({
       {onSaveSupplierCost && (
         <ConsultationSupplierCostsCard
           suppliers={suppliers}
+          productsWithoutSupplier={productsWithoutSupplier}
+          onToggleLineFees={toggleLineFees}
           supplierCosts={supplierCosts}
           supplierEconomics={supplierEconomics}
           unallocatedSupplierFees={economics.unallocatedSupplierFees}
@@ -329,9 +422,24 @@ export function ConsultationOrderInterface({
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-zinc-100">
         {/* Header tableau */}
         <div className="px-4 py-2.5 flex justify-between items-center bg-zinc-50/50 border-b border-zinc-100">
-          <h3 className="text-xs font-bold text-zinc-700">
-            Articles ({totalItems} · {total.toFixed(2)}€ HT)
-          </h3>
+          <div className="min-w-0">
+            <h3 className="text-xs font-bold text-zinc-700">
+              Articles ({totalItems} · {total.toFixed(2)}€ HT)
+            </h3>
+            {hasLineSellingShipping && globalSellingShipping === 0 && (
+              <p className="text-[10px] text-zinc-400">
+                Livraison client saisie ligne par ligne — remets ces lignes à 0
+                pour facturer une seule livraison sur toute la consultation.
+              </p>
+            )}
+            {globalSellingShipping > 0 && (
+              <p className="text-[10px] text-blue-600">
+                Livraison client de {globalSellingShipping.toFixed(2)}€ pour
+                toute la consultation : le transport de vente des lignes est
+                verrouillé.
+              </p>
+            )}
+          </div>
           <div className="flex gap-1">
             <button
               type="button"
@@ -355,6 +463,8 @@ export function ConsultationOrderInterface({
         {/* Table dense */}
         <ConsultationProductsTable
           items={consultationItems}
+          suppliersWithShipping={suppliersWithShipping}
+          globalSellingShippingEntered={globalSellingShipping > 0}
           editingItem={editingItem}
           editQuantity={editQuantity}
           editPrice={editPrice}
@@ -362,6 +472,8 @@ export function ConsultationOrderInterface({
           editShippingCost={editShippingCost}
           editSellingShippingCost={editSellingShippingCost}
           editCostPriceOverride={editCostPriceOverride}
+          editCostPriceCurrency={editCostPriceCurrency}
+          editCostPriceExchangeRate={editCostPriceExchangeRate}
           editIsSample={editIsSample}
           editMarginPercentage={editMarginPercentage}
           editNeedId={editNeedId}
@@ -377,6 +489,8 @@ export function ConsultationOrderInterface({
           onSetEditShippingCost={setEditShippingCost}
           onSetEditSellingShippingCost={setEditSellingShippingCost}
           onSetEditCostPriceOverride={setEditCostPriceOverride}
+          onSetEditCostPriceCurrency={setEditCostPriceCurrency}
+          onSetEditCostPriceExchangeRate={setEditCostPriceExchangeRate}
           onSetEditMarginPercentage={setEditMarginPercentage}
           onSetEditNeedId={setEditNeedId}
           onStartEdit={startEditItem}
@@ -448,6 +562,12 @@ export function ConsultationOrderInterface({
         selectedProducts={[]}
         showQuantity
         showImages
+        // Raccourci : le produit n'existe pas encore → on le crée en sourcing
+        // depuis le sélecteur, et il rejoint la consultation tout seul.
+        onCreateSourcingProduct={() => {
+          setShowAddModal(false);
+          setShowSourcingModal(true);
+        }}
       />
 
       <SourcingProductModal

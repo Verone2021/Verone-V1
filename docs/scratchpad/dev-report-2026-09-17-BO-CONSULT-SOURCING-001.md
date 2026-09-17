@@ -1,0 +1,377 @@
+# [BO-CONSULT-SOURCING-001] — Les produits en sourcing sélectionnables dans une consultation
+
+Date : 2026-09-17 · Branche : `feat/BO-CONSULT-SOURCING-001-selection-produits-sourcing`
+
+## Point de friction signalé par Roméo (16/09 au soir)
+
+« Quand on ajoute un produit à une consultation, on ne peut choisir que des produits du
+catalogue. Il faut pouvoir choisir un produit en sourcing, et pouvoir créer un produit en
+sourcing depuis une consultation. »
+
+## Audit — ce qui existait déjà, ce qui bloquait
+
+| Élément                                                                          | État avant                                                                                                                              | Verdict               |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| Bouton « Sourcer » dans une consultation (crée un produit sourcing + l'associe)  | Présent, ouvre `SourcingProductModal` → `SourcingQuickForm`                                                                             | ✅ déjà là            |
+| Créer un sourcing sans consultation (`/produits/sourcing` → Nouveau sourcing)    | Présent                                                                                                                                 | ✅ déjà là            |
+| Règle métier « proposable en consultation » (vendable **ou** encore en sourcing) | `isProductProposableInConsultation` (TS) + `get_consultation_eligible_products` (SQL) + garde serveur `/api/consultations/associations` | ✅ déjà là            |
+| Sélecteur « Ajouter » d'une consultation                                         | `productStatus: 'active'` en dur → **aucun produit sourcing** (tous en `draft`)                                                         | ❌ **le blocage**     |
+| Pastille de filtre « Sourcing » dans ce sélecteur                                | Présente mais renvoyait toujours 0 résultat                                                                                             | ❌ promesse non tenue |
+
+Vérifié en production avant correction : filtre « Sourcing » → « Aucun produit trouvé », alors que
+6 produits sont en sourcing.
+
+Conséquence : la règle métier et la garde serveur acceptaient déjà les produits en sourcing ;
+seule la requête du sélecteur front les écartait.
+
+## Correction (3 fichiers, ~20 lignes)
+
+`packages/@verone/products/src/components/selectors/UniversalProductSelectorV2/`
+
+1. `index.tsx` — `productStatus: context === 'consultations' ? 'active' : null`
+   → `proposableInConsultation: context === 'consultations'`.
+2. `useProductSearch.ts` — filtre large en base (`archived_at IS NULL` +
+   `product_status IN (active, preorder) OR creation_mode = 'sourcing'`), puis filtrage fin
+   avec la règle partagée `isProductProposableInConsultation` (écarte les sourcings clos :
+   refusé, annulé, archivé, validé). Colonnes `sourcing_status` et `archived_at` ajoutées au
+   `select` explicite. `proposableInConsultation` ajouté aux deps de l'effect.
+3. `types.ts` — `productStatus` (utilisé nulle part ailleurs) remplacé par
+   `proposableInConsultation` ; `sourcing_status` ajouté à `ProductData`.
+
+Aucune migration, aucune route API touchée, aucun composant dupliqué. La carte produit affichait
+déjà le badge « Sourcing » — rien à ajouter côté affichage.
+
+Effet de bord assumé : les produits en **précommande** deviennent eux aussi proposables, ce qui
+aligne enfin le sélecteur sur la règle unique du 13/09 (vendable = actif ou précommande).
+
+## Tests
+
+- `pnpm --filter @verone/products type-check` ✅ · `lint` ✅ (0 warning)
+- `pnpm --filter @verone/back-office type-check` ✅
+- Écran (serveur local, consultation réelle « Black & White Burger ») :
+  - filtre « Sourcing » → **6 produits** (avant : 0) ;
+  - ajout du produit sourcing « Canapé » (SRC-MU2QM3SE) : la ligne apparaît sous
+    « SANS FOURNISSEUR », **son prix d'achat sourcing 1,00 € alimente la colonne Revient**,
+    vente « À fixer » ;
+  - le lien de la ligne vers `/produits/catalogue/<id>` affiche correctement une fiche sourcing
+    (badges « draft » + « Sourcing interne ») — pas de correction nécessaire ;
+  - 0 erreur console nouvelle.
+- **Donnée de test** : la ligne « Canapé » créée pour le test a été supprimée par l'écran.
+  État de la consultation revérifié en base : 1 ligne, 0 frais, marge NULL, TVA 20, `en_attente`
+  — identique à l'état d'origine.
+
+## Reste ouvert (non fait ici, volontairement)
+
+- Le sélecteur charge 100 produits max sans pagination (dette existante). Avec 215 produits
+  éligibles, un produit sourcing peut être hors des 100 premiers : la pastille « Sourcing » ou la
+  recherche par nom le retrouve en un clic.
+- Photos de consultation cassées, données de test PRD-0314 : décisions Roméo, inchangées.
+
+---
+
+# Suite — 17/09 : modifier les prix dans une consultation
+
+## Constat Roméo
+
+« On ne peut pas changer le prix des produits dans une consultation. »
+
+## Cause réelle
+
+Les champs existaient déjà (prix d'achat `cost_price_override`, transport de ligne, transport
+refacturé, prix de vente, marge de ligne) — mais **on ne pouvait pas y entrer** : le seul point
+d'entrée était le menu « … » de la colonne Actions, et cette colonne est **hors cadre** dès
+1440 px (tableau 1249 px de large dans un cadre de 853 px, mesuré à l'écran). Les prix affichés
+n'étaient pas cliquables.
+
+Second blocage, pour les simulations : un champ prix vidé était **ignoré** (`editPrice ? … :
+undefined`), donc un prix saisi par erreur ne pouvait plus être effacé.
+
+## Corrections
+
+1. **Prix cliquables** — les cellules Achat, Transport et Vente ouvrent la ligne en modification
+   (`onStartEdit`), avec une infobulle explicite.
+2. **Colonne Actions collée au bord droit** (`sticky right-0`, en-tête compris) : « Modifier »,
+   « Supprimer », ✓ et ✕ restent visibles quel que soit le défilement.
+3. **Un champ vidé efface la valeur** : vente vide → le prix repart de la marge ; achat vide → on
+   reprend le prix d'achat du produit. Helper `toAmountOrNull` + `unit_price` et
+   `cost_price_override` passés en `number | null` dans `UpdateConsultationItemData` et dans la
+   fusion optimiste (`!== undefined` au lieu de `??`, sinon un `null` était ignoré).
+
+## Simulation vs vente réelle — vérifié, rien à faire
+
+Règle Roméo : une consultation ne doit **pas** alimenter les moyennes de prix des produits.
+
+- Aucune fonction ni déclencheur en base ne lit ou n'écrit `consultation_products` (vérifié).
+- Le prix d'achat moyen (`cost_price_avg`) n'est mis à jour que par
+  `update_product_pmp_on_po_received` — à la **réception d'une commande fournisseur**.
+- Côté code, le module consultations n'écrit que dans `consultation_products` (aucun `from('products')`).
+
+La consultation est donc déjà un bac à sable : les prix qu'on y saisit ne sortent que par un devis
+ou une commande, c'est-à-dire par une vente réelle.
+
+## Tests
+
+- `type-check` + `lint` verts : `@verone/consultations`, `@verone/products`, `@verone/back-office`.
+- Écran, consultation réelle « Pokawa » (PRD-0313, 30 pièces) : prix de vente effacé + marge 40 %
+  → 14,70 € « calculé · marge 40 % » sur un revient de 10,50 € (5,00 € d'achat + 165 € de
+  transport sur 30 pièces), CA 441 €, marge 40 %. **État d'origine remis et vérifié en base**
+  (prix 16,50 €, marge NULL, reste inchangé).
+- Consultation « Black & White Burger » (utilisée par Roméo au même moment) : ouverte en
+  modification puis annulée, aucune donnée touchée — revérifié en base.
+
+## Limites qui restent dans la consultation
+
+1. **Un produit sans fournisseur n'a pas de ligne de frais.** Le bloc « Frais par fournisseur »
+   ne liste que les fournisseurs présents sur les lignes ; un produit sourcé sans fournisseur
+   (ex. « Sofá Modular Lounge ») tombe dans le groupe « Sans fournisseur » et ne peut recevoir ni
+   port ni douane. Remède actuel : rattacher un fournisseur au produit.
+2. **Une seule monnaie.** Les frais et les prix sont en euros ; une offre fournisseur libellée en
+   dollars ou en yuans n'est pas convertie (limite déjà notée le 16/09 sur le comparatif d'offres).
+3. **Pas de remise globale ni de ventilation de TVA par taux** sur la proposition client
+   (décision Roméo en attente, demande une colonne en base).
+4. **Pas de prix de vente cible par besoin** : le budget du client (`tarif_maximum`) s'affiche au
+   niveau de la consultation et du besoin, pas comme objectif par ligne.
+5. **Le rapport interne ne montre pas le point mort** (quantité minimale pour couvrir les frais
+   fixes) ; il donne marge, bénéfice et part des frais.
+
+---
+
+# Contrôle à l'écran des frais par fournisseur (17/09)
+
+## Ce qui marche déjà — vérifié dans le navigateur
+
+Test sur la consultation réelle « Pokawa », deux fauteuils Opjet ajoutés
+temporairement (achat 209 € et 599 €) + 150 € de frais (port 100 € + douane 50 €) :
+
+| Ligne                        | Achat    | Part des frais | Revient  |
+| ---------------------------- | -------- | -------------- | -------- |
+| FAU-0003                     | 209,00 € | **38,80 €**    | 253,47 € |
+| FAU-0008                     | 599,00 € | **111,20 €**   | 721,45 € |
+| PRD-0313 (autre fournisseur) | 5,00 €   | 0,00 €         | 10,50 €  |
+
+38,80 + 111,20 = 150,00 € : répartition exacte au prorata de la valeur de ligne
+(209/808 et 599/808), affichée par ligne (« dont X € de frais ») et isolée au
+fournisseur concerné. Les deux lignes de test et les frais ont été retirés, état
+de la consultation revérifié en base (1 ligne, 0 frais, valeurs d'origine).
+
+## Deux manques constatés, corrigés sans toucher la base
+
+1. **Les « autres frais » n'avaient pas d'intitulé.** La colonne
+   `other_cost_label` existait en base depuis `BO-CONSULT-P9-001` mais n'était
+   jamais remplie : impossible de dire si les 30 € étaient de la manutention, de
+   l'emballage ou de l'assurance. Champ texte ajouté à côté du montant, affiché
+   ensuite à la place du mot « Autres ».
+2. **Une ligne dont le produit n'a pas de fournisseur disparaissait du bloc.**
+   `consultation_supplier_costs.supplier_id` est NOT NULL : ces lignes ne peuvent
+   porter aucun frais de port ou de douane, et rien ne le disait. Une mention
+   « Sans fournisseur — N lignes » apparaît maintenant, avec la marche à suivre
+   (rattacher un fournisseur au produit, ou saisir le transport sur la ligne).
+
+## Ce qui reste demandé par Roméo et qui, lui, demande la base
+
+**Choisir quels produits d'un fournisseur portent ses frais.** Aujourd'hui tous
+les produits retenus de ce fournisseur se partagent les frais au prorata, sans
+exception possible. Il faudrait un marqueur par ligne (`consultation_products`,
+colonne booléenne type `carries_supplier_fees` à `true` par défaut) + une case à
+cocher par produit dans le bloc frais. **En attente du feu vert de Roméo**
+(modification de base de données).
+
+---
+
+# Choisir les produits qui portent les frais d'un fournisseur (17/09)
+
+Feu vert de Roméo, demande précisée : « s'il n'y a qu'une ligne de produits, elle
+est impactée automatiquement ; s'il y en a deux, on peut choisir, on peut décocher ».
+
+## Base de données
+
+Migration `20260917000000_bo_consult_sourcing_001_carries_supplier_fees.sql` :
+colonne `consultation_products.carries_supplier_fees BOOLEAN NOT NULL DEFAULT true`,
+avec commentaire. Un marqueur sur la ligne existante, pas de table d'association :
+une ligne appartient déjà à un seul fournisseur, via son produit
+(`database-modeling-patterns.md` règle 1). Appliquée hors fenêtre 07-17 h UTC
+(ADR-041), inscrite au carnet `supabase_migrations.schema_migrations`, types
+`packages/@verone/types/src/supabase.ts` régénérés dans la même PR (checklist
+`workflow.md` question 4). Les 8 lignes existantes sont à `true` : comportement
+inchangé.
+
+## Code
+
+- `consultation-supplier-costs.ts` : `SupplierCostLineInput.carriesSupplierFees`
+  (optionnel, absent = true) et `isEligibleForSupplierCosts` qui écarte les lignes
+  décochées. Les frais d'une ligne décochée se reportent sur les autres lignes du
+  fournisseur ; si toutes sont décochées, ils partent en « non répartis » (alerte
+  existante), jamais perdus en silence.
+- `consultation-economics.ts` / `consultation-economics-input.ts` : champ transporté
+  jusqu'au calcul.
+- `use-consultation-items.ts` + `consultations-types.ts` : chargement, écriture et
+  fusion optimiste.
+- `ConsultationSupplierCostsCard` : ligne « Produits concernés » avec une case par
+  produit, **affichée seulement quand le fournisseur a plus d'une ligne**. Les
+  lignes refusées, gratuites ou échantillons sont grisées et non cochables.
+
+## Tests
+
+- 17 tests unitaires au vert sur la répartition (4 nouveaux : report sur les autres
+  lignes, champ absent = comportement d'avant, toutes décochées, prix de revient
+  de la ligne décochée).
+- `type-check` + `lint` verts sur `@verone/consultations`, `@verone/types`,
+  `@verone/back-office`.
+- À l'écran (consultation « Pokawa », deux fauteuils Opjet ajoutés puis retirés) :
+  170 € de frais (port 100 + douane 50 + manutention 20) répartis 43,97 € / 126,03 € ;
+  après décochage du premier produit, **170,00 € portés entièrement par le second**
+  et le premier revenu à son coût nu. Données de test supprimées, consultation
+  revérifiée en base (1 ligne, 0 frais, valeurs d'origine).
+
+## Au passage — « le plateau Pokawa a déjà un fournisseur »
+
+Vérifié en base : `PRD-0313` a `supplier_id = NULL`, aucun fournisseur candidat
+dans `sourcing_candidate_suppliers`, aucun `manufacturer`. L'écran disait vrai.
+Le bloc nomme désormais les produits concernés (« Sofá Modular Lounge — aucun
+fournisseur n'est enregistré sur cette fiche produit… ») au lieu d'un simple
+compteur, pour qu'on sache lequel corriger.
+
+---
+
+# Lisibilité : la livraison est celle du fournisseur, pas de la ligne (17/09)
+
+Roméo, après essai : « le fournisseur ne fait pas payer par ligne, il fait payer
+une livraison ». Le comportement demandé existait déjà depuis le commit précédent,
+mais l'écran ne le disait pas : sur sa consultation, chaque fournisseur n'avait
+qu'une ligne, donc aucune case n'apparaissait, et la colonne « Transport » du
+tableau laissait croire à une facturation ligne par ligne.
+
+Corrections, sans toucher au calcul :
+
+- Sous-titre du bloc : « une livraison et une douane par fournisseur, **pas par
+  produit** — réparties sur les produits cochés, au prorata de leur valeur ».
+- La ligne des cases est **toujours affichée**, y compris pour un fournisseur à
+  un seul produit : « Cette livraison concerne » (plusieurs produits, cases
+  actives) ou « Livraison portée par » (un seul produit, case cochée et
+  verrouillée). Le mécanisme est visible partout, sans être modifiable là où il
+  n'y a rien à choisir.
+- Colonne du tableau renommée « **Transport ligne** », avec infobulle : « Frais
+  propres à cette ligne seulement. La livraison facturée une fois par le
+  fournisseur se saisit dans le bloc Frais par fournisseur ».
+
+Vérifié à l'écran sur la consultation « Black & White Burger » (Opjet, 2 lignes) :
+74 € saisis **une seule fois** (port 60 + douane 14) → 47,57 € et 26,43 € sur les
+deux ampoules (9/14 et 5/14) ; produit décoché → **74,00 € entièrement** sur
+l'autre ; Dongguan, qui n'a qu'une ligne, inchangé. Frais remis à zéro et cases
+recochées ; état de la consultation revérifié en base, identique à celui de Roméo.
+
+---
+
+# Saisie au clavier des quantités et des montants (17/09)
+
+Roméo : « si on a 1 000 quantités, on doit appuyer 1 000 fois sur + ».
+
+- **Le nombre de la colonne Qté est cliquable** : il ouvre la ligne en
+  modification, où la quantité se tape directement. Les boutons − et + restent
+  pour les petits ajustements.
+- **Transport vente** rejoint les autres montants cliquables (achat, transport
+  ligne, vente/marge l'étaient déjà).
+- **Sélection au focus** sur les six champs chiffrés : cliquer dans le champ
+  sélectionne la valeur, taper « 1000 » la remplace au lieu de s'y ajouter.
+  Pas d'`autoFocus` : ouvrir la ligne depuis la cellule Vente ne renvoie pas le
+  curseur sur la quantité.
+
+Vérifié à l'écran : 1000 saisi d'un coup dans la quantité d'une ligne, puis
+annulé — les quantités de la consultation de Roméo sont restées à 1 (vérifié en
+base). Les frais Dongguan qu'il venait de saisir n'ont pas été touchés.
+
+---
+
+# Transport : l'un OU l'autre, jamais les deux (17/09)
+
+Roméo : « on ne peut pas mettre une ligne de transport pour un seul produit […]
+le plus normal serait d'indiquer les prix de transport individuellement, ou sinon
+par fournisseur, l'un ou l'autre. […] Pour la vente, qu'on puisse mettre le prix
+de livraison estimé pour la consultation globale […] mais on ne peut pas mettre
+les deux en même temps, sinon ça crée des bugs. »
+
+## Achat — par ligne OU par fournisseur (aucune migration)
+
+- Dès qu'un fournisseur porte des frais (port + douane + autres > 0), le champ
+  « Transport ligne » de **ses** lignes est verrouillé, avec l'explication au
+  survol.
+- Inversement, si ses lignes portent déjà du transport, le bloc frais affiche
+  « Transport déjà saisi ligne par ligne (X,XX €) — remets ces lignes à 0 pour
+  saisir une livraison unique » à la place du bouton Saisir.
+
+## Vente — globale OU par ligne (une colonne)
+
+Migration `20260917010000_bo_consult_sourcing_001_global_selling_shipping.sql` :
+`client_consultations.selling_shipping_cost_ht NUMERIC NOT NULL DEFAULT 0` +
+CHECK ≥ 0. Types régénérés dans la même PR.
+
+- Saisie dans « Modifier » de la consultation, à côté de la marge par défaut et
+  de la TVA : « Livraison facturée au client (€ HT) — une seule pour toute la
+  consultation ».
+- Comptée **une seule fois** dans le CA, jamais imputée à une ligne (donc sans
+  effet sur le prix de revient ni sur les marges par fournisseur).
+- Tant qu'elle est > 0, le champ « Transp. vente » des lignes est verrouillé ;
+  tant que des lignes en portent, un rappel sous « Articles » explique comment
+  basculer sur la livraison globale.
+- Le bandeau du haut affiche « dont X € de livraison » sous le CA.
+
+## Tests
+
+20 tests unitaires au vert (3 nouveaux : comptée une fois, absente/nulle/négative
+sans effet, aucune ligne ne la porte dans son revient). `type-check` et `lint`
+verts sur `@verone/consultations`, `@verone/types`, `@verone/back-office`.
+
+À l'écran (consultation « Pokawa ») : livraison globale de 80 € → CA 495 → 575 €,
+« dont 80.00€ de livraison », bénéfice 260 €, marge 82,5 %, transport de vente des
+lignes verrouillé. Remise à 0 ensuite ; les deux consultations sont à
+`selling_shipping_cost_ht = 0`, vérifié en base.
+
+---
+
+# Raccourci « créer un produit en sourcing » depuis le sélecteur (17/09)
+
+Roméo : « depuis le formulaire pour ajouter les produits, il faut le bouton pour
+créer un nouveau produit en sourcing, et qu'il soit ajouté automatiquement à la
+consultation. C'est juste un raccourci. »
+
+## Ajout
+
+`UniversalProductSelectorV2` accepte `onCreateSourcingProduct` (optionnel, donc
+sans effet sur ses autres usages : commandes, collections, variantes). Quand il
+est fourni :
+
+- bouton **« Nouveau produit en sourcing »** à droite de la recherche ;
+- bouton **« Sourcer ce produit »** dans l'écran « Aucun produit trouvé », là où
+  le besoin apparaît vraiment.
+
+Dans la consultation, le bouton ferme le sélecteur et ouvre le formulaire de
+sourcing existant (`SourcingProductModal`), qui crée le produit **et l'associe**
+à la consultation. Aucun composant dupliqué.
+
+## Deux bugs bloquants découverts en testant — le raccourci ne marchait pas
+
+Le formulaire rapide de sourcing ne pouvait **rien créer du tout**, ni depuis la
+consultation, ni depuis la page Sourcing. Deux causes, corrigées :
+
+1. **`sku_format`** (400). Le formulaire envoyait `sku: ''` en comptant sur le
+   déclencheur `products_auto_sku_trigger`, qui ne sait générer un code qu'à
+   partir d'une sous-catégorie — que ce formulaire ne demande pas. La chaîne vide
+   violait `CHECK (sku ~ '^[A-Z0-9\-]+$')`. Le SKU est désormais généré côté
+   application au format `SRC-…`, le même que l'import du plugin navigateur.
+2. **`chk_supplier_moq_positive`** (400). La quantité minimale de commande est
+   facultative mais partait à `0`, alors que la base exige `>= 1`. Elle part
+   maintenant à `null` quand elle est vide, et le champ n'impose plus `min="1"`
+   (il bloquait la validation du formulaire avec sa propre valeur par défaut).
+
+Corrigé aussi au passage : `supplier_id`, `assigned_client_id` et `enseigne_id`
+partaient en chaîne vide quand rien n'était choisi — futur 400 sur colonne uuid
+dès qu'un de ces champs reste vide.
+
+## Test de bout en bout
+
+Créé depuis le sélecteur de la consultation « Pokawa » : produit `SRC-MU4UHBI4`
+à 12,50 € d'achat, **ajouté tout seul** à la consultation avec la note « Produit
+sourcé spécifiquement pour cette consultation », prix d'achat repris en colonne
+Revient. Ligne retirée et **produit de test supprimé** ensuite ; consultation
+revérifiée en base (1 ligne, 0 frais, valeurs d'origine), aucun produit `TEST`
+restant.

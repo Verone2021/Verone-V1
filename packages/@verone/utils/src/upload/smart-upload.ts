@@ -3,9 +3,21 @@
  * Upload Cloudflare Images uniquement (BO-IMG-CF-002, 2026-05-08).
  *
  * Décision : plus de fallback Supabase Storage. Toutes les images Verone
- * vivent désormais sur Cloudflare Images. Si la configuration Cloudflare
- * est manquante, on lève une erreur explicite (le runtime production en
- * a TOUJOURS besoin).
+ * vivent désormais sur Cloudflare Images.
+ *
+ * 2026-09-17 — Correction d'une panne restée invisible 4 mois.
+ * `isCloudflareConfigured()` exige `CLOUDFLARE_IMAGES_API_TOKEN`, qui est une
+ * clé SERVEUR : Next.js ne l'expose jamais au navigateur. Or tous les écrans de
+ * dépôt d'image sont des composants client. Résultat : depuis le 8 mai 2026,
+ * `smartUploadImage` levait systématiquement « Cloudflare Images non
+ * configuré » dès qu'un utilisateur déposait une photo — consultations, fiches
+ * produit, logos, collections, LinkMe. Seul l'import du plugin navigateur
+ * fonctionnait, parce qu'il tourne côté serveur.
+ *
+ * La clé ne doit évidemment pas être publiée côté client. On route donc le
+ * dépôt du navigateur vers une route serveur (`/api/images/upload`), qui refait
+ * l'appel Cloudflare derrière la garde admin back-office. Côté serveur, l'appel
+ * direct est conservé : c'est le chemin qu'emprunte déjà `/api/sourcing/import`.
  */
 
 import {
@@ -33,6 +45,12 @@ export interface SmartUploadOptions {
   ownerId?: string;
   /** Type d'entité (pour les métadonnées Cloudflare) */
   ownerType?: CloudflareUploadMetadata['ownerType'];
+  /**
+   * Route serveur qui relaie le dépôt quand on tourne dans le navigateur.
+   * Chaque app expose la sienne ; la valeur par défaut convient au back-office
+   * et à LinkMe.
+   */
+  uploadEndpoint?: string;
 }
 
 export interface SmartUploadResult {
@@ -51,6 +69,69 @@ export interface SmartUploadResult {
   storagePath?: string;
 }
 
+/** Route serveur par défaut, présente dans le back-office et dans LinkMe. */
+export const DEFAULT_IMAGE_UPLOAD_ENDPOINT = '/api/images/upload';
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+/** Vrai quand le code s'exécute dans un navigateur (pas de clé serveur). */
+function isBrowser(): boolean {
+  return typeof window !== 'undefined';
+}
+
+const UploadResponseShape = (value: unknown): value is { id: string } =>
+  typeof value === 'object' &&
+  value !== null &&
+  'id' in value &&
+  typeof (value as { id: unknown }).id === 'string';
+
+/**
+ * Dépôt depuis le navigateur : le fichier transite par la route serveur, qui
+ * détient seule le jeton Cloudflare.
+ */
+async function uploadViaServerRoute(
+  file: File,
+  options: SmartUploadOptions
+): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file, file.name);
+
+  if (options.ownerId ?? options.ownerType) {
+    formData.append(
+      'metadata',
+      JSON.stringify({
+        ownerId: options.ownerId,
+        ownerType: options.ownerType,
+      })
+    );
+  }
+
+  const endpoint = options.uploadEndpoint ?? DEFAULT_IMAGE_UPLOAD_ENDPOINT;
+  const response = await fetch(endpoint, { method: 'POST', body: formData });
+
+  if (!response.ok) {
+    const payload: unknown = await response.json().catch(() => null);
+    const message =
+      payload !== null &&
+      typeof payload === 'object' &&
+      'error' in payload &&
+      typeof (payload as { error: unknown }).error === 'string'
+        ? (payload as { error: string }).error
+        : `Échec du dépôt de l'image (erreur ${response.status})`;
+    throw new Error(message);
+  }
+
+  const payload: unknown = await response.json();
+
+  if (!UploadResponseShape(payload)) {
+    throw new Error("Réponse inattendue de la route de dépôt d'image");
+  }
+
+  return payload.id;
+}
+
 // ============================================================================
 // MAIN FUNCTION
 // ============================================================================
@@ -58,13 +139,19 @@ export interface SmartUploadResult {
 /**
  * Upload une image vers Cloudflare Images.
  *
- * Échoue avec une erreur explicite si la configuration Cloudflare est absente :
- * pas de fallback Supabase. Toute image Verone doit vivre sur Cloudflare.
+ * Dans le navigateur, passe par la route serveur `/api/images/upload`.
+ * Côté serveur, appelle Cloudflare directement et échoue avec une erreur
+ * explicite si la configuration est absente.
  */
 export async function smartUploadImage(
   file: File,
   options: SmartUploadOptions
 ): Promise<SmartUploadResult> {
+  if (isBrowser()) {
+    const cloudflareImageId = await uploadViaServerRoute(file, options);
+    return { cloudflareImageId };
+  }
+
   if (!isCloudflareConfigured()) {
     throw new Error(
       'Cloudflare Images non configuré : variables CLOUDFLARE_IMAGES_* manquantes. ' +

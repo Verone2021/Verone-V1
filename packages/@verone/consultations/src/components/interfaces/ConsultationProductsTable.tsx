@@ -17,6 +17,8 @@ interface ConsultationProductsTableProps
   editingItem: string | null;
   /** Calcul de chaque ligne, fait une seule fois pour la consultation. */
   economicsByItemId: Map<string, LineEconomics>;
+  /** Fournisseurs dont la livraison est saisie globalement : transport de ligne verrouillé. */
+  suppliersWithShipping?: ReadonlySet<string>;
 }
 
 /** Lignes regroupées par fournisseur, dans l'ordre d'apparition. */
@@ -50,6 +52,7 @@ export function ConsultationProductsTable({
   items,
   editingItem,
   economicsByItemId,
+  suppliersWithShipping,
   ...rowProps
 }: ConsultationProductsTableProps) {
   // Un seul fournisseur : pas d'en-tête de groupe, ce serait du bruit
@@ -81,8 +84,11 @@ export function ConsultationProductsTable({
             <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[90px]">
               Achat
             </th>
-            <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[80px]">
-              Transport
+            <th
+              className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[80px]"
+              title="Frais propres à cette ligne seulement. La livraison facturée une fois par le fournisseur se saisit dans le bloc « Frais par fournisseur »."
+            >
+              Transport ligne
             </th>
             <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[90px] hidden lg:table-cell">
               Revient
@@ -108,7 +114,10 @@ export function ConsultationProductsTable({
             <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 w-[100px]">
               Statut
             </th>
-            <th className="pr-4 pl-3 py-2 w-[40px]" aria-label="Actions" />
+            <th
+              className="sticky right-0 z-10 bg-zinc-50 pr-4 pl-3 py-2 w-[40px]"
+              aria-label="Actions"
+            />
           </tr>
         </thead>
         {/* Un bloc par fournisseur : la commande fournisseur suit ce découpage */}
@@ -144,6 +153,12 @@ export function ConsultationProductsTable({
                   item={item}
                   isEditing={editingItem === item.id}
                   econ={economicsByItemId.get(item.id) ?? null}
+                  supplierShippingEntered={
+                    item.product?.supplier_id
+                      ? (suppliersWithShipping?.has(item.product.supplier_id) ??
+                        false)
+                      : false
+                  }
                   {...rowProps}
                 />
               ))}

@@ -127,6 +127,11 @@
       "types": "./src/cloudflare/images.ts",
       "import": "./src/cloudflare/images.ts",
       "require": "./src/cloudflare/images.ts"
+    },
+    "./currency": {
+      "types": "./src/currency/index.ts",
+      "import": "./src/currency/index.ts",
+      "require": "./src/currency/index.ts"
     }
   }
 }

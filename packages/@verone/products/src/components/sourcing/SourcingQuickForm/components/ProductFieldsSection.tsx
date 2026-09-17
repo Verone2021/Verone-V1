@@ -11,6 +11,7 @@ import {
   Textarea,
 } from '@verone/ui';
 import { cn } from '@verone/utils';
+import { convertToEur } from '@verone/utils/currency';
 import { Euro, Link } from 'lucide-react';
 
 import type { ProductFormData } from '../types';
@@ -54,7 +55,7 @@ export function ProductFieldsSection({
       {/* URL fournisseur */}
       <div className="space-y-2">
         <Label htmlFor="supplier_url" className="text-sm font-medium">
-          URL de la page fournisseur *
+          URL de la page fournisseur (facultatif)
         </Label>
         <div className="relative">
           <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -84,33 +85,89 @@ export function ProductFieldsSection({
       {/* Prix d'achat */}
       <div className="space-y-2">
         <Label htmlFor="cost_price" className="text-sm font-medium">
-          Prix d&apos;achat fournisseur HT (€) *
+          Prix d&apos;achat fournisseur HT *
         </Label>
-        <div className="relative">
-          <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            id="cost_price"
-            type="number"
-            step="0.01"
-            min="0"
-            value={formData.cost_price ?? ''}
-            onChange={e => {
-              const value = parseFloat(e.target.value) || 0;
-              onFieldChange({ cost_price: value });
-              if (errors.cost_price) onClearError('cost_price');
+        {/* Champ + sélecteur monnaie sur la même ligne */}
+        <div className="flex gap-2 items-stretch">
+          <div className="relative flex-1">
+            <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              id="cost_price"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.cost_price ?? ''}
+              onChange={e => {
+                const value = parseFloat(e.target.value) || 0;
+                onFieldChange({ cost_price: value });
+                if (errors.cost_price) onClearError('cost_price');
+              }}
+              placeholder="250.00"
+              className={cn(
+                'pl-10 transition-colors',
+                errors.cost_price && 'border-red-300 focus:border-red-500'
+              )}
+            />
+          </div>
+          <Select
+            value={formData.cost_price_currency}
+            onValueChange={value => {
+              onFieldChange({ cost_price_currency: value });
             }}
-            placeholder="250.00"
-            className={cn(
-              'pl-10 transition-colors',
-              errors.cost_price && 'border-red-300 focus:border-red-500'
-            )}
-          />
+          >
+            <SelectTrigger className="w-[88px] shrink-0 h-10 md:h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="EUR">€ EUR</SelectItem>
+              <SelectItem value="USD">$ USD</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+        {/* Équivalent en euros affiché quand la monnaie est USD */}
+        {formData.cost_price_currency === 'USD' && formData.cost_price > 0 && (
+          <p className="text-xs text-zinc-500">
+            ≈{' '}
+            {convertToEur(
+              formData.cost_price,
+              'USD',
+              formData.cost_price_exchange_rate
+            ).toFixed(2)}{' '}
+            € au taux de {formData.cost_price_exchange_rate}
+          </p>
+        )}
+        {/* Taux modifiable à la main quand la monnaie est USD */}
+        {formData.cost_price_currency === 'USD' && (
+          <div className="flex items-center gap-2">
+            <Label
+              htmlFor="cost_price_exchange_rate"
+              className="text-xs text-zinc-500 whitespace-nowrap"
+            >
+              1 USD =
+            </Label>
+            <Input
+              id="cost_price_exchange_rate"
+              type="number"
+              step="0.001"
+              min="0.001"
+              value={formData.cost_price_exchange_rate}
+              onChange={e => {
+                const rate = parseFloat(e.target.value);
+                if (rate > 0) {
+                  onFieldChange({ cost_price_exchange_rate: rate });
+                }
+              }}
+              className="h-7 w-24 text-xs"
+            />
+            <span className="text-xs text-zinc-500">EUR</span>
+          </div>
+        )}
         {errors.cost_price && (
           <p className="text-sm text-red-600">{errors.cost_price}</p>
         )}
         <p className="text-xs text-gray-500">
-          Prix d&apos;achat HT chez le fournisseur
+          Prix d&apos;achat HT chez le fournisseur — les prix de vente restent
+          toujours en euros
         </p>
       </div>
 
@@ -174,8 +231,10 @@ export function ProductFieldsSection({
         <Input
           id="supplier_moq"
           type="number"
-          min="1"
-          value={formData.supplier_moq ?? ''}
+          // Champ facultatif : 0 = non renseigné. min="1" bloquait la validation
+          // du formulaire alors que la valeur par défaut est 0 (Roméo 17/09).
+          min="0"
+          value={formData.supplier_moq ? String(formData.supplier_moq) : ''}
           onChange={e => {
             const value = parseInt(e.target.value) || 0;
             onFieldChange({ supplier_moq: value });
