@@ -46,6 +46,13 @@ export interface Product {
   subcategories?: {
     id: string;
     name: string;
+    /** Catégorie parente — porte les coefficients de vente conseillés. */
+    category?: {
+      id: string;
+      name: string;
+      retail_coefficient: number | null;
+      wholesale_coefficient: number | null;
+    } | null;
   };
   has_images?: boolean;
   is_published_online?: boolean | null;
@@ -63,6 +70,9 @@ export interface Product {
   completion_status?: string | null;
   target_margin_percentage?: number | null;
   target_price?: number | null;
+  /** Prix de revient saisi à la main, prioritaire sur cost_net_avg (BO-PRICING-GOV-001). */
+  cost_net_manual?: number | null;
+  eco_tax_default?: number | null;
 }
 
 export interface Category {

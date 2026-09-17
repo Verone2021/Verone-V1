@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
 import type { Product } from '@verone/categories';
+import { useChannelPricesBatch } from '@verone/channels';
 import type { QuickEditField } from '@verone/products';
 import { Checkbox, ResponsiveDataView } from '@verone/ui';
 import type { Database } from '@verone/types';
@@ -16,6 +17,10 @@ import {
 } from './catalogue-list-helpers';
 import { ProductCardMobile } from './CatalogueProductCardMobile';
 import { ProductRow } from './CatalogueProductRow';
+import {
+  buildPricingView,
+  type CataloguePricingView,
+} from './_lib/catalogue-pricing-view';
 
 type ProductImage = Database['public']['Tables']['product_images']['Row'];
 
@@ -56,6 +61,21 @@ export function CatalogueListView({
   const router = useRouter();
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  // Prix site et LinkMe de toute la page en 2 requêtes, pas une par ligne.
+  const productIds = useMemo(() => products.map(p => p.id), [products]);
+  const { getPrices, isLoading: pricesLoading } =
+    useChannelPricesBatch(productIds);
+
+  const pricingViews = useMemo(() => {
+    if (pricesLoading) return new Map<string, CataloguePricingView>();
+    return new Map(
+      products.map(product => [
+        product.id,
+        buildPricingView(product, getPrices(product.id)),
+      ])
+    );
+  }, [products, getPrices, pricesLoading]);
 
   const handleSort = useCallback(
     (field: SortField) => {
@@ -196,21 +216,31 @@ export function CatalogueListView({
                   className="text-right"
                 />
                 <SortableHeader
-                  label="Prix HT"
+                  label="Achat HT"
                   field="cost_price"
                   currentSort={sortField}
                   currentDir={sortDir}
                   onSort={handleSort}
                   className="text-right"
                 />
-                <SortableHeader
-                  label="Marge"
-                  field="margin_percentage"
-                  currentSort={sortField}
-                  currentDir={sortDir}
-                  onSort={handleSort}
-                  className="text-right hidden lg:table-cell"
-                />
+                <th
+                  className="py-2 px-2 text-xs font-semibold text-gray-500 uppercase text-right hidden lg:table-cell"
+                  title="Prix d’achat + frais d’approche (transport, douane)"
+                >
+                  Revient HT
+                </th>
+                <th
+                  className="py-2 px-2 text-xs font-semibold text-gray-500 uppercase text-right"
+                  title="Prix HT réellement affiché sur veronecollections.fr"
+                >
+                  Prix site
+                </th>
+                <th
+                  className="py-2 px-2 text-xs font-semibold text-gray-500 uppercase text-right hidden lg:table-cell"
+                  title="Marge réelle sur le prix du site, et coefficient obtenu sur le prix de revient"
+                >
+                  Marge
+                </th>
                 <SortableHeader
                   label="Compl."
                   field="completion_percentage"
@@ -244,6 +274,7 @@ export function CatalogueListView({
                   onToggleSelect={onToggleSelect}
                   onTogglePublish={onTogglePublish}
                   isPublishPending={publishPendingIds?.has(product.id) ?? false}
+                  pricingView={pricingViews.get(product.id)}
                 />
               ))}
             </tbody>
@@ -260,6 +291,7 @@ export function CatalogueListView({
           selectable={selectable}
           selected={isSelected?.(product.id) ?? false}
           onToggleSelect={onToggleSelect}
+          pricingView={pricingViews.get(product.id)}
         />
       )}
     />

@@ -24,6 +24,7 @@ import {
 
 import { STATUS_CONFIG, stockColor } from './catalogue-list-helpers';
 import { ProductBrandChips } from './_components/ProductBrandChips';
+import type { CataloguePricingView } from './_lib/catalogue-pricing-view';
 
 type ProductImage = Database['public']['Tables']['product_images']['Row'];
 
@@ -35,6 +36,8 @@ interface ProductCardMobileProps {
   selectable?: boolean;
   selected?: boolean;
   onToggleSelect?: (productId: string) => void;
+  /** Vue prix de la carte. `undefined` tant que le lot de prix charge. */
+  pricingView?: CataloguePricingView;
 }
 
 /**
@@ -50,6 +53,7 @@ export const ProductCardMobile = memo(function ProductCardMobile({
   selectable = false,
   selected = false,
   onToggleSelect,
+  pricingView,
 }: ProductCardMobileProps) {
   const { primaryImage: fetchedImage, loading: imageLoading } =
     useProductImages({
@@ -199,16 +203,74 @@ export const ProductCardMobile = memo(function ProductCardMobile({
               {supplierName}
             </div>
           )}
-          <div className="flex items-center gap-3 mt-2 text-sm">
-            <span className="font-semibold text-black">
-              {product.cost_price != null
-                ? `${product.cost_price.toFixed(2)} €`
-                : '—'}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-sm">
+            <span className="text-xs text-gray-600">
+              Achat{' '}
+              <span className="font-semibold text-black">
+                {product.cost_price != null
+                  ? `${product.cost_price.toFixed(2)} €`
+                  : '—'}
+              </span>
             </span>
+            {pricingView && (
+              <span className="text-xs text-gray-600">
+                Site{' '}
+                <span
+                  className={cn(
+                    'font-semibold',
+                    pricingView.sitePriceHt == null
+                      ? 'text-gray-400'
+                      : pricingView.sitePriceSource === 'base_price'
+                        ? 'text-red-600'
+                        : 'text-black'
+                  )}
+                >
+                  {pricingView.sitePriceHt != null
+                    ? `${pricingView.sitePriceHt.toFixed(2)} €`
+                    : '—'}
+                </span>
+              </span>
+            )}
             <span className={cn('text-xs', stockColor(product.stock_real))}>
               Stock {product.stock_real ?? '-'}
             </span>
           </div>
+          {pricingView && (
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              {pricingView.marginPercent != null ? (
+                <span
+                  className={cn(
+                    'text-xs font-semibold',
+                    pricingView.severity === 'critical'
+                      ? 'text-red-600'
+                      : pricingView.severity === 'warning'
+                        ? 'text-orange-600'
+                        : 'text-green-600'
+                  )}
+                >
+                  Marge {pricingView.marginPercent.toFixed(0)} %
+                  {pricingView.coefficient != null &&
+                    ` · ×${pricingView.coefficient.toFixed(2)}`}
+                </span>
+              ) : (
+                <span className="text-xs text-gray-400">
+                  Marge inconnue (prix de revient manquant)
+                </span>
+              )}
+              {pricingView.alerts.length > 0 && (
+                <span
+                  className={cn(
+                    'text-[10px] px-1.5 py-0.5 rounded border',
+                    pricingView.severity === 'critical'
+                      ? 'text-red-700 border-red-200 bg-red-50'
+                      : 'text-orange-700 border-orange-200 bg-orange-50'
+                  )}
+                >
+                  {pricingView.alerts[0].message}
+                </span>
+              )}
+            </div>
+          )}
         </button>
         <div className="flex-shrink-0">
           <ResponsiveActionMenu actions={quickEditActions} breakpoint="md" />
