@@ -18,3 +18,4 @@ export * from './pricing-governance';
 // atteignable seulement depuis l'intérieur du paquet, alors que les écrans en ont
 // besoin (résolution du prix de revient notamment).
 export * from './product-sales-margin';
+export * from './pricing-view';

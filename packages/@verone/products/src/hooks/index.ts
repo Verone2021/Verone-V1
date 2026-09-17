@@ -29,3 +29,4 @@ export * from './use-marketing-eligibility';
 export * from './use-supplier-availability';
 export * from './use-product-performance';
 export * from './use-update-target-price';
+export * from './use-product-cost-basis-batch';
