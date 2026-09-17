@@ -7,6 +7,11 @@ export type Json =
   | Json[];
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '14.5';
+  };
   public: {
     Tables: {
       addresses: {
@@ -2244,6 +2249,8 @@ export type Database = {
         Row: {
           carries_supplier_fees: boolean;
           consultation_id: string;
+          cost_price_currency: string;
+          cost_price_exchange_rate: number;
           cost_price_override: number | null;
           created_at: string | null;
           created_by: string | null;
@@ -2265,6 +2272,8 @@ export type Database = {
         Insert: {
           carries_supplier_fees?: boolean;
           consultation_id: string;
+          cost_price_currency?: string;
+          cost_price_exchange_rate?: number;
           cost_price_override?: number | null;
           created_at?: string | null;
           created_by?: string | null;
@@ -2286,6 +2295,8 @@ export type Database = {
         Update: {
           carries_supplier_fees?: boolean;
           consultation_id?: string;
+          cost_price_currency?: string;
+          cost_price_exchange_rate?: number;
           cost_price_override?: number | null;
           created_at?: string | null;
           created_by?: string | null;
@@ -2356,6 +2367,7 @@ export type Database = {
           created_by: string | null;
           currency: string;
           customs_cost_ht: number;
+          exchange_rate: number;
           id: string;
           notes: string | null;
           other_cost_ht: number;
@@ -2370,6 +2382,7 @@ export type Database = {
           created_by?: string | null;
           currency?: string;
           customs_cost_ht?: number;
+          exchange_rate?: number;
           id?: string;
           notes?: string | null;
           other_cost_ht?: number;
@@ -2384,6 +2397,7 @@ export type Database = {
           created_by?: string | null;
           currency?: string;
           customs_cost_ht?: number;
+          exchange_rate?: number;
           id?: string;
           notes?: string | null;
           other_cost_ht?: number;
@@ -7407,6 +7421,8 @@ export type Database = {
           cost_price: number | null;
           cost_price_avg: number | null;
           cost_price_count: number;
+          cost_price_currency: string;
+          cost_price_exchange_rate: number;
           cost_price_last: number | null;
           cost_price_max: number | null;
           cost_price_min: number | null;
@@ -7513,6 +7529,8 @@ export type Database = {
           cost_price?: number | null;
           cost_price_avg?: number | null;
           cost_price_count?: number;
+          cost_price_currency?: string;
+          cost_price_exchange_rate?: number;
           cost_price_last?: number | null;
           cost_price_max?: number | null;
           cost_price_min?: number | null;
@@ -7619,6 +7637,8 @@ export type Database = {
           cost_price?: number | null;
           cost_price_avg?: number | null;
           cost_price_count?: number;
+          cost_price_currency?: string;
+          cost_price_exchange_rate?: number;
           cost_price_last?: number | null;
           cost_price_max?: number | null;
           cost_price_min?: number | null;

@@ -12,6 +12,8 @@
  * Sprint BO-CONSULT-MULTI-001 — 2026-09-16
  */
 
+import { convertToEur } from '@verone/utils/currency';
+
 import {
   computeConsultationEconomics,
   type ConsultationEconomicsLineInput,
@@ -41,12 +43,28 @@ export interface ConsultationEconomicsItemLike {
   shipping_cost?: number | null;
   selling_shipping_cost?: number | null;
   cost_price_override?: number | null;
+  /**
+   * Monnaie du prix d'achat de la ligne (cost_price_override).
+   * Absent ou 'EUR' = euros. L'adaptateur convertit en euros avant calcul.
+   * [BO-CONSULT-CURRENCY-001]
+   */
+  cost_price_currency?: string | null;
+  /**
+   * Taux de change → EUR figé au moment de la saisie.
+   * Absent = 1 (EUR ou pas encore renseigné).
+   * [BO-CONSULT-CURRENCY-001]
+   */
+  cost_price_exchange_rate?: number | null;
   /** La ligne porte-t-elle les frais de son fournisseur ? défaut true. */
   carries_supplier_fees?: boolean | null;
   /** Marge de la ligne en % — prioritaire sur la marge par défaut. */
   margin_percentage?: number | null;
   product?: {
     cost_price?: number | null;
+    /** Monnaie du prix d'achat de base du produit. Absent ou 'EUR' = euros. */
+    cost_price_currency?: string | null;
+    /** Taux de change figé sur le produit. Absent = 1. */
+    cost_price_exchange_rate?: number | null;
     eco_tax_default?: number | null;
     supplier_id?: string | null;
   } | null;
@@ -102,14 +120,46 @@ export function resolveConsultationTaxRate(
 // Adaptateurs
 // ---------------------------------------------------------------------------
 
-/** Convertit une ligne de consultation en entrée de calcul. */
+/**
+ * Convertit une ligne de consultation en entrée de calcul.
+ *
+ * Le prix d'achat brut (cost_price_override ou product.cost_price) est converti
+ * en euros à l'aide de la monnaie et du taux figés sur la ligne. Si la ligne n'a
+ * pas de prix propre, les champs du produit servent de repli.
+ *
+ * Le moteur `consultation-economics.ts` ne manipule que des euros — cette
+ * conversion est le seul endroit du code conscient de la monnaie d'achat.
+ * [BO-CONSULT-CURRENCY-001]
+ */
 export function itemToEconomicsInput(
   item: ConsultationEconomicsItemLike
 ): ConsultationEconomicsLineInput {
+  // -- Résolution du prix d'achat brut et de la monnaie associée --------
+  const hasLineOverride = item.cost_price_override != null;
+  const rawCost = hasLineOverride
+    ? (item.cost_price_override as number)
+    : (item.product?.cost_price ?? null);
+
+  // Monnaie et taux : ceux de la ligne si override, sinon ceux du produit,
+  // sinon EUR au taux 1.
+  const currency = hasLineOverride
+    ? (item.cost_price_currency ?? item.product?.cost_price_currency ?? 'EUR')
+    : (item.product?.cost_price_currency ?? 'EUR');
+  const rate = hasLineOverride
+    ? (item.cost_price_exchange_rate ??
+      item.product?.cost_price_exchange_rate ??
+      1)
+    : (item.product?.cost_price_exchange_rate ?? 1);
+
+  const unitCost =
+    rawCost === null
+      ? null
+      : convertToEur(rawCost, currency, rate > 0 ? rate : 1);
+
   return {
     id: item.id,
     quantity: item.quantity,
-    unitCost: item.cost_price_override ?? item.product?.cost_price ?? null,
+    unitCost,
     ecoTax: item.product?.eco_tax_default ?? 0,
     shippingCost: item.shipping_cost ?? 0,
     sellingShippingCost: item.selling_shipping_cost ?? 0,

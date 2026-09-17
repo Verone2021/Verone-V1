@@ -23,6 +23,10 @@ export function useSourcingCreateUpdate({
     name: string;
     supplier_page_url?: string;
     cost_price?: number;
+    /** Monnaie du prix d'achat. 'EUR' par défaut. [BO-CONSULT-CURRENCY-001] */
+    cost_price_currency?: string;
+    /** Taux de change → EUR figé. 1 par défaut. [BO-CONSULT-CURRENCY-001] */
+    cost_price_exchange_rate?: number;
     supplier_reference?: string;
     manufacturer?: string;
     description?: string;
@@ -65,6 +69,8 @@ export function useSourcingCreateUpdate({
             name: data.name,
             supplier_page_url: data.supplier_page_url ?? null,
             cost_price: data.cost_price ?? null,
+            cost_price_currency: data.cost_price_currency ?? 'EUR',
+            cost_price_exchange_rate: data.cost_price_exchange_rate ?? 1,
             supplier_reference: data.supplier_reference ?? null,
             manufacturer: data.manufacturer ?? null,
             description: data.description ?? null,

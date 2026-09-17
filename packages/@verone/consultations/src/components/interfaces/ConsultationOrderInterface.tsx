@@ -109,6 +109,10 @@ export function ConsultationOrderInterface({
   const [editShippingCost, setEditShippingCost] = useState('');
   const [editSellingShippingCost, setEditSellingShippingCost] = useState('');
   const [editCostPriceOverride, setEditCostPriceOverride] = useState('');
+  /** Monnaie du prix d'achat en cours de saisie. [BO-CONSULT-CURRENCY-001] */
+  const [editCostPriceCurrency, setEditCostPriceCurrency] = useState('EUR');
+  /** Taux de change en cours de saisie. [BO-CONSULT-CURRENCY-001] */
+  const [editCostPriceExchangeRate, setEditCostPriceExchangeRate] = useState(1);
   const [editIsSample, setEditIsSample] = useState(false);
   const [editMarginPercentage, setEditMarginPercentage] = useState('');
   const [editNeedId, setEditNeedId] = useState<string>('');
@@ -129,6 +133,15 @@ export function ConsultationOrderInterface({
     setEditShippingCost(item.shipping_cost?.toString() ?? '0');
     setEditSellingShippingCost(item.selling_shipping_cost?.toString() ?? '0');
     setEditCostPriceOverride(item.cost_price_override?.toString() ?? '');
+    // Monnaie + taux figés sur la ligne, sinon repli sur le produit, sinon EUR/1
+    setEditCostPriceCurrency(
+      item.cost_price_currency ?? item.product?.cost_price_currency ?? 'EUR'
+    );
+    setEditCostPriceExchangeRate(
+      item.cost_price_exchange_rate ??
+        item.product?.cost_price_exchange_rate ??
+        1
+    );
     setEditIsSample(item.is_sample ?? false);
     setEditMarginPercentage(item.margin_percentage?.toString() ?? '');
     setEditNeedId(item.need_id ?? '');
@@ -151,6 +164,14 @@ export function ConsultationOrderInterface({
         ? parseFloat(editSellingShippingCost)
         : 0,
       cost_price_override: toAmountOrNull(costRaw),
+      // Monnaie + taux figés — enregistrés uniquement si un prix d'achat est saisi
+      // (un champ vide = reprise du prix produit, la monnaie du produit s'applique)
+      cost_price_currency:
+        toAmountOrNull(costRaw) !== null ? editCostPriceCurrency : undefined,
+      cost_price_exchange_rate:
+        toAmountOrNull(costRaw) !== null
+          ? editCostPriceExchangeRate
+          : undefined,
       is_sample: editIsSample,
       // vide ou illisible → null : la ligne suit la marge par défaut
       margin_percentage:
@@ -451,6 +472,8 @@ export function ConsultationOrderInterface({
           editShippingCost={editShippingCost}
           editSellingShippingCost={editSellingShippingCost}
           editCostPriceOverride={editCostPriceOverride}
+          editCostPriceCurrency={editCostPriceCurrency}
+          editCostPriceExchangeRate={editCostPriceExchangeRate}
           editIsSample={editIsSample}
           editMarginPercentage={editMarginPercentage}
           editNeedId={editNeedId}
@@ -466,6 +489,8 @@ export function ConsultationOrderInterface({
           onSetEditShippingCost={setEditShippingCost}
           onSetEditSellingShippingCost={setEditSellingShippingCost}
           onSetEditCostPriceOverride={setEditCostPriceOverride}
+          onSetEditCostPriceCurrency={setEditCostPriceCurrency}
+          onSetEditCostPriceExchangeRate={setEditCostPriceExchangeRate}
           onSetEditMarginPercentage={setEditMarginPercentage}
           onSetEditNeedId={setEditNeedId}
           onStartEdit={startEditItem}

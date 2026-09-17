@@ -109,6 +109,19 @@ export type {
 export * from './linkme';
 
 // ========================================
+// CURRENCY
+// ========================================
+
+// Utilitaires de conversion monétaire pour les prix d'achat (EUR/USD)
+export {
+  SUPPORTED_PURCHASE_CURRENCIES,
+  USD_TO_EUR_DEFAULT,
+  convertToEur,
+  defaultRateFor,
+} from './currency';
+export type { PurchaseCurrency } from './currency';
+
+// ========================================
 // CONSULTATIONS
 // ========================================
 

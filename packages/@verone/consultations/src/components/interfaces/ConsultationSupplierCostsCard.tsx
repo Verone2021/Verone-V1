@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { Input } from '@verone/ui';
+import { defaultRateFor } from '@verone/utils/currency';
 import { AlertTriangle, Check, Truck } from 'lucide-react';
 
 import type { SupplierEconomics } from '../../lib/consultation-supplier-costs';
@@ -73,6 +74,10 @@ export function ConsultationSupplierCostsCard({
   const [customs, setCustoms] = useState('');
   const [other, setOther] = useState('');
   const [otherLabel, setOtherLabel] = useState('');
+  /** Monnaie des frais en cours de saisie. [BO-CONSULT-CURRENCY-001] */
+  const [currency, setEditCurrency] = useState('EUR');
+  /** Taux de change figé en cours de saisie. [BO-CONSULT-CURRENCY-001] */
+  const [exchangeRate, setExchangeRate] = useState(1);
   const [saving, setSaving] = useState(false);
 
   if (suppliers.length === 0 && productsWithoutSupplier.length === 0) {
@@ -93,6 +98,9 @@ export function ConsultationSupplierCostsCard({
     setCustoms(cost?.customs_cost_ht ? String(cost.customs_cost_ht) : '');
     setOther(cost?.other_cost_ht ? String(cost.other_cost_ht) : '');
     setOtherLabel(cost?.other_cost_label ?? '');
+    const existingCurrency = cost?.currency ?? 'EUR';
+    setEditCurrency(existingCurrency);
+    setExchangeRate(cost?.exchange_rate ?? defaultRateFor(existingCurrency));
   };
 
   const parseAmount = (value: string): number => {
@@ -109,6 +117,8 @@ export function ConsultationSupplierCostsCard({
       other_cost_ht: parseAmount(other),
       // Intitulé libre : « manutention », « emballage », « assurance »…
       other_cost_label: otherLabel.trim() === '' ? null : otherLabel.trim(),
+      currency,
+      exchange_rate: exchangeRate,
     })
       .then(success => {
         if (success) setEditingSupplier(null);
@@ -183,6 +193,39 @@ export function ConsultationSupplierCostsCard({
                   </span>
                 ) : isEditing ? (
                   <div className="flex flex-wrap items-center gap-1.5">
+                    {/* Sélecteur monnaie [BO-CONSULT-CURRENCY-001] */}
+                    <select
+                      value={currency}
+                      onChange={e => {
+                        const next = e.target.value;
+                        setEditCurrency(next);
+                        setExchangeRate(defaultRateFor(next));
+                      }}
+                      title="Monnaie des frais fournisseur"
+                      className="h-8 rounded border border-zinc-200 text-[11px] px-1 py-0 text-zinc-700 bg-white"
+                    >
+                      <option value="EUR">€ EUR</option>
+                      <option value="USD">$ USD</option>
+                    </select>
+                    {/* Taux de change (USD uniquement) */}
+                    {currency === 'USD' && (
+                      <div className="flex items-center gap-0.5">
+                        <span className="text-[10px] text-zinc-400">1$=</span>
+                        <Input
+                          type="number"
+                          step="0.001"
+                          min="0.001"
+                          value={exchangeRate}
+                          onChange={e => {
+                            const r = parseFloat(e.target.value);
+                            if (r > 0) setExchangeRate(r);
+                          }}
+                          title="Taux de change USD → EUR figé"
+                          className="w-16 h-8 text-[11px] px-1 py-0"
+                        />
+                        <span className="text-[10px] text-zinc-400">€</span>
+                      </div>
+                    )}
                     <Input
                       type="number"
                       step="0.01"
@@ -190,7 +233,7 @@ export function ConsultationSupplierCostsCard({
                       value={shipping}
                       onChange={e => setShipping(e.target.value)}
                       placeholder="Port"
-                      title="Transport (€ HT)"
+                      title={`Transport (${currency} HT)`}
                       className="w-20 h-8 text-[11px] px-1.5 py-0"
                     />
                     <Input
@@ -200,7 +243,7 @@ export function ConsultationSupplierCostsCard({
                       value={customs}
                       onChange={e => setCustoms(e.target.value)}
                       placeholder="Douane"
-                      title="Douane (€ HT)"
+                      title={`Douane (${currency} HT)`}
                       className="w-20 h-8 text-[11px] px-1.5 py-0"
                     />
                     <Input
@@ -210,7 +253,7 @@ export function ConsultationSupplierCostsCard({
                       value={other}
                       onChange={e => setOther(e.target.value)}
                       placeholder="Autres"
-                      title="Autres frais (€ HT)"
+                      title={`Autres frais (${currency} HT)`}
                       className="w-20 h-8 text-[11px] px-1.5 py-0"
                     />
                     <Input

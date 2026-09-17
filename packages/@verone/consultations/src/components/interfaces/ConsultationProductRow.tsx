@@ -1,6 +1,7 @@
 'use client';
 
 import { Input } from '@verone/ui';
+import { convertToEur } from '@verone/utils/currency';
 import { Plus, Minus, Package, Euro } from 'lucide-react';
 
 import type { ConsultationItem } from '@verone/consultations/hooks';
@@ -46,6 +47,10 @@ export interface ConsultationProductRowProps {
   editShippingCost: string;
   editSellingShippingCost: string;
   editCostPriceOverride: string;
+  /** Monnaie du prix d'achat en cours de saisie. [BO-CONSULT-CURRENCY-001] */
+  editCostPriceCurrency: string;
+  /** Taux de change en cours de saisie. [BO-CONSULT-CURRENCY-001] */
+  editCostPriceExchangeRate: number;
   editIsSample: boolean;
   editMarginPercentage: string;
   onSetEditQuantity: (v: number) => void;
@@ -54,6 +59,10 @@ export interface ConsultationProductRowProps {
   onSetEditShippingCost: (v: string) => void;
   onSetEditSellingShippingCost: (v: string) => void;
   onSetEditCostPriceOverride: (v: string) => void;
+  /** Change la monnaie du prix d'achat. [BO-CONSULT-CURRENCY-001] */
+  onSetEditCostPriceCurrency: (v: string) => void;
+  /** Change le taux de change. [BO-CONSULT-CURRENCY-001] */
+  onSetEditCostPriceExchangeRate: (v: number) => void;
   onSetEditMarginPercentage: (v: string) => void;
   onStartEdit: (item: ConsultationItem) => void;
   onSaveEdit: (itemId: string) => void;
@@ -83,6 +92,8 @@ export function ConsultationProductRow({
   editShippingCost,
   editSellingShippingCost,
   editCostPriceOverride,
+  editCostPriceCurrency,
+  editCostPriceExchangeRate,
   editIsSample,
   editMarginPercentage,
   onSetEditQuantity,
@@ -91,6 +102,8 @@ export function ConsultationProductRow({
   onSetEditShippingCost,
   onSetEditSellingShippingCost,
   onSetEditCostPriceOverride,
+  onSetEditCostPriceCurrency,
+  onSetEditCostPriceExchangeRate,
   onSetEditMarginPercentage,
   onStartEdit,
   onSaveEdit,
@@ -254,17 +267,63 @@ export function ConsultationProductRow({
       {/* Achat */}
       <td className="px-3 py-0 h-10">
         {isEditing ? (
-          <div className="relative">
-            <Input
-              type="number"
-              step="0.01"
-              value={editCostPriceOverride}
-              onFocus={e => e.currentTarget.select()}
-              onChange={e => onSetEditCostPriceOverride(e.target.value)}
-              placeholder={item.product?.cost_price?.toFixed(2) ?? '0'}
-              className="w-20 h-6 text-[11px] px-1 pr-5 py-0"
-            />
-            <Euro className="absolute right-1 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-zinc-400 pointer-events-none" />
+          <div className="flex flex-col gap-0.5">
+            {/* Ligne saisie : montant + sélecteur monnaie */}
+            <div className="flex items-center gap-1">
+              <div className="relative">
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={editCostPriceOverride}
+                  onFocus={e => e.currentTarget.select()}
+                  onChange={e => onSetEditCostPriceOverride(e.target.value)}
+                  placeholder={item.product?.cost_price?.toFixed(2) ?? '0'}
+                  className="w-16 h-6 text-[11px] px-1 pr-5 py-0"
+                />
+                <Euro className="absolute right-1 top-1/2 -translate-y-1/2 h-2.5 w-2.5 text-zinc-400 pointer-events-none" />
+              </div>
+              <select
+                value={editCostPriceCurrency}
+                onChange={e => onSetEditCostPriceCurrency(e.target.value)}
+                title="Monnaie du prix d'achat"
+                className="h-6 rounded border border-zinc-200 text-[11px] px-1 py-0 text-zinc-700 bg-white"
+              >
+                <option value="EUR">€</option>
+                <option value="USD">$</option>
+              </select>
+            </div>
+            {/* Taux de change modifiable à la main (USD uniquement) */}
+            {editCostPriceCurrency === 'USD' && (
+              <div className="flex items-center gap-0.5">
+                <span className="text-[9px] text-zinc-400">1$=</span>
+                <Input
+                  type="number"
+                  step="0.001"
+                  min="0.001"
+                  value={editCostPriceExchangeRate}
+                  onFocus={e => e.currentTarget.select()}
+                  onChange={e => {
+                    const r = parseFloat(e.target.value);
+                    if (r > 0) onSetEditCostPriceExchangeRate(r);
+                  }}
+                  className="w-14 h-5 text-[10px] px-1 py-0"
+                />
+                <span className="text-[9px] text-zinc-400">€</span>
+              </div>
+            )}
+            {/* Équivalent en euros si USD */}
+            {editCostPriceCurrency === 'USD' &&
+              parseFloat(editCostPriceOverride) > 0 && (
+                <span className="text-[9px] text-blue-600">
+                  ≈{' '}
+                  {convertToEur(
+                    parseFloat(editCostPriceOverride),
+                    'USD',
+                    editCostPriceExchangeRate
+                  ).toFixed(2)}{' '}
+                  €
+                </span>
+              )}
           </div>
         ) : (
           <button
@@ -276,6 +335,12 @@ export function ConsultationProductRow({
             <span className="text-[12px] font-medium text-zinc-700">
               {(econ?.unitCost ?? 0).toFixed(2)}€
             </span>
+            {/* Badge monnaie d'achat quand différent d'EUR */}
+            {item.cost_price_currency && item.cost_price_currency !== 'EUR' && (
+              <span className="text-[9px] text-blue-500 font-bold">
+                {item.cost_price_currency}
+              </span>
+            )}
             {/* Sous-total si plusieurs unités */}
             {item.quantity > 1 && econ !== null && (
               <span className="text-[9px] text-zinc-400 mt-0.5">
