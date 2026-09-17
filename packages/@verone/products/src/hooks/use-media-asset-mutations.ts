@@ -68,6 +68,22 @@ export function useMediaAssetMutations({
           ownerType: 'product',
         });
 
+        // `media_assets` n'a pas de déclencheur qui calcule `public_url` (à la
+        // différence de `product_images` et `collection_images`), et
+        // `supabasePublicUrl` ne vaut plus rien depuis BO-IMG-CF-002 : sans ça
+        // la vignette serait vide. Adresse construite depuis l'identifiant
+        // Cloudflare, comme le fait déjà `use-logo-upload`.
+        let publicUrl: string | null = uploadResult.supabasePublicUrl ?? null;
+        if (uploadResult.cloudflareImageId) {
+          const { buildCloudflareImageUrl } = await import(
+            '@verone/utils/cloudflare/images'
+          );
+          publicUrl = buildCloudflareImageUrl(
+            uploadResult.cloudflareImageId,
+            'public'
+          );
+        }
+
         // Workflow validation : les images IA passent par la file d'attente,
         // les uploads manuels purs sont approuvés directement (l'employé a
         // déjà vu son fichier avant de l'importer).
@@ -83,7 +99,7 @@ export function useMediaAssetMutations({
           file_size: file.size,
           format: fileExt,
           storage_path: uploadResult.storagePath ?? path,
-          public_url: uploadResult.supabasePublicUrl ?? null,
+          public_url: publicUrl,
           cloudflare_image_id: uploadResult.cloudflareImageId ?? null,
           product_id: metadata.productId ?? null,
           variant_group_id: metadata.variantGroupId ?? null,
