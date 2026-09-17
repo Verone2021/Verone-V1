@@ -46,12 +46,24 @@ export interface Product {
   subcategories?: {
     id: string;
     name: string;
-    /** Catégorie parente — porte les coefficients de vente conseillés. */
+    /**
+     * Coefficients de vente conseillés, hérités de haut en bas :
+     * sous-catégorie > catégorie > famille > réglage général.
+     * Un niveau à null laisse la main au niveau au-dessus.
+     */
+    retail_coefficient: number | null;
+    wholesale_coefficient: number | null;
     category?: {
       id: string;
       name: string;
       retail_coefficient: number | null;
       wholesale_coefficient: number | null;
+      family?: {
+        id: string;
+        name: string;
+        retail_coefficient: number | null;
+        wholesale_coefficient: number | null;
+      } | null;
     } | null;
   };
   has_images?: boolean;

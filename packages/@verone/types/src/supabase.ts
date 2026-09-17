@@ -3089,8 +3089,10 @@ export type Database = {
           meta_description: string | null;
           meta_title: string | null;
           name: string;
+          retail_coefficient: number | null;
           slug: string;
           updated_at: string | null;
+          wholesale_coefficient: number | null;
         };
         Insert: {
           cloudflare_image_id?: string | null;
@@ -3104,8 +3106,10 @@ export type Database = {
           meta_description?: string | null;
           meta_title?: string | null;
           name: string;
+          retail_coefficient?: number | null;
           slug: string;
           updated_at?: string | null;
+          wholesale_coefficient?: number | null;
         };
         Update: {
           cloudflare_image_id?: string | null;
@@ -3119,8 +3123,10 @@ export type Database = {
           meta_description?: string | null;
           meta_title?: string | null;
           name?: string;
+          retail_coefficient?: number | null;
           slug?: string;
           updated_at?: string | null;
+          wholesale_coefficient?: number | null;
         };
         Relationships: [];
       };
@@ -10585,8 +10591,10 @@ export type Database = {
           meta_description: string | null;
           meta_title: string | null;
           name: string;
+          retail_coefficient: number | null;
           slug: string;
           updated_at: string | null;
+          wholesale_coefficient: number | null;
         };
         Insert: {
           category_id: string;
@@ -10599,8 +10607,10 @@ export type Database = {
           meta_description?: string | null;
           meta_title?: string | null;
           name: string;
+          retail_coefficient?: number | null;
           slug: string;
           updated_at?: string | null;
+          wholesale_coefficient?: number | null;
         };
         Update: {
           category_id?: string;
@@ -10613,8 +10623,10 @@ export type Database = {
           meta_description?: string | null;
           meta_title?: string | null;
           name?: string;
+          retail_coefficient?: number | null;
           slug?: string;
           updated_at?: string | null;
+          wholesale_coefficient?: number | null;
         };
         Relationships: [
           {

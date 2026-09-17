@@ -67,8 +67,11 @@ const PRODUCT_SELECT = `
   cost_net_manual, eco_tax_default,
   supplier:organisations!supplier_id(id, legal_name, trade_name),
   subcategories!subcategory_id(
-    id, name,
-    category:categories!category_id(id, name, retail_coefficient, wholesale_coefficient)
+    id, name, retail_coefficient, wholesale_coefficient,
+    category:categories!category_id(
+      id, name, retail_coefficient, wholesale_coefficient,
+      family:families!family_id(id, name, retail_coefficient, wholesale_coefficient)
+    )
   )
 `;
 

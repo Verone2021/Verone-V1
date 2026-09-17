@@ -48,15 +48,32 @@ export const DEFAULT_VAT_RATE = 0.2;
 /** Les deux échelles de prix de Vérone. */
 export type PriceScale = 'retail' | 'wholesale';
 
-export interface CategoryCoefficients {
+/** Coefficients portés par un niveau de la hiérarchie produit. */
+export interface CoefficientLevel {
   retailCoefficient: number | null;
   wholesaleCoefficient: number | null;
 }
 
+/**
+ * Hiérarchie produit, du plus précis au plus général.
+ * Chaque niveau est facultatif : un niveau vide laisse la main au suivant.
+ */
+export interface CoefficientHierarchy {
+  subcategory?: CoefficientLevel | null;
+  category?: CoefficientLevel | null;
+  family?: CoefficientLevel | null;
+}
+
+/** Niveau d'où provient le coefficient retenu. */
+export type CoefficientSource =
+  | 'subcategory'
+  | 'category'
+  | 'family'
+  | 'fallback';
+
 export interface ResolvedCoefficient {
   value: number;
-  /** `category` si la catégorie du produit le définit, `fallback` sinon. */
-  source: 'category' | 'fallback';
+  source: CoefficientSource;
   scale: PriceScale;
 }
 
@@ -135,22 +152,42 @@ function roundCoefficient(value: number): number {
 
 // ---------- Coefficients ----------
 
+function levelValue(
+  level: CoefficientLevel | null | undefined,
+  scale: PriceScale
+): number | null {
+  const raw =
+    scale === 'retail' ? level?.retailCoefficient : level?.wholesaleCoefficient;
+  return raw != null && raw > 0 ? raw : null;
+}
+
 /**
- * Coefficient conseillé pour un produit : celui de sa catégorie, sinon le repli
- * global. Ne renvoie jamais null : il y a toujours un conseil à afficher.
+ * Coefficient conseillé pour un produit : **le plus précis l'emporte**.
+ *
+ *   sous-catégorie  >  catégorie  >  famille  >  réglage général
+ *
+ * Un niveau laissé vide n'impose rien, il passe la main au niveau au-dessus. Il n'y
+ * a donc à renseigner que les branches qui se vendent réellement différemment.
+ *
+ * Ne renvoie jamais null : il y a toujours un conseil à afficher, et `source` dit
+ * d'où il vient pour que l'écran puisse l'expliquer.
  */
 export function resolveCoefficient(
   scale: PriceScale,
-  category: CategoryCoefficients | null,
+  hierarchy: CoefficientHierarchy | null,
   fallback: { retail: number; wholesale: number } = FALLBACK_COEFFICIENTS
 ): ResolvedCoefficient {
-  const fromCategory =
-    scale === 'retail'
-      ? category?.retailCoefficient
-      : category?.wholesaleCoefficient;
+  const chain: ReadonlyArray<
+    [CoefficientSource, CoefficientLevel | null | undefined]
+  > = [
+    ['subcategory', hierarchy?.subcategory],
+    ['category', hierarchy?.category],
+    ['family', hierarchy?.family],
+  ];
 
-  if (fromCategory != null && fromCategory > 0) {
-    return { value: fromCategory, source: 'category', scale };
+  for (const [source, level] of chain) {
+    const value = levelValue(level, scale);
+    if (value != null) return { value, source, scale };
   }
 
   return {
@@ -188,12 +225,12 @@ export function evaluateCoefficient(input: {
   unitCostHt: number | null;
   ecoTaxHt?: number | null;
   scale: PriceScale;
-  category: CategoryCoefficients | null;
+  hierarchy: CoefficientHierarchy | null;
   fallback?: { retail: number; wholesale: number };
 }): CoefficientVerdict {
   const recommended = resolveCoefficient(
     input.scale,
-    input.category,
+    input.hierarchy,
     input.fallback
   );
   const target = recommendedPrice({
@@ -331,13 +368,13 @@ export function maxLinkmePrice(sitePriceHt: number): number {
 export function evaluateChannelGap(input: {
   sitePriceHt: number | null;
   linkmePriceHt: number | null;
-  category: CategoryCoefficients | null;
+  hierarchy: CoefficientHierarchy | null;
   fallback?: { retail: number; wholesale: number };
 }): ChannelGapVerdict {
-  const retail = resolveCoefficient('retail', input.category, input.fallback);
+  const retail = resolveCoefficient('retail', input.hierarchy, input.fallback);
   const wholesale = resolveCoefficient(
     'wholesale',
-    input.category,
+    input.hierarchy,
     input.fallback
   );
   const recommendedGapPercent =

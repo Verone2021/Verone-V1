@@ -12,6 +12,7 @@
 import type { Product } from '@verone/categories';
 import type { ProductChannelPrices } from '@verone/channels';
 import {
+  type CoefficientHierarchy,
   type CoefficientVerdict,
   type CostOrigin,
   type ChannelGapVerdict,
@@ -58,12 +59,34 @@ export interface CataloguePricingView {
   alerts: PricingAlert[];
 }
 
-function categoryOf(product: Product) {
-  const category = product.subcategories?.category;
-  if (!category) return null;
+/**
+ * Hiérarchie de coefficients du produit, du plus précis au plus général.
+ * Le plus précis l'emporte ; un niveau vide passe la main au suivant.
+ */
+function hierarchyOf(product: Product): CoefficientHierarchy | null {
+  const subcategory = product.subcategories;
+  if (!subcategory) return null;
+
+  const category = subcategory.category ?? null;
+  const family = category?.family ?? null;
+
   return {
-    retailCoefficient: category.retail_coefficient,
-    wholesaleCoefficient: category.wholesale_coefficient,
+    subcategory: {
+      retailCoefficient: subcategory.retail_coefficient,
+      wholesaleCoefficient: subcategory.wholesale_coefficient,
+    },
+    category: category
+      ? {
+          retailCoefficient: category.retail_coefficient,
+          wholesaleCoefficient: category.wholesale_coefficient,
+        }
+      : null,
+    family: family
+      ? {
+          retailCoefficient: family.retail_coefficient,
+          wholesaleCoefficient: family.wholesale_coefficient,
+        }
+      : null,
   };
 }
 
@@ -84,7 +107,7 @@ export function buildPricingView(
     costNetManual: product.cost_net_manual ?? null,
   });
 
-  const category = categoryOf(product);
+  const hierarchy = hierarchyOf(product);
   const ecoTaxHt = product.eco_tax_default ?? null;
 
   const retailVerdict = evaluateCoefficient({
@@ -92,7 +115,7 @@ export function buildPricingView(
     unitCostHt: cost.cost,
     ecoTaxHt,
     scale: 'retail',
-    category,
+    hierarchy,
   });
 
   const margin = computeLineMargin({
@@ -104,7 +127,7 @@ export function buildPricingView(
   const gapVerdict = evaluateChannelGap({
     sitePriceHt: prices.sitePriceHt,
     linkmePriceHt: prices.linkmePriceHt,
-    category,
+    hierarchy,
   });
 
   const alerts: PricingAlert[] = [];

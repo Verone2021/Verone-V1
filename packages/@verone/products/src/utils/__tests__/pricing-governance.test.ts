@@ -73,33 +73,68 @@ function near(a: number | null, b: number, label: string): void {
   );
 }
 
-// ---------- resolveCoefficient ----------
+// ---------- resolveCoefficient : le plus précis l'emporte ----------
 {
-  const mobilier = resolveCoefficient('retail', {
-    retailCoefficient: 2.3,
-    wholesaleCoefficient: 1.6,
-  });
-  assert.equal(mobilier.value, 2.3);
-  assert.equal(mobilier.source, 'category');
+  const famille = { retailCoefficient: 2.5, wholesaleCoefficient: 1.7 };
+  const categorie = { retailCoefficient: 2.3, wholesaleCoefficient: 1.6 };
+  const sousCategorie = { retailCoefficient: 3.1, wholesaleCoefficient: 1.9 };
 
-  const gros = resolveCoefficient('wholesale', {
-    retailCoefficient: 2.3,
-    wholesaleCoefficient: 1.6,
+  // Les trois niveaux renseignés : la sous-catégorie gagne.
+  const precis = resolveCoefficient('retail', {
+    subcategory: sousCategorie,
+    category: categorie,
+    family: famille,
   });
-  assert.equal(gros.value, 1.6);
+  assert.equal(precis.value, 3.1);
+  assert.equal(precis.source, 'subcategory');
 
-  // Catégorie sans coefficient (les 4 catégories sans produit aujourd'hui).
+  // Sous-catégorie vide : la catégorie prend la main.
+  const parCategorie = resolveCoefficient('retail', {
+    subcategory: { retailCoefficient: null, wholesaleCoefficient: null },
+    category: categorie,
+    family: famille,
+  });
+  assert.equal(parCategorie.value, 2.3);
+  assert.equal(parCategorie.source, 'category');
+
+  // Sous-catégorie et catégorie vides : la famille prend la main.
+  const parFamille = resolveCoefficient('retail', {
+    subcategory: null,
+    category: { retailCoefficient: null, wholesaleCoefficient: null },
+    family: famille,
+  });
+  assert.equal(parFamille.value, 2.5);
+  assert.equal(parFamille.source, 'family');
+
+  // Rien du tout : réglage général.
   const repli = resolveCoefficient('retail', null);
   assert.equal(repli.value, FALLBACK_COEFFICIENTS.retail);
   assert.equal(repli.source, 'fallback');
 
+  // Les deux échelles se résolvent indépendamment : une sous-catégorie peut
+  // préciser le prix de détail sans toucher au prix de gros.
+  const detailSeul = {
+    subcategory: { retailCoefficient: 3.1, wholesaleCoefficient: null },
+    category: categorie,
+    family: famille,
+  };
+  assert.equal(resolveCoefficient('retail', detailSeul).source, 'subcategory');
   assert.equal(
-    resolveCoefficient('wholesale', {
-      retailCoefficient: 2.3,
-      wholesaleCoefficient: null,
+    resolveCoefficient('wholesale', detailSeul).source,
+    'category',
+    'le prix de gros descend d’un niveau tout seul'
+  );
+  assert.equal(resolveCoefficient('wholesale', detailSeul).value, 1.6);
+
+  // Un coefficient à 0 est ignoré comme s'il était vide : il conseillerait un
+  // prix de vente nul.
+  assert.equal(
+    resolveCoefficient('retail', {
+      subcategory: { retailCoefficient: 0, wholesaleCoefficient: null },
+      category: categorie,
     }).source,
-    'fallback',
-    'un coefficient de catégorie absent retombe sur le repli'
+    'category',
+    'un coefficient à 0 ne bloque pas l’héritage'
   );
 }
 
@@ -143,7 +178,9 @@ function near(a: number | null, b: number, label: string): void {
     priceHt: 9.29,
     unitCostHt: 6.19,
     scale: 'retail',
-    category: { retailCoefficient: 2.9, wholesaleCoefficient: 1.8 },
+    hierarchy: {
+      category: { retailCoefficient: 2.9, wholesaleCoefficient: 1.8 },
+    },
   });
   near(repli.actual, 1.5, 'coefficient réellement pratiqué');
   near(repli.recommendedPrice, 17.95, 'prix conseillé');
@@ -160,7 +197,9 @@ function near(a: number | null, b: number, label: string): void {
     priceHt: 247.5,
     unitCostHt: 99.69,
     scale: 'retail',
-    category: { retailCoefficient: 2.3, wholesaleCoefficient: 1.6 },
+    hierarchy: {
+      category: { retailCoefficient: 2.3, wholesaleCoefficient: 1.6 },
+    },
   });
   assert.equal(auDessus.belowRecommended, false, 'au-dessus du conseil');
   assert.ok(auDessus.gapPercent != null && auDessus.gapPercent > 0);
@@ -170,7 +209,7 @@ function near(a: number | null, b: number, label: string): void {
     priceHt: 50,
     unitCostHt: null,
     scale: 'retail',
-    category: null,
+    hierarchy: null,
   });
   assert.equal(sansRevient.actual, null);
   assert.equal(sansRevient.recommendedPrice, null);
@@ -291,13 +330,15 @@ function near(a: number | null, b: number, label: string): void {
   assert.equal(LINKME_MIN_GAP_RATE, 0.05, 'le plancher dur est bien de 5 %');
   near(maxLinkmePrice(100), 95, 'plafond LinkMe');
 
-  const categorie = { retailCoefficient: 2.9, wholesaleCoefficient: 1.8 };
+  const hierarchie = {
+    category: { retailCoefficient: 2.9, wholesaleCoefficient: 1.8 },
+  };
 
   // Anomalie réelle : COU-0005, site 4,58 € et LinkMe 20,90 €.
   const inverse = evaluateChannelGap({
     sitePriceHt: 4.58,
     linkmePriceHt: 20.9,
-    category: categorie,
+    hierarchy: hierarchie,
   });
   assert.equal(inverse.violatesHardFloor, true, 'LinkMe plus cher que le site');
   assert.ok(inverse.gapPercent != null && inverse.gapPercent < 0);
@@ -308,7 +349,7 @@ function near(a: number | null, b: number, label: string): void {
     evaluateChannelGap({
       sitePriceHt: 6.75,
       linkmePriceHt: 6.84,
-      category: categorie,
+      hierarchy: hierarchie,
     }).violatesHardFloor,
     true,
     'un écart inversé de 1 % est refusé'
@@ -318,14 +359,14 @@ function near(a: number | null, b: number, label: string): void {
   const pile = evaluateChannelGap({
     sitePriceHt: 100,
     linkmePriceHt: 95,
-    category: categorie,
+    hierarchy: hierarchie,
   });
   assert.equal(pile.violatesHardFloor, false, '5 % pile passe');
   assert.equal(
     evaluateChannelGap({
       sitePriceHt: 100,
       linkmePriceHt: 95.01,
-      category: categorie,
+      hierarchy: hierarchie,
     }).violatesHardFloor,
     true,
     'un centime au-dessus est refusé'
@@ -339,7 +380,7 @@ function near(a: number | null, b: number, label: string): void {
   const conforme = evaluateChannelGap({
     sitePriceHt: 31.9,
     linkmePriceHt: 19.8,
-    category: categorie,
+    hierarchy: hierarchie,
   });
   assert.equal(conforme.violatesHardFloor, false);
   assert.equal(conforme.belowRecommendedGap, false, 'cible atteinte');
@@ -349,7 +390,7 @@ function near(a: number | null, b: number, label: string): void {
   const incomparable = evaluateChannelGap({
     sitePriceHt: null,
     linkmePriceHt: 19.8,
-    category: categorie,
+    hierarchy: hierarchie,
   });
   assert.equal(incomparable.notComparable, true);
   assert.equal(incomparable.violatesHardFloor, false);
