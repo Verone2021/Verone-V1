@@ -68,11 +68,11 @@ export function ProductsTable({
           <TableHead>Produit</TableHead>
           <TableHead className="hidden lg:table-cell">SKU</TableHead>
           <TableHead className="hidden lg:table-cell">Variantes</TableHead>
-          <TableHead className="text-right hidden lg:table-cell">
+          <TableHead className="w-[110px] text-right hidden lg:table-cell">
             Revient HT
           </TableHead>
-          <TableHead className="text-right">Prix site HT</TableHead>
-          <TableHead className="text-right hidden lg:table-cell">
+          <TableHead className="w-[130px] text-right">Prix site HT</TableHead>
+          <TableHead className="w-[120px] text-right hidden lg:table-cell">
             Marge
           </TableHead>
           <TableHead className="hidden xl:table-cell">Prix TTC</TableHead>

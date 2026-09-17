@@ -117,8 +117,18 @@ export function CatalogueListView({
         return dir * ((a.stock_real ?? 0) - (b.stock_real ?? 0));
       case 'cost_price':
         return dir * ((a.cost_price ?? 0) - (b.cost_price ?? 0));
-      case 'margin_percentage':
-        return dir * ((a.margin_percentage ?? 0) - (b.margin_percentage ?? 0));
+      case 'margin_percentage': {
+        // La colonne affiche la marge REELLE (prix du site - prix de revient).
+        // Trier sur `products.margin_percentage` — la marge CIBLE, vide sur 206
+        // produits sur 209 — donnait un classement sans rapport avec ce qu'on lit.
+        // Marge inconnue : rejetee en fin de liste, dans les deux sens.
+        const ma = pricingViews.get(a.id)?.marginPercent ?? null;
+        const mb = pricingViews.get(b.id)?.marginPercent ?? null;
+        if (ma == null && mb == null) return 0;
+        if (ma == null) return 1;
+        if (mb == null) return -1;
+        return dir * (ma - mb);
+      }
       case 'completion_percentage':
         return (
           dir *

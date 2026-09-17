@@ -3,11 +3,14 @@
 import { useMemo } from 'react';
 
 import type { Product } from '@verone/categories';
+import { useChannelPricesBatch } from '@verone/channels';
 import { ProductCardV2 as ProductCard } from '@verone/products';
 import type { QuickEditField } from '@verone/products';
 import type { Database } from '@verone/types';
 
 import { useProductsWithHistory } from '@/hooks/use-products-with-history';
+
+import { buildPricingView } from './_lib/catalogue-pricing-view';
 
 type ProductImage = Database['public']['Tables']['product_images']['Row'];
 
@@ -37,6 +40,11 @@ export function CatalogueGridView({
     [products]
   );
   const { canDelete } = useProductsWithHistory(archivedIds);
+
+  // Le meme verdict que la vue liste : sans ca, deux vues du meme ecran
+  // affichent deux verites differentes sur le prix d'un produit.
+  const productIds = useMemo(() => products.map(p => p.id), [products]);
+  const { getPrices } = useChannelPricesBatch(productIds);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -69,6 +77,11 @@ export function CatalogueGridView({
               } as Product
             }
             index={index}
+            pricingView={
+              activeTab === 'active'
+                ? buildPricingView(product, getPrices(product.id))
+                : null
+            }
             preloadedImage={preloadedImage}
             incompleteMode={activeTab === 'incomplete'}
             onQuickEdit={onQuickEdit}

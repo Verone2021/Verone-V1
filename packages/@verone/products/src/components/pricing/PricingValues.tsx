@@ -33,7 +33,7 @@ export function alertsTitle(view: PricingView): string | undefined {
 /** Prix de revient retenu, avec sa provenance et l'alerte « sans frais ». */
 export function LandedCostValue({ view }: { view: PricingView }) {
   return (
-    <div className="flex items-center justify-end gap-1">
+    <div className="flex items-center justify-end gap-1 whitespace-nowrap">
       <span
         className={cn(
           'text-sm',
@@ -70,7 +70,7 @@ export function SitePriceValue({ view }: { view: PricingView }) {
   const isFallback = view.sitePriceSource === 'base_price';
 
   return (
-    <div className="flex items-center justify-end gap-1">
+    <div className="flex items-center justify-end gap-1 whitespace-nowrap">
       <span
         className={cn(
           'text-sm font-semibold',
@@ -110,7 +110,10 @@ export function MarginValue({ view }: { view: PricingView }) {
   const conseille = view.retailVerdict.recommended;
 
   return (
-    <div className="flex items-center justify-end gap-1" title={title}>
+    <div
+      className="flex items-center justify-end gap-1 whitespace-nowrap"
+      title={title}
+    >
       {view.marginPercent == null ? (
         <span className="flex items-center gap-1 text-sm text-gray-400">
           <HelpCircle className="h-3 w-3" aria-hidden="true" />

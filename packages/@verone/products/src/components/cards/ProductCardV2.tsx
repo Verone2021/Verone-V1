@@ -24,6 +24,9 @@ import {
 import { useProductImages } from '@verone/products/hooks';
 import type { Database } from '@verone/utils/supabase/types';
 
+import type { PricingView } from '../../utils/pricing-view';
+import { MarginValue, SitePriceValue } from '../pricing';
+
 type ProductImage = Database['public']['Tables']['product_images']['Row'];
 
 export type QuickEditField =
@@ -47,6 +50,13 @@ interface ProductCardProps {
   preloadedImage?: ProductImage | null; // PERF FIX 2026-01-30: Skip useProductImages si fourni
   incompleteMode?: boolean; // Active les chips "à compléter"
   onQuickEdit?: (product: Product, field: QuickEditField) => void; // Callback clic chip
+  /**
+   * Verdict prix (prix du site, marge réelle, code couleur). Facultatif : quand
+   * il est absent, la carte n'affiche que le prix d'achat, comme avant.
+   * Sans lui, la vue grille et la vue liste du catalogue racontent deux choses
+   * différentes du même produit. [BO-PRICING-GOV-001]
+   */
+  pricingView?: PricingView | null;
 }
 
 export const ProductCardV2 = memo(function ProductCardV2({
@@ -62,6 +72,7 @@ export const ProductCardV2 = memo(function ProductCardV2({
   preloadedImage,
   incompleteMode = false,
   onQuickEdit,
+  pricingView = null,
 }: ProductCardProps) {
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
@@ -261,6 +272,24 @@ export const ProductCardV2 = memo(function ProductCardV2({
                   ({product.cost_net_avg.toFixed(2)} € net)
                 </span>
               )}
+          </div>
+        )}
+
+        {/* Prix du site et marge réelle, quand le verdict est fourni */}
+        {pricingView && (
+          <div className="space-y-0.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] uppercase tracking-wide text-gray-400">
+                Prix site
+              </span>
+              <SitePriceValue view={pricingView} />
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] uppercase tracking-wide text-gray-400">
+                Marge
+              </span>
+              <MarginValue view={pricingView} />
+            </div>
           </div>
         )}
 
