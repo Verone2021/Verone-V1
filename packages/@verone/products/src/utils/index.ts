@@ -13,3 +13,4 @@ export * from './derive-sample-state';
 export * from './sourcing-journal';
 export * from './product-evaluation';
 export * from './is-product-sellable';
+export * from './pricing-governance';
