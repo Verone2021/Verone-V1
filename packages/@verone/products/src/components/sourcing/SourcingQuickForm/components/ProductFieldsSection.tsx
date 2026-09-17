@@ -174,8 +174,10 @@ export function ProductFieldsSection({
         <Input
           id="supplier_moq"
           type="number"
-          min="1"
-          value={formData.supplier_moq ?? ''}
+          // Champ facultatif : 0 = non renseigné. min="1" bloquait la validation
+          // du formulaire alors que la valeur par défaut est 0 (Roméo 17/09).
+          min="0"
+          value={formData.supplier_moq ? String(formData.supplier_moq) : ''}
           onChange={e => {
             const value = parseInt(e.target.value) || 0;
             onFieldChange({ supplier_moq: value });

@@ -325,3 +325,53 @@ verts sur `@verone/consultations`, `@verone/types`, `@verone/back-office`.
 « dont 80.00€ de livraison », bénéfice 260 €, marge 82,5 %, transport de vente des
 lignes verrouillé. Remise à 0 ensuite ; les deux consultations sont à
 `selling_shipping_cost_ht = 0`, vérifié en base.
+
+---
+
+# Raccourci « créer un produit en sourcing » depuis le sélecteur (17/09)
+
+Roméo : « depuis le formulaire pour ajouter les produits, il faut le bouton pour
+créer un nouveau produit en sourcing, et qu'il soit ajouté automatiquement à la
+consultation. C'est juste un raccourci. »
+
+## Ajout
+
+`UniversalProductSelectorV2` accepte `onCreateSourcingProduct` (optionnel, donc
+sans effet sur ses autres usages : commandes, collections, variantes). Quand il
+est fourni :
+
+- bouton **« Nouveau produit en sourcing »** à droite de la recherche ;
+- bouton **« Sourcer ce produit »** dans l'écran « Aucun produit trouvé », là où
+  le besoin apparaît vraiment.
+
+Dans la consultation, le bouton ferme le sélecteur et ouvre le formulaire de
+sourcing existant (`SourcingProductModal`), qui crée le produit **et l'associe**
+à la consultation. Aucun composant dupliqué.
+
+## Deux bugs bloquants découverts en testant — le raccourci ne marchait pas
+
+Le formulaire rapide de sourcing ne pouvait **rien créer du tout**, ni depuis la
+consultation, ni depuis la page Sourcing. Deux causes, corrigées :
+
+1. **`sku_format`** (400). Le formulaire envoyait `sku: ''` en comptant sur le
+   déclencheur `products_auto_sku_trigger`, qui ne sait générer un code qu'à
+   partir d'une sous-catégorie — que ce formulaire ne demande pas. La chaîne vide
+   violait `CHECK (sku ~ '^[A-Z0-9\-]+$')`. Le SKU est désormais généré côté
+   application au format `SRC-…`, le même que l'import du plugin navigateur.
+2. **`chk_supplier_moq_positive`** (400). La quantité minimale de commande est
+   facultative mais partait à `0`, alors que la base exige `>= 1`. Elle part
+   maintenant à `null` quand elle est vide, et le champ n'impose plus `min="1"`
+   (il bloquait la validation du formulaire avec sa propre valeur par défaut).
+
+Corrigé aussi au passage : `supplier_id`, `assigned_client_id` et `enseigne_id`
+partaient en chaîne vide quand rien n'était choisi — futur 400 sur colonne uuid
+dès qu'un de ces champs reste vide.
+
+## Test de bout en bout
+
+Créé depuis le sélecteur de la consultation « Pokawa » : produit `SRC-MU4UHBI4`
+à 12,50 € d'achat, **ajouté tout seul** à la consultation avec la note « Produit
+sourcé spécifiquement pour cette consultation », prix d'achat repris en colonne
+Revient. Ligne retirée et **produit de test supprimé** ensuite ; consultation
+revérifiée en base (1 ligne, 0 frais, valeurs d'origine), aucun produit `TEST`
+restant.

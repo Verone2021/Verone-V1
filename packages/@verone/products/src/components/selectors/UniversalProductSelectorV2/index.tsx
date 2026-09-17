@@ -24,7 +24,7 @@ import {
 } from '@verone/ui';
 import { Input } from '@verone/ui';
 import { cn } from '@verone/utils';
-import { Check, Search, X } from 'lucide-react';
+import { Check, Search, Sparkles, X } from 'lucide-react';
 
 import type {
   ProductData,
@@ -66,6 +66,7 @@ export function UniversalProductSelectorV2({
   supplierId,
   initialSearch,
   sellableOnly = false,
+  onCreateSourcingProduct,
 }: UniversalProductSelectorV2Props) {
   // ============================================================================
   // STATE
@@ -231,24 +232,40 @@ export function UniversalProductSelectorV2({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Search Bar (sticky) */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Rechercher par nom ou SKU..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="pl-10 pr-10 border-2 focus:border-[#3b86d1]"
-            autoFocus
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+        {/* Search Bar (sticky) + raccourci sourcing */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Rechercher par nom ou SKU..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10 border-2 focus:border-[#3b86d1]"
+              autoFocus
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="h-4 w-4 text-gray-400" />
+              </button>
+            )}
+          </div>
+          {/* Le produit n'existe pas encore : on le crée en sourcing sans
+              quitter la consultation (BO-CONSULT-SOURCING-001) */}
+          {onCreateSourcingProduct && (
+            <ButtonV2
+              variant="outline"
+              size="sm"
+              onClick={onCreateSourcingProduct}
+              className="whitespace-nowrap"
+              title="Créer un produit en sourcing et l'ajouter tout de suite à cette consultation"
             >
-              <X className="h-4 w-4 text-gray-400" />
-            </button>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Nouveau produit en sourcing
+            </ButtonV2>
           )}
         </div>
 
@@ -295,6 +312,7 @@ export function UniversalProductSelectorV2({
                     type="no-results"
                     searchQuery={searchQuery}
                     onReset={handleResetFilters}
+                    onCreateSourcingProduct={onCreateSourcingProduct}
                   />
                 ) : viewMode === 'grid' ? (
                   /* Vue Grille - images grandes */

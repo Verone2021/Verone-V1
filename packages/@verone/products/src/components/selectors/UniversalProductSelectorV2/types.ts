@@ -110,6 +110,12 @@ export interface UniversalProductSelectorV2Props {
   initialSearch?: string;
   /** Seulement les produits vendables (commandes client) — règle BO-CHANNELS-P7-001 */
   sellableOnly?: boolean;
+  /**
+   * Raccourci « créer un produit en sourcing » proposé dans le sélecteur.
+   * Fourni par l'appelant, qui ferme le sélecteur et ouvre son propre
+   * formulaire de sourcing (consultations — BO-CONSULT-SOURCING-001).
+   */
+  onCreateSourcingProduct?: () => void;
 }
 
 // Types pour filtres hiérarchiques (internes)

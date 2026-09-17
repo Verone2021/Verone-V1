@@ -537,6 +537,12 @@ export function ConsultationOrderInterface({
         selectedProducts={[]}
         showQuantity
         showImages
+        // Raccourci : le produit n'existe pas encore → on le crée en sourcing
+        // depuis le sélecteur, et il rejoint la consultation tout seul.
+        onCreateSourcingProduct={() => {
+          setShowAddModal(false);
+          setShowSourcingModal(true);
+        }}
       />
 
       <SourcingProductModal
