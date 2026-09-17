@@ -1,17 +1,23 @@
 /**
  * Protected Layout — Back-Office
  *
- * Verifie l'authentification ET le role back-office cote serveur.
+ * Ceinture cote serveur : authentification + role back-office.
  * Base sur le pattern f352e5f3 (prouve fonctionnel) + verification role.
  *
- * 2026-09-17 — Robustesse : ce layout est `force-dynamic`, donc il se rejoue
- * cote serveur a CHAQUE navigation et a chaque rafraichissement declenche par
- * un ecran. Avant, la moindre erreur de `getUser()` — y compris un simple
- * "Failed to fetch" ou un 503 passager de Supabase — renvoyait vers la page de
- * connexion : l'utilisateur etait deconnecte sans que sa session soit invalide
- * (symptome rapporte par Romeo en ajoutant un produit a une consultation).
- * On distingue desormais "session invalide" (on renvoie vers /login, inchange)
- * de "echec passager" (on retente une fois, puis on echoue de facon fermee).
+ * 2026-09-17 (soir) — Ce layout n'est plus le seul garde-fou : le
+ * rafraichissement de session et la garde d'acces sont passes dans
+ * `apps/back-office/src/middleware.ts`, qui tranche AVANT tout rendu. Ici, on
+ * garde une seconde verification, mais elle ne doit JAMAIS enfermer personne.
+ *
+ * Ce qu'on a corrige le meme soir : la version precedente jetait une exception
+ * quand la lecture du role echouait, en pensant que `(protected)/error.tsx`
+ * l'attraperait. Ce n'est pas le cas — un `error.tsx` n'attrape pas les erreurs
+ * du `layout.tsx` de son propre segment. L'exception tombait dans
+ * `global-error.tsx` (« Erreur systeme Verone ») et « Reessayer » rejouait le
+ * meme plantage : des collaborateurs se sont retrouves dehors, sans issue.
+ *
+ * Regle desormais : un echec de lecture renvoie vers la page de connexion avec
+ * un motif affichable, jamais vers un ecran sans sortie.
  */
 import { redirect } from 'next/navigation';
 
@@ -53,7 +59,7 @@ export default async function ProtectedLayout({
   const user = userData.user;
 
   if (userError || !user) {
-    redirect('/login');
+    redirect('/login?erreur=session');
   }
 
   // Verification role back-office (ajout par rapport a f352e5f3)
@@ -77,18 +83,20 @@ export default async function ProtectedLayout({
   }
 
   if (roleError) {
-    // La session est valide : la lecture du role a echoue, pas l'authentification.
-    // On laisse remonter vers `error.tsx` (ecran "Reessayer") au lieu de
-    // deconnecter quelqu'un qui a parfaitement le droit d'etre la.
-    throw new Error(
-      `Verification du role back-office indisponible: ${roleError.message}`
+    // La session est valide : c'est la lecture du role qui a echoue deux fois.
+    // On trace de quoi retrouver la cause dans les journaux, et on renvoie vers
+    // la connexion avec un motif — surtout pas vers un ecran sans issue.
+    console.error(
+      `[back-office/(protected)] Lecture du role impossible pour ${user.id} (${roleError.code ?? 'sans code'}): ${roleError.message}`
     );
+    redirect('/login?erreur=role');
   }
 
   if (!role) {
-    // PAS de signOut() ici — modifier les cookies pendant le render serveur
-    // peut causer des mismatches d'hydration. Simple redirect suffit.
-    redirect('/login');
+    // Session valide, mais pas de role back-office actif : ce n'est pas un
+    // probleme de connexion, inutile de renvoyer vers /login (l'utilisateur se
+    // reconnecterait en boucle sans jamais comprendre).
+    redirect('/unauthorized');
   }
 
   return <>{children}</>;
