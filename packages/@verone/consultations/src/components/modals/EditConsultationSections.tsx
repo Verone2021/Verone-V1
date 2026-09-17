@@ -36,6 +36,7 @@ export interface EditFormData {
   tarif_maximum: number;
   /** Marge par défaut en % — chaîne vide = aucune (prix saisi à la main). */
   default_margin_percentage: string;
+  selling_shipping_cost_ht: string;
   /** Taux de TVA en % — chaîne vide = taux par défaut (20 %). */
   tva_rate: string;
   estimated_response_date: string;
@@ -317,6 +318,41 @@ export function ConsultationParamsSection({
           {errors.default_margin_percentage && (
             <p className="text-xs text-red-600">
               {errors.default_margin_percentage}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <Label
+            htmlFor="selling-shipping-cost"
+            className="text-xs font-medium"
+          >
+            Livraison facturée au client (€ HT)
+          </Label>
+          <Input
+            id="selling-shipping-cost"
+            type="number"
+            step="0.01"
+            min="0"
+            value={formData.selling_shipping_cost_ht}
+            onChange={e => {
+              onChange('selling_shipping_cost_ht', e.target.value);
+              if (errors.selling_shipping_cost_ht)
+                onClearError('selling_shipping_cost_ht');
+            }}
+            placeholder="0"
+            className={cn(
+              errors.selling_shipping_cost_ht &&
+                'border-red-300 focus:border-red-500'
+            )}
+          />
+          <p className="text-xs text-zinc-500">
+            Une seule livraison pour toute la consultation. Laisse à 0 pour la
+            facturer ligne par ligne — les deux à la fois sont impossibles.
+          </p>
+          {errors.selling_shipping_cost_ht && (
+            <p className="text-xs text-red-600">
+              {errors.selling_shipping_cost_ht}
             </p>
           )}
         </div>

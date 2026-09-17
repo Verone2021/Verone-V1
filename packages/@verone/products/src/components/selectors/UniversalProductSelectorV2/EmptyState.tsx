@@ -1,7 +1,7 @@
 'use client';
 
 import { ButtonV2 } from '@verone/ui';
-import { Package, Plus, RotateCcw } from 'lucide-react';
+import { Package, Plus, RotateCcw, Sparkles } from 'lucide-react';
 
 // ============================================================================
 // COMPOSANT - EmptyState
@@ -11,9 +11,16 @@ interface EmptyStateProps {
   type: 'no-results' | 'no-selection';
   searchQuery?: string;
   onReset?: () => void;
+  /** Raccourci « créer le produit en sourcing » quand la recherche ne donne rien. */
+  onCreateSourcingProduct?: () => void;
 }
 
-export function EmptyState({ type, searchQuery, onReset }: EmptyStateProps) {
+export function EmptyState({
+  type,
+  searchQuery,
+  onReset,
+  onCreateSourcingProduct,
+}: EmptyStateProps) {
   if (type === 'no-results') {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -28,12 +35,20 @@ export function EmptyState({ type, searchQuery, onReset }: EmptyStateProps) {
             ? `Aucun résultat pour "${searchQuery}". Essayez de modifier votre recherche.`
             : 'Essayez de modifier vos filtres ou votre recherche'}
         </p>
-        {onReset && (
-          <ButtonV2 variant="outline" onClick={onReset} size="sm">
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Réinitialiser les filtres
-          </ButtonV2>
-        )}
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {onReset && (
+            <ButtonV2 variant="outline" onClick={onReset} size="sm">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Réinitialiser les filtres
+            </ButtonV2>
+          )}
+          {onCreateSourcingProduct && (
+            <ButtonV2 onClick={onCreateSourcingProduct} size="sm">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Sourcer ce produit
+            </ButtonV2>
+          )}
+        </div>
       </div>
     );
   }

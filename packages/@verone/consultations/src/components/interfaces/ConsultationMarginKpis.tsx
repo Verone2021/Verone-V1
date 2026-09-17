@@ -6,6 +6,8 @@ interface ConsultationMarginKpisProps {
   totalShipping: number;
   totalMargin: number;
   totalMarginPercent: number;
+  /** Livraison refacturée au client pour toute la consultation (0 = aucune). */
+  globalSellingShipping?: number;
 }
 
 export function ConsultationMarginKpis({
@@ -14,6 +16,7 @@ export function ConsultationMarginKpis({
   totalShipping,
   totalMargin,
   totalMarginPercent,
+  globalSellingShipping = 0,
 }: ConsultationMarginKpisProps) {
   return (
     <div className="bg-white border border-zinc-100 rounded-lg flex divide-x divide-zinc-100 overflow-hidden shadow-sm">
@@ -24,6 +27,14 @@ export function ConsultationMarginKpis({
         <p className="text-base font-bold text-zinc-900 leading-none">
           {total.toFixed(2)}€
         </p>
+        {globalSellingShipping > 0 && (
+          <p
+            className="text-[9px] text-blue-600 mt-0.5"
+            title="Livraison refacturée au client pour toute la consultation, comprise dans le CA"
+          >
+            dont {globalSellingShipping.toFixed(2)}€ de livraison
+          </p>
+        )}
       </div>
       <div className="flex-1 px-4 py-2 bg-rose-50/20">
         <p className="text-[9px] font-bold text-rose-600 uppercase tracking-tighter">

@@ -2,6 +2,7 @@
  * Tests unitaires — adaptateur unique ligne de consultation → calcul
  * Exécution standalone : npx tsx <ce-fichier>
  * Sprint BO-CONSULT-MULTI-001 — 2026-09-16
+ * Sprint BO-CONSULT-CURRENCY-001 — 2026-09-17 (tests devise)
  */
 
 import { strict as assert } from 'node:assert';
@@ -389,6 +390,119 @@ test('la date d’émission n’est pas modifiée', () => {
   const issued = new Date('2026-09-16T10:00:00Z');
   consultationProposalValidUntil(issued);
   assert.equal(issued.toISOString(), '2026-09-16T10:00:00.000Z');
+});
+
+// ---------------------------------------------------------------------------
+// (h) Conversion de devise — BO-CONSULT-CURRENCY-001
+// ---------------------------------------------------------------------------
+
+console.log('\n--- (h) CONVERSION DEVISE ---');
+
+test('ligne EUR sans champ devise → coût inchangé (identité)', () => {
+  const item = makeItem({ cost_price_override: 100 });
+  const input = itemToEconomicsInput(item);
+  assert.equal(input.unitCost, 100);
+});
+
+test('ligne USD à taux 0.87 → coût converti en euros', () => {
+  const item = makeItem({
+    cost_price_override: 100,
+    cost_price_currency: 'USD',
+    cost_price_exchange_rate: 0.87,
+  });
+  const input = itemToEconomicsInput(item);
+  // 100 USD × 0.87 = 87.00 EUR
+  assert.ok(
+    input.unitCost !== null && Math.abs(input.unitCost - 87) < 0.001,
+    `unitCost=${input.unitCost}, attendu 87`
+  );
+});
+
+test('produit USD sans override → monnaie du produit appliquée', () => {
+  const item = makeItem({
+    cost_price_override: null,
+    product: {
+      cost_price: 200,
+      cost_price_currency: 'USD',
+      cost_price_exchange_rate: 0.87,
+      eco_tax_default: 0,
+      supplier_id: 'sup-1',
+      archived_at: null,
+    },
+  });
+  const input = itemToEconomicsInput(item);
+  // 200 USD × 0.87 = 174.00 EUR
+  assert.ok(
+    input.unitCost !== null && Math.abs(input.unitCost - 174) < 0.001,
+    `unitCost=${input.unitCost}, attendu 174`
+  );
+});
+
+test('taux figé sur la ligne — changer la constante ne change plus rien', () => {
+  // Le taux est stocké sur la ligne, pas recalculé depuis la constante
+  const rate = 0.85; // taux "d’hier"
+  const item = makeItem({
+    cost_price_override: 100,
+    cost_price_currency: 'USD',
+    cost_price_exchange_rate: rate,
+  });
+  const input = itemToEconomicsInput(item);
+  // 100 USD × 0.85 = 85.00 EUR (taux figé, pas 0.87)
+  assert.ok(
+    input.unitCost !== null && Math.abs(input.unitCost - 85) < 0.001,
+    `unitCost=${input.unitCost}, attendu 85`
+  );
+});
+
+test('ligne EUR explicite → pas de conversion', () => {
+  const item = makeItem({
+    cost_price_override: 250,
+    cost_price_currency: 'EUR',
+    cost_price_exchange_rate: 1,
+  });
+  const input = itemToEconomicsInput(item);
+  assert.equal(input.unitCost, 250);
+});
+
+test('coût null → toujours null quelle que soit la devise', () => {
+  const item = makeItem({
+    cost_price_override: null,
+    product: null,
+    cost_price_currency: 'USD',
+    cost_price_exchange_rate: 0.87,
+  });
+  const input = itemToEconomicsInput(item);
+  assert.equal(input.unitCost, null);
+});
+
+test('arrondi au centime — 3 USD × 0.87 = 2.61 €', () => {
+  const item = makeItem({
+    cost_price_override: 3,
+    cost_price_currency: 'USD',
+    cost_price_exchange_rate: 0.87,
+  });
+  const input = itemToEconomicsInput(item);
+  assert.equal(input.unitCost, 2.61);
+});
+
+test('la marge calcule sur le prix en euros, pas en dollars', () => {
+  // 10 USD × 0.87 = 8.70 EUR ; marge 50 % → prix de vente = 8.70 × 1.5 = 13.05
+  const { byItemId } = computeItemsEconomics(
+    [
+      makeItem({
+        cost_price_override: 10,
+        cost_price_currency: 'USD',
+        cost_price_exchange_rate: 0.87,
+      }),
+    ],
+    { default_margin_percentage: 50 }
+  );
+  const econ = byItemId.get('item-1');
+  assert.ok(econ);
+  assert.ok(
+    approxEqual(econ.unitPrice ?? 0, 13.05),
+    `unitPrice=${econ.unitPrice}, attendu 13.05`
+  );
 });
 
 report('consultation-economics-input');

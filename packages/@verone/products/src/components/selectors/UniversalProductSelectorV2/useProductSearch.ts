@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 
 import { createClient } from '@verone/utils/supabase/client';
 
+import { isProductProposableInConsultation } from '../../../utils/is-product-sellable';
+
 import type { ProductData, ProductSearchFilters } from './types';
 
 // ============================================================================
@@ -38,6 +40,7 @@ export function useProductSearch(
     filters.supplierId,
     filters.excludeProductsInVariantGroup,
     filters.sellableOnly,
+    filters.proposableInConsultation,
   ]);
 
   const fetchProducts = async () => {
@@ -56,6 +59,8 @@ export function useProductSearch(
           product_status,
           creation_mode,
           sourcing_type,
+          sourcing_status,
+          archived_at,
           supplier_id,
           subcategory_id,
           stock_real,
@@ -102,16 +107,13 @@ export function useProductSearch(
         query = query.eq('sourcing_type', filters.sourcingType);
       }
 
-      // Filtre par statut produit (ex: consultations = seulement produits actifs)
-      if (filters.productStatus) {
-        query = query.eq(
-          'product_status',
-          filters.productStatus as
-            | 'active'
-            | 'draft'
-            | 'preorder'
-            | 'discontinued'
-        );
+      // Consultations : produits vendables OU encore en sourcing.
+      // Filtre large côté base (les sourcings clos sont écartés ensuite avec
+      // la règle partagée isProductProposableInConsultation).
+      if (filters.proposableInConsultation) {
+        query = query
+          .is('archived_at', null)
+          .or('product_status.in.(active,preorder),creation_mode.eq.sourcing');
       }
 
       // Règle unique « vendable » (BO-CHANNELS-P7-001) : commandes client
@@ -189,6 +191,7 @@ export function useProductSearch(
         product_status: item.product_status,
         creation_mode: item.creation_mode,
         sourcing_type: item.sourcing_type,
+        sourcing_status: item.sourcing_status ?? null,
         supplier_id: item.supplier_id,
         subcategory_id: item.subcategory_id,
         stock_real: item.stock_real,
@@ -203,7 +206,10 @@ export function useProductSearch(
       }));
 
       const filteredData = transformedData.filter(
-        p => !excludeIds.includes(p.id)
+        p =>
+          !excludeIds.includes(p.id) &&
+          (!filters.proposableInConsultation ||
+            isProductProposableInConsultation(p))
       );
 
       setProducts(filteredData);

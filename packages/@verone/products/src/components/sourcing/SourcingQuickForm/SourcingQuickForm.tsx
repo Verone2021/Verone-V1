@@ -24,6 +24,7 @@ export function SourcingQuickForm({
     setNewSupplier,
     formData,
     setFormData,
+    handleFieldChange,
     selectedImages,
     imagePreviews,
     isSubmitting,
@@ -94,9 +95,7 @@ export function SourcingQuickForm({
         <ProductFieldsSection
           formData={formData}
           errors={errors}
-          onFieldChange={updates =>
-            setFormData(prev => ({ ...prev, ...updates }))
-          }
+          onFieldChange={handleFieldChange}
           onClearError={clearError}
         />
 
