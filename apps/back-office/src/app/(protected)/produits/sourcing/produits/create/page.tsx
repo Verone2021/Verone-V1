@@ -108,17 +108,14 @@ export default function NewSourcingPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <div className="text-sm font-medium text-blue-700 mb-2">
-                      ⚡ Champs requis (seulement 3) :
+                      ⚡ Champs requis (seulement 2) :
                     </div>
                     <ul className="text-sm text-gray-600 space-y-1">
                       <li>
-                        • <strong>Image du produit</strong> (drag & drop)
+                        • <strong>Nom du produit</strong> (5 caractères minimum)
                       </li>
                       <li>
-                        • <strong>Nom du produit</strong>
-                      </li>
-                      <li>
-                        • <strong>URL de la page fournisseur</strong>
+                        • <strong>Prix d&apos;achat fournisseur (HT)</strong>
                       </li>
                     </ul>
                   </div>
@@ -128,7 +125,8 @@ export default function NewSourcingPage() {
                       📋 Champs facultatifs :
                     </div>
                     <ul className="text-sm text-gray-600 space-y-1">
-                      <li>• Prix coûtant fournisseur (HT)</li>
+                      <li>• Image du produit (glisser-déposer)</li>
+                      <li>• Adresse de la page fournisseur</li>
                       <li>• Fournisseur</li>
                       <li>• Client assigné</li>
                     </ul>

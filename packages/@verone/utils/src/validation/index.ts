@@ -81,5 +81,8 @@ export {
   validateQueryParams,
 } from './api-schemas';
 
-// Saisies de formulaire tolérantes (adresses sans schéma, décimales à virgule)
+// Saisies de formulaire tolérantes (adresses sans schéma, décimales à virgule).
+// Réexporté ici pour la découvrabilité, mais les écrans doivent importer
+// `@verone/utils/validation/form-inputs` : ce tonneau tire `form-security`,
+// donc isomorphic-dompurify et jsdom, qui cassent la génération des pages.
 export { normalizeUrl, isValidUrl, parseDecimalInput } from './form-inputs';

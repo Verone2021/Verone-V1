@@ -7,7 +7,10 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@verone/common/hooks';
 import { associateProductToConsultation } from '@verone/utils';
 import { defaultRateFor } from '@verone/utils/currency';
-import { isValidUrl, normalizeUrl } from '@verone/utils/validation';
+// Chemin direct et non le tonneau `@verone/utils/validation` : celui-ci tire
+// `form-security` -> isomorphic-dompurify -> jsdom, qui casse la generation des
+// pages de LinkMe (constate en CI le 17/09).
+import { isValidUrl, normalizeUrl } from '@verone/utils/validation/form-inputs';
 import { useOrganisations } from '@verone/organisations/hooks';
 
 import { useSourcingCreateUpdate } from '@verone/products/hooks';

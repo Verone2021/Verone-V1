@@ -14,7 +14,7 @@ import {
 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { convertToEur } from '@verone/utils/currency';
-import { parseDecimalInput } from '@verone/utils/validation';
+import { parseDecimalInput } from '@verone/utils/validation/form-inputs';
 import { Euro, Link } from 'lucide-react';
 
 import type { ProductFormData } from '../types';
