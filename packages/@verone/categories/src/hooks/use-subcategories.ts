@@ -52,7 +52,8 @@ export function useSubcategories(categoryId?: string) {
       setError(null);
 
       let baseQuery = supabase.from('subcategories').select(`
-          id, name, slug, category_id, description, image_url, is_active, display_order, created_at, updated_at,
+          id, name, slug, category_id, description, image_url, is_active, display_order,
+          retail_coefficient, wholesale_coefficient, created_at, updated_at,
           categories!subcategories_category_id_fkey(
             id,
             name,
@@ -137,7 +138,7 @@ export function useSubcategories(categoryId?: string) {
           },
         ])
         .select(
-          'id, name, slug, category_id, description, image_url, is_active, display_order, created_at, updated_at'
+          'id, name, slug, category_id, description, image_url, is_active, display_order, retail_coefficient, wholesale_coefficient, created_at, updated_at'
         )
         .single();
 
@@ -183,7 +184,7 @@ export function useSubcategories(categoryId?: string) {
         .update(updateData)
         .eq('id', id)
         .select(
-          'id, name, slug, category_id, description, image_url, is_active, display_order, created_at, updated_at'
+          'id, name, slug, category_id, description, image_url, is_active, display_order, retail_coefficient, wholesale_coefficient, created_at, updated_at'
         )
         .single();
 
@@ -294,7 +295,8 @@ export function useSubcategories(categoryId?: string) {
         .from('subcategories')
         .select(
           `
-          id, name, slug, category_id, description, image_url, is_active, display_order, created_at, updated_at,
+          id, name, slug, category_id, description, image_url, is_active, display_order,
+          retail_coefficient, wholesale_coefficient, created_at, updated_at,
           categories!subcategories_category_id_fkey(
             id,
             name,

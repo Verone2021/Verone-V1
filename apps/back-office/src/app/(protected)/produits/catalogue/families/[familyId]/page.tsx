@@ -18,8 +18,10 @@ import { VéroneCard } from '@verone/ui';
 import { ArrowLeft, Plus, Edit, FolderOpen, Package } from 'lucide-react';
 
 import { FamilyCrudForm } from '@/components/forms/family-crud-form';
+import { CoefficientsCard } from '@verone/categories';
 import { useFamilies } from '@verone/categories';
 import { useCategories, type CategoryWithCount } from '@verone/categories';
+import { FALLBACK_COEFFICIENTS } from '@verone/products/utils';
 import type { Database } from '@verone/utils/supabase/types';
 
 interface FamilyFormData {
@@ -263,6 +265,19 @@ export default function FamilyDetailPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Coefficients conseilles */}
+        <CoefficientsCard
+          level="famille"
+          retailCoefficient={family.retail_coefficient ?? null}
+          wholesaleCoefficient={family.wholesale_coefficient ?? null}
+          inherited={{
+            retail: FALLBACK_COEFFICIENTS.retail,
+            wholesale: FALLBACK_COEFFICIENTS.wholesale,
+            from: 'la valeur par défaut',
+          }}
+          onSave={values => updateFamily(family.id, values)}
+        />
 
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

@@ -168,6 +168,7 @@ export function useCategoryDetail(categoryId: string) {
     category,
     family,
     families,
+    updateCategory,
     allCategories,
     categorySubcategories,
     loading,

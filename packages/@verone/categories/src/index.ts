@@ -7,6 +7,7 @@ export * from './components/filters';
 export * from './components/modals';
 export * from './components/badges';
 export * from './components/selectors';
+export * from './components/pricing';
 
 // Hooks
 export * from './hooks';
