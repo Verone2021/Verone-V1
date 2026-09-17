@@ -57,8 +57,10 @@ export const getChannelRedirectUrl = (order: SalesOrder) => {
     }
     return '/canaux-vente/linkme/commandes';
   }
-  if (order.channel_id === SITE_INTERNET_CHANNEL_ID) {
-    return '/canaux-vente/site-internet/commandes';
-  }
+  // Site Internet : pas d'ecran de commandes dedie (seules `produits` et
+  // `ambassadeurs` existent sous /canaux-vente/site-internet). Le lien menait
+  // vers une page 404 — constate le 17/09. On ne propose donc rien : ces
+  // commandes se gerent depuis la liste Commandes clients elle-meme.
+  // A rebrancher le jour ou l'ecran du canal existera.
   return null;
 };

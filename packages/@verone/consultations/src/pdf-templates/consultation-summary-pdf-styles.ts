@@ -156,7 +156,12 @@ export const s = StyleSheet.create({
     fontSize: 7.5,
     color: veroneColors.pearl,
     marginTop: 6,
-    fontStyle: 'italic',
+    // Pas d'italique : seules Montserrat 400/600 et Bodoni Moda 700 sont
+    // enregistrees (pdf-fonts.ts), et @react-pdf refuse de generer le
+    // document entier des qu'une fonte demandee manque (constate le 17/09 :
+    // « Could not resolve font for Montserrat, fontWeight 400, fontStyle
+    // italic » — la proposition client ne sortait plus). La distinction
+    // visuelle passe par la taille et la couleur.
   },
   freeBadge: {
     fontSize: 6,
@@ -174,7 +179,12 @@ export const s = StyleSheet.create({
   emptyText: {
     fontSize: 8,
     color: veroneColors.pearl,
-    fontStyle: 'italic',
+    // Pas d'italique : seules Montserrat 400/600 et Bodoni Moda 700 sont
+    // enregistrees (pdf-fonts.ts), et @react-pdf refuse de generer le
+    // document entier des qu'une fonte demandee manque (constate le 17/09 :
+    // « Could not resolve font for Montserrat, fontWeight 400, fontStyle
+    // italic » — la proposition client ne sortait plus). La distinction
+    // visuelle passe par la taille et la couleur.
     textAlign: 'center',
     paddingVertical: 16,
   },
