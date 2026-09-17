@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import {
   Input,
   Label,
@@ -12,6 +14,7 @@ import {
 } from '@verone/ui';
 import { cn } from '@verone/utils';
 import { convertToEur } from '@verone/utils/currency';
+import { parseDecimalInput } from '@verone/utils/validation';
 import { Euro, Link } from 'lucide-react';
 
 import type { ProductFormData } from '../types';
@@ -29,6 +32,19 @@ export function ProductFieldsSection({
   onFieldChange,
   onClearError,
 }: ProductFieldsSectionProps) {
+  // Le prix est saisi en texte libre pour accepter la virgule française.
+  // Avec `type="number"`, Chrome considère « 12,50 » comme invalide : `value`
+  // vaut alors la chaîne vide, le prix est perdu et l'envoi est bloqué sans
+  // message. On garde ici la frappe telle quelle, et on remonte au parent le
+  // nombre correspondant. Formulaire de création uniquement : pas de valeur
+  // initiale à resynchroniser.
+  const [costPriceText, setCostPriceText] = useState<string>(
+    formData.cost_price ? String(formData.cost_price) : ''
+  );
+  const [exchangeRateText, setExchangeRateText] = useState<string>(
+    String(formData.cost_price_exchange_rate)
+  );
+
   return (
     <>
       {/* Nom produit */}
@@ -61,7 +77,13 @@ export function ProductFieldsSection({
           <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             id="supplier_url"
-            type="url"
+            // Volontairement `text` et non `url` : le champ est facultatif, et
+            // `type="url"` fait refuser « fournisseur.fr/p » par le navigateur,
+            // qui bloque alors l'envoi sans afficher quoi que ce soit dans la
+            // page. Le format est verifie en JavaScript, qui complete le
+            // « https:// » manquant.
+            type="text"
+            inputMode="url"
             value={formData.supplier_page_url}
             onChange={e => {
               onFieldChange({ supplier_page_url: e.target.value });
@@ -93,16 +115,16 @@ export function ProductFieldsSection({
             <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               id="cost_price"
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.cost_price ?? ''}
+              type="text"
+              inputMode="decimal"
+              value={costPriceText}
               onChange={e => {
-                const value = parseFloat(e.target.value) || 0;
-                onFieldChange({ cost_price: value });
+                const raw = e.target.value;
+                setCostPriceText(raw);
+                onFieldChange({ cost_price: parseDecimalInput(raw) ?? 0 });
                 if (errors.cost_price) onClearError('cost_price');
               }}
-              placeholder="250.00"
+              placeholder="250,00"
               className={cn(
                 'pl-10 transition-colors',
                 errors.cost_price && 'border-red-300 focus:border-red-500'
@@ -147,13 +169,15 @@ export function ProductFieldsSection({
             </Label>
             <Input
               id="cost_price_exchange_rate"
-              type="number"
-              step="0.001"
-              min="0.001"
-              value={formData.cost_price_exchange_rate}
+              // Meme raison que le prix d'achat : la virgule doit passer.
+              type="text"
+              inputMode="decimal"
+              value={exchangeRateText}
               onChange={e => {
-                const rate = parseFloat(e.target.value);
-                if (rate > 0) {
+                const raw = e.target.value;
+                setExchangeRateText(raw);
+                const rate = parseDecimalInput(raw);
+                if (rate !== null && rate > 0) {
                   onFieldChange({ cost_price_exchange_rate: rate });
                 }
               }}

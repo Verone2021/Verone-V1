@@ -11,6 +11,42 @@ interface UseSourcingCreateUpdateParams {
   refetch: () => Promise<void>;
 }
 
+/**
+ * Traduit un refus de la base en phrase comprehensible.
+ *
+ * Le message brut de PostgreSQL (« violates check constraint "name_length" »)
+ * ne dit rien a qui remplit un formulaire. Chaque contrainte que ce formulaire
+ * peut reellement heurter a sa traduction ; le reste est renvoye tel quel,
+ * plutot que masque derriere un « une erreur est survenue » inutile.
+ */
+function describeProductInsertError(message: string): string {
+  if (message.includes('name_length')) {
+    return 'Le nom du produit doit faire au moins 5 caractères.';
+  }
+  if (message.includes('chk_supplier_moq_positive')) {
+    return 'La quantité minimum de commande doit être au moins 1, ou laissée vide.';
+  }
+  if (message.includes('check_products_cost_price_positive')) {
+    return "Le prix d'achat doit être supérieur à 0.";
+  }
+  if (message.includes('products_cost_price_currency_check')) {
+    return "La monnaie du prix d'achat doit être l'euro ou le dollar.";
+  }
+  if (message.includes('sku_format')) {
+    return 'La référence interne générée est invalide. Signalez-le : le produit ne peut pas être créé en l’état.';
+  }
+  if (message.includes('duplicate key') || message.includes('unique')) {
+    return 'Un produit portant la même référence existe déjà.';
+  }
+  if (
+    message.includes('row-level security') ||
+    message.includes('permission')
+  ) {
+    return "Vous n'avez pas les droits pour créer un produit. Reconnectez-vous, puis réessayez.";
+  }
+  return message;
+}
+
 export function useSourcingCreateUpdate({
   refetch,
 }: UseSourcingCreateUpdateParams) {
@@ -102,9 +138,10 @@ export function useSourcingCreateUpdate({
         .single();
 
       if (error) {
+        console.error('[useSourcingCreateUpdate] INSERT products:', error);
         toast({
-          title: 'Erreur',
-          description: error.message,
+          title: 'Enregistrement refusé',
+          description: describeProductInsertError(error.message),
           variant: 'destructive',
         });
         return null;

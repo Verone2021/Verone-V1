@@ -80,3 +80,6 @@ export {
   validateRequestBodyNoSanitize,
   validateQueryParams,
 } from './api-schemas';
+
+// Saisies de formulaire tolérantes (adresses sans schéma, décimales à virgule)
+export { normalizeUrl, isValidUrl, parseDecimalInput } from './form-inputs';
