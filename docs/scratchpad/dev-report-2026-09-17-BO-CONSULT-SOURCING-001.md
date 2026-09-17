@@ -259,3 +259,23 @@ Vérifié à l'écran sur la consultation « Black & White Burger » (Opjet, 2 l
 deux ampoules (9/14 et 5/14) ; produit décoché → **74,00 € entièrement** sur
 l'autre ; Dongguan, qui n'a qu'une ligne, inchangé. Frais remis à zéro et cases
 recochées ; état de la consultation revérifié en base, identique à celui de Roméo.
+
+---
+
+# Saisie au clavier des quantités et des montants (17/09)
+
+Roméo : « si on a 1 000 quantités, on doit appuyer 1 000 fois sur + ».
+
+- **Le nombre de la colonne Qté est cliquable** : il ouvre la ligne en
+  modification, où la quantité se tape directement. Les boutons − et + restent
+  pour les petits ajustements.
+- **Transport vente** rejoint les autres montants cliquables (achat, transport
+  ligne, vente/marge l'étaient déjà).
+- **Sélection au focus** sur les six champs chiffrés : cliquer dans le champ
+  sélectionne la valeur, taper « 1000 » la remplace au lieu de s'y ajouter.
+  Pas d'`autoFocus` : ouvrir la ligne depuis la cellule Vente ne renvoie pas le
+  curseur sur la quantité.
+
+Vérifié à l'écran : 1000 saisi d'un coup dans la quantité d'une ligne, puis
+annulé — les quantités de la consultation de Roméo sont restées à 1 (vérifié en
+base). Les frais Dongguan qu'il venait de saisir n'ont pas été touchés.

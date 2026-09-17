@@ -205,8 +205,11 @@ export function ConsultationProductRow({
             type="number"
             min="1"
             value={editQuantity}
+            // Sélection au focus : saisir « 1000 » remplace la valeur d'un coup
+            // au lieu de s'ajouter à elle (retour Roméo 17/09).
+            onFocus={e => e.currentTarget.select()}
             onChange={e => onSetEditQuantity(parseInt(e.target.value) || 1)}
-            className="w-14 h-6 text-[11px] px-1 py-0"
+            className="w-16 h-6 text-[11px] px-1 py-0"
           />
         ) : (
           <div className="flex items-center gap-0.5">
@@ -219,9 +222,14 @@ export function ConsultationProductRow({
             >
               <Minus className="h-2.5 w-2.5" />
             </button>
-            <span className="w-7 text-center text-[12px] font-medium">
+            <button
+              type="button"
+              onClick={() => onStartEdit(item)}
+              title="Cliquer pour saisir la quantité au clavier"
+              className="w-7 text-center text-[12px] font-medium rounded hover:bg-zinc-100"
+            >
               {item.quantity}
-            </span>
+            </button>
             <button
               type="button"
               onClick={() => onChangeQuantity(item.id, 1)}
@@ -242,6 +250,7 @@ export function ConsultationProductRow({
               type="number"
               step="0.01"
               value={editCostPriceOverride}
+              onFocus={e => e.currentTarget.select()}
               onChange={e => onSetEditCostPriceOverride(e.target.value)}
               placeholder={item.product?.cost_price?.toFixed(2) ?? '0'}
               className="w-20 h-6 text-[11px] px-1 pr-5 py-0"
@@ -283,6 +292,7 @@ export function ConsultationProductRow({
               type="number"
               step="0.01"
               value={editShippingCost}
+              onFocus={e => e.currentTarget.select()}
               onChange={e => onSetEditShippingCost(e.target.value)}
               className="w-16 h-6 text-[11px] px-1 pr-5 py-0"
               disabled={editIsSample}
@@ -341,6 +351,7 @@ export function ConsultationProductRow({
               type="number"
               step="0.01"
               value={editSellingShippingCost}
+              onFocus={e => e.currentTarget.select()}
               onChange={e => onSetEditSellingShippingCost(e.target.value)}
               className="w-16 h-6 text-[11px] px-1 pr-5 py-0"
               disabled={editIsSample}
@@ -350,7 +361,12 @@ export function ConsultationProductRow({
         ) : item.is_sample ? (
           <span className="text-[12px] text-zinc-400">—</span>
         ) : (
-          <div className="flex flex-col leading-none">
+          <button
+            type="button"
+            onClick={() => onStartEdit(item)}
+            title="Cliquer pour modifier le transport refacturé au client"
+            className="flex flex-col leading-none text-left rounded px-1 -mx-1 hover:bg-zinc-100"
+          >
             <span className="text-[12px] text-emerald-700">
               {item.selling_shipping_cost > 0
                 ? `${item.selling_shipping_cost.toFixed(2)}€`
@@ -359,7 +375,7 @@ export function ConsultationProductRow({
             {item.selling_shipping_cost > 0 && (
               <span className="text-[9px] text-zinc-400 mt-0.5">refacturé</span>
             )}
-          </div>
+          </button>
         )}
       </td>
 
@@ -377,6 +393,7 @@ export function ConsultationProductRow({
                 type="number"
                 step="0.01"
                 value={editPrice}
+                onFocus={e => e.currentTarget.select()}
                 onChange={e => onSetEditPrice(e.target.value)}
                 className="w-20 h-6 text-[11px] px-1 pr-5 py-0"
                 disabled={item.is_free}
@@ -389,6 +406,7 @@ export function ConsultationProductRow({
                 type="number"
                 step="1"
                 value={editMarginPercentage}
+                onFocus={e => e.currentTarget.select()}
                 onChange={e => onSetEditMarginPercentage(e.target.value)}
                 placeholder={
                   defaultMarginPercentage !== null
