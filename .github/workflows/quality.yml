@@ -25,8 +25,13 @@ jobs:
   # 1. Detect which apps changed → skip unchanged apps
   # ----------------------------------------------------------------
   detect-changes:
-    name: Detect changes
+    name: Contrôles rapides (détection + gardes base)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
     outputs:
       back-office: ${{ steps.filter.outputs.back-office }}
       linkme: ${{ steps.filter.outputs.linkme }}
@@ -107,6 +112,156 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # --------------------------------------------------------------
+      # Gardes base de donnees, fusionnees ici en [INFRA-CI-MINUTES-001].
+      #
+      # Elles vivaient dans trois taches separees (DB FK drift, types
+      # Supabase, advisors securite). Leur travail reel : 8 s, 44 s et 13 s.
+      # Mais GitHub facture CHAQUE tache arrondie a la minute superieure :
+      # trois taches de quelques secondes coutaient 3 minutes pleines par
+      # declenchement, soit ~264 minutes par mois d'arrondi pur. Elles
+      # refaisaient aussi trois fois le meme checkout et le meme Python.
+      #
+      # Fusionnees ici : meme travail, memes conditions, une seule minute.
+      # --------------------------------------------------------------
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install psycopg2
+        run: pip install psycopg2-binary
+
+      # ---- Garde 1 : derive des cles etrangeres (bloquante) ----
+      - name: DB FK drift check
+        if: env.SUPABASE_DB_URL != ''
+        run: python3 scripts/db-drift-check.py --ci
+
+      - name: Upload drift report
+        if: always() && env.SUPABASE_DB_URL != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-report
+          path: drift-report.json
+          retention-days: 30
+
+      - name: Comment PR on drift failure
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ❌ DB FK Drift Detected\n\nUne FK a été ajoutée, supprimée ou modifiée sur la DB **sans migration versionnée**.\n\nVoir le [drift report](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) téléchargé en artifact.\n\n**Corriger :**\n1. Créer une migration \`supabase/migrations/YYYYMMDD_XXX_description.sql\` qui déclare le changement.\n2. Si le changement en live est intentionnel : ajouter \`DROP CONSTRAINT IF EXISTS ... ADD CONSTRAINT ... ON DELETE <rule>\`.\n3. Ne **pas** modifier une migration existante (règle append-only).\n\nRéférence : ADR-018 dans \`.claude/DECISIONS.md\`.`
+            });
+
+      # ---- Garde 2 : types Supabase desynchronises (bloquante) ----
+      # Ne tourne QUE si une migration ou supabase.ts a bouge. Sur toute autre
+      # PR, rien a verifier : aucune seconde depensee.
+      - name: Setup pnpm
+        if: steps.filter.outputs.migrations == 'true' && env.SUPABASE_DB_URL != ''
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.13.1
+
+      - name: Setup Node.js
+        if: steps.filter.outputs.migrations == 'true' && env.SUPABASE_DB_URL != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies (needed for @verone/prettier-config)
+        if: steps.filter.outputs.migrations == 'true' && env.SUPABASE_DB_URL != ''
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Supabase CLI
+        if: steps.filter.outputs.migrations == 'true' && env.SUPABASE_DB_URL != ''
+        uses: supabase/setup-cli@v2
+        with:
+          version: latest
+
+      - name: Regenerate types from live DB
+        if: steps.filter.outputs.migrations == 'true' && env.SUPABASE_DB_URL != ''
+        # La CLI Supabase (>= mi-2026) exige un access token meme avec --db-url,
+        # sinon : "Access token not provided" -> fichier genere vide -> faux drift.
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          supabase gen types typescript --db-url "$SUPABASE_DB_URL" \
+            > packages/@verone/types/src/supabase.ts.generated
+          pnpm exec prettier --write packages/@verone/types/src/supabase.ts.generated --parser typescript
+          diff -w packages/@verone/types/src/supabase.ts \
+            packages/@verone/types/src/supabase.ts.generated \
+            > types-drift.diff || true
+          if [ -s types-drift.diff ]; then
+            echo "❌ Les types Supabase sont désynchronisés du schéma DB."
+            echo "Corriger localement : pnpm run generate:types"
+            echo ""
+            echo "=== Diff (200 premières lignes) ==="
+            head -200 types-drift.diff
+            exit 1
+          fi
+
+      - name: Upload types drift diff on failure
+        if: failure() && steps.filter.outputs.migrations == 'true' && env.SUPABASE_DB_URL != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-types-drift
+          path: |
+            types-drift.diff
+            packages/@verone/types/src/supabase.ts.generated
+          retention-days: 7
+
+      # ---- Garde 3 : advisors securite Supabase (SECURITY DEFINER, bloquante) ----
+      - name: Fetch security advisors
+        if: github.event_name == 'pull_request' && env.SUPABASE_ACCESS_TOKEN != '' && env.SUPABASE_PROJECT_REF != ''
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          set +e
+          python3 scripts/supabase-advisors-check.py --type security \
+            --baseline scripts/supabase-advisors-baseline.json \
+            --blocking-lints anon_security_definer_function_executable,authenticated_security_definer_function_executable
+          code=$?
+          set -e
+          if [ "$code" -eq 1 ]; then
+            echo "::warning::Régression advisors hors SECURITY DEFINER (non bloquant) — voir le commentaire de PR."
+            exit 0
+          fi
+          exit "$code"
+
+      - name: Comment PR with advisors summary
+        if: always() && github.event_name == 'pull_request' && env.SUPABASE_ACCESS_TOKEN != '' && env.SUPABASE_PROJECT_REF != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            let summary = '';
+            try {
+              summary = fs.readFileSync('advisors-summary.md', 'utf8');
+            } catch (e) {
+              summary = '(advisors summary non disponible)';
+            }
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary,
+            });
+
+      - name: Note secrets manquants
+        if: env.SUPABASE_DB_URL == '' || env.SUPABASE_ACCESS_TOKEN == '' || env.SUPABASE_PROJECT_REF == ''
+        run: |
+          echo "⚠️ Un secret Supabase manque — la garde correspondante a été sautée." >> $GITHUB_STEP_SUMMARY
+          echo "Secrets attendus : SUPABASE_DB_URL, SUPABASE_ACCESS_TOKEN, SUPABASE_PROJECT_REF." >> $GITHUB_STEP_SUMMARY
+
   # ----------------------------------------------------------------
   # 2. Quality checks — only on affected apps
   #
@@ -141,7 +296,7 @@ jobs:
     needs: detect-changes
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: needs.detect-changes.outputs.code == 'true'
+    if: always() && needs.detect-changes.outputs.code == 'true'
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -285,7 +440,7 @@ jobs:
     needs: detect-changes
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: needs.detect-changes.outputs.code == 'true'
+    if: always() && needs.detect-changes.outputs.code == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -381,851 +536,3 @@ jobs:
           path: /tmp/back-office-next.tgz
           retention-days: 1
           include-hidden-files: true
-
-  # ----------------------------------------------------------------
-  # 2c. Consolidation sous le nom historique.
-  #     La protection de branche et les tâches E2E connaissent le check
-  #     « ESLint + Type-Check + Build » : il doit continuer d'exister et,
-  #     surtout, de devenir ROUGE quand l'un des deux échoue.
-  #     Ni quality-lint ni quality-build ne portent `continue-on-error`,
-  #     donc `needs.*.result` dit la vérité ici (contrairement au cas
-  #     documenté dans e2e-smoke-aggregate).
-  # ----------------------------------------------------------------
-  quality:
-    name: ESLint + Type-Check + Build
-    needs: [detect-changes, quality-lint, quality-build]
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    if: always()
-    steps:
-      - name: Résultat consolidé
-        run: |
-          LINT="${{ needs.quality-lint.result }}"
-          BUILD="${{ needs.quality-build.result }}"
-          CODE="${{ needs.detect-changes.outputs.code }}"
-
-          echo "code applicatif modifié : $CODE"
-          echo "  lint + type-check + type-coverage : $LINT"
-          echo "  build des applications            : $BUILD"
-
-          if [ "$CODE" != "true" ]; then
-            echo "## ✅ PR documentation-seule — build non nécessaire" >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-
-          FAILED=0
-          for r in "$LINT" "$BUILD"; do
-            case "$r" in
-              success | skipped) ;;
-              *) FAILED=1 ;;
-            esac
-          done
-
-          if [ "$FAILED" = "1" ]; then
-            echo "::error title=Quality Checks Failed::lint=$LINT build=$BUILD"
-            echo "## ❌ Quality Checks Failed" >> "$GITHUB_STEP_SUMMARY"
-            echo "- Lint + Type-Check + Type Coverage : \`$LINT\`" >> "$GITHUB_STEP_SUMMARY"
-            echo "- Build des applications : \`$BUILD\`" >> "$GITHUB_STEP_SUMMARY"
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "**Reproduire en local :** \`pnpm turbo run lint type-check build\`" >> "$GITHUB_STEP_SUMMARY"
-            exit 1
-          fi
-
-          echo "## ✅ Quality Checks Passed" >> "$GITHUB_STEP_SUMMARY"
-
-  # ----------------------------------------------------------------
-  # 3a. E2E Niveau 1 — smoke-golden
-  #     Gate PR : 1 spec, ~30 sec. Valide le golden path minimal.
-  #     Lancé sur toute PR UI (e2e-needed == true).
-  #     Continue-on-error : informationnel (non-bloquant au merge).
-  # ----------------------------------------------------------------
-  smoke-golden:
-    name: E2E smoke-golden (Niveau 1 — ~30 sec)
-    needs: [detect-changes, quality]
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    continue-on-error: true
-    # [INFRA-CI-NO-E2E-001] Désactivé sur ordre Roméo (2026-05-13). Les tests
-    # E2E ralentissaient la CI (~10 min) sans détecter les vraies régressions
-    # (cf. PR #942 BO-RLS-PERF-002 qui a cassé les photos commandes en prod
-    # pendant 6 jours sans que le smoke ne sourcille). Roméo teste lui-même.
-    if: needs.detect-changes.outputs.e2e-needed == 'true' && github.event_name == 'pull_request'
-    env:
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      E2E_USER_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
-      E2E_USER_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
-      # tests/auth.setup.ts et les specs lisent E2E_TEST_EMAIL / E2E_TEST_PASSWORD
-      E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
-      E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 10.13.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: playwright-${{ runner.os }}-
-
-      - name: Install Playwright browsers (chromium only — cache miss)
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Install Playwright system deps (cache hit)
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium
-
-      - name: Download back-office .next artifact (built by quality job)
-        uses: actions/download-artifact@v4
-        with:
-          name: back-office-build
-          path: /tmp/back-office-artifact
-
-      - name: Unpack back-office build
-        run: tar -xzf /tmp/back-office-artifact/back-office-next.tgz -C apps/back-office
-
-      - name: Start back-office (background)
-        run: |
-          # `next start` ne fonctionne PAS avec `output: 'standalone'`. Next le
-          # dit lui-meme au demarrage, sert quand meme, et chaque requete tombe
-          # en 500 des qu'un middleware existe :
-          #   ⚠ "next start" does not work with "output: standalone"
-          #   [TypeError: Cannot read properties of undefined (reading 'default')]
-          # Le defaut dormait depuis toujours ; il s'est reveille le 18/09 avec
-          # l'ajout du controle de session. On lance donc le serveur autonome —
-          # exactement ce que Vercel execute en production, donc ce que les
-          # tests doivent eprouver. [BO-AUTH-SESSION-002]
-          SERVER=$(find apps/back-office/.next/standalone -maxdepth 4 -name server.js | head -1)
-          if [ -z "$SERVER" ]; then
-            echo "::error title=Build autonome absent::Aucun server.js sous apps/back-office/.next/standalone"
-            ls apps/back-office/.next || true
-            exit 1
-          fi
-          APP_DIR=$(dirname "$SERVER")
-          # Le serveur autonome n'embarque ni les fichiers statiques ni /public.
-          mkdir -p "$APP_DIR/.next"
-          cp -r apps/back-office/.next/static "$APP_DIR/.next/static"
-          cp -r apps/back-office/public "$APP_DIR/public" 2>/dev/null || true
-          PORT=3000 HOSTNAME=127.0.0.1 node "$SERVER" > /tmp/next-start.log 2>&1 &
-          echo $! > /tmp/next-start.pid
-          up=0
-          for i in {1..60}; do
-            if curl -sf http://localhost:3000/login > /dev/null; then
-              echo "Back-office up on :3000"
-              up=1
-              break
-            fi
-            sleep 1
-          done
-          # Sans ce bloc, un serveur qui ne demarre pas se manifestait 2 minutes
-          # plus tard par un « Timed out waiting from config.webServer » de
-          # Playwright, sans jamais montrer POURQUOI. On affiche le journal et
-          # on echoue ici, la ou l'information existe. [BO-AUTH-SESSION-002]
-          if [ "$up" -ne 1 ]; then
-            echo "::error title=Back-office injoignable::Le serveur n'a pas repondu sur /login en 60 s."
-            echo "--- derniere reponse HTTP sur /login ---"
-            curl -s -o /dev/null -w 'code=%{http_code}\n' http://localhost:3000/login || true
-            echo "--- journal de demarrage (next start) ---"
-            cat /tmp/next-start.log || true
-            exit 1
-          fi
-
-      - name: Run smoke golden (1 spec, ~30 sec)
-        run: pnpm exec playwright test tests/e2e/smoke/smoke-golden.spec.ts --reporter=list
-        env:
-          BASE_URL: http://localhost:3000
-
-      - name: Upload Playwright report on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report-smoke-golden
-          path: |
-            tests/reports/
-            test-results/
-          retention-days: 7
-
-      - name: Comment PR on smoke failure
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## ❌ E2E Smoke Golden Échoué (Niveau 1)\n\nLe parcours utilisateur de base est cassé : dashboard → commandes → LinkMe.\n\nSpec : \`tests/e2e/smoke/smoke-golden.spec.ts\`\n\nVoir le [log du job smoke-golden](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) pour le détail.`
-            });
-
-  # ----------------------------------------------------------------
-  # 3b. E2E Niveau 2 — smoke-domaine (sharded 4 runners)
-  #     Lance les 9 specs smoke domaine en parallèle.
-  #     Sur PR UI + push main. ~2 min wall-clock.
-  #     Dépend de smoke-golden (si golden fail → domaine skip).
-  # ----------------------------------------------------------------
-  smoke-domaine:
-    name: E2E smoke-domaine shard ${{ matrix.shard }}/4 (Niveau 2)
-    needs: [detect-changes, quality, smoke-golden]
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
-    continue-on-error: true
-    # [BO-AUDIT-004] Réactivé le 2026-07-30. Le `false &&` d'INFRA-CI-NO-E2E-001
-    # (2026-05-13) était en tête de cette expression multiligne, ce qui rendait
-    # le job systématiquement `skipped` — donc jamais `failure`, donc le check
-    # requis e2e-smoke-aggregate passait au vert sans qu'aucun test ne tourne.
-    # Reste continue-on-error: true dans ce lot : on mesure avant de durcir.
-    if: >
-      needs.detect-changes.outputs.e2e-needed == 'true' &&
-      (github.event_name == 'pull_request' || github.ref == 'refs/heads/main')
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
-    env:
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      E2E_USER_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
-      E2E_USER_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
-      # tests/auth.setup.ts et les specs lisent E2E_TEST_EMAIL / E2E_TEST_PASSWORD
-      E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
-      E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 10.13.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: playwright-${{ runner.os }}-
-
-      - name: Install Playwright browsers (chromium only — cache miss)
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Install Playwright system deps (cache hit)
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium
-
-      - name: Download back-office .next artifact (built by quality job)
-        uses: actions/download-artifact@v4
-        with:
-          name: back-office-build
-          path: /tmp/back-office-artifact
-
-      - name: Unpack back-office build
-        run: tar -xzf /tmp/back-office-artifact/back-office-next.tgz -C apps/back-office
-
-      - name: Start back-office (background)
-        run: |
-          # `next start` ne fonctionne PAS avec `output: 'standalone'`. Next le
-          # dit lui-meme au demarrage, sert quand meme, et chaque requete tombe
-          # en 500 des qu'un middleware existe :
-          #   ⚠ "next start" does not work with "output: standalone"
-          #   [TypeError: Cannot read properties of undefined (reading 'default')]
-          # Le defaut dormait depuis toujours ; il s'est reveille le 18/09 avec
-          # l'ajout du controle de session. On lance donc le serveur autonome —
-          # exactement ce que Vercel execute en production, donc ce que les
-          # tests doivent eprouver. [BO-AUTH-SESSION-002]
-          SERVER=$(find apps/back-office/.next/standalone -maxdepth 4 -name server.js | head -1)
-          if [ -z "$SERVER" ]; then
-            echo "::error title=Build autonome absent::Aucun server.js sous apps/back-office/.next/standalone"
-            ls apps/back-office/.next || true
-            exit 1
-          fi
-          APP_DIR=$(dirname "$SERVER")
-          # Le serveur autonome n'embarque ni les fichiers statiques ni /public.
-          mkdir -p "$APP_DIR/.next"
-          cp -r apps/back-office/.next/static "$APP_DIR/.next/static"
-          cp -r apps/back-office/public "$APP_DIR/public" 2>/dev/null || true
-          PORT=3000 HOSTNAME=127.0.0.1 node "$SERVER" > /tmp/next-start.log 2>&1 &
-          echo $! > /tmp/next-start.pid
-          up=0
-          for i in {1..60}; do
-            if curl -sf http://localhost:3000/login > /dev/null; then
-              echo "Back-office up on :3000"
-              up=1
-              break
-            fi
-            sleep 1
-          done
-          # Sans ce bloc, un serveur qui ne demarre pas se manifestait 2 minutes
-          # plus tard par un « Timed out waiting from config.webServer » de
-          # Playwright, sans jamais montrer POURQUOI. On affiche le journal et
-          # on echoue ici, la ou l'information existe. [BO-AUTH-SESSION-002]
-          if [ "$up" -ne 1 ]; then
-            echo "::error title=Back-office injoignable::Le serveur n'a pas repondu sur /login en 60 s."
-            echo "--- derniere reponse HTTP sur /login ---"
-            curl -s -o /dev/null -w 'code=%{http_code}\n' http://localhost:3000/login || true
-            echo "--- journal de demarrage (next start) ---"
-            cat /tmp/next-start.log || true
-            exit 1
-          fi
-
-      - name: Run smoke domaine (shard ${{ matrix.shard }}/4)
-        run: |
-          pnpm exec playwright test \
-            --shard=${{ matrix.shard }}/4 \
-            tests/e2e/smoke/smoke-finance.spec.ts \
-            tests/e2e/smoke/smoke-finance-modals.spec.ts \
-            tests/e2e/smoke/smoke-commandes.spec.ts \
-            tests/e2e/smoke/smoke-stock.spec.ts \
-            tests/e2e/smoke/smoke-canaux.spec.ts \
-            tests/e2e/smoke/smoke-produits.spec.ts \
-            tests/e2e/smoke/smoke-contacts.spec.ts \
-            tests/e2e/smoke/smoke-linkme.spec.ts \
-            tests/e2e/smoke/smoke-ambassador.spec.ts \
-            --reporter=list
-        env:
-          BASE_URL: http://localhost:3000
-
-      - name: Upload Playwright report on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report-smoke-domaine-shard-${{ matrix.shard }}
-          path: |
-            tests/reports/
-            test-results/
-          retention-days: 7
-
-      - name: Comment PR on smoke failure
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## ❌ E2E Smoke Domaine Échoué (Niveau 2 — shard ${{ matrix.shard }}/4)\n\nUne régression a été détectée dans le shard ${{ matrix.shard }}/4 des tests domaine.\n\nVoir le [log du job smoke-domaine](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) et le Playwright report en artifact \`playwright-report-smoke-domaine-shard-${{ matrix.shard }}\`.`
-            });
-
-  # ----------------------------------------------------------------
-  # 3c. E2E Niveau 3 — e2e-full (sharded 4 runners)
-  #     Workflows métier complets. Manuel uniquement (workflow_dispatch).
-  #     Retiré du push main automatique en BO-INFRA-DX-001 (2026-05-09) :
-  #     5 min payés à chaque release main pour 0 décision (déjà
-  #     non-bloquant). À déclencher à la main avant un gros release ou
-  #     dans une session debug. ~5 min wall-clock.
-  # ----------------------------------------------------------------
-  e2e-full:
-    name: E2E full shard ${{ matrix.shard }}/4 (Niveau 3)
-    needs: [detect-changes, quality]
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    continue-on-error: true
-    # [INFRA-CI-NO-E2E-001] Désactivé — voir smoke-golden ci-dessus.
-    if: github.event_name == 'workflow_dispatch'
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
-    env:
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      E2E_USER_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
-      E2E_USER_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
-      # tests/auth.setup.ts et les specs lisent E2E_TEST_EMAIL / E2E_TEST_PASSWORD
-      E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
-      E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 10.13.1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: playwright-${{ runner.os }}-
-
-      - name: Install Playwright browsers (chromium only — cache miss)
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Install Playwright system deps (cache hit)
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium
-
-      - name: Download back-office .next artifact (built by quality job)
-        uses: actions/download-artifact@v4
-        with:
-          name: back-office-build
-          path: /tmp/back-office-artifact
-
-      - name: Unpack back-office build
-        run: tar -xzf /tmp/back-office-artifact/back-office-next.tgz -C apps/back-office
-
-      - name: Start back-office (background)
-        run: |
-          # `next start` ne fonctionne PAS avec `output: 'standalone'`. Next le
-          # dit lui-meme au demarrage, sert quand meme, et chaque requete tombe
-          # en 500 des qu'un middleware existe :
-          #   ⚠ "next start" does not work with "output: standalone"
-          #   [TypeError: Cannot read properties of undefined (reading 'default')]
-          # Le defaut dormait depuis toujours ; il s'est reveille le 18/09 avec
-          # l'ajout du controle de session. On lance donc le serveur autonome —
-          # exactement ce que Vercel execute en production, donc ce que les
-          # tests doivent eprouver. [BO-AUTH-SESSION-002]
-          SERVER=$(find apps/back-office/.next/standalone -maxdepth 4 -name server.js | head -1)
-          if [ -z "$SERVER" ]; then
-            echo "::error title=Build autonome absent::Aucun server.js sous apps/back-office/.next/standalone"
-            ls apps/back-office/.next || true
-            exit 1
-          fi
-          APP_DIR=$(dirname "$SERVER")
-          # Le serveur autonome n'embarque ni les fichiers statiques ni /public.
-          mkdir -p "$APP_DIR/.next"
-          cp -r apps/back-office/.next/static "$APP_DIR/.next/static"
-          cp -r apps/back-office/public "$APP_DIR/public" 2>/dev/null || true
-          PORT=3000 HOSTNAME=127.0.0.1 node "$SERVER" > /tmp/next-start.log 2>&1 &
-          echo $! > /tmp/next-start.pid
-          up=0
-          for i in {1..60}; do
-            if curl -sf http://localhost:3000/login > /dev/null; then
-              echo "Back-office up on :3000"
-              up=1
-              break
-            fi
-            sleep 1
-          done
-          # Sans ce bloc, un serveur qui ne demarre pas se manifestait 2 minutes
-          # plus tard par un « Timed out waiting from config.webServer » de
-          # Playwright, sans jamais montrer POURQUOI. On affiche le journal et
-          # on echoue ici, la ou l'information existe. [BO-AUTH-SESSION-002]
-          if [ "$up" -ne 1 ]; then
-            echo "::error title=Back-office injoignable::Le serveur n'a pas repondu sur /login en 60 s."
-            echo "--- derniere reponse HTTP sur /login ---"
-            curl -s -o /dev/null -w 'code=%{http_code}\n' http://localhost:3000/login || true
-            echo "--- journal de demarrage (next start) ---"
-            cat /tmp/next-start.log || true
-            exit 1
-          fi
-
-      - name: Run e2e full (shard ${{ matrix.shard }}/4)
-        run: |
-          pnpm exec playwright test \
-            --shard=${{ matrix.shard }}/4 \
-            tests/e2e/workflows/ \
-            tests/e2e/stocks/ \
-            tests/e2e/smoke/smoke-147-pages.spec.ts \
-            tests/e2e/smoke/smoke-critical-workflows.spec.ts \
-            tests/e2e/linkme-org-independante-workflow.spec.ts \
-            tests/e2e/linkme-public-selection.spec.ts \
-            tests/e2e/si-pricing-minimum-guard.spec.ts \
-            --reporter=list
-        env:
-          BASE_URL: http://localhost:3000
-
-      - name: Upload Playwright report on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report-e2e-full-shard-${{ matrix.shard }}
-          path: |
-            tests/reports/
-            test-results/
-          retention-days: 7
-
-  # ----------------------------------------------------------------
-  # 4. DB FK drift check — gate bloquant (ADR-018)
-  #    Détecte toute modification DB faite hors migration (SQL Editor
-  #    Supabase, script manuel, etc.). Le backlog a été nettoyé par la
-  #    migration 20260424_001_retrofit_legacy_fk_declarations.sql
-  #    (INFRA-HARDENING-002), drift = 0 au moment du merge.
-  #    Tout nouveau drift fait échouer la PR → oblige à versionner.
-  # ----------------------------------------------------------------
-  db-drift-check:
-    name: DB FK drift check (blocking)
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
-    env:
-      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install psycopg2
-        run: pip install psycopg2-binary
-
-      - name: Run db-drift-check
-        if: env.SUPABASE_DB_URL != ''
-        run: python3 scripts/db-drift-check.py --ci
-
-      - name: Upload drift report
-        if: always() && env.SUPABASE_DB_URL != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: drift-report
-          path: drift-report.json
-          retention-days: 30
-
-      - name: Comment PR on drift failure
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## ❌ DB FK Drift Detected\n\nUne FK a été ajoutée, supprimée ou modifiée sur la DB **sans migration versionnée**.\n\nVoir le [drift report](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) téléchargé en artifact.\n\n**Corriger :**\n1. Créer une migration \`supabase/migrations/YYYYMMDD_XXX_description.sql\` qui déclare le changement.\n2. Si le changement en live est intentionnel : ajouter \`DROP CONSTRAINT IF EXISTS ... ADD CONSTRAINT ... ON DELETE <rule>\`.\n3. Ne **pas** modifier une migration existante (règle append-only).\n\nRéférence : ADR-018 dans \`.claude/DECISIONS.md\`.`
-            });
-
-      - name: Skip note
-        if: env.SUPABASE_DB_URL == ''
-        run: |
-          echo "⚠️ SUPABASE_DB_URL secret not set — drift check skipped." >> $GITHUB_STEP_SUMMARY
-          echo "Configure secret in repo settings to enable." >> $GITHUB_STEP_SUMMARY
-
-  # ----------------------------------------------------------------
-  # 5. Supabase TypeScript types drift — gate bloquant
-  #    Toute migration SQL change le schéma DB. Les types TS dans
-  #    packages/@verone/types/src/supabase.ts doivent refléter ce schéma.
-  #    Si un dev ajoute une migration sans régénérer les types, le code TS
-  #    ignore la nouvelle colonne/FK silencieusement → régression runtime.
-  #
-  #    Ce job régénère les types côté CI via `supabase gen types typescript
-  #    --db-url $SUPABASE_DB_URL` (méthode officielle Supabase) et compare
-  #    au fichier commité. Drift non-nul → PR refusée.
-  #
-  #    Le job tourne TOUJOURS (sinon GitHub reporte "skipped" sur les PRs
-  #    sans migration, ce qui ne satisfait pas le required status check
-  #    en branch protection → toutes les PRs sans migration restent bloquées).
-  #    Quand aucune migration n'est touchée, le job exécute un no-op qui
-  #    rapporte "success" via le step-summary. Voir INFRA-CI-002.
-  #    Nécessite le secret `SUPABASE_DB_URL` (déjà utilisé par db-drift-check).
-  # ----------------------------------------------------------------
-  supabase-types-drift:
-    name: Supabase TS types drift (blocking)
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    needs: detect-changes
-    env:
-      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-      MIGRATIONS_TOUCHED: ${{ needs.detect-changes.outputs.migrations }}
-
-    steps:
-      # No-op success quand aucune migration ni fichier supabase.ts n'est touché.
-      # Garantit que le check est reporté comme "success" (pas "skipped") afin
-      # de satisfaire la branch protection sur les PRs sans changement DB.
-      - name: No-op (no DB migration in this PR)
-        if: env.MIGRATIONS_TOUCHED != 'true'
-        run: |
-          echo "## ✅ Pas de migration DB dans cette PR" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Aucun fichier sous \`supabase/migrations/**\` ni \`packages/@verone/types/src/supabase.ts\` n'a été modifié." >> $GITHUB_STEP_SUMMARY
-          echo "Le check de drift de types est inutile pour cette PR — pas de régénération nécessaire." >> $GITHUB_STEP_SUMMARY
-
-      - name: Checkout code
-        if: env.MIGRATIONS_TOUCHED == 'true'
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        if: env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL != ''
-        uses: pnpm/action-setup@v2
-        with:
-          version: 10.13.1
-
-      - name: Setup Node.js
-        if: env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL != ''
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies (needed for @verone/prettier-config)
-        if: env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL != ''
-        run: pnpm install --frozen-lockfile
-
-      - name: Install Supabase CLI
-        if: env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL != ''
-        uses: supabase/setup-cli@v2
-        with:
-          version: latest
-
-      - name: Regenerate types from live DB
-        if: env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL != ''
-        # La CLI Supabase (>= mi-2026) exige un access token même avec --db-url,
-        # sinon : "Access token not provided" → fichier généré vide → faux drift.
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: |
-          supabase gen types typescript --db-url "$SUPABASE_DB_URL" \
-            > packages/@verone/types/src/supabase.ts.generated
-          # Format via prettier pour aligner sur la convention du repo
-          # (semi: true, etc.). Sans ça le diff matche sur chaque ;/,
-          # → faux positif 30000 lignes.
-          pnpm exec prettier --write packages/@verone/types/src/supabase.ts.generated --parser typescript
-          # Comparer au fichier commité (--ignore-all-space pour neutraliser
-          # les diff de whitespace entre versions de la CLI).
-          diff -w packages/@verone/types/src/supabase.ts \
-            packages/@verone/types/src/supabase.ts.generated \
-            > types-drift.diff || true
-          if [ -s types-drift.diff ]; then
-            echo "❌ Les types Supabase sont désynchronisés du schéma DB."
-            echo "Corriger localement : pnpm run generate:types"
-            echo ""
-            echo "=== Diff (200 premières lignes) ==="
-            head -200 types-drift.diff
-            exit 1
-          fi
-
-      - name: Upload drift diff on failure
-        if: failure() && env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: supabase-types-drift
-          path: |
-            types-drift.diff
-            packages/@verone/types/src/supabase.ts.generated
-          retention-days: 7
-
-      - name: Comment PR on types drift
-        if: failure() && env.MIGRATIONS_TOUCHED == 'true' && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## ❌ Supabase Types Drift\n\nLe fichier \`packages/@verone/types/src/supabase.ts\` n'est pas à jour avec le schéma DB actuel.\n\n**Corriger :**\n\`\`\`bash\npnpm run generate:types\ngit add packages/@verone/types/src/supabase.ts\ngit commit -m "chore: regenerate supabase types"\ngit push\n\`\`\`\n\nVoir le diff en artifact du workflow.`
-            });
-
-      - name: Skip note (secret missing)
-        if: env.MIGRATIONS_TOUCHED == 'true' && env.SUPABASE_DB_URL == ''
-        run: |
-          echo "⚠️ SUPABASE_DB_URL secret not set — types drift skipped." >> $GITHUB_STEP_SUMMARY
-
-  # ----------------------------------------------------------------
-  # 6. Supabase security advisors
-  #    Appelle le Supabase Management API pour lister les lints
-  #    (security_definer_view, function_search_path_mutable, etc.) et commente
-  #    la PR avec le delta vs scripts/supabase-advisors-baseline.json.
-  #    BLOQUANT uniquement si une fonction SECURITY DEFINER redevient exécutable
-  #    par anon ou authenticated au-delà de la baseline ([BO-AUDIT-SEC-S1],
-  #    ADR-039). Les autres régressions restent un avertissement. Pas de
-  #    continue-on-error : il fait mentir le résultat du job (ADR-037).
-  #
-  #    Source : https://supabase.com/docs/guides/database/database-advisors
-  #    API : GET /v1/projects/{ref}/advisors/lints?type=security
-  #
-  #    Nécessite les secrets :
-  #      - SUPABASE_ACCESS_TOKEN (Personal Access Token Supabase)
-  #      - SUPABASE_PROJECT_REF (ex. `aorroydfjsrygmosnzrl`)
-  # ----------------------------------------------------------------
-  supabase-advisors-security:
-    name: Supabase security advisors (SECURITY DEFINER blocking)
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    if: github.event_name == 'pull_request'
-    env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Fetch security advisors
-        if: env.SUPABASE_ACCESS_TOKEN != '' && env.SUPABASE_PROJECT_REF != ''
-        run: |
-          set +e
-          python3 scripts/supabase-advisors-check.py --type security \
-            --baseline scripts/supabase-advisors-baseline.json \
-            --blocking-lints anon_security_definer_function_executable,authenticated_security_definer_function_executable
-          code=$?
-          set -e
-          if [ "$code" -eq 1 ]; then
-            echo "::warning::Régression advisors hors SECURITY DEFINER (non bloquant) — voir le commentaire de PR."
-            exit 0
-          fi
-          exit "$code"
-
-      - name: Comment PR with summary
-        if: always() && env.SUPABASE_ACCESS_TOKEN != '' && env.SUPABASE_PROJECT_REF != ''
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            let summary = '';
-            try {
-              summary = fs.readFileSync('advisors-summary.md', 'utf8');
-            } catch (e) {
-              summary = '(advisors summary non disponible)';
-            }
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: summary,
-            });
-
-      - name: Skip note
-        if: env.SUPABASE_ACCESS_TOKEN == '' || env.SUPABASE_PROJECT_REF == ''
-        run: |
-          echo "⚠️ Secrets SUPABASE_ACCESS_TOKEN / SUPABASE_PROJECT_REF absents." >> $GITHUB_STEP_SUMMARY
-          echo "Configure-les dans repo settings → Secrets → Actions." >> $GITHUB_STEP_SUMMARY
-          echo "Token : https://supabase.com/dashboard/account/tokens" >> $GITHUB_STEP_SUMMARY
-
-  # ----------------------------------------------------------------
-  # Alias retro-compat : la branch protection de staging/main exige
-  # un check nommé "E2E Smoke (Playwright — back-office)" historique.
-  # Ce job consolide les nouveaux checks (golden + domaine) sous ce
-  # nom hérité, pour ne pas avoir à modifier la protection.
-  # À supprimer le jour où on met à jour les protections branch.
-  # ----------------------------------------------------------------
-  e2e-smoke-aggregate:
-    name: E2E Smoke (Playwright — back-office)
-    needs: [detect-changes, smoke-golden, smoke-domaine]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Aggregate result
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          E2E_NEEDED="${{ needs.detect-changes.outputs.e2e-needed }}"
-
-          # [BO-AUDIT-004] 2026-07-30 (correctif nº2) — on NE PEUT PAS lire
-          # `needs.smoke-golden.result` : quand un job porte
-          # `continue-on-error: true`, GitHub renvoie `success` dans le
-          # contexte `needs` même lorsque le job a échoué. Vérifié sur le run
-          # 30545876019 : les 5 jobs E2E étaient en `failure` dans l'onglet
-          # Actions, et ce job lisait golden=success domaine=success. Le gate
-          # mentait donc une deuxième fois, pour une raison différente des
-          # `if: false` retirés plus haut.
-          #
-          # On interroge l'API du run courant, qui expose la conclusion réelle
-          # de chaque job indépendamment de continue-on-error.
-          JOBS_JSON=$(gh api \
-            "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs?per_page=100" \
-            --jq '.jobs[] | select(.name | startswith("E2E smoke-")) | "\(.conclusion)\t\(.name)"')
-
-          echo "--- Conclusions réelles des jobs E2E de ce run ---"
-          printf '%s\n' "$JOBS_JSON"
-          echo "--------------------------------------------------"
-
-          FAILED=$(printf '%s\n' "$JOBS_JSON" | grep -c '^failure' || true)
-          SKIPPED=$(printf '%s\n' "$JOBS_JSON" | grep -c '^skipped' || true)
-          TOTAL=$(printf '%s\n' "$JOBS_JSON" | grep -c . || true)
-
-          GOLDEN=$(printf '%s\n' "$JOBS_JSON" | grep 'smoke-golden' | cut -f1 | head -1)
-          DOMAINE="ok"
-          if printf '%s\n' "$JOBS_JSON" | grep 'smoke-domaine' | grep -q '^failure'; then
-            DOMAINE="failure"
-          fi
-          [ -n "$GOLDEN" ] || GOLDEN="absent"
-
-          echo "e2e-needed=$E2E_NEEDED golden=$GOLDEN domaine=$DOMAINE jobs=$TOTAL echecs=$FAILED skips=$SKIPPED"
-
-          # [BO-AUDIT-004] 2026-07-30 — ce job portait le nom du check requis par
-          # la branch protection et sortait en succès sur 100 % des PR, parce que
-          # smoke-golden et smoke-domaine étaient désactivés en dur (if: false)
-          # depuis le 2026-05-13 : leur `result` valait `skipped`, jamais
-          # `failure`. La protection affichait donc un gate E2E vert alors
-          # qu'aucun test n'avait tourné depuis deux mois et demi.
-          #
-          # Les if: false sont retirés dans ce même lot. Ce job reste NON
-          # BLOQUANT pour l'instant (on mesure avant de durcir), mais il ne
-          # mentira plus : un skip inattendu est désormais signalé en warning
-          # visible dans l'onglet Actions et dans le résumé de la PR.
-          # Passage en bloquant (exit 1) : prévu en fin de Lot 006, quand les
-          # tests E2E disposeront d'un compte de test dédié et d'un jeu de
-          # données de référence. Aujourd'hui ils échouent tous pour une seule
-          # raison — les secrets E2E_TEST_EMAIL / E2E_TEST_PASSWORD ne sont pas
-          # renseignés dans les secrets GitHub depuis le Lot 002 — donc bloquer
-          # maintenant arrêterait tout le travail sans rien prouver.
-          # Voir docs/audit-2026-07-30/PLAN-CORRECTION.md § Lot 006.
-          if [ "$FAILED" -gt 0 ]; then
-            echo "::warning title=Gate E2E en echec ($FAILED job(s))::Les tests E2E ont echoue reellement sur cette PR. Ce check reste non bloquant jusqu a la fin du Lot 006 (compte de test dedie). Detail dans les jobs E2E smoke-*."
-            {
-              echo "### ⚠ Gate E2E : $FAILED job(s) en échec sur $TOTAL"
-              echo ""
-              printf '%s\n' "$JOBS_JSON" | sed 's/^/- /'
-              echo ""
-              echo "Check non bloquant jusqu'à la fin du Lot 006."
-            } >> "$GITHUB_STEP_SUMMARY"
-          fi
-          if [ "$E2E_NEEDED" = "true" ] && [ "$SKIPPED" -gt 0 ]; then
-            echo "::warning title=Gate E2E non concluant::Les tests E2E etaient necessaires (e2e-needed=true) mais $SKIPPED job(s) n ont pas tourne. Ce check ne prouve rien sur cette PR."
-          fi
-          if [ "$FAILED" -eq 0 ] && [ "$SKIPPED" -eq 0 ] && [ "$TOTAL" -gt 0 ]; then
-            echo "✅ E2E smoke OK ($TOTAL job(s), 0 echec)"
-          fi

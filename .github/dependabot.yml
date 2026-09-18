@@ -2,9 +2,16 @@
 # Source officielle : https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 #
 # Stratégie :
-#   - npm : update hebdomadaire (lundi matin), groupé par type (patch/minor/major).
-#     Ouvre 1 PR max à la fois pour ne pas spammer.
+#   - npm : update MENSUEL, groupé par type (patch/minor/major).
 #     Les majors sont flaggés séparément — à reviewer avec attention.
+#
+# [INFRA-CI-MINUTES-001] 2026-09-18 — passé d'hebdomadaire à mensuel, et de
+# 3 PR ouvertes à 1. Depuis que le dépôt est privé (11/09), Dependabot
+# consomme des minutes GitHub Actions facturées : 166 minutes pour 3 passages
+# en une semaine, soit ~55 minutes par passage. Mensuel + 1 PR ramène ça à
+# ~55 minutes par mois. Les correctifs de sécurité urgents ne sont PAS
+# concernés : les alertes de sécurité Dependabot restent immédiates, elles ne
+# suivent pas ce calendrier.
 #   - github-actions : update mensuel (moins critique).
 #
 # Pour activer l'auto-merge sur les bumps patch/minor (reco Romeo) :
@@ -21,11 +28,11 @@ updates:
     directory: '/'
     target-branch: 'staging' # PR vers staging, jamais vers main (workflow Verone)
     schedule:
-      interval: 'weekly'
+      interval: 'monthly'
       day: 'monday'
       time: '06:00'
       timezone: 'Europe/Paris'
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 1
     labels:
       - 'dependencies'
       - 'infra'

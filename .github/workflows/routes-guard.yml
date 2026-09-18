@@ -12,11 +12,15 @@
 # Il tourne APRES la mise en ligne, parce que la panne n'existe qu'a la sortie :
 # rien avant le deploiement ne peut la voir. En cas d'echec, la production est
 # deja en ligne — le but est d'alerter en minutes plutot qu'en jours.
+#
+# [INFRA-CI-MINUTES-001] Declenche sur `deployment_status`, pas sur `push`.
+# Sur push il aurait fallu attendre la fin du deploiement Vercel en tournant
+# dans le vide : 10 a 15 minutes facturees a chaque mise en ligne. Ici GitHub
+# nous reveille quand Vercel annonce que c'est pret : ~1 minute.
 name: Routes deployees (post-mise en ligne)
 
 on:
-  push:
-    branches: [main]
+  deployment_status:
   workflow_dispatch:
     inputs:
       deployment_url:
@@ -24,14 +28,22 @@ on:
         required: false
 
 concurrency:
-  group: routes-guard-${{ github.ref }}
-  cancel-in-progress: true
+  group: routes-guard-${{ github.event.deployment_status.environment_url || github.ref }}
+  cancel-in-progress: false
 
 jobs:
   check:
     name: Toute route compilee est-elle servie
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 10
+    # Uniquement le back-office, uniquement en production, uniquement une fois
+    # le deploiement reussi. Les previsualisations et les deux autres projets
+    # Vercel ne declenchent rien.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+       contains(github.event.deployment.environment, 'Production') &&
+       contains(github.event.deployment.environment, 'verone-back-office'))
     steps:
       - uses: actions/checkout@v4
 
@@ -47,9 +59,12 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          MANUAL_URL: ${{ github.event.inputs.deployment_url }}
+          DEPLOY_URL: ${{ github.event.deployment_status.environment_url }}
         run: |
-          if [ -n "${{ github.event.inputs.deployment_url }}" ]; then
-            node scripts/check-deployed-routes.mjs "${{ github.event.inputs.deployment_url }}"
+          URL="${MANUAL_URL:-$DEPLOY_URL}"
+          if [ -n "$URL" ]; then
+            node scripts/check-deployed-routes.mjs "$URL"
           else
-            node scripts/check-deployed-routes.mjs "--sha=${{ github.sha }}"
+            node scripts/check-deployed-routes.mjs
           fi

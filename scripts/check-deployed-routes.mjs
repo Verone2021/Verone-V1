@@ -25,6 +25,11 @@
  *   node scripts/check-deployed-routes.mjs --sha=<commit>   # attend puis verifie
  *   node scripts/check-deployed-routes.mjs                  # dernier deploiement
  *
+ * En CI, la forme <url> est preferee a --sha : le workflow est reveille par
+ * Vercel une fois le deploiement pret, donc il n'y a rien a attendre. La forme
+ * --sha reste utile en local, quand on veut lancer la verification avant que
+ * le deploiement soit fini.
+ *
  * Sort en 1 si une route compilee n'est pas deployee.
  *
  * Jeton : VERCEL_TOKEN, sinon le jeton de la CLI Vercel locale.
