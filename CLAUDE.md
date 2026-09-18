@@ -166,6 +166,7 @@ Détails dans les règles citées. Résumés courts ici :
 | Data fetching & perf      | `.claude/rules/data-fetching.md`               |
 | Workflow git/PR + branche | `.claude/rules/workflow.md`                    |
 | Zéro donnée fantôme       | `.claude/rules/no-phantom-data.md`             |
+| Gardes des routes API     | `.claude/rules/api-guards.md`                  |
 | Autonomie externe         | `.claude/rules/agent-autonomy-external.md`     |
 | Lifecycle mémoires/règles | `.claude/rules/memory-lifecycle.md`            |
 | Modélisation DB           | `.claude/rules/database-modeling-patterns.md`  |

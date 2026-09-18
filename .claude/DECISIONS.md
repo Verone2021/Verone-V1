@@ -1987,3 +1987,81 @@ public ou passe sur Pro, réappliquer cet ADR.
 - Exiger une revue : Roméo est seul, ça bloquerait tout.
 - `strict: true` (branche obligatoirement à jour avant fusion) : relancerait toute la CI à chaque avancée
   de `staging`, ce qui va contre l'économie de minutes d'ADR-044.
+
+## ADR-046 — `[BO-SEC-GUARD-001]` Les routes API du back-office ne sont protégées par rien, et le layout ne les couvre pas
+
+**Date** : 2026-09-18 · **Statut** : appliqué (temps 1) · **Fichiers** : 8 routes `GET` du back-office,
+`docs/current/security/api-routes-guards.md` (nouveau), `.claude/rules/api-guards.md` (nouveau)
+
+### Constat
+
+Vérification depuis Internet, sans aucune session, le 2026-09-18 à 16 h 45 UTC :
+
+```
+GET https://verone-backoffice.vercel.app/api/qonto/invoices
+→ 200, 172 311 octets, 41 factures (client, contact_email, montants, invoice_url)
+
+GET .../api/qonto/quotes                     → 200, 27 597 octets
+GET .../api/packlink/shipments/pending       → 200
+GET .../api/sales-orders/<uuid>/customer-address
+→ 404 {"error":"Commande introuvable"}   ← la requête part en base AVANT tout contrôle
+```
+
+**Cause racine** : le back-office n'a pas de `middleware.ts`. Sa seule protection est
+`apps/back-office/src/app/(protected)/layout.tsx`, qui couvre les **pages** et jamais
+`src/app/api/**`. 152 routes API, dont 50 portent la clé `service_role` qui contourne la RLS.
+
+Ce n'est pas une nouveauté de l'audit du 18/09 : celui-ci comptait « 85 routes sans garde » en
+agrégat. Ce qui est nouveau, c'est l'**inventaire nominatif** et la **preuve par l'appel réel**
+que des données clients sortent effectivement.
+
+### Décision de Roméo, le 2026-09-18
+
+Roméo a d'abord répondu, de bonne foi : « il est impossible d'avoir accès aux factures sans se
+connecter au back office ». C'est vrai des **pages**, faux des **routes API**. Preuve chiffrée
+fournie, décision reprise :
+
+1. **Fermer d'abord les portes de lecture.** Huit handlers `GET` reçoivent `requireBackofficeAdmin`
+   en tête, **sans qu'une seule ligne de logique Qonto ou Packlink ne soit touchée** : « il ne faut
+   pas toucher à des choses qui fonctionnent, sinon on ne pourra plus éditer de factures ».
+2. **Ne pas toucher aux portes d'écriture ce soir.** Elles sont inventoriées et laissées pour un
+   chantier dédié.
+3. **Vérification à l'écran obligatoire** avant de rendre la main.
+
+### Écart de règle assumé
+
+`apps/back-office/CLAUDE.md` et le `CLAUDE.md` racine interdisent de modifier les routes
+`/api/qonto/*`. L'ordre de Roméo est explicite, postérieur, et donné en connaissance du geste exact
+(« 3 lignes en tête, aucune ligne de logique de facturation »). L'esprit de l'interdiction — ne pas
+casser la facturation — est respecté et **vérifié à l'écran** : listes factures et devis, détail
+d'une facture, expéditions, tous inchangés, zéro nouvelle erreur de console.
+
+### Ce qui reste ouvert, volontairement
+
+- ~15 routes qui **écrivent** (factures et devis Qonto) répondent toujours sans connexion ;
+- 7 routes `emails/*` permettent d'expédier des messages depuis le domaine Vérone ;
+- `qonto/quotes/[id]/convert` appelle `getUser()` ligne 111 et **ne teste jamais le résultat** ;
+- `webhooks/packlink` et `webhook/revolut` **sautent** leur vérification si la variable
+  d'environnement est absente ; `gmail/inbound` accepte son jeton en paramètre d'adresse.
+
+**La vraie réponse reste un `middleware.ts` qui refuse `/api/*` par défaut**, avec liste blanche
+explicite pour les tâches planifiées, les webhooks et l'extension Chrome du sourcing. C'est le
+temps 2, dans la lignée d'ADR-036 : réparer avant de durcir.
+
+### Leçon de méthode
+
+La détection automatique par motif a produit des **faux positifs et des faux négatifs** sur la
+question « cette garde est-elle branchée ? » : quatre routes signalées à tort comme non protégées,
+puis, après correction du motif, vingt-neuf signalées à tort. Conséquence retenue dans
+`docs/current/security/api-routes-guards.md` : la colonne « serrure » de l'inventaire dit qu'une
+garde est **présente**, jamais qu'elle est **branchée**. Cette seconde question se tranche en
+lisant le code, ou par un appel réel sans session.
+
+### Écarté
+
+- **Poser la garde sur les routes d'écriture dans la même PR** : décision de Roméo, risque de
+  casser l'édition de factures un soir de fermeture du site.
+- **Supprimer `sales-orders/[id]/customer-address`** alors qu'elle n'a aucun appelant : c'est une
+  suppression, donc une décision de Roméo, pas de l'agent. Elle est gardée **et** repassée sur le
+  client normal (les trois tables lues portent une règle `is_backoffice_user()`, vérifié en base ;
+  la clé `service_role` n'était pas nécessaire).
