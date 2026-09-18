@@ -46,15 +46,15 @@ Liste courte, zéro flatterie, juste les faits :
 
 Les mêmes "5 techniques obligatoires" apparaissent dans :
 
-| # | Fichier                                       | Forme                       | Lignes concernées |
-|---|-----------------------------------------------|-----------------------------|-------------------|
-| 1 | `CLAUDE.md` (racine)                          | Section STANDARDS RESPONSIVE | ~70 lignes        |
-| 2 | `.claude/rules/responsive.md`                 | Règle complète              | 244 lignes        |
-| 3 | `.claude/agents/reviewer-agent.md`            | Axe 4 Responsive            | ~40 lignes        |
-| 4 | `.claude/agents/dev-agent.md`                 | ANTI-PATTERNS RESPONSIVE    | ~20 lignes        |
-| 5 | `docs/current/GUIDE-RESPONSIVE.md`            | Exemple copier-coller       | 205 lignes        |
-| 6 | `docs/current/RESPONSIVE-INDEX.md`            | Recap                       | 180 lignes        |
-| 7 | `docs/current/RESPONSIVE-SETUP-RECAP.md`      | Inventaire fichiers         | 170 lignes        |
+| #   | Fichier                                  | Forme                        | Lignes concernées |
+| --- | ---------------------------------------- | ---------------------------- | ----------------- |
+| 1   | `CLAUDE.md` (racine)                     | Section STANDARDS RESPONSIVE | ~70 lignes        |
+| 2   | `.claude/rules/responsive.md`            | Règle complète               | 244 lignes        |
+| 3   | `.claude/agents/reviewer-agent.md`       | Axe 4 Responsive             | ~40 lignes        |
+| 4   | `.claude/agents/dev-agent.md`            | ANTI-PATTERNS RESPONSIVE     | ~20 lignes        |
+| 5   | `docs/current/GUIDE-RESPONSIVE.md`       | Exemple copier-coller        | 205 lignes        |
+| 6   | `docs/current/RESPONSIVE-INDEX.md`       | Recap                        | 180 lignes        |
+| 7   | `docs/current/RESPONSIVE-SETUP-RECAP.md` | Inventaire fichiers          | 170 lignes        |
 
 Romeo a installé tout ça en une nuit avec un assistant chat. Cohérent à l'instant T ; dérive garantie dans un mois parce que la prochaine fois que tu changes un breakpoint (ex: passes `md` de 768 à 720), tu auras **7 fichiers à synchroniser** — et tu en oublieras au moins 3.
 
@@ -62,18 +62,19 @@ Romeo a installé tout ça en une nuit avec un assistant chat. Cohérent à l'in
 
 #### A.2. Workflow Git — dupliqué à 4 endroits
 
-| # | Fichier                               | Forme                                       |
-|---|---------------------------------------|---------------------------------------------|
-| 1 | `CLAUDE.md` (racine)                  | Section "⚡ WORKFLOW : 1 PR = 1 BLOC" (~40 lignes) |
-| 2 | `.claude/rules/workflow.md`           | 206 lignes complètes                       |
-| 3 | `.claude/agents/ops-agent.md`         | Section "RÈGLE FONDAMENTALE" + exemples    |
-| 4 | `.claude/work/NEXT-SPRINTS.md`        | Explication avec tableau des blocs         |
+| #   | Fichier                        | Forme                                              |
+| --- | ------------------------------ | -------------------------------------------------- |
+| 1   | `CLAUDE.md` (racine)           | Section "⚡ WORKFLOW : 1 PR = 1 BLOC" (~40 lignes) |
+| 2   | `.claude/rules/workflow.md`    | 206 lignes complètes                               |
+| 3   | `.claude/agents/ops-agent.md`  | Section "RÈGLE FONDAMENTALE" + exemples            |
+| 4   | `.claude/work/NEXT-SPRINTS.md` | Explication avec tableau des blocs                 |
 
 Même remarque : un agent ne sait pas lequel lire. Et les 4 versions commencent déjà à diverger légèrement (CLAUDE.md dit "3+ sprints OU bloc atomique critique", workflow.md dit la même chose mais avec une checklist de 6 items différents).
 
 #### A.3. Delegation des agents — 3 listings
 
 Le listing des 6 agents + leur rôle apparaît dans :
+
 1. `CLAUDE.md` section DELEGATION AUTOMATIQUE
 2. `.claude/INDEX.md` section Agents
 3. `.claude/commands/README.md` section "Les agents"
@@ -106,11 +107,11 @@ Le fichier a deux sections qui listent les règles : "Rules (5 fichiers)" en hau
 
 #### B.1. Point d'entrée — 3 fichiers qui se disputent la première place
 
-| Source                              | Dit qu'il faut lire en premier      |
-|-------------------------------------|-------------------------------------|
+| Source                                           | Dit qu'il faut lire en premier                                                                                 |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
 | `CLAUDE.md` racine (section AVANT CHAQUE ACTION) | 1. `.claude/rules/workflow.md`, 2. schémas DB, 3. Triple Lecture, 4. git log, 5. `ACTIVE.md`, 6. app CLAUDE.md |
-| `settings.json` SessionStart hook    | `.claude/work/ACTIVE.md` + `.claude/INDEX.md`                               |
-| `.claude/work/AGENT-ENTRY-POINT.md`  | **"LIS CE FICHIER EN PREMIER"** (self-proclaim) puis liste 6 autres fichiers |
+| `settings.json` SessionStart hook                | `.claude/work/ACTIVE.md` + `.claude/INDEX.md`                                                                  |
+| `.claude/work/AGENT-ENTRY-POINT.md`              | **"LIS CE FICHIER EN PREMIER"** (self-proclaim) puis liste 6 autres fichiers                                   |
 
 Trois sources disent toutes "je suis la porte d'entrée". Un agent débutant sa session choisit au hasard. Et `AGENT-ENTRY-POINT.md` est daté 2026-04-18 (créé hier soir) — c'est un empilement de plus, pas un remplacement.
 
@@ -119,12 +120,14 @@ Trois sources disent toutes "je suis la porte d'entrée". Un agent débutant sa 
 #### B.2. Script fantôme au démarrage de session
 
 `CLAUDE.md` racine (ligne 69) :
+
 ```
 ## AU DEBUT DE CHAQUE SESSION (OBLIGATOIRE)
 bash .claude/scripts/check-open-prs.sh
 ```
 
 **Ce script n'existe pas.** La liste réelle de `.claude/scripts/` :
+
 ```
 auto-sync-with-main.sh
 check-responsive-violations.sh
@@ -153,6 +156,7 @@ J'avais signalé ce point le 17/04 dans `coherence-documentaire-2026-04-17.md`. 
 #### B.4. Chemin cassé stock-triggers dans CLAUDE.md racine
 
 `CLAUDE.md` section INTERDICTIONS ABSOLUES :
+
 ```
 - JAMAIS modifier les triggers stock (`rules/stock-triggers-protected.md`)
 ```
@@ -163,16 +167,17 @@ Le vrai chemin : `.claude/rules/stock-triggers-protected.md`. Même remarque —
 
 Deux sections du même `CLAUDE.md` se contredisent sur le commit/push :
 
-| Section                            | Dit                                                 |
-|------------------------------------|-----------------------------------------------------|
-| INTERDICTIONS ABSOLUES (historique)| "JAMAIS commit/push sans ordre de Romeo" (implicite via "coordinateur ne code pas") |
-| AUTORISATIONS (MODIFIE 2026-04-18) | "Commit sur feature branch, Push sur feature branch, Rebase sur staging, Creation de branche = NE NECESSITENT PLUS d'ordre explicite" |
+| Section                             | Dit                                                                                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| INTERDICTIONS ABSOLUES (historique) | "JAMAIS commit/push sans ordre de Romeo" (implicite via "coordinateur ne code pas")                                                   |
+| AUTORISATIONS (MODIFIE 2026-04-18)  | "Commit sur feature branch, Push sur feature branch, Rebase sur staging, Creation de branche = NE NECESSITENT PLUS d'ordre explicite" |
 
 La section AUTORISATIONS est récente (hier) et corrige la contradiction **pour qui la lit entière**. Un agent qui ne lit que les INTERDICTIONS ABSOLUES reçoit l'ancien message. À consolider.
 
 #### B.6. Contradiction sur "coordinateur code ou pas"
 
 `CLAUDE.md` racine :
+
 - Ligne 7 : **"Tu ne codes JAMAIS directement, meme pour des ajustements UI qui semblent triviaux."**
 - Lignes 47-53 : **"SEUILS DE DELEGATION — Tu codes DIRECTEMENT uniquement si : 1 seul fichier, < 10 lignes, pas de logique métier..."**
 
@@ -197,6 +202,7 @@ Voir A.8.
 #### C.1. Agents supprimés mais encore référencés ?
 
 `settings.local.json` documente la suppression de :
+
 - `.claude/agents/back-office-expert.md`
 - `.claude/agents/linkme-expert.md`
 - `.claude/agents/site-internet-expert.md`
@@ -209,6 +215,7 @@ OK, c'est nettoyé côté fichiers. Mais nulle part dans la doc on n'explique ce
 #### C.2. Dossiers supprimés sans mention dans la doc
 
 `settings.local.json` documente `rm -rf` sur :
+
 - `.claude/agent-memory/`
 - `.claude/audits/`
 - `.claude/research/`
@@ -220,6 +227,7 @@ OK, c'est nettoyé côté fichiers. Mais nulle part dans la doc on n'explique ce
 #### C.3. Commande `/fix-warnings` référencée mais inexistante
 
 `.claude/guides/typescript-errors-debugging.md` (fin du fichier) :
+
 ```
 - Workflow fix-warnings : `.claude/commands/fix-warnings.md` (Phase 6)
 - Workflow expert : `.claude/guides/expert-workflow.md`
@@ -252,6 +260,7 @@ C'est ICI que se joue la question "pourquoi l'agent ne peut pas tourner sans Rom
 #### D.1. Pas de queue de tâches consommable automatiquement
 
 État actuel de `.claude/work/` :
+
 ```
 ACTIVE.md                 369+ lignes   — backlog + faits, tout mélangé
 AGENT-ENTRY-POINT.md      196 lignes    — mode d'emploi agent (créé hier)
@@ -275,6 +284,7 @@ Chaque sprint `BO-UI-RESP-0XX` dans `NEXT-SPRINTS.md` redécrit le même workflo
 Le CLAUDE.md a une section AUTORISATIONS (créée 2026-04-18) qui s'y essaie, mais elle est mêlée aux règles générales. Et elle est contradictoire avec IDENTITE ("tu ne codes JAMAIS").
 
 **Ce qu'il faut** : un fichier unique `.claude/config/autonomy-boundaries.md` qui liste sans ambiguïté :
+
 - Feu vert (l'agent fait, ne demande pas)
 - Feu orange (l'agent propose, demande confirmation laconique)
 - Feu rouge (l'agent refuse jusqu'à ordre explicite)
@@ -310,6 +320,7 @@ CLAUDE.md liste les 6 agents. Mais ne donne pas d'arbre de décision "si ci, alo
 Personne ne surveille si `.claude/INDEX.md` ment (c'est le cas — voir A.7/A.8/B.8). Pas de script qui vérifie que les fichiers listés dans INDEX.md existent vraiment.
 
 **Facile à corriger** : un test `tests/claude-config.spec.ts` qui fait :
+
 ```bash
 grep -oE '\.claude/[^ `)]+' CLAUDE.md .claude/**/*.md | while read path; do
   test -e "$path" || echo "CASSE: $path"
@@ -326,20 +337,20 @@ Les Task IDs `[BO-UI-RESP-001]` sont une convention locale. Rien ne les lie à d
 
 Seuil pragmatique : un agent lit en moyenne 200-400 lignes avant de filtrer. Au-delà, il saute.
 
-| Fichier                                            | Lignes | Statut                          |
-|----------------------------------------------------|--------|--------------------------------|
-| `.claude/work/ACTIVE.md`                           | 369+   | **Trop long** — mélange backlog/faits/sprints |
-| `.claude/guides/cross-app-protection.md`           | 579    | OK pour un guide, mais agent ne le lira qu'à la demande |
-| `.claude/guides/typescript-errors-debugging.md`    | 390    | Limite                         |
-| `.claude/rules/responsive.md`                      | 244    | OK                             |
-| `.claude/rules/workflow.md`                        | 206    | OK                             |
-| `.claude/rules/finance.md`                         | 154    | OK                             |
-| `.claude/rules/code-standards.md`                  | 142    | OK                             |
-| `.claude/work/AGENT-ENTRY-POINT.md`                | 196    | **Trop long** pour un entry point |
-| `.claude/work/NEXT-SPRINTS.md`                     | ~200   | **Trop long** pour un plan vivant |
-| `CLAUDE.md` racine                                 | ~240   | **Limite** — à scinder         |
-| `docs/current/RESPONSIVE-INDEX.md`                 | 180    | OK (mais redondant avec les autres) |
-| `docs/current/GUIDE-RESPONSIVE.md`                 | 205    | OK                             |
+| Fichier                                         | Lignes | Statut                                                  |
+| ----------------------------------------------- | ------ | ------------------------------------------------------- |
+| `.claude/work/ACTIVE.md`                        | 369+   | **Trop long** — mélange backlog/faits/sprints           |
+| `.claude/guides/cross-app-protection.md`        | 579    | OK pour un guide, mais agent ne le lira qu'à la demande |
+| `.claude/guides/typescript-errors-debugging.md` | 390    | Limite                                                  |
+| `.claude/rules/responsive.md`                   | 244    | OK                                                      |
+| `.claude/rules/workflow.md`                     | 206    | OK                                                      |
+| `.claude/rules/finance.md`                      | 154    | OK                                                      |
+| `.claude/rules/code-standards.md`               | 142    | OK                                                      |
+| `.claude/work/AGENT-ENTRY-POINT.md`             | 196    | **Trop long** pour un entry point                       |
+| `.claude/work/NEXT-SPRINTS.md`                  | ~200   | **Trop long** pour un plan vivant                       |
+| `CLAUDE.md` racine                              | ~240   | **Limite** — à scinder                                  |
+| `docs/current/RESPONSIVE-INDEX.md`              | 180    | OK (mais redondant avec les autres)                     |
+| `docs/current/GUIDE-RESPONSIVE.md`              | 205    | OK                                                      |
 
 **Pas catastrophique** — mais la dispersion fait qu'un agent **doit lire 1500+ lignes** avant de taper une ligne de code sur une tâche responsive. Ce n'est pas efficace.
 
@@ -485,6 +496,7 @@ Ce n'est pas un graphe d'architecture, c'est une toile d'araignée.
 6. **Décisions versionnées**. `DECISIONS.md` = journal (comme un ADR).
 
 C'est exactement le pattern que **Linear, Stripe, Shopify et Vercel** utilisent pour leurs configs internes d'agents/bots :
+
 - **Linear** : chaque issue est un YAML + body Markdown. Les agents consomment la queue via API. Les workflows sont des playbooks versionnés.
 - **Stripe** : les "runbooks" sont dans un dossier séparé des "rules". Les rules changent rarement, les runbooks s'adaptent aux incidents.
 - **Shopify** : un fichier `CODEOWNERS` + `CONTRIBUTING.md` par domaine, pas un méga-CLAUDE.md.
@@ -494,16 +506,16 @@ C'est exactement le pattern que **Linear, Stripe, Shopify et Vercel** utilisent 
 
 ## Synthèse chiffrée
 
-| Métrique                                  | Actuel | Proposé |
-|-------------------------------------------|--------|---------|
-| Fichiers qui se proclament "point d'entrée" | 3      | 1 (`ENTRY.md`) |
-| Endroits où les règles responsive apparaissent | 7      | 1 (source) + N pointeurs |
-| Fichiers dans `.claude/work/`              | 5      | 1 (`SPRINT-CURRENT.md`) |
-| Chemins cassés dans la config              | 4 confirmés | 0 (test automatisé bloque) |
-| Lignes à lire avant de prendre une tâche UI responsive | ~1 500 | ~250 |
-| Playbooks réutilisables                    | 0      | 6-10 |
-| Queue de tâches machine-lisible            | Non    | Oui (YAML frontmatter) |
-| Monitoring de dérive config                | Non    | Oui (test CI dédié) |
+| Métrique                                               | Actuel      | Proposé                    |
+| ------------------------------------------------------ | ----------- | -------------------------- |
+| Fichiers qui se proclament "point d'entrée"            | 3           | 1 (`ENTRY.md`)             |
+| Endroits où les règles responsive apparaissent         | 7           | 1 (source) + N pointeurs   |
+| Fichiers dans `.claude/work/`                          | 5           | 1 (`SPRINT-CURRENT.md`)    |
+| Chemins cassés dans la config                          | 4 confirmés | 0 (test automatisé bloque) |
+| Lignes à lire avant de prendre une tâche UI responsive | ~1 500      | ~250                       |
+| Playbooks réutilisables                                | 0           | 6-10                       |
+| Queue de tâches machine-lisible                        | Non         | Oui (YAML frontmatter)     |
+| Monitoring de dérive config                            | Non         | Oui (test CI dédié)        |
 
 ---
 

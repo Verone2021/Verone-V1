@@ -105,9 +105,18 @@ done
 # ---- 2. ARCHIVE : session reports > 30 jours ----
 archive_if_old "session-*.md" 30
 
-# ---- 3. SUPPRESSION : archives > 90 jours (mtime OK ici, archive/ est stable) ----
+# ---- 3. PAS DE SUPPRESSION DEFINITIVE (retiree le 2026-09-18, ADR-042) ----
+# L'ancienne etape supprimait tout fichier de archive/ de plus de 90 jours.
+# Deux raisons de l'avoir retiree :
+#   1. Elle raisonnait sur le mtime du systeme de fichiers, pas sur la date du nom.
+#      Or tout `git pull` / `git checkout` remet les mtime a zero : des fichiers
+#      d'avril se retrouvaient "recents", et inversement une archive fraichement
+#      deplacee (mv preserve le mtime) etait consideree comme vieille de 5 mois
+#      et supprimee au premier passage.
+#   2. Ces fichiers sont suivis par Git. Les effacer produit un commit de
+#      suppression silencieux dans un chantier qui n'a rien a voir.
+# On archive, on ne detruit pas. Le menage des dossiers vides reste utile.
 if [ -d "$ARCHIVE_ROOT" ]; then
-  find "$ARCHIVE_ROOT" -type f -mtime +90 -delete 2>/dev/null
   find "$ARCHIVE_ROOT" -type d -empty -delete 2>/dev/null
 fi
 

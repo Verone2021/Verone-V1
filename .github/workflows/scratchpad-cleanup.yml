@@ -2,11 +2,25 @@ name: Scratchpad Cleanup
 
 # Filet de securite : lance tous les dimanches a 3h du matin UTC
 # meme si les hooks post-merge locaux ont ete oublies ou sautes.
+#
+# 2026-09-18 (ADR-042) : une SEULE branche, reutilisee chaque semaine, et une
+# seule demande ouverte a la fois. Avant, chaque dimanche creait une branche
+# datee et une demande distincte : 8 demandes jumelles se sont accumulees du
+# 26/07 au 13/09, toutes bloquees par le meme controle rouge, deplacant
+# exactement les memes 15 fichiers. Le robot repartait de staging inchange et
+# rouvrait la meme demande indefiniment.
 
 on:
   schedule:
     - cron: '0 3 * * 0' # Tous les dimanches 3h UTC
   workflow_dispatch: # Declenchable manuellement via l'UI GitHub
+
+concurrency:
+  group: scratchpad-cleanup
+  cancel-in-progress: false
+
+env:
+  CLEANUP_BRANCH: chore/scratchpad-cleanup
 
 jobs:
   cleanup:
@@ -35,24 +49,33 @@ jobs:
       - name: Check for changes
         id: check
         run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
+          if [ -n "$(git status --porcelain docs/scratchpad)" ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
           else
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create cleanup PR
+      - name: Push cleanup branch and open the single PR
         if: steps.check.outputs.has_changes == 'true'
         run: |
-          BRANCH="chore/scratchpad-cleanup-$(date +%Y%m%d)"
-          git checkout -b "$BRANCH"
-          git add -A
+          set -euo pipefail
+          git checkout -b "$CLEANUP_BRANCH"
+          # Jamais `git add -A` : le menage ne touche que le scratchpad.
+          git add docs/scratchpad
           git commit -m "[NO-TASK] chore: auto-archive scratchpad (weekly cleanup)"
-          git push origin "$BRANCH"
-          gh pr create \
-            --base staging \
-            --head "$BRANCH" \
-            --title "[NO-TASK] chore: auto-archive scratchpad (weekly cleanup)" \
-            --body "Nettoyage hebdomadaire automatique du scratchpad.\n\nVoir .claude/scripts/cleanup-scratchpad.sh pour les regles."
+          # La branche est entierement derivee de staging et jetable : on la
+          # reecrit chaque semaine, mais jamais a l'aveugle.
+          git fetch origin "$CLEANUP_BRANCH" || true
+          git push --force-with-lease origin "HEAD:$CLEANUP_BRANCH"
+          OPEN_PR="$(gh pr list --head "$CLEANUP_BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$OPEN_PR" ]; then
+            echo "Demande #$OPEN_PR deja ouverte sur $CLEANUP_BRANCH : mise a jour, pas de doublon."
+          else
+            gh pr create \
+              --base staging \
+              --head "$CLEANUP_BRANCH" \
+              --title "[NO-TASK] chore: auto-archive scratchpad (weekly cleanup)" \
+              --body "Nettoyage hebdomadaire automatique du scratchpad (branche unique, reutilisee). Regles : .claude/scripts/cleanup-scratchpad.sh — aucune suppression definitive, les fichiers sont deplaces vers docs/scratchpad/archive/AAAA-MM/."
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
