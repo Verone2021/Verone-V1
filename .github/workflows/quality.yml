@@ -449,13 +449,27 @@ jobs:
         run: |
           pnpm --filter @verone/back-office start > /tmp/next-start.log 2>&1 &
           echo $! > /tmp/next-start.pid
+          up=0
           for i in {1..60}; do
             if curl -sf http://localhost:3000/login > /dev/null; then
               echo "Back-office up on :3000"
+              up=1
               break
             fi
             sleep 1
           done
+          # Sans ce bloc, un serveur qui ne demarre pas se manifestait 2 minutes
+          # plus tard par un « Timed out waiting from config.webServer » de
+          # Playwright, sans jamais montrer POURQUOI. On affiche le journal et
+          # on echoue ici, la ou l'information existe. [BO-AUTH-SESSION-002]
+          if [ "$up" -ne 1 ]; then
+            echo "::error title=Back-office injoignable::Le serveur n'a pas repondu sur /login en 60 s."
+            echo "--- derniere reponse HTTP sur /login ---"
+            curl -s -o /dev/null -w 'code=%{http_code}\n' http://localhost:3000/login || true
+            echo "--- journal de demarrage (next start) ---"
+            cat /tmp/next-start.log || true
+            exit 1
+          fi
 
       - name: Run smoke golden (1 spec, ~30 sec)
         run: pnpm exec playwright test tests/e2e/smoke/smoke-golden.spec.ts --reporter=list
@@ -564,13 +578,27 @@ jobs:
         run: |
           pnpm --filter @verone/back-office start > /tmp/next-start.log 2>&1 &
           echo $! > /tmp/next-start.pid
+          up=0
           for i in {1..60}; do
             if curl -sf http://localhost:3000/login > /dev/null; then
               echo "Back-office up on :3000"
+              up=1
               break
             fi
             sleep 1
           done
+          # Sans ce bloc, un serveur qui ne demarre pas se manifestait 2 minutes
+          # plus tard par un « Timed out waiting from config.webServer » de
+          # Playwright, sans jamais montrer POURQUOI. On affiche le journal et
+          # on echoue ici, la ou l'information existe. [BO-AUTH-SESSION-002]
+          if [ "$up" -ne 1 ]; then
+            echo "::error title=Back-office injoignable::Le serveur n'a pas repondu sur /login en 60 s."
+            echo "--- derniere reponse HTTP sur /login ---"
+            curl -s -o /dev/null -w 'code=%{http_code}\n' http://localhost:3000/login || true
+            echo "--- journal de demarrage (next start) ---"
+            cat /tmp/next-start.log || true
+            exit 1
+          fi
 
       - name: Run smoke domaine (shard ${{ matrix.shard }}/4)
         run: |
@@ -687,13 +715,27 @@ jobs:
         run: |
           pnpm --filter @verone/back-office start > /tmp/next-start.log 2>&1 &
           echo $! > /tmp/next-start.pid
+          up=0
           for i in {1..60}; do
             if curl -sf http://localhost:3000/login > /dev/null; then
               echo "Back-office up on :3000"
+              up=1
               break
             fi
             sleep 1
           done
+          # Sans ce bloc, un serveur qui ne demarre pas se manifestait 2 minutes
+          # plus tard par un « Timed out waiting from config.webServer » de
+          # Playwright, sans jamais montrer POURQUOI. On affiche le journal et
+          # on echoue ici, la ou l'information existe. [BO-AUTH-SESSION-002]
+          if [ "$up" -ne 1 ]; then
+            echo "::error title=Back-office injoignable::Le serveur n'a pas repondu sur /login en 60 s."
+            echo "--- derniere reponse HTTP sur /login ---"
+            curl -s -o /dev/null -w 'code=%{http_code}\n' http://localhost:3000/login || true
+            echo "--- journal de demarrage (next start) ---"
+            cat /tmp/next-start.log || true
+            exit 1
+          fi
 
       - name: Run e2e full (shard ${{ matrix.shard }}/4)
         run: |
