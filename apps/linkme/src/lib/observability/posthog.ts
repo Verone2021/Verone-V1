@@ -96,9 +96,21 @@ export function buildPosthogConfig({
       capture_console_errors: true,
     },
 
-    // Aucun enregistrement permanent : le rejeu ne demarre QUE sur erreur,
-    // via startSessionReplayOnError() ci-dessous.
-    disable_session_recording: true,
+    // Aucun enregistrement permanent — mais le rejeu doit contenir CE QUI A
+    // PRECEDE le plantage, pas seulement l'ecran fige apres coup.
+    //
+    // Le mecanisme : l'enregistreur tourne en memoire et garde une fenetre
+    // glissante (une minute par defaut) SANS RIEN ENVOYER. Il ne persiste la
+    // session que si le declencheur configure cote projet se produit —
+    // ici l'evenement `$exception`.
+    //
+    // ⚠️ DEPENDANCE : ce reglage suppose que le declencheur sur `$exception`
+    // est bien configure dans PostHog (Session replay → Recording conditions →
+    // Event emitted). SANS LUI, PostHog enregistrerait TOUTES les sessions en
+    // permanence, ce que Romeo a explicitement refuse.
+    // Verification : Settings → Session replay → « Trigger summary » doit
+    // afficher « Event triggers (1 event) ». Cf. .claude/local/OPERATIONS-RUNBOOK.md
+    disable_session_recording: false,
 
     // Console et requetes reseau dans le rejeu, corps des requetes EXCLUS.
     enable_recording_console_log: true,
@@ -121,8 +133,13 @@ export function buildPosthogConfig({
 }
 
 /**
- * Demarre le rejeu au moment ou une erreur survient, puis remonte l'erreur.
- * Idempotent : PostHog ignore un second demarrage.
+ * Remonte une erreur attrapee par nos propres filets (limite d'erreur React,
+ * ecrans `error.tsx`), et force la persistance du rejeu.
+ *
+ * Le declencheur `$exception` cote projet couvre deja les erreurs non
+ * rattrapees ; cet appel explicite couvre le cas ou l'erreur est attrapee
+ * avant d'atteindre `window.onerror`. Idempotent : un second demarrage est
+ * ignore par PostHog.
  */
 export function reportErrorToPosthog(
   client: PostHog,
