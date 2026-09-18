@@ -14,7 +14,7 @@ Sommaire unique de la config agent. Si tu cherches où est une règle, un agent,
 
 ---
 
-## Rules (14 fichiers)
+## Rules (15 fichiers)
 
 Règles stables lues automatiquement par l'agent.
 
@@ -31,6 +31,7 @@ Règles stables lues automatiquement par l'agent.
 - `.claude/rules/agent-autonomy-external.md` — Agent fait tout lui-même via CLI/MCP
 - `.claude/rules/active-md-maintenance.md` — Nettoyage post-merge obligatoire de `ACTIVE.md`, jamais de tâche résolue > 7 jours
 - `.claude/rules/memory-lifecycle.md` — Lifecycle des mémoires `feedback_*` et règles (ADR-029, 2026-05-08)
+- `.claude/rules/api-guards.md` — Gardes des routes API : quelle porte, quelle serrure (ADR-046, 2026-09-18)
 
 _Note : sous-dossier `.claude/rules/domain/` envisagé dans ADR-004 mais non appliqué (faux positif du check-integrity). Toutes les règles restent à plat dans `.claude/rules/`._
 
