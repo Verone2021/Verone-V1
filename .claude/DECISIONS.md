@@ -1714,3 +1714,83 @@ Supabase qui n'a pas de marge. Deux salariés travaillent sur le back-office en 
 ### Écarté
 
 - Fenêtre libre avec surveillance renforcée : l'incident du 15/09 montre que la bascule elle-même crée la charge.
+
+## ADR-042 — `[BO-PROD-DETAIL-404-006]` Une route peut être compilée sans être déployée : garde post-mise en ligne
+
+**Date** : 2026-09-18 · **Statut** : appliqué · **Fichiers** : `scripts/check-deployed-routes.mjs`,
+`.github/workflows/routes-guard.yml`, `tests/e2e/smoke/smoke-produits.spec.ts`,
+`apps/back-office/src/app/(protected)/produits/catalogue/detail/[id]/page.tsx`
+
+### Constat
+
+La fiche produit `/produits/catalogue/detail/[id]` a disparu de la production **trois fois** : avril 2026
+(ADR du 2026-04-24, rollback `vercel promote`, cause jamais cherchée), mai 2026 (série
+`BO-PROD-DETAIL-404-001` à `-005`, cinq correctifs en quinze heures), et depuis le 2026-09-15.
+
+Preuve obtenue le 2026-09-18, jamais recueillie lors des épisodes précédents — comparaison entre le tableau
+de routes de `next build` et la sortie réelle du déploiement (`/v11/deployments/<id>/builds`) :
+
+```
+routes de page compilées : 167
+COMPILÉES MAIS ABSENTES DU DÉPLOIEMENT (1) :
+  /produits/catalogue/detail/[id]
+```
+
+Une seule route sur 167. Le code est juste, la compilation verte (`cache miss, executing`), le rewrite
+fonctionne (`x-nextjs-rewritten-path` présent) : c'est **l'étape de sortie de Vercel** qui perd la route.
+Vercel répond alors `x-matched-path: /_not-found` tout en laissant l'URL intacte.
+
+Trois raisons pour lesquelles c'est passé inaperçu si longtemps :
+
+1. **Un doublon masquait la panne.** `catalogue/[id]` et `catalogue/detail/[id]` coexistaient depuis mai
+   (le merge de release #979 avait ressuscité le dossier que #978 venait de déplacer). Le rewrite est
+   `afterFiles` avec `check: true` : quand sa destination ne répondait pas, Next retombait sur
+   `catalogue/[id]`. La PR #1160 (2026-09-15) a supprimé le doublon en supposant « le rewrite sert
+   detail/[id] » — supposition jamais vérifiée. Le correctif 005 de mai était donc un **faux positif**
+   validé quatre mois durant.
+2. **Le test de fumée validait du vide.** `smoke-produits.spec.ts` cherchait un `a[href*="/produits/catalogue/"]` ;
+   le catalogue rend des **boutons** « Voir détail ». Le locator ne matchait rien, tout le bloc d'assertions
+   vivait dans `if (await lien.isVisible())`, et le test passait au vert sans ouvrir un seul produit.
+3. **Rien avant le déploiement ne peut voir la panne.** Ni `tsc`, ni ESLint, ni `next build`, ni la
+   compilation locale (dont le `routes-manifest.json` contient bien la route).
+
+### Cause, établie par expérience
+
+Six déploiements de prévisualisation, un candidat à la fois, vérifiés par le script de comparaison :
+
+| Essai                                                     | Morceau propre de `page.tsx` | Route déployée |
+| --------------------------------------------------------- | ---------------------------- | -------------- |
+| `output: 'standalone'` retiré                             | 43,1 kB                      | non            |
+| rewrite UUID retiré                                       | 43,1 kB                      | non            |
+| sonde légère (route neuve triviale, voisine)              | 43,1 kB                      | non            |
+| sonde lourde (même page, adresse neuve → morceau partagé) | 439 B                        | **oui**        |
+| six onglets en chargement différé                         | 15,6 kB                      | **oui**        |
+
+Ce n'est ni la configuration de compilation, ni le rewrite, ni le dossier parent, ni la profondeur, ni le
+nom du segment : **c'est le poids du morceau propre de la route**. `detail/[id]` était de loin la plus
+lourde des 167 routes (43,1 kB de page, 2,21 Mo au premier chargement) et la seule à tomber. Le seuil exact
+côté Vercel reste inconnu, et aucun message ne le signale — d'où la garde ci-dessous.
+
+### Décision
+
+- **Les six onglets secondaires de la fiche produit passent en `next/dynamic`.** Morceau propre 43,1 kB →
+  15,6 kB, premier chargement 2,21 Mo → 1,27 Mo. La route est de nouveau servie (167/167). Gain réel au
+  passage : `TabContent` renvoie `null` hors onglet actif, ce code était téléchargé sans jamais être affiché.
+- **`scripts/check-deployed-routes.mjs`** compare routes compilées et chemins réellement déployés ; sort en
+  erreur si l'écart n'est pas vide. `.github/workflows/routes-guard.yml` l'exécute après chaque `push` sur
+  `main`. Le contrôle est **post-mise en ligne par nécessité** : la panne n'existe qu'à la sortie. C'est lui
+  qui rattrapera le jour où une autre route franchira le seuil.
+- **Le test de fumée échoue** désormais s'il ne peut pas ouvrir une fiche, et vérifie `x-matched-path`.
+- **Règle** : ne jamais valider une route sur « la page répond 200 ». Toujours regarder **quelle route** a
+  répondu (`x-matched-path`). C'est ce raccourci qui a fait passer le correctif 005 pour un succès.
+
+### Écarté
+
+- Rétablir le doublon `catalogue/[id]` comme filet permanent : cache la panne au lieu de la corriger, et
+  c'est exactement ce qui a produit quatre mois de fausse sécurité.
+- `output: 'standalone'` retiré : testé, sans effet sur la panne, réglage remis en place. Vercel l'ignore
+  (mêmes messages `Traced Next.js server files` / `Created all serverless functions` avec et sans).
+- Supprimer le rewrite UUID : testé, sans effet. Conservé, les 19 appels en forme courte continuent de
+  fonctionner.
+- Baisser la garde à un simple avertissement : les trois épisodes montrent qu'un signal non bloquant n'est
+  pas lu.
