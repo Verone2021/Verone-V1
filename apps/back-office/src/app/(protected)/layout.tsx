@@ -4,12 +4,14 @@
  * Ceinture cote serveur : authentification + role back-office.
  * Base sur le pattern f352e5f3 (prouve fonctionnel) + verification role.
  *
- * 2026-09-17 (soir) — Ce layout n'est plus le seul garde-fou : le
- * rafraichissement de session et la garde d'acces sont passes dans
- * `apps/back-office/src/middleware.ts`, qui tranche AVANT tout rendu. Ici, on
- * garde une seconde verification, mais elle ne doit JAMAIS enfermer personne.
+ * 2026-09-18 — Ce layout reste le garde-fou cote serveur. Un middleware a ete
+ * essaye pour rafraichir la session en amont : le serveur de production refuse
+ * de charger son module (« Cannot read properties of undefined (reading
+ * 'default') », toutes les pages en 500 sur la sortie autonome). Faute de
+ * pouvoir le verifier en conditions reelles, il n'a pas ete livre ; le reveil
+ * de session se fait cote navigateur (`auth-wrapper.tsx`).
  *
- * Ce qu'on a corrige le meme soir : la version precedente jetait une exception
+ * Ce qu'on a corrige : la version precedente jetait une exception
  * quand la lecture du role echouait, en pensant que `(protected)/error.tsx`
  * l'attraperait. Ce n'est pas le cas — un `error.tsx` n'attrape pas les erreurs
  * du `layout.tsx` de son propre segment. L'exception tombait dans

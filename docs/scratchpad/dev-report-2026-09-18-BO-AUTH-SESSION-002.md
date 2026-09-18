@@ -67,16 +67,16 @@ Chemin : `SourcingQuickForm` → `hooks.ts` (validation) → `use-sourcing-creat
 
 ## 2. Ce qui a été fait
 
-| Fichier                                                                                | Changement                                                                                                                                                                                                                                                                             |
-| -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/back-office/src/middleware.ts`                                                   | **Nouveau.** Calqué sur `apps/linkme/src/middleware.ts` (autonome, aucun import `@verone/*` — contrainte Edge Runtime). Rafraîchit le cookie, renvoie un visiteur non connecté vers `/login?redirect=…` en **307 réel**. `/api/*` exclu du matcher. Ne lit **pas** le rôle (voir § 4). |
-| `apps/back-office/src/app/error.tsx`                                                   | **Nouveau.** La frontière manquante au-dessus de `(protected)`. Deux sorties réelles : rejouer, ou repartir de la connexion.                                                                                                                                                           |
-| `apps/back-office/src/app/(protected)/layout.tsx`                                      | Plus de `throw`. Échec de lecture du rôle → `console.error` avec le code PostgREST puis `redirect('/login?erreur=role')`. Rôle absent → `/unauthorized` au lieu de `/login` (où l'utilisateur se reconnectait en boucle).                                                              |
-| `apps/back-office/src/app/login/page.tsx`                                              | `window.location.assign` au lieu de `router.push` (le routeur pouvait resservir une réponse mise en cache pendant la déconnexion) + message expliquant pourquoi on a été raccompagné ici.                                                                                              |
-| `SourcingQuickForm.tsx`, `ProductFieldsSection.tsx`, `SupplierSection.tsx`, `hooks.ts` | `noValidate` ; `type="text"` + `inputMode` sur adresse et prix ; virgule acceptée ; nom ≥ 5 caractères ; défilement vers le premier champ fautif.                                                                                                                                      |
-| `use-sourcing-create-update.ts`                                                        | Les refus de la base sont traduits en français ; l'erreur complète est journalisée.                                                                                                                                                                                                    |
-| `@verone/utils/src/validation/form-inputs.ts`                                          | **Nouveau** : `normalizeUrl`, `isValidUrl`, `parseDecimalInput` + 15 tests. Exporté par un sous-chemin dédié (§ 3).                                                                                                                                                                    |
-| `.github/workflows/quality.yml`                                                        | Voir § 3.                                                                                                                                                                                                                                                                              |
+| Fichier                                                                                | Changement                                                                                                                                                                                                                |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/back-office/src/components/layout/auth-wrapper.tsx`                              | Renouvelle la session au réveil de l'onglet (`visibilitychange`, `online`) — le cas Chrome rapporté. Remplace le middleware, voir § 3.3.                                                                                  |
+| `apps/back-office/src/app/error.tsx`                                                   | **Nouveau.** La frontière manquante au-dessus de `(protected)`. Deux sorties réelles : rejouer, ou repartir de la connexion.                                                                                              |
+| `apps/back-office/src/app/(protected)/layout.tsx`                                      | Plus de `throw`. Échec de lecture du rôle → `console.error` avec le code PostgREST puis `redirect('/login?erreur=role')`. Rôle absent → `/unauthorized` au lieu de `/login` (où l'utilisateur se reconnectait en boucle). |
+| `apps/back-office/src/app/login/page.tsx`                                              | `window.location.assign` au lieu de `router.push` (le routeur pouvait resservir une réponse mise en cache pendant la déconnexion) + message expliquant pourquoi on a été raccompagné ici.                                 |
+| `SourcingQuickForm.tsx`, `ProductFieldsSection.tsx`, `SupplierSection.tsx`, `hooks.ts` | `noValidate` ; `type="text"` + `inputMode` sur adresse et prix ; virgule acceptée ; nom ≥ 5 caractères ; défilement vers le premier champ fautif.                                                                         |
+| `use-sourcing-create-update.ts`                                                        | Les refus de la base sont traduits en français ; l'erreur complète est journalisée.                                                                                                                                       |
+| `@verone/utils/src/validation/form-inputs.ts`                                          | **Nouveau** : `normalizeUrl`, `isValidUrl`, `parseDecimalInput` + 15 tests. Exporté par un sous-chemin dédié (§ 3).                                                                                                       |
+| `.github/workflows/quality.yml`                                                        | Voir § 3.                                                                                                                                                                                                                 |
 
 ---
 
@@ -115,6 +115,38 @@ Deux corrections :
    message qui ne dit rien.
 2. Les jobs lancent `node .next/standalone/…/server.js`, c'est-à-dire ce que Vercel exécute en
    production, avec `static/` et `public/` recopiés à côté comme la sortie autonome l'exige.
+
+---
+
+## 3.3 Le middleware n'est PAS livré — et pourquoi
+
+Un `middleware.ts` avait été écrit (calqué sur LinkMe) pour rafraîchir la session côté serveur et
+rendre un vrai 307. Une fois les deux défauts du § 3.2 corrigés, le serveur autonome démarre
+proprement — et **toutes les pages répondent 500** :
+
+```
+✓ Ready in 277ms
+[TypeError: Cannot read properties of undefined (reading 'default')]   (une par requête)
+```
+
+Le serveur de production n'arrive pas à charger le module de middleware. Le même symptôme
+apparaissait sous `next start` : ce n'est donc pas la manière de lancer, c'est le middleware.
+Impossible de trancher si Vercel (qui empaquette le middleware autrement) s'en sortirait, car le
+déploiement d'aperçu est derrière l'authentification Vercel.
+
+**Décision : on ne livre pas un composant d'authentification dont le seul serveur de production
+testable dit que tout tombe.** Le middleware est retiré. Le besoin réel — une session qui meurt
+pendant qu'un onglet dort — est traité côté navigateur : `auth-wrapper.tsx` renouvelle la session
+sur `visibilitychange` et `online`, donc au réveil de l'onglet, avant le premier clic. C'est
+exactement le cas Chrome rapporté, et c'est vérifiable à l'écran.
+
+Ce qui reste du lot et qui corrige l'écran vu par les collaborateurs : la frontière d'erreur
+racine, le `throw` supprimé, `/unauthorized` au lieu d'une boucle de connexion, et la navigation
+dure après identification.
+
+**À reprendre plus tard, hors urgence** : le vrai 307 et le rafraîchissement serveur nécessitent
+soit de comprendre l'empaquetage du middleware en sortie autonome (`outputFileTracingRoot` en
+monorepo), soit un accès de vérification sur un déploiement d'aperçu.
 
 ---
 
