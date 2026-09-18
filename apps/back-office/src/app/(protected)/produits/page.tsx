@@ -108,7 +108,7 @@ export default function ProduitsPage() {
             </div>
           </div>
           <button
-            onClick={() => router.push('/produits/catalogue/create')}
+            onClick={() => router.push('/produits/catalogue/nouveau')}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800"
           >
             <Plus className="h-3.5 w-3.5" />
