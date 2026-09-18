@@ -1714,3 +1714,65 @@ Supabase qui n'a pas de marge. Deux salariés travaillent sur le back-office en 
 ### Écarté
 
 - Fenêtre libre avec surveillance renforcée : l'incident du 15/09 montre que la bascule elle-même crée la charge.
+
+## ADR-043 — `[INFRA-CI-BUILD-001]` Le contrôle qualité tient dans son budget : trois tâches au lieu d'une
+
+**Date** : 2026-09-18 · **Statut** : appliqué · **Fichiers** : `.github/workflows/quality.yml`
+
+### Constat
+
+Le 2026-09-18, le contrôle `ESLint + Type-Check + Build` de la demande #1175 a été **annulé à 20 minutes
+pile**, en plein troisième build (run `35359993221`, étape coupée à 15:23:17 UTC). Ce n'est pas une erreur
+de code : la tâche n'a simplement pas eu le temps de finir.
+
+Mesure sur un passage réussi récent (job `105608551127`) :
+
+| Étape                                                   | Durée à chaud |
+| ------------------------------------------------------- | ------------- |
+| Build des 3 applications, à la file (`--concurrency=1`) | 5 min 42      |
+| Lint + type-check                                       | 2 min 30      |
+| Type coverage × 3                                       | 3 min 06      |
+
+À froid, sur la #1175 : lint + type-check **8 min 33**, build **> 9 min 47 sans finir**. Les quinze derniers
+passages tournaient entre 11 et 19 minutes, dont deux à 19 — le budget était consommé à 95 % depuis des
+semaines. Une modification dans `packages/` invalide le cache Next.js des **trois** applications à la fois
+(leur clé hache `packages/**/*.ts`), donc ce n'est pas un cas rare : c'est le cas de toute demande qui
+touche un paquet partagé.
+
+### Décision
+
+Le budget de 20 minutes **ne bouge pas**. On ne remonte pas un seuil pour faire passer la CI (ADR-033).
+On arrête de faire à la file ce qui est indépendant :
+
+- **`quality-lint`** — lint, type-check, et les trois passes `type-coverage`. Ces dernières ne dépendent
+  d'aucun build : elles n'avaient aucune raison d'attendre derrière eux.
+- **`quality-build`** — une tâche **par application**, les trois en parallèle. Le profil mémoire de chaque
+  build est **inchangé** : un seul build par machine, 6 Go de heap. La raison qui avait imposé
+  `--concurrency=1` en ADR de `[BO-AUDIT-004]` (2 vCPU / 7 Go, 24 Go de heap demandés en parallèle, runner
+  qui passe son temps à échanger avec le disque) reste intégralement respectée. On ne met pas trois builds
+  sur une machine ; on met un build sur chacune des trois.
+- **`quality`** — consolide les deux sous le nom historique `ESLint + Type-Check + Build`, attendu par la
+  protection de branche et par les tâches E2E (`needs: quality`).
+
+Attendu : un passage à froid passe d'environ 26 minutes cumulées à environ 15 minutes d'attente réelle.
+
+### Points de vigilance
+
+- La consolidation **doit** devenir rouge quand l'une des deux tâches échoue. Ni `quality-lint` ni
+  `quality-build` ne portent `continue-on-error`, donc `needs.*.result` dit ici la vérité — contrairement au
+  piège documenté dans `e2e-smoke-aggregate`, où `continue-on-error` faisait remonter `success` sur des
+  tâches en échec. Seuls `success` et `skipped` sont acceptés ; tout le reste sort en erreur.
+- L'archive du build back-office consommée par les tâches E2E est produite par la branche `back-office` de
+  la matrice. Les tâches E2E la récupèrent par son nom, inchangé.
+- L'étape « commentaire sur la demande en cas d'échec » est retirée : le résumé de tâche porte désormais
+  l'information, sans écrire dans la conversation de la demande.
+
+### Écarté
+
+- **Porter le délai à 30 minutes** : c'est exactement le raccourci interdit par ADR-033 — la marge cache la
+  dette au lieu de la traiter. Le constat de la session 03 (« build des 3 apps < 20 min ») visait déjà ce
+  point, et notait que le délai à 30 min n'est un filet qu'**après** la vraie correction.
+- **Remonter `--concurrency`** sur un seul runner : c'est précisément ce qui avait provoqué l'incident de
+  `[BO-AUDIT-004]` (> 25 min de thrashing au lieu de 2 à 6).
+- **Retirer ou alléger `type-coverage`** : c'est un garde-fou de qualité, il reste entier — il change
+  seulement de voisinage. Son heap passe de 8 Go à 6 Go, la machine n'en ayant que 7.
