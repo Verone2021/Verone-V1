@@ -17,6 +17,9 @@ const securityHeaders = {
         'https://localhost:*', // Development localhost HTTPS
         'https://aorroydfjsrygmosnzrl.supabase.co',
         'https://va.vercel-scripts.com', // Vercel Analytics
+        // [BO-OBS-001] PostHog charge son module de rejeu a l'execution depuis
+        // le domaine « assets ». Sans cette ligne, il est bloque EN SILENCE.
+        'https://eu-assets.i.posthog.com',
       ],
       styleSrc: [
         "'self'",
@@ -52,6 +55,10 @@ const securityHeaders = {
         'https://api.geoapify.com', // API Geoapify (Geocoding international)
         'https://basemaps.cartocdn.com', // CartoDB Voyager map tiles
         'https://*.basemaps.cartocdn.com', // CartoDB tile subdomains (a/b/c/d)
+        // [BO-OBS-001] Observabilite navigateur, hebergement europeen impose :
+        // les rejeus contiennent des donnees de clients francais.
+        'https://eu.i.posthog.com',
+        'https://eu-assets.i.posthog.com',
       ],
       mediaSrc: ["'self'", 'https://aorroydfjsrygmosnzrl.supabase.co'],
       objectSrc: ["'none'"],

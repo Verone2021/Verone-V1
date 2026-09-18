@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  env: {
+    // Version attachee a chaque evenement d'observabilite ([BO-OBS-001]).
+    NEXT_PUBLIC_APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA ?? '',
+  },
   eslint: {
     dirs: ['src'],
   },

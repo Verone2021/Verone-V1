@@ -172,6 +172,9 @@ const nextConfig = {
   // Environment variables for client-side
   env: {
     BUILD_TIME: new Date().toISOString(),
+    // Version de l'application attachee a chaque evenement d'observabilite,
+    // pour pouvoir dire « cette erreur date de la mise en ligne de 13 h 45 ».
+    NEXT_PUBLIC_APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA ?? '',
     // ✅ FIX: Supprimer warning "Using edge runtime" (message informatif)
     NEXT_HIDE_MIDDLEWARE_MESSAGE: '1',
   },

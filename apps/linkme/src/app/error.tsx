@@ -18,6 +18,13 @@
 
 import { useEffect } from 'react';
 
+import posthog from 'posthog-js';
+
+import {
+  reportErrorToPosthog,
+  shouldInitPosthog,
+} from '@/lib/observability/posthog';
+
 export default function LinkMeError({
   error,
   reset,
@@ -27,6 +34,9 @@ export default function LinkMeError({
 }) {
   useEffect(() => {
     console.error('[linkme] Error boundary:', error);
+    if (shouldInitPosthog()) {
+      reportErrorToPosthog(posthog, error, { source: 'linkme-error' });
+    }
     if (error.digest) console.error('[linkme] Digest:', error.digest);
   }, [error]);
 
@@ -58,6 +68,15 @@ export default function LinkMeError({
           Le service a rencontré un problème passager. Réessayez : dans la
           plupart des cas, cela repart tout de suite.
         </p>
+
+        {error.digest !== undefined && error.digest !== '' && (
+          <div className="mb-6 rounded-md bg-gray-50 px-4 py-3 text-center text-xs text-gray-500">
+            Code technique :{' '}
+            <span className="font-mono text-gray-700">{error.digest}</span>
+            <br />
+            Communiquez ce code au support.
+          </div>
+        )}
 
         {process.env.NODE_ENV === 'development' && (
           <div className="mb-6 rounded bg-gray-100 p-3 text-sm">
