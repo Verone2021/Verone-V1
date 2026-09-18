@@ -4,6 +4,13 @@ import { useEffect } from 'react';
 
 import { AlertCircle, RotateCcw, Home } from 'lucide-react';
 
+import posthog from 'posthog-js';
+
+import {
+  reportErrorToPosthog,
+  shouldInitPosthog,
+} from '@/lib/observability/posthog';
+
 interface ModuleErrorBoundaryProps {
   error: Error & { digest?: string };
   reset: () => void;
@@ -17,6 +24,9 @@ export function ModuleErrorBoundary({
 }: ModuleErrorBoundaryProps) {
   useEffect(() => {
     console.error(`[${moduleName}] Error boundary triggered:`, error);
+    if (shouldInitPosthog()) {
+      reportErrorToPosthog(posthog, error, { source: 'module-error' });
+    }
   }, [error, moduleName]);
 
   return (
@@ -34,6 +44,15 @@ export function ModuleErrorBoundary({
           Une erreur est survenue dans ce module. Les autres sections de
           l&apos;application restent fonctionnelles.
         </p>
+
+        {error.digest !== undefined && error.digest !== '' && (
+          <div className="mb-6 rounded-md bg-gray-50 px-4 py-3 text-center text-xs text-gray-500">
+            Code technique :{' '}
+            <span className="font-mono text-gray-700">{error.digest}</span>
+            <br />
+            Communiquez ce code au support.
+          </div>
+        )}
 
         {process.env.NODE_ENV === 'development' && (
           <div className="mb-6 p-3 bg-gray-100 rounded text-sm">
