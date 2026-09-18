@@ -3,7 +3,11 @@
 import { useState } from 'react';
 
 import { Input } from '@verone/ui';
-import { defaultRateFor } from '@verone/utils/currency';
+import {
+  convertToEur,
+  currencySymbol,
+  defaultRateFor,
+} from '@verone/utils/currency';
 import { AlertTriangle, Check, Truck } from 'lucide-react';
 
 import type { SupplierEconomics } from '../../lib/consultation-supplier-costs';
@@ -167,6 +171,47 @@ export function ConsultationSupplierCostsCard({
             ? cost.other_cost_label.trim()
             : 'Autres';
           const lineShippingTotal = supplier.lineShippingTotal;
+          /*
+           * Les trois montants de `cost` sont BRUTS, dans la monnaie de saisie
+           * (`cost.currency`). Les afficher avec un € en dur faisait passer
+           * 330 $ pour 330 € — alors que la ligne du dessus, elle, affiche
+           * bien les 287,10 € convertis. [BO-CONSULT-CURRENCY-002]
+           */
+          const costSymbol = currencySymbol(cost?.currency ?? 'EUR');
+          /*
+           * « 330.00 $ » mais « 330.00€ » : le dollar se colle mal au chiffre,
+           * l'euro est accolé partout ailleurs dans la carte. On garde donc
+           * l'affichage euro au pixel près et on aère seulement les devises
+           * étrangères.
+           */
+          const formatCost = (value: number): string =>
+            costSymbol === '€'
+              ? `${value.toFixed(2)}€`
+              : `${value.toFixed(2)} ${costSymbol}`;
+          /*
+           * Équivalent euros du total, affiché à côté du détail quand la
+           * monnaie n'est pas l'euro. `null` en euros : rien à préciser.
+           * Même fonction de conversion que le hook → pas d'écart d'arrondi
+           * avec le total affiché au-dessus.
+           */
+          const costEurTotal =
+            cost && cost.currency !== 'EUR'
+              ? convertToEur(
+                  cost.shipping_cost_ht,
+                  cost.currency,
+                  cost.exchange_rate
+                ) +
+                convertToEur(
+                  cost.customs_cost_ht,
+                  cost.currency,
+                  cost.exchange_rate
+                ) +
+                convertToEur(
+                  cost.other_cost_ht,
+                  cost.currency,
+                  cost.exchange_rate
+                )
+              : null;
 
           return (
             <div key={supplier.supplierId} className="px-4 py-2.5">
@@ -175,7 +220,7 @@ export function ConsultationSupplierCostsCard({
                   <p className="text-[12px] font-semibold text-zinc-900 truncate">
                     {supplier.supplierName}
                   </p>
-                  <p className="text-[10px] text-zinc-400">
+                  <p className="text-[11px] text-zinc-600">
                     {supplier.lineCount} ligne
                     {supplier.lineCount > 1 ? 's' : ''}
                     {total > 0 && ` · ${total.toFixed(2)}€ de frais`}
@@ -283,11 +328,17 @@ export function ConsultationSupplierCostsCard({
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
-                    <span className="text-[11px] text-zinc-500">
+                    <span className="text-[11px] font-medium text-zinc-700">
                       {cost
-                        ? `Port ${cost.shipping_cost_ht.toFixed(2)}€ · Douane ${cost.customs_cost_ht.toFixed(2)}€ · ${otherName} ${cost.other_cost_ht.toFixed(2)}€`
+                        ? `Port ${formatCost(cost.shipping_cost_ht)} · Douane ${formatCost(cost.customs_cost_ht)} · ${otherName} ${formatCost(cost.other_cost_ht)}`
                         : 'Aucun frais saisi'}
                     </span>
+                    {/* Équivalent euros quand les frais ne sont pas saisis en euros */}
+                    {costEurTotal !== null && (
+                      <span className="text-[11px] text-blue-600">
+                        ≈ {costEurTotal.toFixed(2)} €
+                      </span>
+                    )}
                     <button
                       type="button"
                       onClick={() => startEdit(supplier.supplierId)}

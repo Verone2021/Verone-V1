@@ -8,6 +8,7 @@ import { strict as assert } from 'node:assert';
 
 import {
   convertToEur,
+  currencySymbol,
   defaultRateFor,
   SUPPORTED_PURCHASE_CURRENCIES,
   USD_TO_EUR_DEFAULT,
@@ -121,6 +122,25 @@ test('USD → USD_TO_EUR_DEFAULT', () => {
 test('monnaie inconnue → taux 1 (safe fallback)', () => {
   assert.equal(defaultRateFor('GBP'), 1);
   assert.equal(defaultRateFor(''), 1);
+});
+
+// ---------------------------------------------------------------------------
+// currencySymbol
+// ---------------------------------------------------------------------------
+
+console.log('\n--- currencySymbol ---');
+
+test('EUR → €', () => {
+  assert.equal(currencySymbol('EUR'), '€');
+});
+
+test('USD → $', () => {
+  assert.equal(currencySymbol('USD'), '$');
+});
+
+test('monnaie inconnue → son propre code (jamais un symbole faux)', () => {
+  assert.equal(currencySymbol('GBP'), 'GBP');
+  assert.equal(currencySymbol(''), '');
 });
 
 // ---------------------------------------------------------------------------
