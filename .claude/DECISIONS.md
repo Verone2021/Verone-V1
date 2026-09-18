@@ -1856,3 +1856,80 @@ Attendu : un passage à froid passe d'environ 26 minutes cumulées à environ 15
   `[BO-AUDIT-004]` (> 25 min de thrashing au lieu de 2 à 6).
 - **Retirer ou alléger `type-coverage`** : c'est un garde-fou de qualité, il reste entier — il change
   seulement de voisinage. Son heap passe de 8 Go à 6 Go, la machine n'en ayant que 7.
+
+## ADR-044 — `[INFRA-CI-MINUTES-001]` Le dépôt privé met les minutes GitHub au compteur : CI taillée pour le plan gratuit
+
+**Date** : 2026-09-18 · **Statut** : appliqué · **Fichiers** : `.github/workflows/quality.yml`,
+`.github/workflows/routes-guard.yml`, `.github/dependabot.yml`, `scripts/check-deployed-routes.mjs`
+
+### Constat
+
+Le 2026-09-18 à ~19 h UTC, GitHub Actions a cessé de démarrer la moindre tâche :
+_« The job was not started because recent account payments have failed or your spending limit needs to be
+increased. »_ Deux demandes en cours (#1178, #1179) et le workflow de release en ont été victimes.
+
+**Cause : le dépôt est passé en privé le 2026-09-11.** Un dépôt public a des minutes Actions illimitées et
+gratuites ; un dépôt privé sur le plan gratuit dispose de 2 000 minutes par mois. Un an de développement
+n'avait jamais rien coûté parce qu'il n'y avait pas de compteur. Il s'est allumé le 11.
+
+Audit sur les 7 jours suivants : **135 déclenchements, 693 tâches, ~1 822 minutes facturées** sur 2 000.
+
+Deux découvertes en auditant :
+
+1. **L'arrondi domine la facture.** GitHub facture **chaque tâche arrondie à la minute supérieure**. Six
+   tâches duraient de 3 à 44 secondes et coûtaient une minute pleine à chaque déclenchement :
+
+   | Tâche                     | Durée réelle | Exécutions | Facturé | Dont arrondi |
+   | ------------------------- | ------------ | ---------- | ------- | ------------ |
+   | Detect changes            | 8 s          | 79         | 79      | **68**       |
+   | E2E Smoke (consolidation) | 5 s          | 79         | 79      | **72**       |
+   | DB FK drift               | 20 s         | 79         | 79      | **52**       |
+   | Supabase advisors         | 13 s         | 70         | 70      | **55**       |
+   | Supabase TS types         | 44 s         | 78         | 115     | **57**       |
+   | Protect main              | 4 s          | 28         | 28      | **26**       |
+
+   ~25 minutes de travail réel, ~450 minutes facturées. **330 minutes de pur arrondi**, un cinquième du
+   quota mensuel.
+
+2. **Les tests E2E tournaient alors qu'ils étaient réputés coupés.** `smoke-golden` et les 4 shards
+   `smoke-domaine` portent le commentaire « Désactivé sur ordre Roméo (2026-05-13) » mais leur condition
+   `if:` les laissait passer. 30 à 35 exécutions cette semaine, **402 minutes**, toutes en
+   `continue-on-error: true` — donc aucun effet sur la décision de fusionner.
+
+3. **Dependabot**, sur dépôt privé, consomme le quota : 166 minutes pour 3 passages hebdomadaires.
+
+### Décision
+
+- **Fusionner les gardes base de données dans `detect-changes`** (renommé « Contrôles rapides »). Mêmes
+  contrôles, mêmes conditions, un seul checkout et un seul Python au lieu de trois. 4 tâches → 1.
+- **Supprimer les tests E2E** (`smoke-golden`, `smoke-domaine`, `e2e-full`) et les deux tâches de
+  consolidation (`quality`, `e2e-smoke-aggregate`). Ces dernières n'existaient que pour satisfaire des
+  noms de checks requis par la protection de branche — **or celle-ci ne s'applique plus** depuis le passage
+  en privé sur le plan gratuit (vérifié : l'API répond « Upgrade to GitHub Pro or make this repository
+  public »). Elles ne protégeaient donc plus rien, cf. ADR-040.
+- **Dependabot npm : hebdomadaire → mensuel**, 3 PR ouvertes → 1. Les alertes de sécurité restent
+  immédiates, elles ne suivent pas ce calendrier.
+- **`routes-guard.yml` déclenché sur `deployment_status`** au lieu de `push`. Sur push il fallait attendre
+  la fin du déploiement Vercel en tournant dans le vide (10 à 15 min facturées par mise en ligne) ; Vercel
+  publie des déploiements GitHub, donc on se fait réveiller quand c'est prêt : ~1 minute.
+
+Résultat : **5 tâches par déclenchement au lieu de 11**, et sur la semaine auditée la facture serait passée
+de ~1 822 à **~900 minutes**.
+
+### Ce que cette décision ne résout pas
+
+La semaine du 14/09 a compté **62 déclenchements, contre 24 la semaine précédente et 1 à 18 les
+précédentes**. À ce rythme soutenu un mois entier, même la configuration allégée dépasserait 2 000 minutes.
+Le levier structurel restant est de repasser le dépôt en public (minutes illimitées) — écarté par Roméo
+pour cause d'historique sensible, cf. ADR-040. À surveiller : si le compteur se retend, la piste suivante
+est de ne plus déclencher la CI sur chaque poussée mais seulement à l'ouverture et à la mise à jour finale
+d'une demande.
+
+### Écarté
+
+- Passer sur GitHub Pro : dépense non décidée, et Roméo veut rester sur le plan gratuit.
+- Baisser la couverture des gardes bloquantes (FK, types, advisors) : elles coûtent quelques secondes une
+  fois fusionnées, et ce sont elles qui attrapent les vraies régressions. On supprime l'emballage, pas le
+  contrôle.
+- Fusionner `Protect main` dans `quality.yml` : déclencheur différent (demandes vers `main`), et c'est la
+  seule barrière restante depuis que la protection de branche a disparu. 28 min/mois assumées.
