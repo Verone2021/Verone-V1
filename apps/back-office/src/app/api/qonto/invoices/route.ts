@@ -27,6 +27,8 @@ import { computeDueDate } from './_lib/compute-due-date';
 import { persistFinancialDocument } from './_lib/persist-financial-document';
 import type { IPostRequestBody } from './_lib/types';
 
+import { requireBackofficeAdmin } from '@/lib/guards';
+
 /**
  * GET /api/qonto/invoices
  * Liste les factures avec filtre optionnel par status
@@ -41,6 +43,19 @@ export async function GET(request: NextRequest): Promise<
     error?: string;
   }>
 > {
+  // Garde : back-office connecte (owner/admin) uniquement.
+  // [BO-SEC-GUARD-001] cette route lisait des donnees clients sans aucune
+  // authentification, avec la cle service_role qui contourne la RLS.
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    // On renvoie le meme code (401 ou 403) dans la forme de reponse declaree
+    // par cette route, pour ne pas elargir son contrat de sortie.
+    return NextResponse.json(
+      { success: false, error: 'Acces refuse' },
+      { status: guardResult.status }
+    );
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') as

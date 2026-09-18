@@ -8,12 +8,22 @@
  * - Si customer_type = 'organisation' → Décompose nom en "Entreprise" + nom_org
  * - Si customer_type = 'individual' → Utilise first_name + last_name directement
  * - Champs manquants (phone, email) → Retourne chaîne vide
+ *
+ * @since 2026-09-18 - [BO-SEC-GUARD-001] cette route répondait à n'importe
+ *   quel appel anonyme, avec la clé service_role. Elle rendait le nom, l'e-mail,
+ *   le téléphone et l'adresse postale d'un client à qui devinait un identifiant
+ *   de commande. Garde ajoutée, et retour au client normal : les trois tables
+ *   lues ont une règle RLS `is_backoffice_user()`, la clé service_role n'était
+ *   pas nécessaire.
  */
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
-import { createAdminClient } from '@verone/utils/supabase/server';
+import { createServerClient } from '@verone/utils/supabase/server';
+
+import { requireBackofficeAdmin } from '@/lib/guards';
 
 interface CustomerAddress {
   name: string;
@@ -27,13 +37,31 @@ interface CustomerAddress {
   company?: string;
 }
 
+const OrderIdSchema = z.string().uuid();
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  // Garde : back-office connecte (owner/admin) uniquement.
+  // [BO-SEC-GUARD-001] cette route lisait des donnees clients sans aucune
+  // authentification, avec la cle service_role qui contourne la RLS.
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult;
+  }
+
   try {
-    const supabase = createAdminClient();
     const { id } = await context.params;
+
+    if (!OrderIdSchema.safeParse(id).success) {
+      return NextResponse.json(
+        { error: 'Identifiant de commande invalide', code: 'INVALID_ORDER_ID' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await createServerClient();
 
     // 1. Récupérer la commande
     const { data: order, error: orderError } = await supabase
@@ -57,14 +85,6 @@ export async function GET(
     }
 
     let address: CustomerAddress;
-
-    // Guard: customer_id is required
-    if (!order.customer_id) {
-      return NextResponse.json(
-        { error: 'Commande sans client associé', code: 'NO_CUSTOMER' },
-        { status: 400 }
-      );
-    }
 
     // 2. Si customer_type = 'organization'
     if (order.customer_type === 'organization') {

@@ -7,10 +7,13 @@
  * ⚠️ SECURITY: Admin only, disabled in production by default
  */
 
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { getQontoClient } from '@verone/integrations/qonto';
 import { createAdminClient } from '@verone/utils/supabase/server';
+
+import { requireBackofficeAdmin } from '@/lib/guards';
 
 interface YearBreakdown {
   [year: string]: number;
@@ -48,7 +51,15 @@ interface SupabaseDataResponse<T> {
   error: unknown;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Garde : back-office connecte (owner/admin) uniquement.
+  // [BO-SEC-GUARD-001] cette route lisait des donnees clients sans aucune
+  // authentification, avec la cle service_role qui contourne la RLS.
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult;
+  }
+
   // Security: Only allow in development or with explicit flag
   if (
     process.env.NODE_ENV === 'production' &&
