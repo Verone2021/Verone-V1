@@ -38,7 +38,7 @@ const nextConfig = {
     ];
   },
 
-  // Redirections - Migration structure (Root redirect géré par middleware.ts)
+  // Redirections - Migration structure
   async redirects() {
     return [
       {

@@ -347,13 +347,23 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=8192
 
-      # [INFRA-CI-NO-E2E-001] Upload .next pour E2E désactivé (jobs E2E off).
+      # Archive AVANT l'envoi : `upload-artifact` ne preserve pas les liens
+      # symboliques, or la sortie autonome de Next reference les paquets par
+      # lien vers `node_modules/.pnpm`. Envoyee telle quelle, l'arborescence
+      # arrivait amputee et le serveur mourait sur
+      # « Cannot find module './cjs/react-dom-server-legacy.node.development.js' ».
+      # Un tar conserve les liens ; les cibles existent cote consommateur, qui
+      # fait son propre `pnpm install`. [BO-AUTH-SESSION-002]
+      - name: Archive back-office build (for E2E jobs)
+        if: needs.detect-changes.outputs.e2e-needed == 'true'
+        run: tar -czf /tmp/back-office-next.tgz -C apps/back-office .next
+
       - name: Upload back-office .next artifact (for E2E jobs)
         if: needs.detect-changes.outputs.e2e-needed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: back-office-build
-          path: apps/back-office/.next
+          path: /tmp/back-office-next.tgz
           retention-days: 1
           include-hidden-files: true
 
@@ -443,19 +453,56 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: back-office-build
-          path: apps/back-office/.next
+          path: /tmp/back-office-artifact
+
+      - name: Unpack back-office build
+        run: tar -xzf /tmp/back-office-artifact/back-office-next.tgz -C apps/back-office
 
       - name: Start back-office (background)
         run: |
-          pnpm --filter @verone/back-office start > /tmp/next-start.log 2>&1 &
+          # `next start` ne fonctionne PAS avec `output: 'standalone'`. Next le
+          # dit lui-meme au demarrage, sert quand meme, et chaque requete tombe
+          # en 500 des qu'un middleware existe :
+          #   ⚠ "next start" does not work with "output: standalone"
+          #   [TypeError: Cannot read properties of undefined (reading 'default')]
+          # Le defaut dormait depuis toujours ; il s'est reveille le 18/09 avec
+          # l'ajout du controle de session. On lance donc le serveur autonome —
+          # exactement ce que Vercel execute en production, donc ce que les
+          # tests doivent eprouver. [BO-AUTH-SESSION-002]
+          SERVER=$(find apps/back-office/.next/standalone -maxdepth 4 -name server.js | head -1)
+          if [ -z "$SERVER" ]; then
+            echo "::error title=Build autonome absent::Aucun server.js sous apps/back-office/.next/standalone"
+            ls apps/back-office/.next || true
+            exit 1
+          fi
+          APP_DIR=$(dirname "$SERVER")
+          # Le serveur autonome n'embarque ni les fichiers statiques ni /public.
+          mkdir -p "$APP_DIR/.next"
+          cp -r apps/back-office/.next/static "$APP_DIR/.next/static"
+          cp -r apps/back-office/public "$APP_DIR/public" 2>/dev/null || true
+          PORT=3000 HOSTNAME=127.0.0.1 node "$SERVER" > /tmp/next-start.log 2>&1 &
           echo $! > /tmp/next-start.pid
+          up=0
           for i in {1..60}; do
             if curl -sf http://localhost:3000/login > /dev/null; then
               echo "Back-office up on :3000"
+              up=1
               break
             fi
             sleep 1
           done
+          # Sans ce bloc, un serveur qui ne demarre pas se manifestait 2 minutes
+          # plus tard par un « Timed out waiting from config.webServer » de
+          # Playwright, sans jamais montrer POURQUOI. On affiche le journal et
+          # on echoue ici, la ou l'information existe. [BO-AUTH-SESSION-002]
+          if [ "$up" -ne 1 ]; then
+            echo "::error title=Back-office injoignable::Le serveur n'a pas repondu sur /login en 60 s."
+            echo "--- derniere reponse HTTP sur /login ---"
+            curl -s -o /dev/null -w 'code=%{http_code}\n' http://localhost:3000/login || true
+            echo "--- journal de demarrage (next start) ---"
+            cat /tmp/next-start.log || true
+            exit 1
+          fi
 
       - name: Run smoke golden (1 spec, ~30 sec)
         run: pnpm exec playwright test tests/e2e/smoke/smoke-golden.spec.ts --reporter=list
@@ -558,19 +605,56 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: back-office-build
-          path: apps/back-office/.next
+          path: /tmp/back-office-artifact
+
+      - name: Unpack back-office build
+        run: tar -xzf /tmp/back-office-artifact/back-office-next.tgz -C apps/back-office
 
       - name: Start back-office (background)
         run: |
-          pnpm --filter @verone/back-office start > /tmp/next-start.log 2>&1 &
+          # `next start` ne fonctionne PAS avec `output: 'standalone'`. Next le
+          # dit lui-meme au demarrage, sert quand meme, et chaque requete tombe
+          # en 500 des qu'un middleware existe :
+          #   ⚠ "next start" does not work with "output: standalone"
+          #   [TypeError: Cannot read properties of undefined (reading 'default')]
+          # Le defaut dormait depuis toujours ; il s'est reveille le 18/09 avec
+          # l'ajout du controle de session. On lance donc le serveur autonome —
+          # exactement ce que Vercel execute en production, donc ce que les
+          # tests doivent eprouver. [BO-AUTH-SESSION-002]
+          SERVER=$(find apps/back-office/.next/standalone -maxdepth 4 -name server.js | head -1)
+          if [ -z "$SERVER" ]; then
+            echo "::error title=Build autonome absent::Aucun server.js sous apps/back-office/.next/standalone"
+            ls apps/back-office/.next || true
+            exit 1
+          fi
+          APP_DIR=$(dirname "$SERVER")
+          # Le serveur autonome n'embarque ni les fichiers statiques ni /public.
+          mkdir -p "$APP_DIR/.next"
+          cp -r apps/back-office/.next/static "$APP_DIR/.next/static"
+          cp -r apps/back-office/public "$APP_DIR/public" 2>/dev/null || true
+          PORT=3000 HOSTNAME=127.0.0.1 node "$SERVER" > /tmp/next-start.log 2>&1 &
           echo $! > /tmp/next-start.pid
+          up=0
           for i in {1..60}; do
             if curl -sf http://localhost:3000/login > /dev/null; then
               echo "Back-office up on :3000"
+              up=1
               break
             fi
             sleep 1
           done
+          # Sans ce bloc, un serveur qui ne demarre pas se manifestait 2 minutes
+          # plus tard par un « Timed out waiting from config.webServer » de
+          # Playwright, sans jamais montrer POURQUOI. On affiche le journal et
+          # on echoue ici, la ou l'information existe. [BO-AUTH-SESSION-002]
+          if [ "$up" -ne 1 ]; then
+            echo "::error title=Back-office injoignable::Le serveur n'a pas repondu sur /login en 60 s."
+            echo "--- derniere reponse HTTP sur /login ---"
+            curl -s -o /dev/null -w 'code=%{http_code}\n' http://localhost:3000/login || true
+            echo "--- journal de demarrage (next start) ---"
+            cat /tmp/next-start.log || true
+            exit 1
+          fi
 
       - name: Run smoke domaine (shard ${{ matrix.shard }}/4)
         run: |
@@ -681,19 +765,56 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: back-office-build
-          path: apps/back-office/.next
+          path: /tmp/back-office-artifact
+
+      - name: Unpack back-office build
+        run: tar -xzf /tmp/back-office-artifact/back-office-next.tgz -C apps/back-office
 
       - name: Start back-office (background)
         run: |
-          pnpm --filter @verone/back-office start > /tmp/next-start.log 2>&1 &
+          # `next start` ne fonctionne PAS avec `output: 'standalone'`. Next le
+          # dit lui-meme au demarrage, sert quand meme, et chaque requete tombe
+          # en 500 des qu'un middleware existe :
+          #   ⚠ "next start" does not work with "output: standalone"
+          #   [TypeError: Cannot read properties of undefined (reading 'default')]
+          # Le defaut dormait depuis toujours ; il s'est reveille le 18/09 avec
+          # l'ajout du controle de session. On lance donc le serveur autonome —
+          # exactement ce que Vercel execute en production, donc ce que les
+          # tests doivent eprouver. [BO-AUTH-SESSION-002]
+          SERVER=$(find apps/back-office/.next/standalone -maxdepth 4 -name server.js | head -1)
+          if [ -z "$SERVER" ]; then
+            echo "::error title=Build autonome absent::Aucun server.js sous apps/back-office/.next/standalone"
+            ls apps/back-office/.next || true
+            exit 1
+          fi
+          APP_DIR=$(dirname "$SERVER")
+          # Le serveur autonome n'embarque ni les fichiers statiques ni /public.
+          mkdir -p "$APP_DIR/.next"
+          cp -r apps/back-office/.next/static "$APP_DIR/.next/static"
+          cp -r apps/back-office/public "$APP_DIR/public" 2>/dev/null || true
+          PORT=3000 HOSTNAME=127.0.0.1 node "$SERVER" > /tmp/next-start.log 2>&1 &
           echo $! > /tmp/next-start.pid
+          up=0
           for i in {1..60}; do
             if curl -sf http://localhost:3000/login > /dev/null; then
               echo "Back-office up on :3000"
+              up=1
               break
             fi
             sleep 1
           done
+          # Sans ce bloc, un serveur qui ne demarre pas se manifestait 2 minutes
+          # plus tard par un « Timed out waiting from config.webServer » de
+          # Playwright, sans jamais montrer POURQUOI. On affiche le journal et
+          # on echoue ici, la ou l'information existe. [BO-AUTH-SESSION-002]
+          if [ "$up" -ne 1 ]; then
+            echo "::error title=Back-office injoignable::Le serveur n'a pas repondu sur /login en 60 s."
+            echo "--- derniere reponse HTTP sur /login ---"
+            curl -s -o /dev/null -w 'code=%{http_code}\n' http://localhost:3000/login || true
+            echo "--- journal de demarrage (next start) ---"
+            cat /tmp/next-start.log || true
+            exit 1
+          fi
 
       - name: Run e2e full (shard ${{ matrix.shard }}/4)
         run: |

@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 
 import { useToggle } from '@verone/hooks';
 import { ButtonV2 } from '@verone/ui';
@@ -11,13 +10,31 @@ import { Card, CardContent, CardHeader } from '@verone/ui';
 import { createClient } from '@verone/utils/supabase/client';
 import { Eye, EyeOff, LogIn, Mail, Lock } from 'lucide-react';
 
+/**
+ * Motifs renvoyes par le middleware ou le layout `(protected)` quand ils
+ * raccompagnent quelqu'un ici. Sans ce message, la personne croit que son mot
+ * de passe est refuse alors que c'est la session qui a expire.
+ */
+const REASON_MESSAGES: Record<string, string> = {
+  session: 'Votre session a expiré. Reconnectez-vous pour continuer.',
+  role: "Vos droits n'ont pas pu être vérifiés (incident passager). Reconnectez-vous.",
+};
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, toggleShowPassword] = useToggle(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const router = useRouter();
+  const [notice, setNotice] = useState('');
+
+  // Lecture directe de l'adresse plutot que `useSearchParams` : pas de
+  // frontiere Suspense a ajouter, et cette page ne depend de rien d'autre.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const reason = new URLSearchParams(window.location.search).get('erreur');
+    if (reason && REASON_MESSAGES[reason]) setNotice(REASON_MESSAGES[reason]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,11 +58,17 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        // Succès - redirection vers dashboard
+        // Succes - redirection vers dashboard.
+        // Navigation complete et NON `router.push` : le cookie de session vient
+        // d'etre ecrit, or le routeur Next peut resservir une reponse mise en
+        // cache pendant que la personne etait deconnectee — elle retombe alors
+        // sur la page de connexion en croyant que ca a echoue.
+        // Meme choix que `auth-wrapper.tsx` (commente sur place).
         const redirectUrl =
           new URLSearchParams(window.location.search).get('redirect') ??
           '/dashboard';
-        router.push(redirectUrl);
+        window.location.assign(redirectUrl);
+        return;
       }
     } catch (_err) {
       setError('Une erreur est survenue lors de la connexion');
@@ -182,6 +205,13 @@ export default function LoginPage() {
                   </button>
                 </div>
               </div>
+
+              {/* Motif du retour ici (session expiree, droits illisibles) */}
+              {notice && !error && (
+                <div className="text-amber-700 text-sm text-center bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  {notice}
+                </div>
+              )}
 
               {/* Message d'erreur */}
               {error && (

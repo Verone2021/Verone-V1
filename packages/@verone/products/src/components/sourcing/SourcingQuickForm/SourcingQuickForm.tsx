@@ -62,6 +62,14 @@ export function SourcingQuickForm({
       )}
 
       <form
+        // `noValidate` est indispensable ici : sans lui, le navigateur refuse
+        // d'envoyer le formulaire des qu'un champ lui deplait (adresse sans
+        // « https:// », prix ecrit avec une virgule) et n'affiche qu'une bulle
+        // qui passe sous le pli dans une fenetre qui defile. Resultat vu le
+        // 17/09 : « je clique sur Valider et il ne se passe rien ». La
+        // validation JavaScript ci-dessous est la seule voix, et elle ecrit ses
+        // messages sous les champs concernes.
+        noValidate
         onSubmit={e => {
           void handleSubmit(e).catch(error => {
             console.error('[SourcingQuickForm] Submit error:', error);
