@@ -347,13 +347,23 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=8192
 
-      # [INFRA-CI-NO-E2E-001] Upload .next pour E2E désactivé (jobs E2E off).
+      # Archive AVANT l'envoi : `upload-artifact` ne preserve pas les liens
+      # symboliques, or la sortie autonome de Next reference les paquets par
+      # lien vers `node_modules/.pnpm`. Envoyee telle quelle, l'arborescence
+      # arrivait amputee et le serveur mourait sur
+      # « Cannot find module './cjs/react-dom-server-legacy.node.development.js' ».
+      # Un tar conserve les liens ; les cibles existent cote consommateur, qui
+      # fait son propre `pnpm install`. [BO-AUTH-SESSION-002]
+      - name: Archive back-office build (for E2E jobs)
+        if: needs.detect-changes.outputs.e2e-needed == 'true'
+        run: tar -czf /tmp/back-office-next.tgz -C apps/back-office .next
+
       - name: Upload back-office .next artifact (for E2E jobs)
         if: needs.detect-changes.outputs.e2e-needed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: back-office-build
-          path: apps/back-office/.next
+          path: /tmp/back-office-next.tgz
           retention-days: 1
           include-hidden-files: true
 
@@ -443,7 +453,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: back-office-build
-          path: apps/back-office/.next
+          path: /tmp/back-office-artifact
+
+      - name: Unpack back-office build
+        run: tar -xzf /tmp/back-office-artifact/back-office-next.tgz -C apps/back-office
 
       - name: Start back-office (background)
         run: |
@@ -592,7 +605,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: back-office-build
-          path: apps/back-office/.next
+          path: /tmp/back-office-artifact
+
+      - name: Unpack back-office build
+        run: tar -xzf /tmp/back-office-artifact/back-office-next.tgz -C apps/back-office
 
       - name: Start back-office (background)
         run: |
@@ -749,7 +765,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: back-office-build
-          path: apps/back-office/.next
+          path: /tmp/back-office-artifact
+
+      - name: Unpack back-office build
+        run: tar -xzf /tmp/back-office-artifact/back-office-next.tgz -C apps/back-office
 
       - name: Start back-office (background)
         run: |
