@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 
+import { PostHogProvider } from '@/components/providers/PostHogProvider';
+
 import 'driver.js/dist/driver.css';
 
 import './globals.css';
@@ -80,6 +82,14 @@ export const metadata: Metadata = {
   alternates: {
     canonical: SITE_URL,
   },
+  /**
+   * Application en francais. La traduction automatique de Chrome reecrit des
+   * noeuds de texte dans le DOM, React perd ses reperes et leve une erreur non
+   * rattrapee. [BO-OBS-001]
+   */
+  other: {
+    google: 'notranslate',
+  },
 };
 
 export const viewport: Viewport = {
@@ -101,7 +111,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <html lang="fr">
+    <html lang="fr" translate="no">
       <head>
         <link
           rel="preconnect"
@@ -112,7 +122,9 @@ export default function RootLayout({
           href="https://aorroydfjsrygmosnzrl.supabase.co"
         />
       </head>
-      <body className="min-h-screen bg-gray-50/50">{children}</body>
+      <body className="notranslate min-h-screen bg-gray-50/50">
+        <PostHogProvider>{children}</PostHogProvider>
+      </body>
     </html>
   );
 }

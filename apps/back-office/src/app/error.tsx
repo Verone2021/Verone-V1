@@ -20,6 +20,13 @@ import { useEffect } from 'react';
 
 import { AlertCircle, LogIn, RotateCcw } from 'lucide-react';
 
+import posthog from 'posthog-js';
+
+import {
+  reportErrorToPosthog,
+  shouldInitPosthog,
+} from '@/lib/observability/posthog';
+
 export default function RootError({
   error,
   reset,
@@ -29,6 +36,9 @@ export default function RootError({
 }) {
   useEffect(() => {
     console.error('[back-office] Root error boundary:', error);
+    if (shouldInitPosthog()) {
+      reportErrorToPosthog(posthog, error, { source: 'root-error' });
+    }
     if (error.digest) console.error('[back-office] Digest:', error.digest);
   }, [error]);
 
@@ -48,6 +58,15 @@ export default function RootError({
           plupart des cas, cela repart tout de suite. Si l&apos;ecran revient,
           reconnectez-vous.
         </p>
+
+        {error.digest !== undefined && error.digest !== '' && (
+          <div className="mb-6 rounded-md bg-gray-50 px-4 py-3 text-center text-xs text-gray-500">
+            Code technique :{' '}
+            <span className="font-mono text-gray-700">{error.digest}</span>
+            <br />
+            Communiquez ce code au support.
+          </div>
+        )}
 
         {process.env.NODE_ENV === 'development' && (
           <div className="mb-6 p-3 bg-gray-100 rounded text-sm">

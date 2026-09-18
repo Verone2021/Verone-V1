@@ -6,6 +6,13 @@
  */
 import { useEffect } from 'react';
 
+import posthog from 'posthog-js';
+
+import {
+  reportErrorToPosthog,
+  shouldInitPosthog,
+} from '@/lib/observability/posthog';
+
 export default function GlobalError({
   error,
   reset,
@@ -16,6 +23,9 @@ export default function GlobalError({
   useEffect(() => {
     // Console log for debugging
     console.error('Global Error:', error);
+    if (shouldInitPosthog()) {
+      reportErrorToPosthog(posthog, error, { source: 'linkme-global-error' });
+    }
   }, [error]);
 
   return (

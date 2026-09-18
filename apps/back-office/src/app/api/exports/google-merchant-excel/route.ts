@@ -15,6 +15,8 @@ import { createAdminClient } from '@verone/utils/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import * as XLSX from 'xlsx';
 
+import { requireBackofficeAdmin } from '@/lib/guards';
+
 interface ExportResponse {
   success: boolean;
   disabled?: boolean;
@@ -189,6 +191,14 @@ function generateExcelFile<T extends object>(
  * GET - Exporte les produits en format Excel Google Merchant
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  // Garde : back-office connecte (owner/admin) uniquement.
+  // [BO-SEC-GUARD-001] cette route lisait des donnees clients sans aucune
+  // authentification, avec la cle service_role qui contourne la RLS.
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult;
+  }
+
   // 🔒 HARD GATE: Si flag désactivé ou absent, skip silencieux
   if (process.env.NEXT_PUBLIC_GOOGLE_MERCHANT_SYNC_ENABLED !== 'true') {
     return NextResponse.json(

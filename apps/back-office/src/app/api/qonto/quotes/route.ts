@@ -29,6 +29,8 @@ import {
   validatePostBody,
 } from './route.post';
 
+import { requireBackofficeAdmin } from '@/lib/guards';
+
 function getQontoClient(): QontoClient {
   return new QontoClient({
     authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') ?? 'oauth',
@@ -62,6 +64,19 @@ export async function GET(request: NextRequest): Promise<
     error?: string;
   }>
 > {
+  // Garde : back-office connecte (owner/admin) uniquement.
+  // [BO-SEC-GUARD-001] cette route lisait des donnees clients sans aucune
+  // authentification, avec la cle service_role qui contourne la RLS.
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    // On renvoie le meme code (401 ou 403) dans la forme de reponse declaree
+    // par cette route, pour ne pas elargir son contrat de sortie.
+    return NextResponse.json(
+      { success: false, error: 'Acces refuse' },
+      { status: guardResult.status }
+    );
+  }
+
   try {
     const status = new URL(request.url).searchParams.get(
       'status'
