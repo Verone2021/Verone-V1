@@ -447,7 +447,27 @@ jobs:
 
       - name: Start back-office (background)
         run: |
-          pnpm --filter @verone/back-office start > /tmp/next-start.log 2>&1 &
+          # `next start` ne fonctionne PAS avec `output: 'standalone'`. Next le
+          # dit lui-meme au demarrage, sert quand meme, et chaque requete tombe
+          # en 500 des qu'un middleware existe :
+          #   ⚠ "next start" does not work with "output: standalone"
+          #   [TypeError: Cannot read properties of undefined (reading 'default')]
+          # Le defaut dormait depuis toujours ; il s'est reveille le 18/09 avec
+          # l'ajout du controle de session. On lance donc le serveur autonome —
+          # exactement ce que Vercel execute en production, donc ce que les
+          # tests doivent eprouver. [BO-AUTH-SESSION-002]
+          SERVER=$(find apps/back-office/.next/standalone -maxdepth 4 -name server.js | head -1)
+          if [ -z "$SERVER" ]; then
+            echo "::error title=Build autonome absent::Aucun server.js sous apps/back-office/.next/standalone"
+            ls apps/back-office/.next || true
+            exit 1
+          fi
+          APP_DIR=$(dirname "$SERVER")
+          # Le serveur autonome n'embarque ni les fichiers statiques ni /public.
+          mkdir -p "$APP_DIR/.next"
+          cp -r apps/back-office/.next/static "$APP_DIR/.next/static"
+          cp -r apps/back-office/public "$APP_DIR/public" 2>/dev/null || true
+          PORT=3000 HOSTNAME=127.0.0.1 node "$SERVER" > /tmp/next-start.log 2>&1 &
           echo $! > /tmp/next-start.pid
           up=0
           for i in {1..60}; do
@@ -576,7 +596,27 @@ jobs:
 
       - name: Start back-office (background)
         run: |
-          pnpm --filter @verone/back-office start > /tmp/next-start.log 2>&1 &
+          # `next start` ne fonctionne PAS avec `output: 'standalone'`. Next le
+          # dit lui-meme au demarrage, sert quand meme, et chaque requete tombe
+          # en 500 des qu'un middleware existe :
+          #   ⚠ "next start" does not work with "output: standalone"
+          #   [TypeError: Cannot read properties of undefined (reading 'default')]
+          # Le defaut dormait depuis toujours ; il s'est reveille le 18/09 avec
+          # l'ajout du controle de session. On lance donc le serveur autonome —
+          # exactement ce que Vercel execute en production, donc ce que les
+          # tests doivent eprouver. [BO-AUTH-SESSION-002]
+          SERVER=$(find apps/back-office/.next/standalone -maxdepth 4 -name server.js | head -1)
+          if [ -z "$SERVER" ]; then
+            echo "::error title=Build autonome absent::Aucun server.js sous apps/back-office/.next/standalone"
+            ls apps/back-office/.next || true
+            exit 1
+          fi
+          APP_DIR=$(dirname "$SERVER")
+          # Le serveur autonome n'embarque ni les fichiers statiques ni /public.
+          mkdir -p "$APP_DIR/.next"
+          cp -r apps/back-office/.next/static "$APP_DIR/.next/static"
+          cp -r apps/back-office/public "$APP_DIR/public" 2>/dev/null || true
+          PORT=3000 HOSTNAME=127.0.0.1 node "$SERVER" > /tmp/next-start.log 2>&1 &
           echo $! > /tmp/next-start.pid
           up=0
           for i in {1..60}; do
@@ -713,7 +753,27 @@ jobs:
 
       - name: Start back-office (background)
         run: |
-          pnpm --filter @verone/back-office start > /tmp/next-start.log 2>&1 &
+          # `next start` ne fonctionne PAS avec `output: 'standalone'`. Next le
+          # dit lui-meme au demarrage, sert quand meme, et chaque requete tombe
+          # en 500 des qu'un middleware existe :
+          #   ⚠ "next start" does not work with "output: standalone"
+          #   [TypeError: Cannot read properties of undefined (reading 'default')]
+          # Le defaut dormait depuis toujours ; il s'est reveille le 18/09 avec
+          # l'ajout du controle de session. On lance donc le serveur autonome —
+          # exactement ce que Vercel execute en production, donc ce que les
+          # tests doivent eprouver. [BO-AUTH-SESSION-002]
+          SERVER=$(find apps/back-office/.next/standalone -maxdepth 4 -name server.js | head -1)
+          if [ -z "$SERVER" ]; then
+            echo "::error title=Build autonome absent::Aucun server.js sous apps/back-office/.next/standalone"
+            ls apps/back-office/.next || true
+            exit 1
+          fi
+          APP_DIR=$(dirname "$SERVER")
+          # Le serveur autonome n'embarque ni les fichiers statiques ni /public.
+          mkdir -p "$APP_DIR/.next"
+          cp -r apps/back-office/.next/static "$APP_DIR/.next/static"
+          cp -r apps/back-office/public "$APP_DIR/public" 2>/dev/null || true
+          PORT=3000 HOSTNAME=127.0.0.1 node "$SERVER" > /tmp/next-start.log 2>&1 &
           echo $! > /tmp/next-start.pid
           up=0
           for i in {1..60}; do
