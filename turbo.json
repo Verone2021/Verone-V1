@@ -32,7 +32,10 @@
         "CRON_SECRET",
         "RESEND_API_KEY",
         "RESEND_FROM_EMAIL",
-        "RESEND_REPLY_TO"
+        "RESEND_REPLY_TO",
+        "NEXT_PUBLIC_POSTHOG_KEY",
+        "NEXT_PUBLIC_POSTHOG_HOST",
+        "VERCEL_GIT_COMMIT_SHA"
       ]
     },
     "dev": {
