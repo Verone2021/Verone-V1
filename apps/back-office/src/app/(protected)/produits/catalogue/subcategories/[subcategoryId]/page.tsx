@@ -25,10 +25,12 @@ import {
   Clock,
 } from 'lucide-react';
 
+import { CoefficientsCard } from '@verone/categories';
 import { useFamilies } from '@verone/categories';
 import { useCategories } from '@verone/categories';
 import { useSubcategories } from '@verone/categories';
 import { useProducts } from '@verone/products';
+import { resolveCoefficient } from '@verone/products/utils';
 import type { Database } from '@verone/utils/supabase/types';
 
 type Family = Database['public']['Tables']['families']['Row'];
@@ -52,7 +54,11 @@ export default function SubcategoryDetailPage() {
 
   const { families, loading: familiesLoading } = useFamilies();
   const { allCategories, loading: categoriesLoading } = useCategories();
-  const { subcategories, loading: subcategoriesLoading } = useSubcategories();
+  const {
+    subcategories,
+    loading: subcategoriesLoading,
+    updateSubcategory,
+  } = useSubcategories();
 
   // ✅ Hook pour charger les produits de la sous-catégorie
   const { products, loading: productsLoading } = useProducts(
@@ -132,6 +138,35 @@ export default function SubcategoryDetailPage() {
       </div>
     );
   }
+
+  // Ce qui s'applique si les deux champs restent vides : le niveau au-dessus.
+  const hierarchy = {
+    category: category
+      ? {
+          retailCoefficient: category.retail_coefficient,
+          wholesaleCoefficient: category.wholesale_coefficient,
+        }
+      : null,
+    family: family
+      ? {
+          retailCoefficient: family.retail_coefficient,
+          wholesaleCoefficient: family.wholesale_coefficient,
+        }
+      : null,
+  };
+  const inheritedRetail = resolveCoefficient('retail', hierarchy);
+  const inheritedWholesale = resolveCoefficient('wholesale', hierarchy);
+  const SOURCE_LABELS: Record<string, string> = {
+    category: 'la catégorie',
+    family: 'la famille',
+    fallback: 'la valeur par défaut',
+    subcategory: 'la sous-catégorie',
+  };
+  const inheritedCoefficients = {
+    retail: inheritedRetail.value,
+    wholesale: inheritedWholesale.value,
+    from: SOURCE_LABELS[inheritedRetail.source] ?? 'la valeur par défaut',
+  };
 
   const handleProductClick = (productId: string) => {
     router.push(`/catalogue/${productId}`);
@@ -252,6 +287,15 @@ export default function SubcategoryDetailPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Coefficients conseilles */}
+        <CoefficientsCard
+          level="sous-catégorie"
+          retailCoefficient={subcategory.retail_coefficient ?? null}
+          wholesaleCoefficient={subcategory.wholesale_coefficient ?? null}
+          inherited={inheritedCoefficients}
+          onSave={values => updateSubcategory(subcategory.id, values)}
+        />
 
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

@@ -13,6 +13,9 @@ import { Card, CardContent } from '@verone/ui';
 import { VéroneCard } from '@verone/ui';
 import { ArrowLeft, Plus, Edit, FolderOpen, Package, Tag } from 'lucide-react';
 
+import { CoefficientsCard } from '@verone/categories';
+import { resolveCoefficient } from '@verone/products/utils';
+
 import { FamilyCrudForm } from '@/components/forms/family-crud-form';
 import { SubcategoryForm } from '@/components/forms/subcategory-form';
 
@@ -27,6 +30,7 @@ export default function CategoryDetailPage() {
     category,
     family,
     families,
+    updateCategory,
     allCategories,
     categorySubcategories,
     loading,
@@ -90,6 +94,18 @@ export default function CategoryDetailPage() {
   const handleSubcategoryClick = (subcategoryId: string) => {
     router.push(`/catalogue/subcategories/${subcategoryId}`);
   };
+
+  // Ce qui s'applique si les deux champs restent vides : le niveau au-dessus.
+  const parentHierarchy = {
+    family: family
+      ? {
+          retailCoefficient: family.retail_coefficient,
+          wholesaleCoefficient: family.wholesale_coefficient,
+        }
+      : null,
+  };
+  const inheritedRetail = resolveCoefficient('retail', parentHierarchy);
+  const inheritedWholesale = resolveCoefficient('wholesale', parentHierarchy);
 
   return (
     <div className="min-h-screen bg-white p-6">
@@ -168,6 +184,22 @@ export default function CategoryDetailPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Coefficients conseilles */}
+        <CoefficientsCard
+          level="catégorie"
+          retailCoefficient={category.retail_coefficient ?? null}
+          wholesaleCoefficient={category.wholesale_coefficient ?? null}
+          inherited={{
+            retail: inheritedRetail.value,
+            wholesale: inheritedWholesale.value,
+            from:
+              inheritedRetail.source === 'family'
+                ? 'la famille'
+                : 'la valeur par défaut',
+          }}
+          onSave={values => updateCategory(category.id, values)}
+        />
 
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

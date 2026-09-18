@@ -1104,8 +1104,10 @@ export type Database = {
           meta_description: string | null;
           meta_title: string | null;
           name: string;
+          retail_coefficient: number | null;
           slug: string;
           updated_at: string | null;
+          wholesale_coefficient: number | null;
         };
         Insert: {
           cloudflare_image_id?: string | null;
@@ -1123,8 +1125,10 @@ export type Database = {
           meta_description?: string | null;
           meta_title?: string | null;
           name: string;
+          retail_coefficient?: number | null;
           slug: string;
           updated_at?: string | null;
+          wholesale_coefficient?: number | null;
         };
         Update: {
           cloudflare_image_id?: string | null;
@@ -1142,8 +1146,10 @@ export type Database = {
           meta_description?: string | null;
           meta_title?: string | null;
           name?: string;
+          retail_coefficient?: number | null;
           slug?: string;
           updated_at?: string | null;
+          wholesale_coefficient?: number | null;
         };
         Relationships: [
           {
@@ -1254,6 +1260,8 @@ export type Database = {
           min_margin_rate: number | null;
           min_quantity: number | null;
           notes: string | null;
+          price_validated_at: string | null;
+          price_validated_by: string | null;
           product_id: string;
           propagate_to_selections: boolean | null;
           public_price_ht: number | null;
@@ -1289,6 +1297,8 @@ export type Database = {
           min_margin_rate?: number | null;
           min_quantity?: number | null;
           notes?: string | null;
+          price_validated_at?: string | null;
+          price_validated_by?: string | null;
           product_id: string;
           propagate_to_selections?: boolean | null;
           public_price_ht?: number | null;
@@ -1324,6 +1334,8 @@ export type Database = {
           min_margin_rate?: number | null;
           min_quantity?: number | null;
           notes?: string | null;
+          price_validated_at?: string | null;
+          price_validated_by?: string | null;
           product_id?: string;
           propagate_to_selections?: boolean | null;
           public_price_ht?: number | null;
@@ -3077,8 +3089,10 @@ export type Database = {
           meta_description: string | null;
           meta_title: string | null;
           name: string;
+          retail_coefficient: number | null;
           slug: string;
           updated_at: string | null;
+          wholesale_coefficient: number | null;
         };
         Insert: {
           cloudflare_image_id?: string | null;
@@ -3092,8 +3106,10 @@ export type Database = {
           meta_description?: string | null;
           meta_title?: string | null;
           name: string;
+          retail_coefficient?: number | null;
           slug: string;
           updated_at?: string | null;
+          wholesale_coefficient?: number | null;
         };
         Update: {
           cloudflare_image_id?: string | null;
@@ -3107,8 +3123,10 @@ export type Database = {
           meta_description?: string | null;
           meta_title?: string | null;
           name?: string;
+          retail_coefficient?: number | null;
           slug?: string;
           updated_at?: string | null;
+          wholesale_coefficient?: number | null;
         };
         Relationships: [];
       };
@@ -7411,6 +7429,9 @@ export type Database = {
           consultation_id: string | null;
           cost_net_avg: number | null;
           cost_net_last: number | null;
+          cost_net_manual: number | null;
+          cost_net_manual_at: string | null;
+          cost_net_manual_by: string | null;
           cost_net_max: number | null;
           cost_net_min: number | null;
           cost_price: number | null;
@@ -7519,6 +7540,9 @@ export type Database = {
           consultation_id?: string | null;
           cost_net_avg?: number | null;
           cost_net_last?: number | null;
+          cost_net_manual?: number | null;
+          cost_net_manual_at?: string | null;
+          cost_net_manual_by?: string | null;
           cost_net_max?: number | null;
           cost_net_min?: number | null;
           cost_price?: number | null;
@@ -7627,6 +7651,9 @@ export type Database = {
           consultation_id?: string | null;
           cost_net_avg?: number | null;
           cost_net_last?: number | null;
+          cost_net_manual?: number | null;
+          cost_net_manual_at?: string | null;
+          cost_net_manual_by?: string | null;
           cost_net_max?: number | null;
           cost_net_min?: number | null;
           cost_price?: number | null;
@@ -10564,8 +10591,10 @@ export type Database = {
           meta_description: string | null;
           meta_title: string | null;
           name: string;
+          retail_coefficient: number | null;
           slug: string;
           updated_at: string | null;
+          wholesale_coefficient: number | null;
         };
         Insert: {
           category_id: string;
@@ -10578,8 +10607,10 @@ export type Database = {
           meta_description?: string | null;
           meta_title?: string | null;
           name: string;
+          retail_coefficient?: number | null;
           slug: string;
           updated_at?: string | null;
+          wholesale_coefficient?: number | null;
         };
         Update: {
           category_id?: string;
@@ -10592,8 +10623,10 @@ export type Database = {
           meta_description?: string | null;
           meta_title?: string | null;
           name?: string;
+          retail_coefficient?: number | null;
           slug?: string;
           updated_at?: string | null;
+          wholesale_coefficient?: number | null;
         };
         Relationships: [
           {
@@ -13857,9 +13890,11 @@ export type Database = {
           is_active: boolean;
           level: number;
           name: string;
+          retail_coefficient: number;
           slug: string;
           subcategory_count: number;
           updated_at: string;
+          wholesale_coefficient: number;
         }[];
       };
       get_channel_price_evolution: {

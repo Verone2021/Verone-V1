@@ -17,6 +17,12 @@ import {
   stockColor,
 } from './catalogue-list-helpers';
 import { ProductBrandChips } from './_components/ProductBrandChips';
+import {
+  LandedCostCell,
+  MarginCell,
+  SitePriceCell,
+} from './_components/CataloguePricingCells';
+import type { CataloguePricingView } from './_lib/catalogue-pricing-view';
 
 type ProductImage = Database['public']['Tables']['product_images']['Row'];
 
@@ -33,6 +39,12 @@ interface ProductRowProps {
     nextPublished: boolean
   ) => Promise<boolean>;
   isPublishPending?: boolean;
+  /**
+   * Vue prix de la ligne (revient, prix site, marge, anomalies), construite une
+   * seule fois par la liste à partir du lot de prix canal. `undefined` tant que le
+   * lot charge : les cellules affichent alors « — », jamais un zéro trompeur.
+   */
+  pricingView?: CataloguePricingView;
 }
 
 export const ProductRow = memo(function ProductRow({
@@ -45,6 +57,7 @@ export const ProductRow = memo(function ProductRow({
   onToggleSelect,
   onTogglePublish,
   isPublishPending = false,
+  pricingView,
 }: ProductRowProps) {
   const { primaryImage: fetchedImage, loading: imageLoading } =
     useProductImages({
@@ -229,25 +242,23 @@ export const ProductRow = memo(function ProductRow({
         </div>
       </td>
 
-      <td className="py-2 px-2 text-right hidden lg:table-cell">
-        <span
-          className={cn(
-            'text-sm',
-            product.margin_percentage != null && product.margin_percentage >= 40
-              ? 'text-green-600 font-semibold'
-              : product.margin_percentage != null &&
-                  product.margin_percentage >= 20
-                ? 'text-orange-600'
-                : product.margin_percentage != null
-                  ? 'text-red-600'
-                  : 'text-gray-400'
-          )}
-        >
-          {product.margin_percentage != null
-            ? `${product.margin_percentage.toFixed(1)}%`
-            : '-'}
-        </span>
-      </td>
+      {pricingView ? (
+        <>
+          <LandedCostCell view={pricingView} />
+          <SitePriceCell view={pricingView} />
+          <MarginCell view={pricingView} />
+        </>
+      ) : (
+        <>
+          <td className="py-2 px-2 text-right text-sm text-gray-400 hidden lg:table-cell">
+            —
+          </td>
+          <td className="py-2 px-2 text-right text-sm text-gray-400">—</td>
+          <td className="py-2 px-2 text-right text-sm text-gray-400 hidden lg:table-cell">
+            —
+          </td>
+        </>
+      )}
 
       <td className="py-2 px-2 text-center hidden xl:table-cell">
         <div className="flex items-center justify-center gap-1">

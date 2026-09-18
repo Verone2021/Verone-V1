@@ -15,3 +15,6 @@ export * from './use-product-channel-publication';
 
 // Top produits site internet (BO-MKT-METRICS-001b)
 export * from './use-site-top-products';
+
+// Prix par canal en lot, pour les listes (BO-PRICING-GOV-001)
+export * from './use-channel-prices-batch';

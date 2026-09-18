@@ -64,8 +64,15 @@ const PRODUCT_SELECT = `
   subcategory_id, supplier_id, manufacturer, brand_ids,
   has_images, is_published_online, dimensions, weight,
   archived_at, created_at, updated_at,
+  cost_net_manual, eco_tax_default,
   supplier:organisations!supplier_id(id, legal_name, trade_name),
-  subcategories!subcategory_id(id, name)
+  subcategories!subcategory_id(
+    id, name, retail_coefficient, wholesale_coefficient,
+    category:categories!category_id(
+      id, name, retail_coefficient, wholesale_coefficient,
+      family:families!family_id(id, name, retail_coefficient, wholesale_coefficient)
+    )
+  )
 `;
 
 export async function loadProducts(

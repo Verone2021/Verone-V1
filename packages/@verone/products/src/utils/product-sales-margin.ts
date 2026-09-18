@@ -81,10 +81,22 @@ export interface ProductCostInput {
 
 // ---------- Output types ----------
 
+/**
+ * D'où vient le coût retenu. Sert à afficher la provenance à l'écran : une marge
+ * calculée sur un prix d'achat nu (`purchase_price`) est trop belle, il faut le dire.
+ */
+export type CostOrigin =
+  | 'manual'
+  | 'weighted_average'
+  | 'purchase_price'
+  | 'missing';
+
 export interface ResolvedCost {
   cost: number | null;
   includesFees: boolean;
   missing: boolean;
+  /** Provenance du coût retenu. */
+  origin: CostOrigin;
 }
 
 export interface ComputedSaleLine {
@@ -185,18 +197,57 @@ export interface LinkMeSummary {
 
 // ---------- Pure functions ----------
 
-/** Résout le coût du produit avec priorité cost_net_avg > cost_price */
+/**
+ * Résout le prix de revient d'un produit.
+ *
+ * Priorité : saisie manuelle > moyenne pondérée des achats > prix d'achat nu.
+ *
+ * La saisie manuelle passe devant parce qu'elle existe précisément pour les produits
+ * qu'aucun achat ne renseigne (50 produits actifs au 17/09/2026). Elle ne remplace
+ * pas `cost_net_avg` en base : le déclencheur PMP continue de l'écrire, la valeur
+ * manuelle la couvre seulement à la lecture. Voir migration
+ * `20260917235000_bo_pricing_gov_001_cost_net_manual.sql`.
+ *
+ * `includesFees` dit si le coût retenu comprend les frais d'approche (transport,
+ * douane, assurance). Un coût sans frais produit une marge optimiste : l'appelant
+ * doit le signaler à l'écran, jamais le masquer.
+ */
 export function resolveCost(input: {
   costNetAvg: number | null;
   costPrice: number | null;
+  /** Prix de revient saisi à la main (`products.cost_net_manual`). */
+  costNetManual?: number | null;
 }): ResolvedCost {
+  if (input.costNetManual != null && input.costNetManual > 0) {
+    return {
+      cost: input.costNetManual,
+      includesFees: true,
+      missing: false,
+      origin: 'manual',
+    };
+  }
   if (input.costNetAvg != null && input.costNetAvg > 0) {
-    return { cost: input.costNetAvg, includesFees: true, missing: false };
+    return {
+      cost: input.costNetAvg,
+      includesFees: true,
+      missing: false,
+      origin: 'weighted_average',
+    };
   }
   if (input.costPrice != null && input.costPrice > 0) {
-    return { cost: input.costPrice, includesFees: false, missing: false };
+    return {
+      cost: input.costPrice,
+      includesFees: false,
+      missing: false,
+      origin: 'purchase_price',
+    };
   }
-  return { cost: null, includesFees: false, missing: true };
+  return {
+    cost: null,
+    includesFees: false,
+    missing: true,
+    origin: 'missing',
+  };
 }
 
 /** Filtre les lignes sur les statuts de vente valables */
@@ -250,6 +301,13 @@ export function computeSaleLine(
       cost: isMissing ? null : lc.costUnitHt,
       includesFees: lc.includesFees,
       missing: isMissing,
+      // Coût figé à la vente : sa provenance est déjà portée par `costSource`
+      // (colonne `sales_order_item_costs.cost_source`), plus précise que `origin`.
+      origin: isMissing
+        ? 'missing'
+        : lc.includesFees
+          ? 'weighted_average'
+          : 'purchase_price',
     };
     costSource = lc.source;
   } else {
