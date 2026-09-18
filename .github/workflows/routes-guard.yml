@@ -1,0 +1,55 @@
+# Garde-fou : une route compilee qui n'arrive pas jusqu'au deploiement.
+#
+# Le 15 septembre 2026, la fiche produit a disparu de la production sans qu'aucun
+# signal ne se leve. Le code etait juste, la compilation verte, les tests de
+# fumee au vert : c'est l'etape de sortie de Vercel qui perdait la route. Meme
+# panne en avril, puis en mai (cinq tentatives de correction en quinze heures).
+#
+# Ce controle compare, apres chaque mise en ligne, les routes que Next compile
+# avec celles que le deploiement contient reellement. C'est le seul garde-fou
+# qui aurait vu passer les trois episodes.
+#
+# Il tourne APRES la mise en ligne, parce que la panne n'existe qu'a la sortie :
+# rien avant le deploiement ne peut la voir. En cas d'echec, la production est
+# deja en ligne — le but est d'alerter en minutes plutot qu'en jours.
+name: Routes deployees (post-mise en ligne)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: "URL d'un deploiement precis a verifier"
+        required: false
+
+concurrency:
+  group: routes-guard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Toute route compilee est-elle servie
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer la CLI Vercel
+        run: npm install --global vercel@50
+
+      - name: Comparer routes compilees et routes deployees
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -n "${{ github.event.inputs.deployment_url }}" ]; then
+            node scripts/check-deployed-routes.mjs "${{ github.event.inputs.deployment_url }}"
+          else
+            node scripts/check-deployed-routes.mjs "--sha=${{ github.sha }}"
+          fi

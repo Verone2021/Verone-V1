@@ -68,3 +68,20 @@ export function defaultRateFor(currency: string): number {
   if (currency === 'USD') return USD_TO_EUR_DEFAULT;
   return 1;
 }
+
+/**
+ * Symbole d'affichage d'une monnaie d'achat.
+ *
+ * Sert à afficher un montant dans la monnaie où il a réellement été saisi,
+ * au lieu de coller un « € » en dur sur une valeur libellée en dollars.
+ *
+ * Toute monnaie non reconnue retombe sur son propre code (ex: 'GBP'), ce qui
+ * reste lisible et évite d'afficher un symbole faux.
+ *
+ * @param currency Code monnaie ('EUR' | 'USD').
+ */
+export function currencySymbol(currency: string): string {
+  if (currency === 'USD') return '$';
+  if (currency === 'EUR') return '€';
+  return currency;
+}

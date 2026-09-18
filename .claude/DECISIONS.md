@@ -1714,3 +1714,145 @@ Supabase qui n'a pas de marge. Deux salariés travaillent sur le back-office en 
 ### Écarté
 
 - Fenêtre libre avec surveillance renforcée : l'incident du 15/09 montre que la bascule elle-même crée la charge.
+
+## ADR-042 — `[BO-PROD-DETAIL-404-006]` Une route peut être compilée sans être déployée : garde post-mise en ligne
+
+**Date** : 2026-09-18 · **Statut** : appliqué · **Fichiers** : `scripts/check-deployed-routes.mjs`,
+`.github/workflows/routes-guard.yml`, `tests/e2e/smoke/smoke-produits.spec.ts`,
+`apps/back-office/src/app/(protected)/produits/catalogue/detail/[id]/page.tsx`
+
+### Constat
+
+La fiche produit `/produits/catalogue/detail/[id]` a disparu de la production **trois fois** : avril 2026
+(ADR du 2026-04-24, rollback `vercel promote`, cause jamais cherchée), mai 2026 (série
+`BO-PROD-DETAIL-404-001` à `-005`, cinq correctifs en quinze heures), et depuis le 2026-09-15.
+
+Preuve obtenue le 2026-09-18, jamais recueillie lors des épisodes précédents — comparaison entre le tableau
+de routes de `next build` et la sortie réelle du déploiement (`/v11/deployments/<id>/builds`) :
+
+```
+routes de page compilées : 167
+COMPILÉES MAIS ABSENTES DU DÉPLOIEMENT (1) :
+  /produits/catalogue/detail/[id]
+```
+
+Une seule route sur 167. Le code est juste, la compilation verte (`cache miss, executing`), le rewrite
+fonctionne (`x-nextjs-rewritten-path` présent) : c'est **l'étape de sortie de Vercel** qui perd la route.
+Vercel répond alors `x-matched-path: /_not-found` tout en laissant l'URL intacte.
+
+Trois raisons pour lesquelles c'est passé inaperçu si longtemps :
+
+1. **Un doublon masquait la panne.** `catalogue/[id]` et `catalogue/detail/[id]` coexistaient depuis mai
+   (le merge de release #979 avait ressuscité le dossier que #978 venait de déplacer). Le rewrite est
+   `afterFiles` avec `check: true` : quand sa destination ne répondait pas, Next retombait sur
+   `catalogue/[id]`. La PR #1160 (2026-09-15) a supprimé le doublon en supposant « le rewrite sert
+   detail/[id] » — supposition jamais vérifiée. Le correctif 005 de mai était donc un **faux positif**
+   validé quatre mois durant.
+2. **Le test de fumée validait du vide.** `smoke-produits.spec.ts` cherchait un `a[href*="/produits/catalogue/"]` ;
+   le catalogue rend des **boutons** « Voir détail ». Le locator ne matchait rien, tout le bloc d'assertions
+   vivait dans `if (await lien.isVisible())`, et le test passait au vert sans ouvrir un seul produit.
+3. **Rien avant le déploiement ne peut voir la panne.** Ni `tsc`, ni ESLint, ni `next build`, ni la
+   compilation locale (dont le `routes-manifest.json` contient bien la route).
+
+### Cause, établie par expérience
+
+Six déploiements de prévisualisation, un candidat à la fois, vérifiés par le script de comparaison :
+
+| Essai                                                     | Morceau propre de `page.tsx` | Route déployée |
+| --------------------------------------------------------- | ---------------------------- | -------------- |
+| `output: 'standalone'` retiré                             | 43,1 kB                      | non            |
+| rewrite UUID retiré                                       | 43,1 kB                      | non            |
+| sonde légère (route neuve triviale, voisine)              | 43,1 kB                      | non            |
+| sonde lourde (même page, adresse neuve → morceau partagé) | 439 B                        | **oui**        |
+| six onglets en chargement différé                         | 15,6 kB                      | **oui**        |
+
+Ce n'est ni la configuration de compilation, ni le rewrite, ni le dossier parent, ni la profondeur, ni le
+nom du segment : **c'est le poids du morceau propre de la route**. `detail/[id]` était de loin la plus
+lourde des 167 routes (43,1 kB de page, 2,21 Mo au premier chargement) et la seule à tomber. Le seuil exact
+côté Vercel reste inconnu, et aucun message ne le signale — d'où la garde ci-dessous.
+
+### Décision
+
+- **Les six onglets secondaires de la fiche produit passent en `next/dynamic`.** Morceau propre 43,1 kB →
+  15,6 kB, premier chargement 2,21 Mo → 1,27 Mo. La route est de nouveau servie (167/167). Gain réel au
+  passage : `TabContent` renvoie `null` hors onglet actif, ce code était téléchargé sans jamais être affiché.
+- **`scripts/check-deployed-routes.mjs`** compare routes compilées et chemins réellement déployés ; sort en
+  erreur si l'écart n'est pas vide. `.github/workflows/routes-guard.yml` l'exécute après chaque `push` sur
+  `main`. Le contrôle est **post-mise en ligne par nécessité** : la panne n'existe qu'à la sortie. C'est lui
+  qui rattrapera le jour où une autre route franchira le seuil.
+- **Le test de fumée échoue** désormais s'il ne peut pas ouvrir une fiche, et vérifie `x-matched-path`.
+- **Règle** : ne jamais valider une route sur « la page répond 200 ». Toujours regarder **quelle route** a
+  répondu (`x-matched-path`). C'est ce raccourci qui a fait passer le correctif 005 pour un succès.
+
+### Écarté
+
+- Rétablir le doublon `catalogue/[id]` comme filet permanent : cache la panne au lieu de la corriger, et
+  c'est exactement ce qui a produit quatre mois de fausse sécurité.
+- `output: 'standalone'` retiré : testé, sans effet sur la panne, réglage remis en place. Vercel l'ignore
+  (mêmes messages `Traced Next.js server files` / `Created all serverless functions` avec et sans).
+- Supprimer le rewrite UUID : testé, sans effet. Conservé, les 19 appels en forme courte continuent de
+  fonctionner.
+- Baisser la garde à un simple avertissement : les trois épisodes montrent qu'un signal non bloquant n'est
+  pas lu.
+
+## ADR-043 — `[INFRA-CI-BUILD-001]` Le contrôle qualité tient dans son budget : trois tâches au lieu d'une
+
+**Date** : 2026-09-18 · **Statut** : appliqué · **Fichiers** : `.github/workflows/quality.yml`
+
+### Constat
+
+Le 2026-09-18, le contrôle `ESLint + Type-Check + Build` de la demande #1175 a été **annulé à 20 minutes
+pile**, en plein troisième build (run `35359993221`, étape coupée à 15:23:17 UTC). Ce n'est pas une erreur
+de code : la tâche n'a simplement pas eu le temps de finir.
+
+Mesure sur un passage réussi récent (job `105608551127`) :
+
+| Étape                                                   | Durée à chaud |
+| ------------------------------------------------------- | ------------- |
+| Build des 3 applications, à la file (`--concurrency=1`) | 5 min 42      |
+| Lint + type-check                                       | 2 min 30      |
+| Type coverage × 3                                       | 3 min 06      |
+
+À froid, sur la #1175 : lint + type-check **8 min 33**, build **> 9 min 47 sans finir**. Les quinze derniers
+passages tournaient entre 11 et 19 minutes, dont deux à 19 — le budget était consommé à 95 % depuis des
+semaines. Une modification dans `packages/` invalide le cache Next.js des **trois** applications à la fois
+(leur clé hache `packages/**/*.ts`), donc ce n'est pas un cas rare : c'est le cas de toute demande qui
+touche un paquet partagé.
+
+### Décision
+
+Le budget de 20 minutes **ne bouge pas**. On ne remonte pas un seuil pour faire passer la CI (ADR-033).
+On arrête de faire à la file ce qui est indépendant :
+
+- **`quality-lint`** — lint, type-check, et les trois passes `type-coverage`. Ces dernières ne dépendent
+  d'aucun build : elles n'avaient aucune raison d'attendre derrière eux.
+- **`quality-build`** — une tâche **par application**, les trois en parallèle. Le profil mémoire de chaque
+  build est **inchangé** : un seul build par machine, 6 Go de heap. La raison qui avait imposé
+  `--concurrency=1` en ADR de `[BO-AUDIT-004]` (2 vCPU / 7 Go, 24 Go de heap demandés en parallèle, runner
+  qui passe son temps à échanger avec le disque) reste intégralement respectée. On ne met pas trois builds
+  sur une machine ; on met un build sur chacune des trois.
+- **`quality`** — consolide les deux sous le nom historique `ESLint + Type-Check + Build`, attendu par la
+  protection de branche et par les tâches E2E (`needs: quality`).
+
+Attendu : un passage à froid passe d'environ 26 minutes cumulées à environ 15 minutes d'attente réelle.
+
+### Points de vigilance
+
+- La consolidation **doit** devenir rouge quand l'une des deux tâches échoue. Ni `quality-lint` ni
+  `quality-build` ne portent `continue-on-error`, donc `needs.*.result` dit ici la vérité — contrairement au
+  piège documenté dans `e2e-smoke-aggregate`, où `continue-on-error` faisait remonter `success` sur des
+  tâches en échec. Seuls `success` et `skipped` sont acceptés ; tout le reste sort en erreur.
+- L'archive du build back-office consommée par les tâches E2E est produite par la branche `back-office` de
+  la matrice. Les tâches E2E la récupèrent par son nom, inchangé.
+- L'étape « commentaire sur la demande en cas d'échec » est retirée : le résumé de tâche porte désormais
+  l'information, sans écrire dans la conversation de la demande.
+
+### Écarté
+
+- **Porter le délai à 30 minutes** : c'est exactement le raccourci interdit par ADR-033 — la marge cache la
+  dette au lieu de la traiter. Le constat de la session 03 (« build des 3 apps < 20 min ») visait déjà ce
+  point, et notait que le délai à 30 min n'est un filet qu'**après** la vraie correction.
+- **Remonter `--concurrency`** sur un seul runner : c'est précisément ce qui avait provoqué l'incident de
+  `[BO-AUDIT-004]` (> 25 min de thrashing au lieu de 2 à 6).
+- **Retirer ou alléger `type-coverage`** : c'est un garde-fou de qualité, il reste entier — il change
+  seulement de voisinage. Son heap passe de 8 Go à 6 Go, la machine n'en ayant que 7.
