@@ -148,3 +148,100 @@ provisoire dans un fournisseur) : vérifié par recherche, zéro trace.
 3. **Donner l'ordre de fusion**, demande par demande. Ordre conseillé : **1185** (fermer la
    boutique) → **1186** (les serrures) → **1188** (la règle) → **1187** (observabilité, une fois la
    clé posée).
+
+---
+
+# ADDENDUM — mise en ligne et vérifications réelles (2026-09-19, 00 h → 01 h 45 Paris)
+
+Roméo a donné l'ordre de tout passer sur `main`. Chaîne complète exécutée. Hors fenêtre
+interdite (ADR-041) : 22 h 48 → 23 h 42 UTC, un vendredi.
+
+## Ce qui a été mis en ligne
+
+| Demande  | Sujet                                                | Fusionnée           |
+| -------- | ---------------------------------------------------- | ------------------- |
+| 1185     | `[SI-MAINT-001]` fermeture provisoire de la boutique | staging 22 h 48 UTC |
+| 1186     | `[BO-SEC-GUARD-001]` 8 portes de lecture fermées     | staging             |
+| 1188     | `[INFRA-RULES-046]` règle + ADR-046                  | staging             |
+| 1187     | `[BO-OBS-001]` PostHog + filet d'erreur              | staging             |
+| **1189** | **release `staging` → `main`**                       | **23 h 09 UTC**     |
+| 1190     | `[BO-OBS-002]` le rejeu doit montrer l'AVANT         | staging             |
+| **1191** | **release `staging` → `main`**                       | **23 h 42 UTC**     |
+
+Un conflit sur `turbo.json` (les variables de #1185 et celles de #1187) résolu en gardant les deux.
+
+## Preuves en production — avant / après
+
+Appels depuis Internet, **sans aucune session** :
+
+| Adresse                                     | Avant                                | Après                                              |
+| ------------------------------------------- | ------------------------------------ | -------------------------------------------------- |
+| `/api/qonto/invoices`                       | **200, 172 311 octets, 41 factures** | **401** `{"success":false,"error":"Acces refuse"}` |
+| `/api/qonto/quotes`                         | **200, 27 597 octets**               | **401**                                            |
+| `/api/packlink/shipments/pending`           | **200, 1 331 octets**                | **401**                                            |
+| `/api/sales-orders/<uuid>/customer-address` | 404 (requête partie en base)         | **401** avant toute requête                        |
+| `/api/qonto/quotes/by-order/<uuid>`         | 200                                  | **401**                                            |
+| `www.veronecollections.fr`                  | 200                                  | **503** + `Retry-After: 3600`                      |
+
+**Aucune régression** : écran Facturation en production, connecté — 41 factures, 72 196,82 € de
+total, onglets Devis (41) et Avoirs (5). Capture :
+`.playwright-mcp/screenshots/20260919/prod-factures-apres-release-011500.png`.
+
+**Boutique fermée proprement** : page « la boutique est momentanément fermée / nous revenons très
+vite / contact@veronecollections.fr », `cache-control: no-store`, catalogue en 503.
+**Le webhook de paiement Stripe répond toujours** (400 « signature manquante » = joignable, ce
+n'est pas la page d'attente) : aucune commande déjà payée n'est perdue.
+
+**Anti-traduction actif** : le code servi contient `<html lang="fr" … translate="no">` et la classe
+`notranslate` sur le `body`.
+
+## PostHog — ce qui marche, et le défaut trouvé en testant
+
+Compte `romeo@veronecollections.fr`, **région UE**, organisation Vérone, projet **278462**,
+conservation des rejeus **30 jours**.
+
+**Ce qui est prouvé** : erreur volontaire provoquée en production → PostHog a chargé
+`exception-autocapture.js` avec la bonne clé, envoyé les événements sur `eu.i.posthog.com/i/v0/e/`,
+et l'interface affiche bien **`Exception`**, **`Identify`** et **`Set person properties`** —
+l'utilisateur identifié par `100d2439-0f52-46b1-9c30-ad7934b44719`, **un identifiant Supabase,
+jamais un e-mail**.
+
+**Le défaut trouvé** : **aucun rejeu n'a été créé**. Deux causes :
+
+1. l'enregistrement n'était déclenché que par nos propres filets React — une erreur captée
+   directement par PostHog ne produisait rien ;
+2. et quand il se déclenchait, il commençait **au** plantage : on aurait vu l'écran figé, jamais
+   ce qui l'a cassé. C'est exactement l'information qui a manqué le 17/09.
+
+**Corrigé** (`[BO-OBS-002]`, demande #1190) : déclencheur sur l'événement `$exception` configuré
+côté projet — l'enregistreur garde une fenêtre glissante **en mémoire** et ne persiste que si une
+erreur survient. L'exigence « pas d'enregistrement permanent » reste tenue.
+
+Deux réglages invisibles ont dû être corrigés à la main, et méritent d'être connus :
+
+- **« Record user sessions » était désactivé par défaut.** Sans lui, `startSessionRecording()` ne
+  fait strictement rien.
+- **Le déclencheur ne peut pas être posé sur un projet neuf** : la liste d'événements est vide tant
+  qu'aucune erreur n'a été reçue. D'où l'ordre : brancher → provoquer une erreur → configurer.
+
+## Défaut trouvé dans mon propre travail, et corrigé
+
+La demande #1187 affirmait que `turbo.json` déclarait les variables PostHog. **C'était faux** :
+le remplacement visait une ligne qui n'existait que sur une autre branche, et je n'avais pas relu
+le résultat. Sans correction, **Turbo filtre les variables non déclarées et elles n'arrivent jamais
+à l'application** — le journal de construction Vercel le dit explicitement. Corrigé avec
+vérification après écriture, et rectifié publiquement en commentaire de la demande.
+
+## Où sont rangées les clés
+
+| Emplacement                                                    | Contenu                                                   |
+| -------------------------------------------------------------- | --------------------------------------------------------- |
+| Vercel `verone-back-office` et `linkme` (production + preview) | `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`     |
+| `apps/*/.env.local` (hors suivi git)                           | idem                                                      |
+| `apps/*/.env.example` (versionné)                              | **les noms seulement** — ADR-034                          |
+| `turbo.json > tasks.build.env`                                 | déclarées, sinon filtrées                                 |
+| `.claude/local/OPERATIONS-RUNBOOK.md`                          | compte, région, réglages à ne pas casser, arrêt d'urgence |
+| Mémoire agent                                                  | `posthog-observabilite`                                   |
+
+Rien sur `veronecollections-fr`. La clé `phc_…` **n'est pas un secret** : PostHog la qualifie de
+« write-only key, safe to use in public apps », elle part dans le code envoyé au navigateur.
