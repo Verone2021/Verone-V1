@@ -109,80 +109,63 @@ jobs:
 
   # ----------------------------------------------------------------
   # 2. Quality checks — only on affected apps
-  #    PR doc-only (code=false) → no-op success (pas de build) pour ne pas
-  #    bloquer la branch protection. Voir BO-CI-DOC-PR-CHECKS-001.
+  #
+  #    [INFRA-CI-BUILD-001] 2026-09-18 — découpé en trois tâches.
+  #
+  #    Avant : une seule tâche faisait tout, à la file, sur un runner
+  #    2 vCPU / 7 Go, dans un budget de 20 minutes :
+  #      lint + type-check (2,5 min à chaud, 8,5 min à froid)
+  #      + 3 builds Next.js l'un après l'autre (5,7 min à chaud, ~14 à froid)
+  #      + 3 passes type-coverage (3,1 min)
+  #    À chaud cela tenait en 14 min ; les derniers passages tournaient à
+  #    11-19 min, deux fois à 19. Le 2026-09-18 la PR #1175 a débordé :
+  #    annulée à 20 min pile, en plein troisième build (run 35359993221).
+  #    Un changement dans packages/ invalide le cache des TROIS apps, donc
+  #    ce n'est pas un cas rare : c'est le cas de toute PR qui touche un
+  #    paquet partagé.
+  #
+  #    Après : le budget de 20 min ne bouge pas (on ne remonte pas un seuil
+  #    pour faire passer la CI, ADR-033). On arrête simplement de faire
+  #    séquentiellement ce qui est indépendant :
+  #      - quality-lint  : lint + type-check + type-coverage
+  #      - quality-build : une tâche PAR application, en parallèle
+  #      - quality       : consolide les deux sous le nom historique
+  #
+  #    Le profil mémoire de chaque build est INCHANGÉ (un seul build par
+  #    runner, 6 Go de heap) : la raison qui avait imposé --concurrency=1
+  #    en [BO-AUDIT-004] reste respectée. On ne met pas trois builds sur un
+  #    runner, on met un build sur chacun des trois runners.
   # ----------------------------------------------------------------
-  quality:
-    name: ESLint + Type-Check + Build
+  quality-lint:
+    name: Lint + Type-Check + Type Coverage
     needs: detect-changes
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    if: needs.detect-changes.outputs.code == 'true'
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
     steps:
-      - name: No-op (PR sans code applicatif — docs/.claude/*.md uniquement)
-        if: needs.detect-changes.outputs.code != 'true'
-        run: |
-          echo "## ✅ PR documentation-seule — build non nécessaire" >> "$GITHUB_STEP_SUMMARY"
-          echo "Aucun code applicatif modifié (apps/**, packages/**, migrations). Check rapporté vert." >> "$GITHUB_STEP_SUMMARY"
-
       - name: Checkout code
-        if: needs.detect-changes.outputs.code == 'true'
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        if: needs.detect-changes.outputs.code == 'true'
         uses: pnpm/action-setup@v2
         with:
           version: 10.13.1
 
       - name: Setup Node.js
-        if: needs.detect-changes.outputs.code == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
 
       - name: Install dependencies
-        if: needs.detect-changes.outputs.code == 'true'
         run: pnpm install --frozen-lockfile
-
-      # ---- Next.js build cache per app (narrow keys = better cache hit ratio) ----
-      - name: Cache Next.js back-office
-        if: needs.detect-changes.outputs.code == 'true'
-        uses: actions/cache@v5
-        with:
-          path: apps/back-office/.next/cache
-          key: ${{ runner.os }}-nextjs-bo-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/back-office/**/*.ts', 'apps/back-office/**/*.tsx', 'packages/**/*.ts', 'packages/**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-bo-${{ hashFiles('pnpm-lock.yaml') }}-
-            ${{ runner.os }}-nextjs-bo-
-
-      - name: Cache Next.js linkme
-        if: needs.detect-changes.outputs.code == 'true'
-        uses: actions/cache@v5
-        with:
-          path: apps/linkme/.next/cache
-          key: ${{ runner.os }}-nextjs-lm-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/linkme/**/*.ts', 'apps/linkme/**/*.tsx', 'packages/**/*.ts', 'packages/**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-lm-${{ hashFiles('pnpm-lock.yaml') }}-
-            ${{ runner.os }}-nextjs-lm-
-
-      - name: Cache Next.js site-internet
-        if: needs.detect-changes.outputs.code == 'true'
-        uses: actions/cache@v5
-        with:
-          path: apps/site-internet/.next/cache
-          key: ${{ runner.os }}-nextjs-si-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/site-internet/**/*.ts', 'apps/site-internet/**/*.tsx', 'packages/**/*.ts', 'packages/**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-si-${{ hashFiles('pnpm-lock.yaml') }}-
-            ${{ runner.os }}-nextjs-si-
 
       # ---- ESLint cache (content-based, invalidated when files change) ----
       - name: Cache ESLint
-        if: needs.detect-changes.outputs.code == 'true'
         uses: actions/cache@v5
         with:
           path: |
@@ -197,7 +180,6 @@ jobs:
 
       # ---- TypeScript incremental cache (tsbuildinfo) ----
       - name: Cache tsbuildinfo
-        if: needs.detect-changes.outputs.code == 'true'
         uses: actions/cache@v5
         with:
           path: |
@@ -210,15 +192,12 @@ jobs:
             ${{ runner.os }}-tsbuildinfo-${{ hashFiles('**/tsconfig*.json', 'pnpm-lock.yaml') }}-
             ${{ runner.os }}-tsbuildinfo-
 
-      # ---- Determine which --filter flags to use ----
       - name: Build filter flags
         id: flags
-        if: needs.detect-changes.outputs.code == 'true'
         run: |
           FILTERS=""
           APPS_CHANGED=""
 
-          # If shared packages changed → check ALL apps
           if [ "${{ needs.detect-changes.outputs.packages }}" = "true" ]; then
             FILTERS="--filter=@verone/back-office --filter=@verone/linkme --filter=@verone/site-internet"
             APPS_CHANGED="back-office, linkme, site-internet (packages changed)"
@@ -237,7 +216,6 @@ jobs:
             fi
           fi
 
-          # Fallback: if nothing detected, check all
           if [ -z "$FILTERS" ]; then
             FILTERS="--filter=@verone/back-office --filter=@verone/linkme --filter=@verone/site-internet"
             APPS_CHANGED="all (fallback)"
@@ -248,12 +226,7 @@ jobs:
           echo "📦 Apps to check: $APPS_CHANGED"
 
       # ---- Diagnostic du cache distant Turborepo — [BO-AUDIT-004]
-      # turbo.json a `remoteCache.enabled: true`, mais si TURBO_TOKEN ou
-      # TURBO_TEAM n'est pas configuré côté GitHub, turbo émet un avertissement
-      # et continue SANS cache — silencieusement. Chaque run repart alors de
-      # zéro. Ce step rend le fait visible en une ligne.
       - name: Diagnostic cache Turborepo
-        if: needs.detect-changes.outputs.code == 'true'
         run: |
           if [ -z "$TURBO_TOKEN" ] || [ -z "$TURBO_TEAM" ]; then
             echo "::warning title=Cache Turborepo inactif::TURBO_TOKEN ou TURBO_TEAM manquant. Chaque run recompile tout depuis zéro. Configurer dans Settings > Secrets and variables > Actions."
@@ -261,105 +234,147 @@ jobs:
             echo "✅ Cache distant Turborepo configuré (team: $TURBO_TEAM)"
           fi
 
-      # ---- Lint + Type-Check — [BO-AUDIT-004]
-      # Séparé du build : ces deux tâches sont légères et rapides (~90 s). Les
-      # avoir en premier donne un retour immédiat sur 90 % des erreurs, sans
-      # attendre les 3 builds Next.js.
       - name: Lint + Type-Check (${{ steps.flags.outputs.apps }})
-        if: needs.detect-changes.outputs.code == 'true'
         run: pnpm turbo run lint type-check ${{ steps.flags.outputs.filters }} --concurrency=100%
         env:
           NODE_OPTIONS: --max-old-space-size=4096
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
-      # ---- Build — [BO-AUDIT-004] : séquentiel, et voici pourquoi.
-      # Avant : `--concurrency=100%` avec NODE_OPTIONS=8192 sur un runner
-      # ubuntu-latest (2 vCPU / 7 Go). Quand les 3 apps sont concernées, cela
-      # demande jusqu'à 24 Go de heap : le runner passe son temps à swapper.
-      # Constaté sur le run 30543586686 (PR #1128) : > 25 min au lieu de 2 à 6.
-      # Après : un build à la fois, 6 Go de heap chacun. Trois builds séquentiels
-      # coûtent ~4 min, contre 25 min de thrashing.
-      - name: Build (${{ steps.flags.outputs.apps }})
-        if: needs.detect-changes.outputs.code == 'true'
-        run: pnpm turbo run build ${{ steps.flags.outputs.filters }} --concurrency=1
-        env:
-          NODE_OPTIONS: --max-old-space-size=6144
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-
-      # ---- Alignement DB <-> TypeScript — [BO-AUDIT-004]
-      # scripts/check-db-type-alignment.ts existe depuis des mois et n'était
-      # branché nulle part. Il détecte les colonnes inexistantes et les enums
-      # écrits en dur — soit à lui seul 3 des 12 bugs bloquants de l'audit
-      # (colonne `status` du wizard produit, `backorder`, segments fournisseur).
-      # NON BLOQUANT dans ce lot, volontairement : on mesure d'abord l'ampleur,
-      # on durcit ensuite. Voir docs/audit-2026-07-30/PLAN-CORRECTION.md § Lot 004.
+      # ---- Alignement DB <-> TypeScript — [BO-AUDIT-004] (non bloquant)
       - name: Alignement types DB (informational)
-        if: needs.detect-changes.outputs.code == 'true'
         continue-on-error: true
         run: pnpm validate:types
 
-      # ---- Ecritures DB impossibles (informational) ----
-      # [BO-AUDIT-004] 2026-07-30 — nouveau gate. `validate:types` ci-dessus
-      # annonce dans son en-tete qu'il detecte les colonnes inexistantes et les
-      # valeurs d'enum invalides : verification faite, il n'en detecte AUCUNE
-      # (950 diagnostics emis, dont 273 « Query Supabase sans type », zero
-      # colonne, zero enum). Ce script-la le fait vraiment, en lisant
-      # packages/@verone/types/src/supabase.ts comme source de verite.
-      #
-      # Ce qu'il attrape est invisible pour tsc, ESLint et next build : le code
-      # compile, se deploie, et echoue seulement au clic de l'utilisateur avec
-      # une erreur PostgREST PGRST204 ou 22P02. C'est la categorie de bug qui a
-      # casse le rapprochement bancaire, l'archivage des variantes, la reception
-      # fournisseur et le webhook Revolut sans qu'aucun controle ne bronche.
-      #
-      # NON BLOQUANT dans ce lot : 31 ecritures impossibles existent deja dans
-      # le code. Elles sont la matiere du Lot 005. Passage en bloquant a la fin
-      # du Lot 005, quand le compte sera a zero — sans baseline, pour ne pas
-      # reproduire le defaut de la baseline advisors.
+      # ---- Ecritures DB impossibles — [BO-AUDIT-004] (non bloquant, Lot 005)
       - name: Ecritures DB impossibles (informational)
-        if: needs.detect-changes.outputs.code == 'true'
         continue-on-error: true
         run: pnpm validate:db-usage:ci
 
       # ---- Type Coverage Gate (baseline-protected) ----
       # Bloque le merge si la couverture de types descend sous le seuil par app.
-      # Méthode senior : pas de big bang strict mode — verrou progressif sur le
-      # pourcentage actuel. Le code legacy reste tel quel, mais toute régression
-      # (nouveau `any` implicite introduit) bloque la PR.
       # Baselines mesurées 2026-05-09 : back-office 99.22, linkme 99.56, site-internet 98.12
+      # [INFRA-CI-BUILD-001] : ces trois passes ne dépendent d'AUCUN build.
+      # Elles vivent ici, en parallèle des builds, au lieu de s'ajouter derrière.
       - name: Type Coverage — back-office
         if: needs.detect-changes.outputs.back-office == 'true' || needs.detect-changes.outputs.packages == 'true'
         run: pnpm --filter @verone/back-office type-coverage
         env:
-          NODE_OPTIONS: --max-old-space-size=8192
+          NODE_OPTIONS: --max-old-space-size=6144
 
       - name: Type Coverage — linkme
         if: needs.detect-changes.outputs.linkme == 'true' || needs.detect-changes.outputs.packages == 'true'
         run: pnpm --filter @verone/linkme type-coverage
         env:
-          NODE_OPTIONS: --max-old-space-size=8192
+          NODE_OPTIONS: --max-old-space-size=6144
 
       - name: Type Coverage — site-internet
         if: needs.detect-changes.outputs.site-internet == 'true' || needs.detect-changes.outputs.packages == 'true'
         run: pnpm --filter @verone/site-internet type-coverage
         env:
-          NODE_OPTIONS: --max-old-space-size=8192
+          NODE_OPTIONS: --max-old-space-size=6144
+
+  # ----------------------------------------------------------------
+  # 2b. Build — une application par runner, les trois en parallèle.
+  #     Un seul build par runner, 6 Go de heap : profil mémoire identique
+  #     à l'ancien --concurrency=1, mais le temps d'attente devient celui
+  #     de l'application la plus lente au lieu de la somme des trois.
+  # ----------------------------------------------------------------
+  quality-build:
+    name: Build ${{ matrix.app }}
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: needs.detect-changes.outputs.code == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: back-office
+            code: bo
+          - app: linkme
+            code: lm
+          - app: site-internet
+            code: si
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+    steps:
+      # Cette application est-elle concernee ? (packages/ touche => les trois)
+      - name: Application concernée ?
+        id: scope
+        run: |
+          if [ "${{ needs.detect-changes.outputs.packages }}" = "true" ] || [ "${{ needs.detect-changes.outputs[matrix.app] }}" = "true" ]; then
+            echo "needed=true" >> $GITHUB_OUTPUT
+            echo "✅ ${{ matrix.app }} : build nécessaire"
+          else
+            echo "needed=false" >> $GITHUB_OUTPUT
+            echo "⏭️  ${{ matrix.app }} : inchangée, build inutile"
+          fi
+
+      - name: Checkout code
+        if: steps.scope.outputs.needed == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        if: steps.scope.outputs.needed == 'true'
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.13.1
+
+      - name: Setup Node.js
+        if: steps.scope.outputs.needed == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        if: steps.scope.outputs.needed == 'true'
+        run: pnpm install --frozen-lockfile
+
+      # Meme cle et memes restore-keys qu'avant le decoupage : un changement
+      # dans packages/ invalide le cache, le repli rattrape le reste.
+      - name: Cache Next.js ${{ matrix.app }}
+        if: steps.scope.outputs.needed == 'true'
+        uses: actions/cache@v5
+        with:
+          path: apps/${{ matrix.app }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ matrix.code }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles(format('apps/{0}/**/*.ts', matrix.app), format('apps/{0}/**/*.tsx', matrix.app), 'packages/**/*.ts', 'packages/**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ matrix.code }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-${{ matrix.code }}-
+
+      - name: Diagnostic cache Turborepo
+        if: steps.scope.outputs.needed == 'true'
+        run: |
+          if [ -z "$TURBO_TOKEN" ] || [ -z "$TURBO_TEAM" ]; then
+            echo "::warning title=Cache Turborepo inactif::TURBO_TOKEN ou TURBO_TEAM manquant."
+          else
+            echo "✅ Cache distant Turborepo configuré (team: $TURBO_TEAM)"
+          fi
+
+      - name: Build ${{ matrix.app }}
+        if: steps.scope.outputs.needed == 'true'
+        run: pnpm turbo run build --filter=@verone/${{ matrix.app }} --concurrency=1
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       # Archive AVANT l'envoi : `upload-artifact` ne preserve pas les liens
       # symboliques, or la sortie autonome de Next reference les paquets par
       # lien vers `node_modules/.pnpm`. Envoyee telle quelle, l'arborescence
       # arrivait amputee et le serveur mourait sur
       # « Cannot find module './cjs/react-dom-server-legacy.node.development.js' ».
-      # Un tar conserve les liens ; les cibles existent cote consommateur, qui
-      # fait son propre `pnpm install`. [BO-AUTH-SESSION-002]
+      # Un tar conserve les liens. [BO-AUTH-SESSION-002]
       - name: Archive back-office build (for E2E jobs)
-        if: needs.detect-changes.outputs.e2e-needed == 'true'
+        if: matrix.app == 'back-office' && steps.scope.outputs.needed == 'true' && needs.detect-changes.outputs.e2e-needed == 'true'
         run: tar -czf /tmp/back-office-next.tgz -C apps/back-office .next
 
       - name: Upload back-office .next artifact (for E2E jobs)
-        if: needs.detect-changes.outputs.e2e-needed == 'true'
+        if: matrix.app == 'back-office' && steps.scope.outputs.needed == 'true' && needs.detect-changes.outputs.e2e-needed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: back-office-build
@@ -367,25 +382,56 @@ jobs:
           retention-days: 1
           include-hidden-files: true
 
-      # ---- PR comment on failure ----
-      - name: Comment PR on Failure
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## ❌ Quality Checks Failed\n\nApps checked: **${{ steps.flags.outputs.apps }}**\n\nSee [workflow logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.\n\n**Fix locally:**\n\`\`\`bash\npnpm turbo run lint type-check build ${{ steps.flags.outputs.filters }}\n\`\`\``
-            });
-
-      - name: Summary
-        if: success() && needs.detect-changes.outputs.code == 'true'
+  # ----------------------------------------------------------------
+  # 2c. Consolidation sous le nom historique.
+  #     La protection de branche et les tâches E2E connaissent le check
+  #     « ESLint + Type-Check + Build » : il doit continuer d'exister et,
+  #     surtout, de devenir ROUGE quand l'un des deux échoue.
+  #     Ni quality-lint ni quality-build ne portent `continue-on-error`,
+  #     donc `needs.*.result` dit la vérité ici (contrairement au cas
+  #     documenté dans e2e-smoke-aggregate).
+  # ----------------------------------------------------------------
+  quality:
+    name: ESLint + Type-Check + Build
+    needs: [detect-changes, quality-lint, quality-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    if: always()
+    steps:
+      - name: Résultat consolidé
         run: |
-          echo "## ✅ Quality Checks Passed" >> $GITHUB_STEP_SUMMARY
-          echo "Apps checked: **${{ steps.flags.outputs.apps }}**" >> $GITHUB_STEP_SUMMARY
+          LINT="${{ needs.quality-lint.result }}"
+          BUILD="${{ needs.quality-build.result }}"
+          CODE="${{ needs.detect-changes.outputs.code }}"
+
+          echo "code applicatif modifié : $CODE"
+          echo "  lint + type-check + type-coverage : $LINT"
+          echo "  build des applications            : $BUILD"
+
+          if [ "$CODE" != "true" ]; then
+            echo "## ✅ PR documentation-seule — build non nécessaire" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          FAILED=0
+          for r in "$LINT" "$BUILD"; do
+            case "$r" in
+              success | skipped) ;;
+              *) FAILED=1 ;;
+            esac
+          done
+
+          if [ "$FAILED" = "1" ]; then
+            echo "::error title=Quality Checks Failed::lint=$LINT build=$BUILD"
+            echo "## ❌ Quality Checks Failed" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Lint + Type-Check + Type Coverage : \`$LINT\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Build des applications : \`$BUILD\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "**Reproduire en local :** \`pnpm turbo run lint type-check build\`" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          echo "## ✅ Quality Checks Passed" >> "$GITHUB_STEP_SUMMARY"
 
   # ----------------------------------------------------------------
   # 3a. E2E Niveau 1 — smoke-golden
