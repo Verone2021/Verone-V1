@@ -6,9 +6,12 @@
  * One row = one expedition (can contain multiple products).
  */
 
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { createClient } from '@supabase/supabase-js';
+
+import { requireBackofficeAdmin } from '@/lib/guards';
 
 interface GroupedShipment {
   packlink_shipment_id: string;
@@ -27,7 +30,15 @@ interface GroupedShipment {
   created_at: string | null;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Garde : back-office connecte (owner/admin) uniquement.
+  // [BO-SEC-GUARD-001] cette route lisait des donnees clients sans aucune
+  // authentification, avec la cle service_role qui contourne la RLS.
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult;
+  }
+
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
