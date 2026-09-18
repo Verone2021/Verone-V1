@@ -5,6 +5,7 @@
 **Objectif** : livrer à Claude Code tout ce qui peut être préparé en parallèle du dev-agent pilote.
 
 Ce document contient :
+
 1. Pièges observés à la lecture du code pilote
 2. Checklist de review pour le reviewer-agent (après pilote)
 3. Prompts Commits 2, 3, 4 prêts à coller
@@ -21,17 +22,18 @@ J'ai lu le code de `/factures`, `/stocks/inventaire` et `/commandes/fournisseurs
 
 Tous les 3 fichiers de table contiennent :
 
-| Fichier                                                              | Anti-pattern                                                |
-| -------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `apps/back-office/.../factures/components/InvoicesTable.tsx:90`      | `<Table className="w-auto">`                                |
-| `apps/back-office/.../stocks/inventaire/InventaireTable.tsx:73`      | `<table className="w-full">` (HTML natif, pas `<Table>` de @verone/ui) |
-| `apps/back-office/.../commandes/fournisseurs/FournisseursTable.tsx:76` | `<Table className="w-auto [&_th]:px-2.5 [&_td]:px-2.5">` |
+| Fichier                                                                | Anti-pattern                                                           |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `apps/back-office/.../factures/components/InvoicesTable.tsx:90`        | `<Table className="w-auto">`                                           |
+| `apps/back-office/.../stocks/inventaire/InventaireTable.tsx:73`        | `<table className="w-full">` (HTML natif, pas `<Table>` de @verone/ui) |
+| `apps/back-office/.../commandes/fournisseurs/FournisseursTable.tsx:76` | `<Table className="w-auto [&_th]:px-2.5 [&_td]:px-2.5">`               |
 
 `w-auto` est listé noir sur blanc comme anti-pattern interdit dans `.claude/rules/responsive.md` et détecté par `check-responsive-violations.sh`. Le dev-agent doit les supprimer, pas les contourner.
 
 ### 1.2 — InventaireTable utilise `<table>` HTML natif, pas `<Table>` de @verone/ui
 
 C'est un cas particulier : `ResponsiveDataView` attend probablement une fonction `renderTable` qui rend un `<Table>` de `@verone/ui`. Si l'existant utilise du HTML natif, il faut :
+
 - soit migrer vers `<Table>` de @verone/ui puis envelopper dans `ResponsiveDataView`
 - soit rendre `ResponsiveDataView` agnostique au type de table
 
@@ -299,9 +301,11 @@ enchainer sur PR B (feat/responsive-details).
 Quand PR A est mergée, 2 options :
 
 ### Option 1 — Enchaîner PR B directement
+
 Migration Patterns C + D (73 pages détail + dashboards). Même pattern, même workflow. Gain : maintien du momentum responsive.
 
 ### Option 2 — Faire la Phase 2 restructuration config d'abord
+
 Queue/playbooks/DECISIONS.md + les 4 ajustements validés par l'autre agent + audit nombre d'agents + test CI anti-dérive. Gain : les PRs B et C seront plus propres avec la nouvelle structure.
 
 **Recommandation** : Option 1 si le pilote + PR A se passent bien (pattern rodé, Claude Code en rythme). Option 2 si des frictions notables émergent pendant PR A (signe que la config actuelle bloque).

@@ -1714,3 +1714,53 @@ Supabase qui n'a pas de marge. Deux salariés travaillent sur le back-office en 
 ### Écarté
 
 - Fenêtre libre avec surveillance renforcée : l'incident du 15/09 montre que la bascule elle-même crée la charge.
+
+## ADR-042 — `[INFRA-SCRATCHPAD-001]` Le scratchpad s'archive, il ne se détruit pas — et une seule demande de ménage à la fois
+
+**Date** : 2026-09-18 · **Statut** : appliqué · **Fichiers** : `.claude/scripts/cleanup-scratchpad.sh`,
+`.github/workflows/scratchpad-cleanup.yml`, `docs/scratchpad/archive/2026-04|05|06|09/`
+
+### Constat
+
+Audit du 2026-09-18, à la demande de Roméo.
+
+1. **Huit demandes de ménage jumelles ouvertes** (#1126, #1132, #1134, #1135, #1136, #1138, #1139, #1147), du
+   26/07 au 13/09, une par dimanche sans interruption. Elles déplacent **exactement les mêmes 15 fichiers**.
+   Toutes bloquées par le même contrôle rouge, `PR vers main doit venir de staging`
+   (`.github/workflows/protect-main-source.yml`), resté collé au commit et qui ne peut plus repasser au vert
+   seul puisque son déclencheur (`pull_request` vers `main`) ne se reproduira pas. Aucune n'ayant été fusionnée,
+   le robot repartait chaque semaine d'un `staging` inchangé, redétectait les mêmes fichiers et rouvrait la
+   même demande.
+2. **127 fichiers à la racine du scratchpad**, dont **68 datés d'avril à juin** — le script ne déplace jamais
+   les préfixes `audit-`, `protocole-`, `dette-`, `coherence-`, `decision-`, `post-mortem-` (il se contente de
+   les signaler comme candidats à une promotion vers `docs/current/`), ni les préfixes hors convention
+   (`compte-rendu-`, `prompt-`, `brief-`, `copy-`, `trace-`, `reste-a-faire-`).
+3. **Une étape de suppression définitive** (`find "$ARCHIVE_ROOT" -type f -mtime +90 -delete`) qui aurait effacé
+   les 157 fichiers de `archive/2026-05/` vers fin octobre 2026. Elle raisonne sur la date du système de
+   fichiers alors que le reste du script raisonne — délibérément, c'est commenté — sur la date contenue dans
+   le nom. Or tout `git pull` ou `git checkout` remet les dates système à zéro, et `mv` les préserve : une
+   archive fraîchement déplacée pouvait être vue comme vieille de cinq mois et supprimée au passage suivant.
+
+### Décision
+
+- **Plus aucune suppression définitive.** Le scratchpad archive, il ne détruit pas. Ces fichiers sont suivis
+  par Git : les effacer produit un commit de suppression silencieux dans un chantier qui n'a rien à voir.
+  Seul le ménage des dossiers vides est conservé.
+- **Une seule branche de ménage**, `chore/scratchpad-cleanup`, réutilisée chaque semaine et réécrite avec
+  `--force-with-lease`. Le robot n'ouvre une demande que s'il n'en existe pas déjà une sur cette branche.
+- **`git add -A` remplacé par `git add docs/scratchpad`** dans le robot : le ménage n'a aucune raison
+  d'emporter autre chose.
+- Les 8 demandes jumelles sont **fermées**, leur contenu étant repris dans la demande de ce chantier.
+- Les 70 fichiers d'avril à juin sont déplacés vers `docs/scratchpad/archive/2026-04|05|06/`.
+
+### Écarté
+
+- **Forcer la fusion des 8 demandes en contournant le contrôle rouge** : interdit par `CLAUDE.md`
+  (« jamais `gh pr merge --admin` pour bypasser un check CI fail »), et inutile puisqu'un seul commit propre
+  fait le même travail.
+- **Baisser ou désactiver le contrôle `protect-main-source`** : c'est le garde-fou qui empêche une demande
+  d'atterrir directement sur `main`. On ne touche pas à un garde-fou pour faire passer du ménage
+  (ADR-033, anti-raccourcis).
+- **Élargir le script aux préfixes `audit-` et `protocole-`** : ces documents ont vocation à être promus vers
+  `docs/current/`, pas archivés à l'aveugle. Le déplacement de ce jour est ponctuel et assumé ; le tri entre
+  « à promouvoir » et « à archiver » reste un geste humain.

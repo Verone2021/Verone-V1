@@ -4,14 +4,14 @@
 
 ## Résultat
 
-| Agent | Fichiers scratchpad | Statut | Décision |
-|-------|---------------------|--------|----------|
-| **dev-agent** | ~10 `dev-plan-*.md` + `dev-report-*.md` (BO-FIN-009, BO-STOCK-008/009, BO-TECH-001, BO-UI-001, BO-SHIP-003, BO-FIN-010/011/014, BO-UI-RESP migration) | Très actif | **GARDER** |
-| **reviewer-agent** | ~10 `review-report-*.md` (BO-FIN-009/014/015/017/019/022, BO-TECH-001, BO-SHIP-003, audit-tva-amount, retroactive) | Très actif | **GARDER** |
-| **verify-agent** | 0 rapport dédié mais invoqué dans workflow dev-agent | Actif (build/type-check) | **GARDER** |
-| **ops-agent** | 0 rapport dédié mais invoqué pour PR/merge | Actif | **GARDER** |
-| **writer-agent** | **0 rapport. Aucun `writer-report-*.md`** | **Mort** | **SUPPRIMER** |
-| **market-agent** | **0 rapport. Aucun `market-report-*.md`** | **Mort** | **SUPPRIMER** |
+| Agent              | Fichiers scratchpad                                                                                                                                   | Statut                   | Décision      |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------------- |
+| **dev-agent**      | ~10 `dev-plan-*.md` + `dev-report-*.md` (BO-FIN-009, BO-STOCK-008/009, BO-TECH-001, BO-UI-001, BO-SHIP-003, BO-FIN-010/011/014, BO-UI-RESP migration) | Très actif               | **GARDER**    |
+| **reviewer-agent** | ~10 `review-report-*.md` (BO-FIN-009/014/015/017/019/022, BO-TECH-001, BO-SHIP-003, audit-tva-amount, retroactive)                                    | Très actif               | **GARDER**    |
+| **verify-agent**   | 0 rapport dédié mais invoqué dans workflow dev-agent                                                                                                  | Actif (build/type-check) | **GARDER**    |
+| **ops-agent**      | 0 rapport dédié mais invoqué pour PR/merge                                                                                                            | Actif                    | **GARDER**    |
+| **writer-agent**   | **0 rapport. Aucun `writer-report-*.md`**                                                                                                             | **Mort**                 | **SUPPRIMER** |
+| **market-agent**   | **0 rapport. Aucun `market-report-*.md`**                                                                                                             | **Mort**                 | **SUPPRIMER** |
 
 ## Détail
 
@@ -32,6 +32,7 @@
 **Supprimer writer-agent.md et market-agent.md.** Moins d'agents = moins de règles à maintenir = moins de confusion pour le coordinateur qui doit choisir qui invoquer.
 
 Si Romeo a besoin de contenu marketing dans le futur, il peut :
+
 - Soit demander directement à claude.ai (ce qu'il fait déjà)
 - Soit recréer un agent dédié à ce moment-là avec un contexte frais
 
