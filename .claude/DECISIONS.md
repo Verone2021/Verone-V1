@@ -1933,3 +1933,57 @@ d'une demande.
   contrôle.
 - Fusionner `Protect main` dans `quality.yml` : déclencheur différent (demandes vers `main`), et c'est la
   seule barrière restante depuis que la protection de branche a disparu. 28 min/mois assumées.
+
+## ADR-045 — `[INFRA-BRANCH-PROT-001]` Protection de branches rétablie pendant la fenêtre publique
+
+**Date** : 2026-09-18 · **Statut** : appliqué (conditionnel) · **Fichiers** : réglages GitHub (pas de fichier
+versionné) · **Annule et remplace la suspension décrite par** ADR-040
+
+### Constat
+
+Le 2026-09-18 au soir, une fusion est passée alors que deux contrôles étaient rouges (#1178, #1179). Ils
+l'étaient pour une raison de facturation, pas de code — mais **rien ne l'aurait empêchée de toute façon** :
+la protection de branches ne s'applique pas sur un dépôt privé en plan gratuit (ADR-040). L'agent devait
+vérifier les contrôles à la main, ce qui a marché ce soir-là mais ne tient pas comme garantie.
+
+Le dépôt est repassé **public** le 2026-09-18 vers 22 h, sur décision de Roméo, pour retrouver des minutes
+Actions illimitées jusqu'à la recharge du quota (début octobre). La protection de branches redevient donc
+disponible pendant cette fenêtre.
+
+### Décision
+
+Protection posée sur `staging` et `main` :
+
+| Réglage                         | `staging`                                     | `main`                                          |
+| ------------------------------- | --------------------------------------------- | ----------------------------------------------- |
+| Contrôle requis                 | `Contrôles rapides (détection + gardes base)` | idem **+** `PR vers main doit venir de staging` |
+| Poussée forcée                  | interdite                                     | interdite                                       |
+| Suppression de branche          | interdite                                     | interdite                                       |
+| Revue obligatoire               | non (Roméo est seul)                          | non                                             |
+| Application aux administrateurs | non                                           | non                                             |
+
+**Pourquoi un seul contrôle requis et pas le lint ni les compilations.** Sur une demande qui ne touche
+que de la documentation, `Lint + Type-Check + Type Coverage` et les compilations sont volontairement
+sautés. Or une tâche de matrice sautée est rapportée sous son nom **non résolu** — `Build ${{ matrix.app }}`
+et non `Build back-office` — donc un contrôle requis nommé `Build back-office` ne serait jamais satisfait
+sur ces demandes. C'est exactement le piège qui avait bloqué 10 demandes de documentation entre mai et
+juillet 2026 (cf. l'en-tête de `quality.yml`). `Contrôles rapides` tourne **toujours** et porte les trois
+gardes bloquantes (liens FK, types Supabase, advisors sécurité) : c'est le bon point d'ancrage.
+
+**Pourquoi les administrateurs ne sont pas soumis à la règle.** Roméo travaille seul. Une protection qui
+l'enfermerait dehors en cas d'incident en production serait pire que le problème. Il garde une porte de
+sortie, mais elle devient un geste délibéré au lieu d'un défaut silencieux.
+
+### Limite à connaître
+
+**Cette protection disparaîtra au retour en dépôt privé** (prévu début octobre, après la recharge du
+quota). GitHub Free ne la propose pas sur un dépôt privé. À ce moment-là, ADR-040 redevient la règle : pas
+d'auto-fusion, vérification manuelle des contrôles avant chaque fusion. Le jour où le dépôt redevient
+public ou passe sur Pro, réappliquer cet ADR.
+
+### Écarté
+
+- Exiger le lint et les compilations : bloquerait à vie les demandes de documentation, voir ci-dessus.
+- Exiger une revue : Roméo est seul, ça bloquerait tout.
+- `strict: true` (branche obligatoirement à jour avant fusion) : relancerait toute la CI à chaque avancée
+  de `staging`, ce qui va contre l'économie de minutes d'ADR-044.

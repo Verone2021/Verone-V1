@@ -255,6 +255,13 @@ Un seul critère manquant : pas de PR, continuer commits/push.
 
 ## Quand MERGER une PR — AUTO-MERGE PAR DÉFAUT (ADR-032 — 2026-05-09)
 
+> **Depuis le 2026-09-18 (ADR-045)** : le dépôt est repassé public le temps de retrouver des minutes
+> Actions, donc la protection de branches est **de nouveau active** sur `staging` et `main` — contrôle requis
+> `Contrôles rapides (détection + gardes base)`, poussée forcée et suppression interdites. Une fusion ne peut
+> plus passer avec ce contrôle rouge. **`--auto` reste proscrit** tant que la fenêtre publique dure : elle est
+> temporaire (retour en privé prévu début octobre), et au retour la protection disparaîtra de nouveau. Le
+> paragraphe ci-dessous redevient alors intégralement la règle.
+>
 > **SUSPENDU depuis le 2026-09-11 (ADR-040).** Le dépôt est privé sur GitHub Free : la protection de branches
 > et les checks requis ne sont plus appliqués par GitHub. `gh pr merge --auto` fusionnerait **immédiatement**,
 > même avec un check rouge. Tant que le dépôt reste privé sur Free : **jamais `--auto`**. Procédure :
