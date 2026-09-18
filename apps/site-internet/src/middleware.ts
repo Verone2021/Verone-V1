@@ -6,15 +6,27 @@
  *
  * @since 2026-02-09 - Simplifie (suppression app-isolation non necessaire)
  * @since 2026-04-12 - Ajout tracking ambassadeur (?ref=CODE → cookie 30j)
+ * @since 2026-09-18 - [SI-MAINT-001] fermeture provisoire du site
  */
 import { type NextRequest } from 'next/server';
 
+import {
+  isMaintenanceExempt,
+  isMaintenanceMode,
+  maintenanceResponse,
+} from '@/lib/maintenance';
 import { updateSession } from '@/lib/supabase/middleware';
 
 const AMBASSADOR_COOKIE = 'verone_ref';
 const AMBASSADOR_COOKIE_DAYS = 30;
 
 export async function middleware(request: NextRequest) {
+  // 0. Fermeture provisoire : avant toute autre chose, et avant tout appel
+  //    Supabase, pour que le site ferme ne consomme rien.
+  if (isMaintenanceMode() && !isMaintenanceExempt(request.nextUrl.pathname)) {
+    return maintenanceResponse();
+  }
+
   // 1. Supabase session refresh (retourne supabaseResponse)
   const response = await updateSession(request);
 
