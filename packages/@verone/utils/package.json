@@ -48,6 +48,11 @@
       "import": "./src/validation/index.ts",
       "require": "./src/validation/index.ts"
     },
+    "./validation/form-inputs": {
+      "types": "./src/validation/form-inputs.ts",
+      "import": "./src/validation/form-inputs.ts",
+      "require": "./src/validation/form-inputs.ts"
+    },
     "./upload": {
       "types": "./src/upload/index.ts",
       "import": "./src/upload/index.ts",

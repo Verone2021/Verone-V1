@@ -60,6 +60,33 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     return () => subscription.unsubscribe();
   }, [supabase]); // ✅ FIX: supabase singleton stable (supabase.auth = objet instable)
 
+  // Renouvellement de la session au réveil de l'onglet.
+  //
+  // Le jeton se renouvelle tout seul via une minuterie du client Supabase.
+  // Chrome suspend les minuteurs des onglets d'arrière-plan bien plus durement
+  // que Safari : un onglet laissé de côté revient avec un accès expiré, et la
+  // première navigation renvoie vers la page de connexion. C'est le « je ne
+  // peux plus me connecter depuis Chrome » rapporté le 17/09.
+  //
+  // `getSession()` renouvelle le jeton s'il est périmé. On le déclenche au
+  // retour sur l'onglet et au retour du réseau, avant que l'utilisateur ne
+  // clique. [BO-AUTH-SESSION-002]
+  useEffect(() => {
+    const refreshIfNeeded = () => {
+      if (document.visibilityState !== 'visible') return;
+      void supabase.auth.getSession().catch(error => {
+        console.error('[AuthWrapper] Renouvellement de session échoué:', error);
+      });
+    };
+
+    document.addEventListener('visibilitychange', refreshIfNeeded);
+    window.addEventListener('online', refreshIfNeeded);
+    return () => {
+      document.removeEventListener('visibilitychange', refreshIfNeeded);
+      window.removeEventListener('online', refreshIfNeeded);
+    };
+  }, [supabase]);
+
   const isPublicPage = PUBLIC_PAGES.includes(pathname);
   // Session connue et absente sur une page protégée : ne jamais rendre la page.
   // Sinon le routeur Next suspend sur la redirection serveur et React lève #310.

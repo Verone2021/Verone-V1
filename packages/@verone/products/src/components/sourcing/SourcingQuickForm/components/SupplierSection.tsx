@@ -159,7 +159,11 @@ export function SupplierSection({
               </Label>
               <Input
                 id="sf_website"
-                type="url"
+                // `text` et non `url` : voir ProductFieldsSection — un
+                // `type="url"` bloque l'envoi du formulaire sans message des
+                // que l'adresse est tapee sans « https:// ».
+                type="text"
+                inputMode="url"
                 value={newSupplier.website}
                 onChange={e => {
                   onNewSupplierChange({ website: e.target.value });

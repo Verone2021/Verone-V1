@@ -7,6 +7,10 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@verone/common/hooks';
 import { associateProductToConsultation } from '@verone/utils';
 import { defaultRateFor } from '@verone/utils/currency';
+// Chemin direct et non le tonneau `@verone/utils/validation` : celui-ci tire
+// `form-security` -> isomorphic-dompurify -> jsdom, qui casse la generation des
+// pages de LinkMe (constate en CI le 17/09).
+import { isValidUrl, normalizeUrl } from '@verone/utils/validation/form-inputs';
 import { useOrganisations } from '@verone/organisations/hooks';
 
 import { useSourcingCreateUpdate } from '@verone/products/hooks';
@@ -16,6 +20,40 @@ import type { NewSupplierState, ProductFormData, SupplierMode } from './types';
 // Le formulaire n'affiche pas la liste sourcing : rien à recharger après la
 // création (l'appelant recharge sa propre liste via onSuccess).
 const noListToRefresh = () => Promise.resolve();
+
+/**
+ * Longueur minimale d'un nom de produit. Miroir exact de la contrainte
+ * `name_length` de la table `products` : sans ce garde-fou, l'enregistrement
+ * partait et revenait en erreur technique.
+ */
+const PRODUCT_NAME_MIN_LENGTH = 5;
+
+/**
+ * Clé d'erreur → identifiant du champ à l'écran. Sert à amener la personne
+ * jusqu'au champ fautif : le formulaire défile dans une fenêtre, un message
+ * affiché hors du pli n'existe pas.
+ */
+const ERROR_FIELD_IDS: Record<string, string> = {
+  supplier_legal_name: 'sf_legal_name',
+  supplier_trade_name: 'sf_trade_name',
+  supplier_website: 'sf_website',
+  name: 'name',
+  supplier_page_url: 'supplier_url',
+  cost_price: 'cost_price',
+};
+
+/** Amène le premier champ en erreur sous les yeux, et lui donne le focus. */
+function focusFirstError(errorKeys: string[]): void {
+  if (typeof document === 'undefined') return;
+  const firstKey = Object.keys(ERROR_FIELD_IDS).find(key =>
+    errorKeys.includes(key)
+  );
+  if (!firstKey) return;
+  const element = document.getElementById(ERROR_FIELD_IDS[firstKey]);
+  if (!element) return;
+  element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  element.focus({ preventScroll: true });
+}
 
 export function useSourcingQuickForm(onSuccess?: (draftId: string) => void) {
   const router = useRouter();
@@ -134,29 +172,33 @@ export function useSourcingQuickForm(onSuccess?: (draftId: string) => void) {
       }
       if (!newSupplier.website.trim()) {
         newErrors.supplier_website = 'Le site web est obligatoire';
-      } else {
-        try {
-          new URL(newSupplier.website);
-        } catch {
-          newErrors.supplier_website = "Format d'URL invalide";
-        }
+      } else if (!isValidUrl(newSupplier.website)) {
+        newErrors.supplier_website =
+          'Adresse invalide (exemple : fournisseur.com)';
       }
     }
 
-    if (!formData.name.trim()) {
+    const name = formData.name.trim();
+    if (!name) {
       newErrors.name = 'Le nom du produit est obligatoire';
+    } else if (name.length < PRODUCT_NAME_MIN_LENGTH) {
+      // La base refuse un nom plus court (CHECK name_length sur `products`).
+      // Sans ce contrôle ici, l'enregistrement partait et se faisait rejeter
+      // avec un message technique incompréhensible.
+      newErrors.name = `Le nom doit faire au moins ${PRODUCT_NAME_MIN_LENGTH} caractères`;
     }
 
     // URL de la page produit chez le fournisseur : facultative (Roméo, 17/09).
     // Quand le fournisseur est déjà enregistré avec son site, redemander le lien
     // de chaque produit bloquait des créations légitimes. Le format reste
-    // vérifié dès que le champ est rempli.
-    if (formData.supplier_page_url.trim()) {
-      try {
-        new URL(formData.supplier_page_url);
-      } catch {
-        newErrors.supplier_page_url = "Format d'URL invalide";
-      }
+    // vérifié dès que le champ est rempli — et une adresse tapée sans
+    // « https:// » est acceptée, elle sera complétée à l'envoi.
+    if (
+      formData.supplier_page_url.trim() &&
+      !isValidUrl(formData.supplier_page_url)
+    ) {
+      newErrors.supplier_page_url =
+        'Adresse invalide (exemple : fournisseur.com/produit)';
     }
 
     if (!formData.cost_price || formData.cost_price <= 0) {
@@ -164,7 +206,9 @@ export function useSourcingQuickForm(onSuccess?: (draftId: string) => void) {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const keys = Object.keys(newErrors);
+    if (keys.length > 0) focusFirstError(keys);
+    return keys.length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -172,8 +216,9 @@ export function useSourcingQuickForm(onSuccess?: (draftId: string) => void) {
 
     if (!validateForm()) {
       toast({
-        title: 'Erreurs de validation',
-        description: 'Veuillez corriger les erreurs avant de continuer',
+        title: 'Formulaire incomplet',
+        description:
+          'Un champ demande une correction : il est signalé en rouge juste au-dessus.',
         variant: 'destructive',
       });
       return;
@@ -193,7 +238,7 @@ export function useSourcingQuickForm(onSuccess?: (draftId: string) => void) {
           has_different_trade_name: newSupplier.has_different_trade_name,
           type: 'supplier',
           is_active: true,
-          website: newSupplier.website ?? null,
+          website: normalizeUrl(newSupplier.website) || null,
           country: newSupplier.country || 'FR',
         });
 
@@ -210,8 +255,9 @@ export function useSourcingQuickForm(onSuccess?: (draftId: string) => void) {
       }
 
       const productData = {
-        name: formData.name,
-        supplier_page_url: formData.supplier_page_url ?? undefined,
+        name: formData.name.trim(),
+        supplier_page_url:
+          normalizeUrl(formData.supplier_page_url) || undefined,
         cost_price: formData.cost_price ?? undefined,
         cost_price_currency: formData.cost_price_currency,
         cost_price_exchange_rate: formData.cost_price_exchange_rate,
