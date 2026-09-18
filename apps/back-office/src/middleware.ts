@@ -21,6 +21,13 @@
  * Ici, la session est rafraichie et la redirection tranchee AVANT tout rendu.
  *
  * Perimetre volontairement restreint :
+ * - Ce fichier rafraichit la session et renvoie un visiteur non connecte vers
+ *   `/login`. Il ne verifie PAS le role : ce serait une requete a la base a
+ *   chaque navigation, en doublon avec celle du layout `(protected)`, sur un
+ *   chemin deja mesure comme charge (768 appels d'authentification sur la seule
+ *   heure de 16 h UTC le 17/09). L'autorisation reste ou elle doit etre :
+ *   cote serveur dans le layout, qui ne fait pas confiance au middleware
+ *   (CVE-2025-29927 : un middleware Next.js peut etre contourne par un en-tete).
  * - `/api/*` est EXCLU du matcher. Les routes API (Qonto, webhooks Packlink,
  *   Revolut, emails) sont immuables et portent deja leur propre controle
  *   d'acces ; les faire passer ici serait un risque de regression pur.
@@ -82,31 +89,6 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       url.pathname = '/login';
       url.search = '';
       url.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(url);
-    }
-
-    const { data: role, error: roleError } = await supabase
-      .from('user_app_roles')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('app', 'back-office')
-      .eq('is_active', true)
-      .maybeSingle();
-
-    // Lecture impossible : on ne sait pas si la personne a le droit d'etre la.
-    // On ne tranche pas ici — le layout `(protected)` refera la verification.
-    // Mieux vaut un rendu de plus qu'une deconnexion injustifiee.
-    if (roleError) {
-      console.error(
-        `[back-office/middleware] Lecture du role indisponible (${roleError.code ?? 'sans code'}): ${roleError.message}`
-      );
-      return supabaseResponse;
-    }
-
-    if (!role) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/unauthorized';
-      url.search = '';
       return NextResponse.redirect(url);
     }
 
