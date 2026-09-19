@@ -63,6 +63,40 @@ export function isSensitiveText(text: string): boolean {
 const MASK = '•••';
 
 /**
+ * Elements qui contiennent de la DONNEE, par opposition a l'habillage de
+ * l'interface. Tout texte a l'interieur est masque sans condition.
+ *
+ * Pourquoi c'est necessaire : aucune expression reguliere ne reconnait un NOM.
+ * Constate en production le 2026-09-19 sur un rejeu de l'ecran Facturation :
+ * « MONSIEUR LAURENT DANIEL LEJOSNE », « Pokawa Lille flandres », « MT Solutions »
+ * etaient lisibles en clair. Le filtre par motif attrapait les montants, jamais
+ * les noms.
+ *
+ * Le compromis : dans un outil de gestion, diagnostiquer un plantage demande de
+ * voir QUEL ECRAN, QUELS BOUTONS, QUELLE NAVIGATION — pas le contenu des
+ * tableaux. On masque donc la donnee et on garde l'habillage lisible.
+ */
+const DATA_SELECTORS = 'td, th, [data-posthog-mask]';
+
+function isInsideDataCell(element?: HTMLElement): boolean {
+  if (!element || typeof element.closest !== 'function') return false;
+  try {
+    return element.closest(DATA_SELECTORS) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Decide si un texte doit etre masque dans un rejeu.
+ * Separee de l'acces au DOM pour rester testable.
+ */
+export function shouldMaskText(text: string, insideDataCell: boolean): boolean {
+  if (insideDataCell) return true;
+  return isSensitiveText(text);
+}
+
+/**
  * Version de l'application, pour pouvoir dire « cette erreur date de la mise en
  * ligne de 13 h 45 ». Injectee au build depuis VERCEL_GIT_COMMIT_SHA
  * (cf. next.config.js), sinon « local ».
@@ -118,7 +152,25 @@ export function buildPosthogConfig({
 
     session_recording: {
       maskAllInputs: true,
-      maskTextFn: (text: string) => (isSensitiveText(text) ? MASK : text),
+
+      // ⚠️ `maskTextSelector` est OBLIGATOIRE pour que `maskTextFn` serve a
+      // quelque chose. La documentation de la bibliotheque est explicite :
+      // « Session replay masks input values by default (see maskAllInputs),
+      //   but it does not mask other DOM text or images. »
+      // Sans selecteur, la fonction ci-dessous n'est JAMAIS appelee sur le
+      // texte de la page. Constate en production le 2026-09-19 : un rejeu de
+      // l'ecran Facturation laissait lire en clair le nom des clients
+      // (« MONSIEUR LAURENT DANIEL LEJOSNE », « Pokawa Lille flandres ») et
+      // les montants (« 557,28 € »).
+      //
+      // `'*'` fait passer TOUT noeud de texte par `maskTextFn`, qui decide
+      // ensuite au cas par cas : masque ce qui ressemble a une donnee
+      // personnelle, laisse lisible le reste (libelles, boutons, statuts) —
+      // sans quoi le rejeu ne servirait plus a diagnostiquer quoi que ce soit.
+      maskTextSelector: '*',
+      maskTextFn: (text: string, element?: HTMLElement) =>
+        shouldMaskText(text, isInsideDataCell(element)) ? MASK : text,
+
       recordHeaders: true,
       recordBody: false,
     },
