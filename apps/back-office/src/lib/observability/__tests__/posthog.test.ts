@@ -13,7 +13,7 @@
 
 import { strict as assert } from 'node:assert';
 
-import { isSensitiveText, shouldInitPosthog } from '../posthog';
+import { isSensitiveText, shouldInitPosthog, shouldMaskText } from '../posthog';
 
 let passed = 0;
 let failed = 0;
@@ -82,6 +82,41 @@ test('avec une cle mais hors production, rien ne demarre', () => {
   process.env.NEXT_PUBLIC_POSTHOG_KEY = 'phc_test';
   assert.notEqual(process.env.NODE_ENV, 'production');
   assert.equal(shouldInitPosthog(), false);
+});
+
+console.log('Contenu des tableaux : masque SANS CONDITION');
+
+// Aucune expression reguliere ne reconnait un nom. Constate en production le
+// 2026-09-19 : un rejeu laissait lire « MONSIEUR LAURENT DANIEL LEJOSNE » et
+// « Pokawa Lille flandres ». D'ou le masquage par emplacement.
+for (const texte of [
+  'MONSIEUR LAURENT DANIEL LEJOSNE',
+  'Pokawa Lille flandres',
+  'MT Solutions',
+  'POKE 18EME (Pokawa Custine)',
+  'SO-2026-00199',
+  'F-2026-035',
+]) {
+  test(`dans une cellule, « ${texte} » est masque`, () => {
+    assert.equal(shouldMaskText(texte, true), true);
+  });
+}
+
+console.log("Habillage de l'interface : reste lisible hors tableau");
+
+for (const texte of [
+  'Facturation',
+  'Nouvelle facture',
+  'Reessayer',
+  'Une erreur est survenue',
+]) {
+  test(`« ${texte} » reste lisible`, () => {
+    assert.equal(shouldMaskText(texte, false), false);
+  });
+}
+
+test('un e-mail reste masque meme hors tableau', () => {
+  assert.equal(shouldMaskText('elisabete@exemple.fr', false), true);
 });
 
 console.log(`\n${passed} reussis, ${failed} echoues`);
