@@ -218,17 +218,17 @@ Deux portes de moins à surveiller que ce qui était prévu.
 
 ### Liste blanche — 9 chemins, chacun justifié
 
-| Chemin                              | Qui appelle               | Sa serrure à elle                            |
-| ----------------------------------- | ------------------------- | -------------------------------------------- |
-| `/api/csp-report`                   | le navigateur             | aucune possible par nature                   |
-| `/api/health`                       | supervision               | aucune donnée métier renvoyée                |
-| `/api/cron/google-merchant-poll`    | tâche planifiée           | `CRON_SECRET` obligatoire (l'était déjà)     |
-| `/api/cron/meta-commerce-sync`      | tâche planifiée           | `CRON_SECRET` **rendu obligatoire**          |
-| `/api/cron/sync-comptabilite`       | tâche planifiée           | `CRON_SECRET` **rendu obligatoire**          |
-| `/api/gmail/watch/refresh`          | tâche planifiée           | `CRON_SECRET` obligatoire (l'était déjà)     |
-| `/api/gmail/inbound`                | Google Pub/Sub            | jeton partagé obligatoire — voir § 5 bis     |
-| `/api/webhooks/packlink`            | Packlink                  | secret partagé — **non configuré, voir § 6** |
-| `/api/emails/linkme-info-completed` | LinkMe, serveur à serveur | aucune — destinataire fixe interne, voir § 6 |
+| Chemin                              | Qui appelle               | Sa serrure à elle                                                                   |
+| ----------------------------------- | ------------------------- | ----------------------------------------------------------------------------------- |
+| `/api/csp-report`                   | le navigateur             | aucune possible par nature                                                          |
+| `/api/health`                       | supervision               | aucune donnée métier renvoyée                                                       |
+| `/api/cron/google-merchant-poll`    | tâche planifiée           | `CRON_SECRET` obligatoire (l'était déjà)                                            |
+| `/api/cron/meta-commerce-sync`      | tâche planifiée           | `CRON_SECRET` **rendu obligatoire**                                                 |
+| `/api/cron/sync-comptabilite`       | tâche planifiée           | `CRON_SECRET` **rendu obligatoire**                                                 |
+| `/api/gmail/watch/refresh`          | tâche planifiée           | `CRON_SECRET` obligatoire (l'était déjà)                                            |
+| `/api/gmail/inbound`                | Google Pub/Sub            | jeton partagé obligatoire — voir § 5 bis                                            |
+| `/api/webhooks/packlink`            | Packlink                  | secret partagé — **non configuré, voir § 6**                                        |
+| `/api/emails/linkme-info-completed` | LinkMe, serveur à serveur | destinataires fixes internes + secret partagé `INTERNAL_NOTIFY_SECRET` — voir § 6.2 |
 
 ### Gardes ajoutées route par route (défense en profondeur)
 
@@ -311,37 +311,51 @@ sans session.
 
 ## 6. Ce qui reste ouvert — deux décisions pour Roméo
 
-### 6.1 Le rappel Packlink accepte n'importe qui
+### 6.1 Le rappel Packlink — fermé sans secret
 
-`PACKLINK_WEBHOOK_SECRET` **n'est pas configuré** dans le projet Vercel
-`verone-back-office` (vérifié le 19/09). La vérification est donc sautée à chaque
-appel. Or sur l'événement `shipment.carrier.success`, la route passe
-`packlink_status` à `paye`, ce qui **déclenche le trigger de décrémentation du
-stock réel** et envoie un e-mail de suivi au client.
+**Le problème.** `PACKLINK_WEBHOOK_SECRET` n'est pas configuré en production, et
+l'API de Packlink n'accepte **qu'une URL** pour enregistrer un rappel
+(`POST /v1/shipments/callback`, corps `{ url }`) : ni en-tête personnalisé, ni
+signature. Le seul support possible pour un secret serait l'adresse elle-même,
+qui finit dans les journaux — ce que la règle interdit, et à raison.
 
-Rendre le secret obligatoire **couperait les mises à jour d'expédition** :
-Packlink ne sait pas envoyer d'en-tête personnalisé sur ses rappels. Le seul
-support disponible serait un secret dans l'adresse du rappel — ce que la règle
-interdit par ailleurs, faute de mieux.
+Et le contenu du message était cru sur parole. Conséquences concrètes : déclarer
+payée une expédition non acceptée par le transporteur **déclenchait la sortie de
+stock réel** ; déclarer une livraison faisait passer la commande en « livrée » ;
+un faux numéro et une fausse adresse de suivi partaient au client par e-mail.
 
-**Décision attendue** : garder tel quel, ou accepter un secret dans l'adresse du
-rappel (à enregistrer côté Packlink via `packlink/callback/register`).
-En attendant, la route écrit une ligne d'alerte dans les journaux à chaque appel
-non vérifié.
+**La correction.** Le rappel a cessé d'être une source de vérité pour devenir un
+**signal de relecture**. Avant toute écriture :
 
-### 6.2 La notification LinkMe entre sans serrure
+1. la référence doit exister dans **nos** expéditions — sinon **404**, et on
+   s'arrête avant d'appeler Packlink, ce qui borne le coût d'un envoi en rafale ;
+2. Packlink doit confirmer la référence — sinon **502** ;
+3. l'état appliqué et les données de suivi viennent de **la réponse de Packlink**,
+   jamais du corps reçu. `shipment.carrier.success` exige un numéro de suivi réel
+   chez Packlink ; `shipment.delivered` exige `state = "DELIVERED"` (valeur
+   constatée en réel le 19/09 sur les deux expéditions du compte).
+
+Ça ne demande rien à Packlink, ça ne coupe rien, et ça ferme les trois abus.
+`PACKLINK_WEBHOOK_SECRET` reste géré : s'il est un jour configuré, il s'ajoute
+comme deuxième verrou. Son absence ne fait plus tomber la protection, puisque la
+protection ne repose plus sur lui.
+
+### 6.2 La notification LinkMe — secret partagé, bascule sans casse
 
 `/api/emails/linkme-info-completed` est appelée par l'application LinkMe, de
-serveur à serveur, quand un client a complété ses informations. Elle est dans la
-liste blanche parce qu'elle n'a aucune serrure possible aujourd'hui : les deux
-projets Vercel ne partagent aucun secret.
+serveur à serveur. Elle reste dans la liste blanche du middleware (aucune session
+n'existe côté appelant), avec deux protections :
 
-Le risque est faible et borné : le destinataire est **fixe et interne**
-(`backoffice@verone.fr`), aucun paramètre d'adresse n'est accepté — ce n'est pas
-un relais d'envoi exploitable, contrairement aux sept routes fermées par ce sprint.
+- les destinataires sont **fixes et internes** (`LINKME_NOTIFICATION_EMAILS`,
+  défaut `backoffice@verone.fr`), aucun paramètre d'adresse n'est accepté — ce
+  n'est pas un relais d'envoi, contrairement aux sept routes fermées ;
+- un secret partagé `INTERNAL_NOTIFY_SECRET`, envoyé par LinkMe en en-tête
+  `x-verone-internal` et **exigé par le back-office dès qu'il est configuré**.
 
-**Décision attendue** : ajouter une variable partagée aux deux projets Vercel pour
-la fermer comme les autres.
+Ce sens-là, et pas l'inverse : le code se livre d'abord, la variable s'ajoute
+ensuite aux deux projets Vercel, sans fenêtre pendant laquelle la notification
+tomberait. **Reste à faire** : ajouter `INTERNAL_NOTIFY_SECRET` (même valeur) aux
+projets `verone-back-office` et `linkme` une fois cette PR en ligne.
 
 ### 6.3 Ce qui n'est plus un sujet
 
@@ -350,6 +364,9 @@ la fermer comme les autres.
   mouvements de stock, tarification par canal…) : **fermées par le middleware**,
   sans qu'une ligne de leur logique ait été touchée.
 - `qonto/quotes/[id]/convert` et le `PATCH` de `qonto/invoices/[id]` : **branchés**.
+- `emails/linkme-step4-confirmed` : **supprimée**. Aucun appelant nulle part ;
+  l'application LinkMe a sa route jumelle `emails/step4-confirmed`. Une porte
+  dont personne ne se sert se mure.
 
 ## 7. Règle pour toute nouvelle route
 

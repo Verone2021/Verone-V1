@@ -9,6 +9,37 @@
  * - shipment.label.fail: label generation failed
  * - shipment.tracking.update: tracking status changed (in_transit, out_for_delivery)
  * - shipment.delivered: shipment delivered
+ *
+ * ---
+ *
+ * SÉCURITÉ (BO-SEC-MW-001, 2026-09-19) — pourquoi il n'y a pas de secret ici.
+ *
+ * L'API de Packlink n'accepte qu'une **URL** pour enregistrer un rappel
+ * (`POST /v1/shipments/callback`, corps `{ url }`) : ni en-tête personnalisé,
+ * ni signature. Le seul support possible pour un secret serait l'adresse
+ * elle-même, qui finit dans les journaux du serveur et dans les traces du
+ * fournisseur — la règle `.claude/rules/api-guards.md` l'interdit, et à raison.
+ *
+ * Le rappel a donc cessé d'être une **source de vérité** pour devenir un
+ * simple **signal de relecture**. Concrètement, avant toute écriture :
+ *
+ *   1. la référence doit exister dans NOS expéditions — sinon 404, et on
+ *      s'arrête avant même d'appeler Packlink (borne le coût d'un envoi en
+ *      rafale) ;
+ *   2. Packlink doit confirmer que la référence existe chez lui — sinon 502 ;
+ *   3. l'état appliqué et les données de suivi viennent de **la réponse de
+ *      Packlink**, jamais du corps du message reçu.
+ *
+ * Ce que ça bloque, sans rien demander à Packlink :
+ *   - déclarer payée une expédition que le transporteur n'a pas acceptée
+ *     (donc déclencher à tort la sortie de stock réel) ;
+ *   - déclarer livrée une expédition qui ne l'est pas ;
+ *   - injecter un faux numéro ou une fausse adresse de suivi, qui partent
+ *     ensuite au client par e-mail.
+ *
+ * `PACKLINK_WEBHOOK_SECRET` reste géré : s'il est un jour configuré des deux
+ * côtés, il s'ajoute comme deuxième verrou. Son absence ne fait plus tomber la
+ * protection, puisque la protection ne repose plus sur lui.
  */
 
 import { NextResponse } from 'next/server';
@@ -17,21 +48,23 @@ import { createClient } from '@supabase/supabase-js';
 
 import { getPacklinkClient } from '@verone/common/lib/packlink/client';
 
+/** L'état réel de l'expédition, tel que Packlink le rapporte. */
+interface PacklinkVerite {
+  state: string;
+  carrier: string | null;
+  trackingUrl: string | null;
+  trackingNumber: string | null;
+}
+
+/** État renvoyé par Packlink pour une expédition livrée (constaté en réel). */
+const ETAT_LIVRE = 'DELIVERED';
+
 export async function POST(request: Request) {
   try {
-    // ⚠️ Garde dégradable — SEUL point du sprint BO-SEC-MW-001 laissé en
-    // l'état, volontairement. `PACKLINK_WEBHOOK_SECRET` n'est PAS configuré
-    // en production (vérifié le 19/09 sur le projet Vercel verone-back-office),
-    // et Packlink ne sait pas envoyer d'en-tête personnalisé sur ses rappels :
-    // rendre le secret obligatoire couperait les mises à jour d'expédition et
-    // la décrémentation du stock. Décision en attente de Roméo — voir
-    // `docs/current/security/api-routes-guards.md` § 6.
+    // Deuxième verrou, optionnel : si un secret partagé est un jour configuré
+    // des deux côtés, il est exigé strictement. Son absence ne dégrade plus
+    // rien, la protection réelle étant la vérification auprès de Packlink.
     const webhookSecret = process.env.PACKLINK_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-      console.error(
-        '[Packlink Webhook] PACKLINK_WEBHOOK_SECRET absent — appel accepte SANS verification'
-      );
-    }
     if (webhookSecret) {
       const authHeader =
         request.headers.get('x-packlink-secret') ??
@@ -69,22 +102,76 @@ export async function POST(request: Request) {
 
     console.warn(`[Packlink Webhook] ${event}: ${reference}`);
 
+    // --- Vérification 1 : la référence est-elle une de NOS expéditions ? ---
+    // On s'arrête ici avant d'appeler Packlink : un envoi en rafale sur des
+    // références inventées ne coûte qu'une lecture en base.
+    const { data: expeditionConnue } = await supabase
+      .from('sales_order_shipments')
+      .select('id')
+      .eq('packlink_shipment_id', reference)
+      .limit(1)
+      .maybeSingle();
+
+    if (!expeditionConnue) {
+      console.warn(
+        `[Packlink Webhook] Reference inconnue de nos expeditions, ignoree : ${reference}`
+      );
+      return NextResponse.json({ error: 'Unknown reference' }, { status: 404 });
+    }
+
+    // --- Vérification 2 : Packlink confirme-t-il cette expédition ? ---
+    // C'est ce qui remplace la signature que Packlink ne sait pas envoyer :
+    // on ne croit pas le message, on va relire la vérité à la source.
+    let verite: PacklinkVerite;
+    try {
+      const brut = (await client.getShipment(reference)) as unknown as {
+        state?: string;
+        carrier?: string;
+        tracking_url?: string;
+        carrier_shipment_tracking_number?: string;
+        packages?: Array<{ carrier_tracking_number?: string }>;
+      };
+      verite = {
+        state: (brut.state ?? '').toUpperCase(),
+        carrier: brut.carrier ?? null,
+        trackingUrl: brut.tracking_url ?? null,
+        trackingNumber:
+          brut.packages?.[0]?.carrier_tracking_number ??
+          brut.carrier_shipment_tracking_number ??
+          null,
+      };
+    } catch (err) {
+      console.error(
+        `[Packlink Webhook] Packlink ne confirme pas ${reference}, rien n'est ecrit :`,
+        err
+      );
+      return NextResponse.json(
+        { error: 'Shipment not confirmed by Packlink' },
+        { status: 502 }
+      );
+    }
+
     switch (event) {
       case 'shipment.carrier.success': {
-        // Carrier accepted the shipment — fetch tracking details from Packlink
+        // « Le transporteur a accepté » se prouve par un numéro de suivi chez
+        // Packlink. Sans ce numéro, on n'écrit RIEN : ce passage à « paye »
+        // déclenche la sortie de stock réel, il ne se déclenche pas sur parole.
+        if (!verite.trackingNumber) {
+          console.warn(
+            `[Packlink Webhook] carrier.success annonce sans numero de suivi chez Packlink (etat ${verite.state}) — ignore : ${reference}`
+          );
+          return NextResponse.json(
+            { error: 'Carrier acceptance not confirmed by Packlink' },
+            { status: 409 }
+          );
+        }
+
         try {
-          const detailsRaw = await client.getShipment(reference);
-          // The Packlink GET /shipments/{ref} response exposes the real tracking
-          // number under packages[0].carrier_tracking_number, not at top-level
-          // tracking_code as the legacy code assumed.
-          const details = detailsRaw as unknown as {
-            packages?: Array<{ carrier_tracking_number?: string }>;
-            tracking_url?: string;
-            carrier?: string;
-            state?: string;
+          const details = {
+            tracking_url: verite.trackingUrl ?? undefined,
+            carrier: verite.carrier ?? undefined,
           };
-          const trackingNumber =
-            details.packages?.[0]?.carrier_tracking_number ?? null;
+          const trackingNumber = verite.trackingNumber;
 
           // packlink_status: a_payer → paye
           // Ce changement déclenche le trigger confirm_packlink_shipment_stock()
@@ -237,36 +324,41 @@ export async function POST(request: Request) {
       }
 
       case 'shipment.tracking.update': {
-        // Update tracking info from webhook data
-        const trackingData = body.data as
-          | {
-              tracking_code?: string;
-              tracking_url?: string;
-              status?: string;
-            }
-          | undefined;
-
-        if (trackingData) {
-          const updateFields: Record<string, unknown> = {
-            packlink_status: 'in_transit',
-            updated_at: new Date().toISOString(),
-          };
-          if (trackingData.tracking_code) {
-            updateFields.tracking_number = trackingData.tracking_code;
-          }
-          if (trackingData.tracking_url) {
-            updateFields.tracking_url = trackingData.tracking_url;
-          }
-
-          await supabase
-            .from('sales_order_shipments')
-            .update(updateFields)
-            .eq('packlink_shipment_id', reference);
+        // Le numéro et l'adresse de suivi viennent de Packlink, PAS du message
+        // reçu : sans ça, n'importe qui pouvait faire afficher au client un
+        // lien de suivi de son choix.
+        const updateFields: Record<string, unknown> = {
+          packlink_status:
+            verite.state === ETAT_LIVRE ? 'delivered' : 'in_transit',
+          updated_at: new Date().toISOString(),
+        };
+        if (verite.trackingNumber) {
+          updateFields.tracking_number = verite.trackingNumber;
         }
+        if (verite.trackingUrl) {
+          updateFields.tracking_url = verite.trackingUrl;
+        }
+
+        await supabase
+          .from('sales_order_shipments')
+          .update(updateFields)
+          .eq('packlink_shipment_id', reference);
         break;
       }
 
       case 'shipment.delivered': {
+        // Packlink doit confirmer la livraison. Valeur constatée en réel sur
+        // les expéditions livrées : `state = "DELIVERED"`.
+        if (verite.state !== ETAT_LIVRE) {
+          console.warn(
+            `[Packlink Webhook] Livraison annoncee mais Packlink dit "${verite.state}" — ignoree : ${reference}`
+          );
+          return NextResponse.json(
+            { error: 'Delivery not confirmed by Packlink' },
+            { status: 409 }
+          );
+        }
+
         // Update packlink_status + mark sales order as delivered
         await supabase
           .from('sales_order_shipments')

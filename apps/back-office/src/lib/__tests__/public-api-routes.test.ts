@@ -123,7 +123,6 @@ test("les routes d'envoi d'e-mail sont fermées, sauf la notification interne", 
     '/api/emails/linkme-info-request',
     '/api/emails/linkme-order-approved',
     '/api/emails/linkme-order-rejected',
-    '/api/emails/linkme-step4-confirmed',
     '/api/emails/form-reply',
   ]) {
     assert.equal(

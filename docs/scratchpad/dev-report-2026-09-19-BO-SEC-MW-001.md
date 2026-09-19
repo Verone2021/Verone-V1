@@ -128,37 +128,96 @@ Captures : `.playwright-mcp/screenshots/20260919/bo-sec-mw-*.png`.
 
 ---
 
-## Deux points laissés ouverts, volontairement
+## Deuxième passe — sur ordre de Roméo (19/09)
 
-### 1. Le rappel Packlink
+Roméo a tranché : supprimer la route morte, et fermer le rappel Packlink
+« comme le ferait un développeur senior ».
 
-`PACKLINK_WEBHOOK_SECRET` **n'est pas configuré** en production (vérifié le 19/09
-sur le projet Vercel). La vérification est donc sautée à chaque appel. Sur
-l'événement `shipment.carrier.success`, la route passe `packlink_status` à `paye`,
-ce qui **déclenche la décrémentation du stock réel** et l'envoi d'un e-mail client.
+### Le rappel Packlink — fermé sans secret
 
-Rendre le secret obligatoire **couperait les mises à jour d'expédition** : Packlink
-ne sait pas envoyer d'en-tête personnalisé. Le comportement est donc **inchangé**,
-avec une ligne d'alerte dans les journaux à chaque appel non vérifié.
-**Décision Roméo attendue.**
+**Ce que Packlink permet, vérifié dans le code du client** : son API n'accepte
+**qu'une URL** (`POST /v1/shipments/callback`, corps `{ url }`). Ni en-tête
+personnalisé, ni signature. Le seul support pour un secret serait l'adresse
+elle-même, qui finit dans les journaux du serveur et chez le fournisseur — ce que
+`.claude/rules/api-guards.md` interdit, et à raison.
 
-### 2. Le jeton Gmail dans l'adresse
+**Ce qui était réellement en jeu**, en relisant chaque branche :
+
+| Événement         | Ce qu'il croyait           | Conséquence d'un faux message                                             |
+| ----------------- | -------------------------- | ------------------------------------------------------------------------- |
+| `carrier.success` | le message                 | passage à « payé » → **sortie de stock réel** + e-mail au client          |
+| `tracking.update` | **entièrement** le message | numéro et **adresse de suivi choisis par l'appelant**, affichés au client |
+| `delivered`       | le message                 | commande marquée livrée                                                   |
+| `carrier.fail`    | le message                 | expédition marquée en incident                                            |
+
+**La correction** : le rappel a cessé d'être une source de vérité pour devenir un
+**signal de relecture**. Avant toute écriture :
+
+1. la référence doit exister dans **nos** expéditions — sinon **404**, et on
+   s'arrête avant même d'appeler Packlink, ce qui borne le coût d'un envoi en
+   rafale sur des références inventées ;
+2. Packlink doit confirmer la référence — sinon **502** ;
+3. l'état appliqué et les données de suivi viennent de **la réponse de Packlink**,
+   jamais du corps reçu.
+
+Deux conditions ajoutées, toutes deux appuyées sur des valeurs **constatées en
+réel** ce 19/09 sur les deux expéditions du compte, pas devinées :
+
+- `carrier.success` n'écrit que si Packlink expose un **numéro de suivi**
+  (`packages[0].carrier_tracking_number`) — c'est exactement ce que veut dire
+  « le transporteur a accepté » ;
+- `delivered` n'écrit que si Packlink répond `state = "DELIVERED"`.
+
+`PACKLINK_WEBHOOK_SECRET` reste géré : configuré un jour, il devient un deuxième
+verrou. Son absence ne fait plus tomber la protection, puisque la protection ne
+repose plus sur lui.
+
+**Essais réels, sans connexion, serveur local :**
+
+| Message envoyé                                                                     | Réponse                                               |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `delivered` sur `REFERENCE-INVENTEE-999`                                           | **404** avant tout appel à Packlink                   |
+| `tracking.update` sur `FR9999PRO0009999999`, avec un faux numéro et un lien pirate | **404**, rien n'est écrit                             |
+| `carrier.success` sur une référence inconnue                                       | **404**                                               |
+| `label.fail` sur une vraie référence                                               | **200** — les deux contrôles passent, aucune écriture |
+
+Empreinte des deux expéditions réelles **avant et après** : `packlink_status`,
+`tracking_number` et `updated_at` **strictement identiques** (`2026-04-28 22:57`).
+
+### La route morte est supprimée
+
+`emails/linkme-step4-confirmed` : aucun appelant dans `apps/`, `packages/`,
+`scripts/` ni la CI. L'application LinkMe a sa route jumelle
+`emails/step4-confirmed`. Supprimée, et retirée du test.
+
+### La dernière porte interne, fermée sans fenêtre de casse
+
+`/api/emails/linkme-info-completed` reste dans la liste blanche (l'appelant est un
+serveur, il n'a pas de session), mais elle porte maintenant un secret partagé
+`INTERNAL_NOTIFY_SECRET` : LinkMe l'envoie en en-tête `x-verone-internal`, le
+back-office l'**exige dès qu'il est configuré**, l'ignore tant qu'il ne l'est pas.
+
+Ce sens-là, et pas l'inverse : le code se livre d'abord, la variable s'ajoute aux
+deux projets Vercel ensuite. À aucun moment la notification ne tombe.
+
+Vérifié en local : sans la variable, la route répond comme avant (400 de sa propre
+validation). L'exigence du secret n'est pas testable sur le serveur local sans le
+redémarrer — elle tient en deux lignes lues et relues.
+
+**Reste à faire une fois cette demande en ligne** : ajouter
+`INTERNAL_NOTIFY_SECRET` (même valeur) aux projets Vercel `verone-back-office` et
+`linkme`.
+
+---
+
+## Un seul point encore ouvert
+
+### Le jeton Gmail dans l'adresse
 
 Google Pub/Sub **n'accepte pas d'en-tête personnalisé** sur un abonnement push :
 soit OIDC, soit un jeton dans l'adresse. Le retirer couperait la réception des
 messages. Une trace signale désormais chaque usage de la forme en adresse, pour
-pouvoir la retirer le jour du passage à OIDC (réglage côté Google, hors dépôt).
-
----
-
-## Route sans aucun appelant — à trancher
-
-`emails/linkme-step4-confirmed` : **aucun appelant** dans `apps/` ni `packages/`.
-L'application LinkMe a sa propre route jumelle `emails/step4-confirmed`. La règle
-dit qu'une porte dont personne ne se sert se mure. Elle est fermée par une garde
-pour l'instant. **À supprimer sur accord de Roméo.**
-
----
+pouvoir la retirer le jour du passage à OIDC — réglage côté Google, hors dépôt.
 
 ## Ce qui n'a pas changé
 
