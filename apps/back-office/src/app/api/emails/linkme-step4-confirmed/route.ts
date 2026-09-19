@@ -15,6 +15,8 @@ import type { Database } from '@verone/types';
 import { getLogoAttachments } from '../_shared/email-logo';
 import { buildEmailHtml } from '../_shared/email-template';
 
+import { requireBackofficeAdmin } from '@/lib/guards/require-backoffice-admin';
+
 function getAdminClient() {
   return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -210,6 +212,11 @@ function buildStep4Emails(params: {
 }
 
 export async function POST(request: NextRequest) {
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult;
+  }
+
   try {
     const body = (await request.json()) as Step4ConfirmedEmailRequest;
     const {

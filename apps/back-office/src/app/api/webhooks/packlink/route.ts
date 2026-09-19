@@ -19,9 +19,19 @@ import { getPacklinkClient } from '@verone/common/lib/packlink/client';
 
 export async function POST(request: Request) {
   try {
-    // Sécurité : vérifier le secret webhook si configuré
-    // Configurer PACKLINK_WEBHOOK_SECRET dans .env pour activer
+    // ⚠️ Garde dégradable — SEUL point du sprint BO-SEC-MW-001 laissé en
+    // l'état, volontairement. `PACKLINK_WEBHOOK_SECRET` n'est PAS configuré
+    // en production (vérifié le 19/09 sur le projet Vercel verone-back-office),
+    // et Packlink ne sait pas envoyer d'en-tête personnalisé sur ses rappels :
+    // rendre le secret obligatoire couperait les mises à jour d'expédition et
+    // la décrémentation du stock. Décision en attente de Roméo — voir
+    // `docs/current/security/api-routes-guards.md` § 6.
     const webhookSecret = process.env.PACKLINK_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error(
+        '[Packlink Webhook] PACKLINK_WEBHOOK_SECRET absent — appel accepte SANS verification'
+      );
+    }
     if (webhookSecret) {
       const authHeader =
         request.headers.get('x-packlink-secret') ??

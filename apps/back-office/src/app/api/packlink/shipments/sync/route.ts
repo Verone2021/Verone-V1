@@ -22,12 +22,15 @@
  * back-office as a phantom "à payer" row with no tracking and no label.
  */
 
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
 import { getPacklinkClient } from '@verone/common/lib/packlink/client';
+
+import { requireBackofficeAdmin } from '@/lib/guards/require-backoffice-admin';
 
 const SyncSchema = z.object({
   sales_order_id: z.string().uuid(),
@@ -49,7 +52,12 @@ interface PacklinkShipmentDetailsExt {
   packages?: Array<{ carrier_tracking_number?: string }>;
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult;
+  }
+
   try {
     const body: unknown = await request.json();
     const parsed = SyncSchema.safeParse(body);

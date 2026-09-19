@@ -18,6 +18,8 @@ import type { CreateClientQuoteParams } from '@verone/integrations/qonto';
 import type { Database } from '@verone/types';
 import { createAdminClient } from '@verone/utils/supabase/server';
 
+import { requireBackofficeAdmin } from '@/lib/guards/require-backoffice-admin';
+
 type Organisation = Database['public']['Tables']['organisations']['Row'];
 type IndividualCustomer =
   Database['public']['Tables']['individual_customers']['Row'];
@@ -56,9 +58,14 @@ function normalizeCountryCode(country: string | null | undefined): string {
 }
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult;
+  }
+
   try {
     const { id: quoteId } = await params;
     const supabase = createAdminClient();

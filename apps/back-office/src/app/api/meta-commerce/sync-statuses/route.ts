@@ -1,6 +1,9 @@
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { createServerClient } from '@verone/utils/supabase/server';
+
+import { isCronCall } from '@/lib/guards/require-cron-secret';
 
 interface MetaProduct {
   id: string;
@@ -30,14 +33,21 @@ interface SyncRecord {
  * Fetches product statuses from Meta Graph API and updates meta_commerce_syncs.
  * Maps retailer_id (SKU) to our products and stores meta_product_id + review_status.
  */
-export async function POST() {
+export async function POST(request: NextRequest) {
+  // Deux appelants légitimes : l'écran Canaux de vente (session) et la tâche
+  // planifiée `cron/meta-commerce-sync`, qui n'a pas de cookie et présente le
+  // secret. Sans cette seconde branche, la synchronisation nocturne renvoyait
+  // 401 — défaut trouvé le 19/09 pendant BO-SEC-MW-001.
   const supabase = await createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
-  if (!user) {
-    return NextResponse.json({ error: 'Non autorise' }, { status: 401 });
+  if (!isCronCall(request)) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Non autorise' }, { status: 401 });
+    }
   }
 
   const accessToken = process.env.META_ACCESS_TOKEN;

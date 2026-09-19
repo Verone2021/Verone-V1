@@ -192,6 +192,17 @@ export async function POST(request: Request): Promise<NextResponse> {
   const queryToken = new URL(request.url).searchParams.get('token') ?? '';
   const providedToken = headerToken || queryToken;
 
+  // Le jeton en adresse finit dans les journaux du serveur, l'historique du
+  // navigateur et l'en-tête `Referer`. On ne peut pas le supprimer tant que
+  // l'abonnement Pub/Sub n'est pas passé en OIDC (jeton signé Google, envoyé
+  // en en-tête) : Pub/Sub n'accepte pas d'en-tête personnalisé. Cette trace
+  // dit si la forme en adresse est encore utilisée — BO-SEC-MW-001.
+  if (!headerToken && queryToken) {
+    console.warn(
+      '[Gmail Inbound] Jeton recu dans l adresse — a migrer vers OIDC (en-tete)'
+    );
+  }
+
   if (providedToken !== expectedToken) {
     console.warn('[Gmail Inbound] Token invalide, requête rejetée');
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });

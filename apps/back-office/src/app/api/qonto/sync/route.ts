@@ -20,7 +20,15 @@ import { NextResponse } from 'next/server';
 
 import { getQontoSyncService } from '@verone/finance/services';
 
+import { requireBackofficeAdminOrCron } from '@/lib/guards/require-cron-secret';
+
 export async function POST(request: NextRequest) {
+  // Garde posée en tête — aucune ligne de la mécanique Qonto n'est touchée.
+  // Deux appelants légitimes : l'écran Finance et la tâche planifiée
+  // `cron/sync-comptabilite`, qui présente le secret.
+  const guard = await requireBackofficeAdminOrCron(request);
+  if (guard) return guard;
+
   try {
     const { searchParams } = new URL(request.url);
 
