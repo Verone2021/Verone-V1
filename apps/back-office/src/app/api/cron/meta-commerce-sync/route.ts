@@ -7,8 +7,8 @@
  * et met à jour `meta_commerce_syncs.meta_status`.
  *
  * Sécurisé via header `Authorization: Bearer <CRON_SECRET>` (standard
- * Vercel Cron). Si l'env var `CRON_SECRET` est manquante, la route
- * accepte les appels — utile en dev mais ne devrait pas arriver en prod.
+ * Vercel Cron). **Variable absente = la route refuse** (BO-SEC-MW-001) :
+ * une garde qui se désactive toute seule n'est pas une garde.
  *
  * Configuration `vercel.json` à ajouter (manuel) :
  * {
@@ -25,6 +25,11 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import {
+  cronAuthHeader,
+  requireCronSecret,
+} from '@/lib/guards/require-cron-secret';
+
 interface CronResponse {
   success: boolean;
   data?: unknown;
@@ -34,15 +39,9 @@ interface CronResponse {
 export async function GET(
   request: NextRequest
 ): Promise<NextResponse<CronResponse>> {
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+  const cronGuard = requireCronSecret(request);
+  if (cronGuard) {
+    return cronGuard as NextResponse<CronResponse>;
   }
 
   try {
@@ -57,7 +56,10 @@ export async function GET(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // Forward cookies pour préserver l'auth Supabase éventuelle
+        // Appel machine : la tâche planifiée n'a pas de cookie de session.
+        // On présente le secret, que la route appelée sait reconnaître.
+        ...cronAuthHeader(),
+        // Cookies transmis quand l'appel vient d'un écran (déclenchement manuel).
         cookie: request.headers.get('cookie') ?? '',
       },
     });

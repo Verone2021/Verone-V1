@@ -87,6 +87,9 @@ export async function POST(
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              // Appel interne : la route appelee exige une session depuis
+              // BO-SEC-MW-001. On transmet celle de l'utilisateur.
+              cookie: request.headers.get('cookie') ?? '',
             },
             body: JSON.stringify({
               submissionId,

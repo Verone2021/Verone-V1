@@ -12,6 +12,8 @@ import { NextResponse } from 'next/server';
 import { QontoClient } from '@verone/integrations/qonto';
 import { createAdminClient } from '@verone/utils/supabase/server';
 
+import { requireBackofficeAdmin } from '@/lib/guards/require-backoffice-admin';
+
 function getQontoClient(): QontoClient {
   return new QontoClient({
     authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') ?? 'oauth',
@@ -25,6 +27,11 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult;
+  }
+
   try {
     const { id } = await params;
     const client = getQontoClient();

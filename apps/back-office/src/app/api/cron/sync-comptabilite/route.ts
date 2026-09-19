@@ -23,6 +23,11 @@ import { NextResponse } from 'next/server';
 
 import { createAdminClient } from '@verone/utils/supabase/admin';
 
+import {
+  cronAuthHeader,
+  requireCronSecret,
+} from '@/lib/guards/require-cron-secret';
+
 import { syncQontoAttachments } from '../../finance/sync-qonto-attachments/_lib/sync-attachments';
 
 export const runtime = 'nodejs';
@@ -38,16 +43,10 @@ interface CronResult {
 export async function GET(
   request: NextRequest
 ): Promise<NextResponse<CronResult>> {
-  // 1. Sécurité : secret Vercel Cron
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+  // 1. Sécurité : secret Vercel Cron. Variable absente = refus (BO-SEC-MW-001).
+  const cronGuard = requireCronSecret(request);
+  if (cronGuard) {
+    return cronGuard as NextResponse<CronResult>;
   }
 
   try {
@@ -59,6 +58,9 @@ export async function GET(
     try {
       const resp = await fetch(`${origin}/api/qonto/sync?scope=incremental`, {
         method: 'POST',
+        // Appel machine : aucune session ici. On présente le secret des
+        // tâches planifiées, que `qonto/sync` sait reconnaître.
+        headers: cronAuthHeader(),
       });
       transactionsSync = (await resp.json()) as unknown;
       if (!resp.ok) {

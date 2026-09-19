@@ -23,6 +23,8 @@ import {
   createServerClient,
 } from '@verone/utils/supabase/server';
 
+import { requireBackofficeAdmin } from '@/lib/guards/require-backoffice-admin';
+
 function getQontoClient(): QontoClient {
   return new QontoClient({
     authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') ?? 'oauth',
@@ -69,6 +71,16 @@ export async function POST(
     error?: string;
   }>
 > {
+  // `auth.getUser()` etait bien appele plus bas, mais son resultat n'etait
+  // JAMAIS teste : la garde existait et ne bloquait rien. Route d'ecriture.
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return NextResponse.json(
+      { success: false, error: 'Acces refuse' },
+      { status: guardResult.status }
+    );
+  }
+
   try {
     const { id } = await params;
     const client = getQontoClient();

@@ -5,10 +5,13 @@
  * by matching document_number against Qonto quote_number or purchase_order_number.
  */
 
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { QontoClient } from '@verone/integrations/qonto';
 import { createAdminClient } from '@verone/utils/supabase/server';
+
+import { requireBackofficeAdmin } from '@/lib/guards/require-backoffice-admin';
 
 function getQontoClient(): QontoClient {
   return new QontoClient({
@@ -20,9 +23,14 @@ function getQontoClient(): QontoClient {
 }
 
 export async function POST(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult;
+  }
+
   try {
     const { id } = await params;
 

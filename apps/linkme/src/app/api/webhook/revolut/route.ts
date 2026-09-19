@@ -34,16 +34,28 @@ export async function POST(request: NextRequest) {
     // Lire le body brut pour vérification de signature
     const rawBody = await request.text();
 
-    // Vérifier la signature si le secret est configuré
-    if (webhookSecret && signature) {
-      const isValid = verifyWebhookSignature(rawBody, signature, webhookSecret);
-      if (!isValid) {
-        console.error('Invalid webhook signature');
-        return NextResponse.json(
-          { error: 'Invalid signature' },
-          { status: 401 }
-        );
-      }
+    // Signature OBLIGATOIRE (BO-SEC-MW-001). Avant ce sprint, l'absence du
+    // secret ou de la signature faisait sauter la vérification : n'importe qui
+    // pouvait déclarer un paiement encaissé. Une garde qui s'efface toute
+    // seule n'est pas une garde.
+    if (!webhookSecret) {
+      console.error(
+        '[Revolut Webhook] REVOLUT_WEBHOOK_SECRET absent — appel refusé'
+      );
+      return NextResponse.json(
+        { error: 'Webhook non configure' },
+        { status: 503 }
+      );
+    }
+
+    if (!signature) {
+      console.error('[Revolut Webhook] Signature absente — appel refusé');
+      return NextResponse.json({ error: 'Signature requise' }, { status: 401 });
+    }
+
+    if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
+      console.error('[Revolut Webhook] Signature invalide');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
     // Parser l'événement
