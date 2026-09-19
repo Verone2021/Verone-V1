@@ -4,6 +4,18 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
+import { clientIpFromHeaders, createRateLimiter } from '@/lib/rate-limit';
+
+/**
+ * Formulaire public, sans connexion : 3 messages par quart d'heure et par
+ * adresse suffisent largement à un visiteur de bonne foi, et coupent le
+ * remplissage en boucle de la table `site_contact_messages`.
+ */
+const contactRateLimiter = createRateLimiter({
+  limit: 3,
+  windowMs: 15 * 60 * 1000,
+});
+
 const contactSchema = z.object({
   name: z.string().min(1).max(200),
   email: z.string().email().max(320),
@@ -13,6 +25,24 @@ const contactSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const clientIp = clientIpFromHeaders(request.headers);
+    const quota = contactRateLimiter.check(clientIp);
+
+    if (!quota.allowed) {
+      console.warn(`[Contact API] Trop de messages depuis ${clientIp}`);
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'Trop de messages envoyés en peu de temps. Merci de réessayer dans quelques minutes.',
+        },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(quota.retryAfterSeconds) },
+        }
+      );
+    }
+
     const body: unknown = await request.json();
     const parsed = contactSchema.safeParse(body);
 

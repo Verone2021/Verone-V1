@@ -3,7 +3,8 @@
 **Source de vérité unique** pour la protection des routes API des trois applications.
 À relire avant d'ajouter une route, avant d'en supprimer une, et avant tout audit de sécurité.
 
-**Dernière mise à jour** : 2026-09-18 — sprint `[BO-SEC-GUARD-001]`.
+**Dernière mise à jour** : 2026-09-19 — sprint `[BO-SEC-MW-001]` (verrou général).
+Sprint précédent : `[BO-SEC-GUARD-001]` (8 portes de lecture, 2026-09-18).
 **Règle associée** : `.claude/rules/api-guards.md`. **Décision** : `.claude/DECISIONS.md`.
 
 ---
@@ -190,7 +191,107 @@ if (guardResult instanceof NextResponse) {
 
 ---
 
-## 5. Gardes présentes mais jamais vérifiées
+## 4 bis. État au 2026-09-19 — le verrou général est posé
+
+`apps/back-office/src/middleware.ts` existe désormais. **Sous `/api/`, le défaut
+est le refus.** Une route nouvellement ajoutée naît fermée ; l'ouvrir demande de
+toucher `apps/back-office/src/lib/security/public-api-routes.ts`, donc de l'écrire
+et de le justifier. Un test parcourt les fichiers de routes réels et échoue si
+l'ensemble des portes ouvertes ne correspond plus à cette liste.
+
+Le middleware ne vise QUE `/api/:path*`. La protection des **pages** reste
+`(protected)/layout.tsx`, inchangée.
+
+### Les quatre façons de passer
+
+| #   | Condition                                             | Pourquoi                                                                                                          |
+| --- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 1   | requête `OPTIONS`                                     | contrôle préalable CORS : aucune donnée, aucun cookie. Le bloquer casserait l'extension Chrome sans rien protéger |
+| 2   | chemin de la liste blanche                            | la route porte sa propre serrure (tableau ci-dessous)                                                             |
+| 3   | `Authorization: Bearer <CRON_SECRET>`                 | appel machine ; la route appelée revérifie                                                                        |
+| 4   | session Supabase valide — cookie **ou** jeton porteur | écrans du back-office, et extension Chrome du sourcing                                                            |
+
+Le cas 4 accepte le jeton porteur : c'est ainsi que l'extension Chrome appelle
+depuis une autre origine, où les cookies ne voyagent pas. Conséquence :
+**`/api/sourcing/*` et `/api/brands` n'ont PAS besoin d'exemption de chemin**.
+Deux portes de moins à surveiller que ce qui était prévu.
+
+### Liste blanche — 9 chemins, chacun justifié
+
+| Chemin                              | Qui appelle               | Sa serrure à elle                                                                   |
+| ----------------------------------- | ------------------------- | ----------------------------------------------------------------------------------- |
+| `/api/csp-report`                   | le navigateur             | aucune possible par nature                                                          |
+| `/api/health`                       | supervision               | aucune donnée métier renvoyée                                                       |
+| `/api/cron/google-merchant-poll`    | tâche planifiée           | `CRON_SECRET` obligatoire (l'était déjà)                                            |
+| `/api/cron/meta-commerce-sync`      | tâche planifiée           | `CRON_SECRET` **rendu obligatoire**                                                 |
+| `/api/cron/sync-comptabilite`       | tâche planifiée           | `CRON_SECRET` **rendu obligatoire**                                                 |
+| `/api/gmail/watch/refresh`          | tâche planifiée           | `CRON_SECRET` obligatoire (l'était déjà)                                            |
+| `/api/gmail/inbound`                | Google Pub/Sub            | jeton partagé obligatoire — voir § 5 bis                                            |
+| `/api/webhooks/packlink`            | Packlink                  | secret partagé — **non configuré, voir § 6**                                        |
+| `/api/emails/linkme-info-completed` | LinkMe, serveur à serveur | destinataires fixes internes + secret partagé `INTERNAL_NOTIFY_SECRET` — voir § 6.2 |
+
+### Gardes ajoutées route par route (défense en profondeur)
+
+Le middleware vérifie qu'une session existe ; `requireBackofficeAdmin` vérifie en
+plus le **rôle** (401 → 403). Les 17 routes signalées ouvertes le 18/09 la portent
+désormais :
+
+```
+POST   qonto/invoices/[id]/cancel          POST  emails/linkme-info-request
+DELETE qonto/invoices/[id]/delete          POST  emails/linkme-order-approved
+POST   qonto/invoices/[id]/sync-to-order   POST  emails/linkme-order-rejected
+POST   qonto/sync-invoices                 POST  emails/linkme-step4-confirmed
+POST   quotes/[id]/finalize                POST  emails/send-consultation
+POST   quotes/[id]/link-qonto              POST  emails/send-document
+POST   quotes/[id]/push-to-qonto           POST  emails/send-order-documents
+POST   qonto/quotes/service
+POST   qonto/quotes/from-invoice/[invoiceId]
+POST   packlink/shipments/sync
+```
+
+Plus `POST qonto/sync`, qui n'était pas dans la liste du 18/09 et n'avait aucune
+garde : elle accepte une session **ou** le secret des tâches planifiées.
+
+**Aucune ligne de logique Qonto ou Packlink n'a été modifiée.** Les gardes sont
+posées en tête de handler, rien d'autre.
+
+### Appels internes trouvés en chemin — le verrou les aurait cassés en silence
+
+Quatre routes en appellent une autre par HTTP, sans session. Sans correction,
+elles seraient tombées en 401 **sans erreur visible** (toutes en `try/catch`).
+
+| Appelant                         | Appelée                             | Correction                        |
+| -------------------------------- | ----------------------------------- | --------------------------------- |
+| `form-submissions/[id]/messages` | `emails/form-reply`                 | transmet le cookie de session     |
+| `qonto/invoices/[id]` (PATCH)    | `qonto/invoices/[id]/sync-to-order` | transmet le cookie de session     |
+| `cron/sync-comptabilite`         | `qonto/sync`                        | présente `CRON_SECRET` en en-tête |
+| `cron/meta-commerce-sync`        | `meta-commerce/sync-statuses`       | présente `CRON_SECRET` en en-tête |
+
+Le dernier cas était **déjà cassé avant ce sprint** : `sync-statuses` exigeait une
+session, et une tâche planifiée n'a pas de cookie. La synchronisation Meta de 4 h
+renvoyait 401 tous les jours. Réparée au passage.
+
+---
+
+## 5 bis. Gardes qui se dégradaient — état après correction
+
+| Route                       | Avant                                                            | Après                                                                                                                                                                                                               |
+| --------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cron/meta-commerce-sync`   | `if (cronSecret)` — pas de secret, pas de contrôle               | variable absente = **503**                                                                                                                                                                                          |
+| `cron/sync-comptabilite`    | idem                                                             | variable absente = **503**                                                                                                                                                                                          |
+| `linkme` `webhook/revolut`  | signature vérifiée **seulement si** secret ET signature présents | secret absent = **503**, signature absente = **401**, signature fausse = **401**                                                                                                                                    |
+| `qonto/quotes/[id]/convert` | `getUser()` appelé, résultat jamais testé                        | `requireBackofficeAdmin` en tête                                                                                                                                                                                    |
+| `qonto/invoices/[id]`       | garde sur le `GET` seulement, `PATCH` ouvert                     | garde sur le `PATCH` aussi                                                                                                                                                                                          |
+| `gmail/inbound`             | jeton accepté dans l'adresse                                     | inchangé — **impossible autrement** : Pub/Sub n'accepte pas d'en-tête personnalisé sur un abonnement push. Une trace signale chaque usage de la forme en adresse, pour pouvoir la retirer le jour du passage à OIDC |
+| `webhooks/packlink`         | dégradable                                                       | **inchangé volontairement** — voir § 6                                                                                                                                                                              |
+
+Revolut pouvait être durci sans risque : **aucune variable `REVOLUT_*` n'existe
+dans le projet Vercel `linkme`** (vérifié le 19/09). L'intégration n'est pas
+branchée ; la fermer ne casse rien.
+
+---
+
+## 5. Gardes présentes mais jamais vérifiées (constat du 18/09)
 
 Une garde peut exister dans le fichier et ne rien bloquer : l'appel est fait, son résultat
 n'est jamais testé. Vérifié à la main, ligne par ligne :
@@ -208,20 +309,64 @@ sans session.
 
 ---
 
-## 6. Ce qui reste ouvert, et dans quel ordre le traiter
+## 6. Ce qui reste ouvert — deux décisions pour Roméo
 
-Décision de Roméo le 18/09 : **fermer d'abord les portes de lecture**, sans toucher à la
-mécanique Qonto et Packlink, qui est fragile et doit continuer de fonctionner.
+### 6.1 Le rappel Packlink — fermé sans secret
 
-| Priorité | Sujet                                                                                                                                                                                                                                | Pourquoi                                                                                          |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| 1        | **Un `middleware.ts` sur le back-office** : refus par défaut sur `/api/*`, liste blanche explicite pour les crons, les webhooks et l'extension Chrome du sourcing                                                                    | C'est la seule réponse systémique. Tant qu'il manque, chaque route ajoutée est ouverte par défaut |
-| 2        | Les routes Qonto qui **écrivent** (factures, devis) sans garde                                                                                                                                                                       | Un inconnu peut créer, modifier ou supprimer une facture                                          |
-| 3        | Les 7 routes `emails/*` sans garde                                                                                                                                                                                                   | Relais d'envoi de messages depuis le domaine Vérone (hameçonnage)                                 |
-| 4        | `qonto/quotes/[id]/convert` : brancher la garde déjà présente                                                                                                                                                                        | Correction d'une ligne                                                                            |
-| 5        | Gardes qui se dégradent en silence : `webhooks/packlink` et `webhook/revolut` sautent la vérification **si la variable d'environnement est absente** ; `gmail/inbound` accepte son jeton **dans l'adresse** (donc dans les journaux) | Une garde qui s'efface toute seule n'est pas une garde                                            |
+**Le problème.** `PACKLINK_WEBHOOK_SECRET` n'est pas configuré en production, et
+l'API de Packlink n'accepte **qu'une URL** pour enregistrer un rappel
+(`POST /v1/shipments/callback`, corps `{ url }`) : ni en-tête personnalisé, ni
+signature. Le seul support possible pour un secret serait l'adresse elle-même,
+qui finit dans les journaux — ce que la règle interdit, et à raison.
 
----
+Et le contenu du message était cru sur parole. Conséquences concrètes : déclarer
+payée une expédition non acceptée par le transporteur **déclenchait la sortie de
+stock réel** ; déclarer une livraison faisait passer la commande en « livrée » ;
+un faux numéro et une fausse adresse de suivi partaient au client par e-mail.
+
+**La correction.** Le rappel a cessé d'être une source de vérité pour devenir un
+**signal de relecture**. Avant toute écriture :
+
+1. la référence doit exister dans **nos** expéditions — sinon **404**, et on
+   s'arrête avant d'appeler Packlink, ce qui borne le coût d'un envoi en rafale ;
+2. Packlink doit confirmer la référence — sinon **502** ;
+3. l'état appliqué et les données de suivi viennent de **la réponse de Packlink**,
+   jamais du corps reçu. `shipment.carrier.success` exige un numéro de suivi réel
+   chez Packlink ; `shipment.delivered` exige `state = "DELIVERED"` (valeur
+   constatée en réel le 19/09 sur les deux expéditions du compte).
+
+Ça ne demande rien à Packlink, ça ne coupe rien, et ça ferme les trois abus.
+`PACKLINK_WEBHOOK_SECRET` reste géré : s'il est un jour configuré, il s'ajoute
+comme deuxième verrou. Son absence ne fait plus tomber la protection, puisque la
+protection ne repose plus sur lui.
+
+### 6.2 La notification LinkMe — secret partagé, bascule sans casse
+
+`/api/emails/linkme-info-completed` est appelée par l'application LinkMe, de
+serveur à serveur. Elle reste dans la liste blanche du middleware (aucune session
+n'existe côté appelant), avec deux protections :
+
+- les destinataires sont **fixes et internes** (`LINKME_NOTIFICATION_EMAILS`,
+  défaut `backoffice@verone.fr`), aucun paramètre d'adresse n'est accepté — ce
+  n'est pas un relais d'envoi, contrairement aux sept routes fermées ;
+- un secret partagé `INTERNAL_NOTIFY_SECRET`, envoyé par LinkMe en en-tête
+  `x-verone-internal` et **exigé par le back-office dès qu'il est configuré**.
+
+Ce sens-là, et pas l'inverse : le code se livre d'abord, la variable s'ajoute
+ensuite aux deux projets Vercel, sans fenêtre pendant laquelle la notification
+tomberait. **Reste à faire** : ajouter `INTERNAL_NOTIFY_SECRET` (même valeur) aux
+projets `verone-back-office` et `linkme` une fois cette PR en ligne.
+
+### 6.3 Ce qui n'est plus un sujet
+
+- Les 17 routes signalées ouvertes le 18/09 : **fermées**.
+- Les ~40 autres routes sans garde (Qonto, Packlink, Google Merchant, Meta,
+  mouvements de stock, tarification par canal…) : **fermées par le middleware**,
+  sans qu'une ligne de leur logique ait été touchée.
+- `qonto/quotes/[id]/convert` et le `PATCH` de `qonto/invoices/[id]` : **branchés**.
+- `emails/linkme-step4-confirmed` : **supprimée**. Aucun appelant nulle part ;
+  l'application LinkMe a sa route jumelle `emails/step4-confirmed`. Une porte
+  dont personne ne se sert se mure.
 
 ## 7. Règle pour toute nouvelle route
 

@@ -1,6 +1,9 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+import { fetchCatalogPrices } from '@/lib/checkout/catalog-prices';
+import { resolveCartItems } from '@/lib/checkout/resolve-cart';
+
 import {
   createAmbassadorAttribution,
   createDraftOrder,
@@ -24,7 +27,7 @@ export async function POST(request: Request) {
     }
 
     const {
-      items,
+      items: declaredItems,
       customer,
       userId,
       discount: frontendDiscount,
@@ -33,22 +36,47 @@ export async function POST(request: Request) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+    // Sans base, aucun prix de référence : on ne peut pas encaisser en
+    // aveugle sur les montants du navigateur. On refuse plutôt que d'ouvrir
+    // la porte que ce sprint ferme.
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('[Checkout] Supabase non configuré — paiement refusé');
+      return NextResponse.json(
+        { error: 'Service de paiement momentanément indisponible' },
+        { status: 503 }
+      );
+    }
+
+    // Prix de référence lus en base — NE JAMAIS faire confiance au navigateur
+    // (même principe que le code promo, appliqué au prix du produit).
+    const catalog = await fetchCatalogPrices(
+      declaredItems.map(item => item.product_id),
+      supabaseUrl,
+      supabaseServiceKey
+    );
+
+    const cart = resolveCartItems(declaredItems, catalog);
+
+    if (!cart.ok) {
+      // Un écart est soit un prix qui a bougé, soit une requête modifiée.
+      // Les deux méritent d'être visibles dans les journaux.
+      console.error(
+        `[Checkout][PANIER_REFUSE] ${cart.reason} — ${cart.detail}`
+      );
+      return NextResponse.json(
+        { error: cart.error, reason: cart.reason },
+        { status: 400 }
+      );
+    }
+
+    const items = cart.items;
+
     // Server-side promo revalidation — NEVER trust frontend discount_amount
     let discount: ValidatedDiscount | undefined;
-    if (frontendDiscount?.code && supabaseUrl && supabaseServiceKey) {
-      const subtotalForPromo = items.reduce(
-        (sum, item) =>
-          sum +
-          (item.price_ttc +
-            item.eco_participation +
-            (item.include_assembly ? item.assembly_price : 0)) *
-            item.quantity,
-        0
-      );
-
+    if (frontendDiscount?.code) {
       const promoResult = await validatePromoServerSide(
         frontendDiscount,
-        subtotalForPromo,
+        cart.subtotalTtc,
         supabaseUrl,
         supabaseServiceKey
       );
@@ -75,53 +103,39 @@ export async function POST(request: Request) {
     const shipping = await getShippingConfig();
 
     // Pre-create draft order
-    let orderId: string | null = null;
-    let finalTtc = 0;
+    const discountAmount = discount?.discount_amount ?? 0;
+    const finalTtc = Math.max(cart.subtotalTtc - discountAmount, 0);
 
-    if (supabaseUrl && supabaseServiceKey) {
-      const subtotalAmount = items.reduce(
-        (sum, item) =>
-          sum +
-          (item.price_ttc +
-            item.eco_participation +
-            (item.include_assembly ? item.assembly_price : 0)) *
-            item.quantity,
-        0
-      );
-      const discountAmount = discount?.discount_amount ?? 0;
-      finalTtc = Math.max(subtotalAmount - discountAmount, 0);
+    const result = await createDraftOrder(
+      items,
+      customer,
+      userId,
+      discount,
+      supabaseUrl,
+      supabaseServiceKey
+    );
+    const orderId = result.orderId;
 
-      const result = await createDraftOrder(
-        items,
-        customer,
-        userId,
-        discount,
+    // ADR-021 D3 + D4 : ambassador attribution (non-blocking)
+    // Priority: explicit promo code wins over referral cookie (D11).
+    // If no code but referral cookie present, attribute via 'referral_link'
+    // without applying any discount to the customer (D4).
+    const cookieStore = await cookies();
+    const referralCookieCode = cookieStore.get('verone_ref')?.value;
+    const ambassadorCode = discount?.code ?? referralCookieCode;
+    const attributionMethod: 'coupon_code' | 'referral_link' = discount?.code
+      ? 'coupon_code'
+      : 'referral_link';
+
+    if (orderId && ambassadorCode) {
+      await createAmbassadorAttribution(
+        orderId,
+        ambassadorCode,
+        finalTtc,
         supabaseUrl,
-        supabaseServiceKey
+        supabaseServiceKey,
+        attributionMethod
       );
-      orderId = result.orderId;
-
-      // ADR-021 D3 + D4 : ambassador attribution (non-blocking)
-      // Priority: explicit promo code wins over referral cookie (D11).
-      // If no code but referral cookie present, attribute via 'referral_link'
-      // without applying any discount to the customer (D4).
-      const cookieStore = await cookies();
-      const referralCookieCode = cookieStore.get('verone_ref')?.value;
-      const ambassadorCode = discount?.code ?? referralCookieCode;
-      const attributionMethod: 'coupon_code' | 'referral_link' = discount?.code
-        ? 'coupon_code'
-        : 'referral_link';
-
-      if (orderId && ambassadorCode) {
-        await createAmbassadorAttribution(
-          orderId,
-          ambassadorCode,
-          finalTtc,
-          supabaseUrl,
-          supabaseServiceKey,
-          attributionMethod
-        );
-      }
     }
 
     const Stripe = (await import('stripe')).default;
@@ -129,50 +143,29 @@ export async function POST(request: Request) {
       apiVersion: '2026-02-25.clover',
     });
 
-    const lineItems = items.map(item => {
-      const unitAmount = Math.round(
-        (item.price_ttc +
-          item.eco_participation +
-          (item.include_assembly ? item.assembly_price : 0)) *
-          100
-      );
-      return {
-        price_data: {
-          currency: 'eur',
-          product_data: {
-            name: item.name,
-            ...(item.include_assembly
-              ? { description: 'Avec service de montage' }
-              : {}),
-          },
-          unit_amount: unitAmount,
+    // Montants et libellés : uniquement ce qui vient de la base.
+    const lineItems = items.map(item => ({
+      price_data: {
+        currency: 'eur',
+        product_data: {
+          name: item.name,
+          ...(item.include_assembly
+            ? { description: 'Avec service de montage' }
+            : {}),
         },
-        quantity: item.quantity,
-      };
-    });
+        unit_amount: item.unit_amount_cents,
+      },
+      quantity: item.quantity,
+    }));
 
-    const subtotalCents = items.reduce(
-      (sum, item) =>
-        sum +
-        Math.round(
-          (item.price_ttc +
-            item.eco_participation +
-            (item.include_assembly ? item.assembly_price : 0)) *
-            100
-        ) *
-          item.quantity,
-      0
-    );
+    const subtotalCents = cart.subtotalCents;
 
     // Fetch product shipping estimates
-    let maxProductShippingCents = 0;
-    if (supabaseUrl && supabaseServiceKey) {
-      maxProductShippingCents = await fetchMaxProductShippingCents(
-        items.map(item => item.product_id),
-        supabaseUrl,
-        supabaseServiceKey
-      );
-    }
+    const maxProductShippingCents = await fetchMaxProductShippingCents(
+      items.map(item => item.product_id),
+      supabaseUrl,
+      supabaseServiceKey
+    );
 
     const shippingOptions = buildShippingOptions(
       shipping,

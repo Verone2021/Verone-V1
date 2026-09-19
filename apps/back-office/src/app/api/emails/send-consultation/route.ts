@@ -16,6 +16,8 @@ import type { Database } from '@verone/types';
 import { getLogoAttachments } from '../_shared/email-logo';
 import { buildEmailHtml } from '../_shared/email-template';
 
+import { requireBackofficeAdmin } from '@/lib/guards/require-backoffice-admin';
+
 // ── Clients ──────────────────────────────────────────────────────────
 
 function getResendClient(): Resend {
@@ -57,6 +59,11 @@ const SendConsultationEmailSchema = z.object({
 // ── Route ────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult;
+  }
+
   try {
     const body: unknown = await request.json();
     const parsed = SendConsultationEmailSchema.safeParse(body);

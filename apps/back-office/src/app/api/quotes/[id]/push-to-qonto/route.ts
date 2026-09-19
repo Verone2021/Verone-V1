@@ -7,12 +7,15 @@
  * 3. If quote is already validated, also sends it (= finalize) to generate PDF
  */
 
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { QontoClient } from '@verone/integrations/qonto';
 import type { CreateClientQuoteParams } from '@verone/integrations/qonto';
 import type { Database } from '@verone/types';
 import { createAdminClient } from '@verone/utils/supabase/server';
+
+import { requireBackofficeAdmin } from '@/lib/guards/require-backoffice-admin';
 
 type Organisation = Database['public']['Tables']['organisations']['Row'];
 type IndividualCustomer =
@@ -40,9 +43,14 @@ interface QuoteItemRow {
 }
 
 export async function POST(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult;
+  }
+
   try {
     const { id } = await params;
     const supabase = createAdminClient();

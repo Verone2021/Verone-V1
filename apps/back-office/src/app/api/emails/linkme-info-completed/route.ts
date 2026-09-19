@@ -3,6 +3,21 @@
  * Sends notification email to back-office when someone completes the info request form
  *
  * Recipients: Verone back-office team (LINKME_NOTIFICATION_EMAILS)
+ *
+ * ---
+ *
+ * SÉCURITÉ (BO-SEC-MW-001) — appel serveur à serveur depuis l'application
+ * LinkMe, donc sans session : c'est la seule route d'envoi d'e-mail qui reste
+ * dans la liste blanche du middleware.
+ *
+ * Le risque est borné : les destinataires sont **fixes et internes**
+ * (`LINKME_NOTIFICATION_EMAILS`, défaut `backoffice@verone.fr`), aucun
+ * paramètre d'adresse n'est accepté — ce n'est pas un relais d'envoi.
+ *
+ * Secret partagé `INTERNAL_NOTIFY_SECRET` : **exigé dès qu'il est configuré**,
+ * ignoré tant qu'il ne l'est pas. Ce sens-là, et pas l'inverse, permet de
+ * livrer le code d'abord et d'ajouter la variable aux deux projets Vercel
+ * ensuite, sans fenêtre pendant laquelle la notification tomberait.
  */
 
 import type { NextRequest } from 'next/server';
@@ -105,6 +120,18 @@ function buildInfoCompletedBodyHtml(params: InfoCompletedEmailParams): string {
 }
 
 export async function POST(request: NextRequest) {
+  const secretInterne = process.env.INTERNAL_NOTIFY_SECRET;
+  if (
+    secretInterne &&
+    request.headers.get('x-verone-internal') !== secretInterne
+  ) {
+    console.error('[linkme-info-completed] Secret interne invalide ou absent');
+    return NextResponse.json(
+      { success: false, error: 'Acces refuse' },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = (await request.json()) as InfoCompletedRequest;
 

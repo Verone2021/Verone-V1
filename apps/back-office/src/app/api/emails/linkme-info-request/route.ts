@@ -14,6 +14,8 @@ import type { Database, Json } from '@verone/types';
 import { getLogoAttachments } from '../_shared/email-logo';
 import { buildEmailHtml } from '../_shared/email-template';
 
+import { requireBackofficeAdmin } from '@/lib/guards/require-backoffice-admin';
+
 function getResendClient(): Resend {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -288,6 +290,11 @@ function buildBodyHtmlFromRequest(body: InfoRequestEmailBody): string {
 }
 
 export async function POST(request: NextRequest) {
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult;
+  }
+
   try {
     const body = (await request.json()) as InfoRequestEmailBody;
     const {

@@ -16,6 +16,8 @@ import { NextResponse } from 'next/server';
 import type { Database, Json } from '@verone/types/supabase';
 import { createAdminClient } from '@verone/utils/supabase/server';
 
+import { requireBackofficeAdmin } from '@/lib/guards/require-backoffice-admin';
+
 // Types for sales orders updates
 type SalesOrderUpdate = Database['public']['Tables']['sales_orders']['Update'];
 type SalesOrderItemInsert =
@@ -77,6 +79,16 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ISyncResponse>> {
+  // Appelée depuis l'écran Facturation, et en interne par PATCH
+  // `qonto/invoices/[id]` qui transmet les cookies de la session.
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return NextResponse.json(
+      { success: false, error: 'Acces refuse' },
+      { status: guardResult.status }
+    );
+  }
+
   try {
     const { id: invoiceId } = await params;
     const supabase = createAdminClient();

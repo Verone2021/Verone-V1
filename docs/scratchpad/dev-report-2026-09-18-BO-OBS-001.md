@@ -245,3 +245,78 @@ vérification après écriture, et rectifié publiquement en commentaire de la d
 
 Rien sur `veronecollections-fr`. La clé `phc_…` **n'est pas un secret** : PostHog la qualifie de
 « write-only key, safe to use in public apps », elle part dans le code envoyé au navigateur.
+
+---
+
+# ADDENDUM 2 — le masquage, vérifié à l'œil (2026-09-19, 03 h Paris)
+
+## Ce qui a été trouvé en ouvrant un vrai rejeu
+
+**Le masquage ne fonctionnait pas.** Le rejeu de l'écran Facturation laissait lire en clair :
+
+> MONSIEUR LAURENT DANIEL LEJOSNE · Pokawa Lille flandres · MT Solutions ·
+> POKE 18EME (Pokawa Custine) · 557,28 € · 1 970,29 €
+
+Aucune lecture de code ne l'aurait montré. Il fallait ouvrir l'enregistrement et regarder.
+
+### Deux défauts distincts
+
+1. **`maskTextFn` n'était jamais appelée.** La documentation de la bibliothèque est explicite :
+   _« Session replay masks input values by default (see `maskAllInputs`), but it does not mask other
+   DOM text or images. »_ Sans `maskTextSelector`, la fonction de masquage est du code mort. Elle
+   était écrite, testée, et ne servait à rien.
+2. **Aucune expression régulière ne reconnaît un NOM.** Les motifs attrapaient e-mail, téléphone,
+   adresse, montant, IBAN — et passaient à côté de « Pokawa Lille flandres ». Ce n'est pas une
+   question d'affiner le motif.
+
+### La correction — `[BO-OBS-003]`, demande #1192
+
+Masquage **par emplacement autant que par motif** :
+
+- tout texte dans une **cellule de tableau** (ou un élément `data-posthog-mask`) → masqué **sans
+  condition** ;
+- les motifs sensibles restent masqués **partout**, y compris hors tableau ;
+- l'**habillage de l'interface** reste lisible.
+
+Compromis assumé : diagnostiquer un plantage demande de voir **quel écran, quels boutons, quelle
+navigation** — jamais le contenu des tableaux.
+
+## Vérification finale, à l'œil, sur le rejeu en production
+
+Capture : `.playwright-mcp/screenshots/20260919/posthog-rejeu-masquage-verifie.jpg`
+
+| Élément                                                                     | Dans le rejeu |
+| --------------------------------------------------------------------------- | ------------- |
+| Les 4 totaux en euros (72 196,82 € …)                                       | **`●●●`**     |
+| Nom du client, colonne Client                                               | **`•••`**     |
+| Montant, date, échéance, statut, paiement                                   | **`•••`**     |
+| Numéro de facture, numéro de commande                                       | **`•••`**     |
+| Titre « Facturation », boutons, onglets                                     | lisibles      |
+| Compteurs « Factures 41 », « Devis 41 », « Brouillons 6 », « 41 résultats » | lisibles      |
+| Adresse de la page, barre latérale, icônes d'action                         | lisibles      |
+
+**Aucune donnée client n'est lisible. L'écran reste diagnosticable.**
+
+## Le reste du dispositif, vérifié en production
+
+- **Le rejeu contient l'avant** : navigation et défilement effectués **avant** l'erreur, puis
+  l'erreur ; l'envoi vers `eu.i.posthog.com/s/` ne part **qu'après** l'erreur.
+- **Aucun enregistrement permanent** : 3 sessions enregistrées au total, correspondant aux
+  3 erreurs de test. Toute la navigation normale de la nuit n'a produit **aucun** rejeu.
+- **Le rapport d'erreur est précis** : message, navigateur (**Chrome 153**), système
+  (**Mac OS X 10.15.7**), pile d'appels, nombre d'occurrences, de sessions et d'utilisateurs,
+  et le rejeu rattaché.
+- **Identification** : `100d2439-0f52-46b1-9c30-ad7934b44719` — identifiant Supabase, **jamais
+  l'e-mail**.
+
+## Ce qui n'a pas pu être fait
+
+**L'enregistrement de test qui contient les données non masquées n'a pas pu être supprimé.** Il
+n'apparaît pas dans la liste des enregistrements (session trop courte pour le filtre par défaut),
+seulement depuis la fiche d'erreur, qui n'offre pas de suppression. Il est dans le compte de Roméo,
+hébergé en Europe, et **s'efface automatiquement au bout de 30 jours**. Signalé plutôt que tu.
+
+## Reste à faire par Roméo
+
+**Prévenir par écrit les deux salariées.** Texte prêt à envoyer :
+`docs/scratchpad/message-salariees-enregistrement-sessions.md`.

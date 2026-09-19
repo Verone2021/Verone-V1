@@ -1,21 +1,27 @@
 import { z } from 'zod';
 
+/**
+ * Ce que le navigateur a le droit d'imposer : le produit, la quantité et le
+ * choix du montage. Les trois montants qui suivent sont encore acceptés, mais
+ * uniquement pour être COMPARÉS aux prix lus en base (`resolveCartItems`).
+ * Aucun d'eux ne sert de montant à payer. Voir `src/lib/checkout/`.
+ */
 export const CheckoutItemSchema = z.object({
-  product_id: z.string(),
-  name: z.string(),
-  price_ttc: z.number().min(0),
-  quantity: z.number().int().min(1),
+  product_id: z.string().uuid(),
+  quantity: z.number().int().min(1).max(99),
   include_assembly: z.boolean(),
+  // Valeurs annoncées par le navigateur — comparées, jamais encaissées.
+  price_ttc: z.number().min(0),
   assembly_price: z.number().min(0),
   eco_participation: z.number().min(0),
 });
 
+/**
+ * Le navigateur n'annonce que le code. Le montant de la remise est recalculé
+ * côté serveur par `validatePromoServerSide` — même principe que les prix.
+ */
 export const DiscountSchema = z.object({
-  discount_id: z.string().uuid(),
-  code: z.string().nullable(),
-  discount_type: z.string(),
-  discount_value: z.number().min(0),
-  discount_amount: z.number().min(0),
+  code: z.string().min(1).max(64),
 });
 
 export const CheckoutSchema = z.object({

@@ -16,6 +16,8 @@ import { createAdminClient } from '@verone/utils/supabase/server';
 import { ServicePostRequestBodySchema } from '../route.schemas';
 import type { IServiceItem, IServicePostRequestBody } from '../route.schemas';
 
+import { requireBackofficeAdmin } from '@/lib/guards/require-backoffice-admin';
+
 type Organisation = Database['public']['Tables']['organisations']['Row'];
 type IndividualCustomer =
   Database['public']['Tables']['individual_customers']['Row'];
@@ -233,6 +235,11 @@ function formatError(error: unknown): NextResponse {
  * Crée un devis de service (sans commande)
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return guardResult;
+  }
+
   try {
     const rawBody: unknown = await request.json();
     const parsed = ServicePostRequestBodySchema.safeParse(rawBody);

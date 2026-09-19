@@ -256,9 +256,17 @@ async function sendCompletionNotification(
 
   const notifyUrl = `${backOfficeUrl}/api/emails/linkme-info-completed`;
 
+  // Secret partagé entre les deux projets. Tant qu'il n'est pas configuré des
+  // deux côtés, l'en-tête est absent et la route reçoit comme avant : la
+  // bascule se fait sans fenêtre de casse (BO-SEC-MW-001).
+  const secretInterne = process.env.INTERNAL_NOTIFY_SECRET;
+
   const res = await fetch(notifyUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(secretInterne ? { 'x-verone-internal': secretInterne } : {}),
+    },
     body: JSON.stringify({
       orderNumber: order.order_number,
       orderId: order.id,

@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
+import type { ResolvedItem } from '@/lib/checkout/resolve-cart';
+
 import type { ValidatedDiscount } from './types';
 
 const SITE_INTERNET_CHANNEL_ID = '0c2639e9-df80-41fa-84d0-9da96a128f7f';
@@ -15,22 +17,13 @@ interface CustomerData {
   country: string;
 }
 
-interface OrderItem {
-  product_id: string;
-  name: string;
-  price_ttc: number;
-  quantity: number;
-  include_assembly: boolean;
-  assembly_price: number;
-  eco_participation: number;
-}
-
 export interface CreateOrderResult {
   orderId: string | null;
 }
 
 export async function createDraftOrder(
-  items: OrderItem[],
+  /** Lignes reconstruites depuis la base — jamais les montants du navigateur. */
+  items: ResolvedItem[],
   customer: CustomerData,
   userId: string | undefined,
   discount: ValidatedDiscount | undefined,

@@ -264,6 +264,17 @@ export async function PATCH(
     synced?: boolean;
   }>
 > {
+  // La garde n'existait que sur le GET de ce fichier : le PATCH, qui ECRIT,
+  // restait ouvert. Piege signale par l'inventaire du 18/09 — la presence
+  // d'une garde dans un fichier ne prouve pas qu'elle protege tout le fichier.
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return NextResponse.json(
+      { success: false, error: 'Acces refuse' },
+      { status: guardResult.status }
+    );
+  }
+
   try {
     const { id } = await params;
     const body = (await request.json()) as IPatchRequestBody;
@@ -436,7 +447,12 @@ export async function PATCH(
             `${baseUrl}/api/qonto/invoices/${typedLocalInvoice.id}/sync-to-order`,
             {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                // La route appelee exige desormais une session : on transmet
+                // celle de l'utilisateur qui a declenche la modification.
+                cookie: request.headers.get('cookie') ?? '',
+              },
             }
           );
 

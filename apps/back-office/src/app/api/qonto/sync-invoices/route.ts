@@ -11,6 +11,8 @@ import { NextResponse } from 'next/server';
 import { QontoClient } from '@verone/integrations/qonto';
 import { createAdminClient } from '@verone/utils/supabase/server';
 
+import { requireBackofficeAdmin } from '@/lib/guards/require-backoffice-admin';
+
 function getQontoClient(): QontoClient {
   return new QontoClient({
     authMode: (process.env.QONTO_AUTH_MODE as 'oauth' | 'api_key') ?? 'oauth',
@@ -71,7 +73,7 @@ interface QontoInvoice {
   }>;
 }
 
-export async function POST(_request: NextRequest): Promise<
+export async function POST(request: NextRequest): Promise<
   NextResponse<{
     success: boolean;
     synced: number;
@@ -81,6 +83,21 @@ export async function POST(_request: NextRequest): Promise<
     message: string;
   }>
 > {
+  const guardResult = await requireBackofficeAdmin(request);
+  if (guardResult instanceof NextResponse) {
+    return NextResponse.json(
+      {
+        success: false,
+        synced: 0,
+        created: 0,
+        updated: 0,
+        errors: ['Acces refuse'],
+        message: 'Acces refuse',
+      },
+      { status: guardResult.status }
+    );
+  }
+
   const errors: string[] = [];
   const created = 0;
   let updated = 0;
