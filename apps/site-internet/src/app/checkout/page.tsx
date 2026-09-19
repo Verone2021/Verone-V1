@@ -55,6 +55,7 @@ export default function CheckoutPage() {
   const { items, itemCount, subtotal } = useCart();
   const { user } = useAuthUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
   const [useSameBillingAddress, setUseSameBillingAddress] = useState(true);
   const [promoCode, setPromoCode] = useState('');
   const [promoResult, setPromoResult] = useState<PromoResult | null>(null);
@@ -151,6 +152,7 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setCheckoutError('');
 
     try {
       const formData = new FormData(e.currentTarget);
@@ -190,14 +192,9 @@ export default function CheckoutPage() {
           },
           ...(user ? { userId: user.id } : {}),
           ...(billingData ? { billing: billingData } : {}),
-          ...(promoResult
-            ? {
-                discount: {
-                  code: promoResult.code,
-                  amount: promoResult.discount_amount,
-                },
-              }
-            : {}),
+          // Seul le code voyage : le montant de la remise est recalculé
+          // côté serveur, comme les prix (SI-CHECKOUT-PRICE-001).
+          ...(promoResult ? { discount: { code: promoResult.code } } : {}),
         }),
       });
 
@@ -210,10 +207,17 @@ export default function CheckoutPage() {
         window.location.href = data.url;
       } else {
         console.error('[Checkout] No redirect URL:', data.error);
+        setCheckoutError(
+          data.error ??
+            'La commande n’a pas pu être validée. Merci de réessayer.'
+        );
         setIsSubmitting(false);
       }
     } catch (error) {
       console.error('[Checkout] Submit failed:', error);
+      setCheckoutError(
+        'La commande n’a pas pu être validée. Merci de réessayer.'
+      );
       setIsSubmitting(false);
     }
   };
@@ -540,6 +544,16 @@ export default function CheckoutPage() {
                 </div>
               )}
             </div>
+
+            {/* Refus côté serveur : prix modifié, article indisponible… */}
+            {checkoutError && (
+              <p
+                role="alert"
+                className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3"
+              >
+                {checkoutError}
+              </p>
+            )}
 
             {/* Submit */}
             <button
